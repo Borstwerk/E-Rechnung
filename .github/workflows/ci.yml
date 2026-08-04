@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  CI: true
+
+jobs:
+  # Schneller Durchlauf auf Linux: baut die gesamte Solution einschliesslich
+  # der WPF-Anwendung (EnableWindowsTargeting) und fuehrt alle plattform-
+  # neutralen Tests aus. Faengt den Grossteil der Fehler ab.
+  build-and-test:
+    name: Build und Tests (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .NET SDK einrichten
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Java einrichten (fuer die externe Gegenpruefung)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Wiederherstellen
+        run: dotnet restore EInvoiceSender.slnx
+
+      - name: Formatpruefung
+        run: dotnet format EInvoiceSender.slnx --verify-no-changes --no-restore
+
+      - name: Bauen
+        run: dotnet build EInvoiceSender.slnx -c Release --no-restore
+
+      - name: Tests
+        run: dotnet test EInvoiceSender.slnx -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Externe Validatoren beschaffen
+        run: ./build/fetch-validators.sh
+
+      - name: Gegenpruefung der Golden Master mit CEN-Schematron und veraPDF
+        run: ./build/validate-golden-masters.sh
+
+      - name: Testergebnisse veroeffentlichen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/TestResults/*.trx"
+          if-no-files-found: ignore
+
+  # Veroeffentlichung und Installer erfordern zwingend Windows:
+  # PublishReadyToRun unterstuetzt kein Cross-OS, und MSI/EXE lassen sich nur
+  # unter Windows erzeugen.
+  publish-windows:
+    name: Veroeffentlichung (Windows)
+    runs-on: windows-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: .NET SDK einrichten
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Tests unter Windows
+        run: dotnet test EInvoiceSender.slnx -c Release
+
+      - name: Self-contained win-x64 veroeffentlichen
+        run: >
+          dotnet publish src/EInvoiceSender.Desktop
+          -c Release -r win-x64 --self-contained true
+          -p:PublishReadyToRun=true
+          -o artifacts/publish/win-x64
+
+      - name: Portable ZIP erzeugen
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
+          Compress-Archive -Path artifacts/publish/win-x64/* `
+            -DestinationPath artifacts/release/EInvoiceSender-portable-win-x64.zip -Force
+
+      - name: Pruefsummen erzeugen
+        shell: pwsh
+        run: |
+          Get-ChildItem artifacts/release -File | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -Append -Encoding utf8 artifacts/release/SHA256SUMS.txt
+          }
+          Get-Content artifacts/release/SHA256SUMS.txt
+
+      - name: Artefakte bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: einvoicesender-win-x64
+          path: artifacts/release/

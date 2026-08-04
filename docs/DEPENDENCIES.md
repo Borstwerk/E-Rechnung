@@ -169,10 +169,11 @@ Für Transparenz offen ausgewiesen:
 - Veröffentlichungsdaten von ZUGFeRD 2.4 und 2.5 stammen aus Sekundärquellen;
   `ferd-net.de` und `fnfe-mpe.org` waren aus dieser Umgebung nicht abrufbar
   (HTTP 403).
-- Die Aussage, dass die Mustang-CLI-JAR selbstenthaltend („shaded") ist, ist
-  über die Dateigröße plausibel, aber nicht geprüft. Wird beim ersten
-  tatsächlichen Aufruf in der CI verifiziert.
-- Die Java-Mindestversion für Mustang 2.24.x ist mit „11 oder neuer" angegeben,
-  aus der Projektkonfiguration abgeleitet, nicht aus der Dokumentation bestätigt.
+- ~~Selbstenthaltende Mustang-JAR~~ – **verifiziert am 2026-08-04**: die JAR
+  (58.755.189 Bytes, SHA-256 `e4904ffa…52edbf`, SHA-1 gegen Maven Central
+  abgeglichen) startet mit `java -jar` ohne weiteren Klassenpfad und meldet
+  „Mustangproject.org 2.24.0". Sie ist damit nachweislich shaded.
+- ~~Java-Mindestversion~~ – **verifiziert**: läuft unter OpenJDK 21. Die untere
+  Grenze (11) ist weiterhin nur aus der Projektkonfiguration abgeleitet.
 - Das Verhalten des „neuen Outlook" beim Öffnen von `.eml`-Dateien mit Anhang ist
   aus dieser Umgebung nicht prüfbar (siehe ADR-0005 und `docs/STATUS.md`).
