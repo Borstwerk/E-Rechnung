@@ -1,10 +1,15 @@
 # STATUS.md
 
-Letzte Aktualisierung: 2026-08-04
+Letzte Aktualisierung: 2026-08-04 (zweiter Stand)
 
 ## Aktueller Meilenstein
 
-**M1 – Solution und Domain** (in Arbeit)
+**M3 – Datenerfassung (WPF)** (als naechstes)
+
+**Hinweis zur Reihenfolge:** M4 (XML) und M5 (PDF/A) wurden bewusst vor M2/M3
+umgesetzt. Beide tragen das gesamte technische Risiko des Projekts; ohne den
+Nachweis, dass eine normgerechte Datei ueberhaupt erzeugbar ist, waere jede
+Oberflaeche verfrueht gewesen. Der Nachweis liegt jetzt vor.
 
 ## Erledigt
 
@@ -24,14 +29,56 @@ Letzte Aktualisierung: 2026-08-04
 - Acht Architekturentscheidungen festgehalten: `docs/DECISIONS.md`.
 - Solution-Grundgerüst mit 7 Quell- und 6 Testprojekten angelegt, Build grün.
 
+### M1 – Solution und Domain ✅
+
+- Werttypen mit Selbstprüfung (IBAN nach ISO 7064, Währung, Land, Einheit).
+- Rechnungsmodell und Berechnungskern nach EN 16931.
+- `SafeFileName` gegen Path Traversal und reservierte Windows-Namen.
+- Ports der Application-Schicht für alle Adapter.
+- CI-Pipeline (Linux-Build/Test, Windows-Veröffentlichung).
+- 187 Unit-Tests.
+
+### M4 – XML-Erzeugung ✅
+
+- Eigener CII-Writer für Profil EN 16931, eigener Reader für die Gegenprüfung.
+- `SecureXml` als einziger Lesepfad (XXE und Entity-Expansion abgewehrt, mit
+  Sicherheitstests belegt).
+- Acht Golden-Master-Fälle, drei absichtlich fehlerhafte Fälle.
+- **Alle acht werden vom offiziellen CEN-Schematron (Mustang 2.24.0) als
+  gültig bestätigt, alle drei fehlerhaften werden beanstandet.**
+
+### M5 – PDF/A-3 und Einbettung ✅
+
+- `SRgbIccProfile`: ICC-v2-Profil programmatisch erzeugt.
+- `XmpMetadataBuilder`: PDF/A-Kennzeichnung und Factur-X-Erweiterungsschema.
+- `PdfAnalyzer`: Signaturprüfung, Schrifteinbettung, Verschlüsselung, aktive
+  Inhalte, Signaturen, bereits eingebettete Rechnungs-XML.
+- `PdfAInvoiceComposer`: OutputIntent, Anhang, `/AF`, Dokumentinfo.
+- `PdfMetadataOverwriter`: setzt das XMP als inkrementelle Aktualisierung ein,
+  weil PDFsharp beim Speichern immer sein eigenes XMP schreibt.
+- **Die erzeugte Datei besteht die veraPDF-Prüfung mit Flavour 3b:
+  389 Prüfpunkte, `isCompliant=true`.** Die eingebettete XML lässt sich wieder
+  extrahieren und ist byte-identisch mit der erzeugten.
+
 ## In Arbeit
 
-- M1: Domänenmodell, Summen- und Steuerberechnung, Werttypen, Unit-Tests,
-  CI-Pipeline.
+Nichts offen. Der nächste Schritt beginnt bei null.
 
 ## Nächster Schritt
 
-Domänenmodell und Berechnungskern implementieren, danach die Regelprüfung.
+M2/M3: PDF-Vorschau und WPF-Oberfläche, danach M6 (Gesamtablauf und Berichte),
+M7 (E-Mail-Entwurf), M8 (Installer).
+
+### Noch nicht umgesetzt
+
+| Baustein | Zustand |
+|---|---|
+| `En16931RuleValidator` (Geschäftsregeln mit deutschen Meldungen) | Codelisten liegen vor, die Regelprüfung selbst fehlt noch |
+| WPF-Oberfläche (M2/M3) | nur Projektgerüst, keine Views |
+| `CreateEInvoiceUseCase` und Validierungsbericht (M6) | Ports definiert, Umsetzung offen |
+| `EmlDraftService` (M7) | Port definiert, Umsetzung offen |
+| `FileStorage`, `SettingsStore`, `ProcessRunner` | Ports definiert, Umsetzung offen |
+| Installer (M8) | offen, Werkzeugentscheidung steht noch aus |
 
 ## Bekannte Probleme und Einschränkungen
 
@@ -52,4 +99,8 @@ Keine. Alle offenen Punkte haben eine dokumentierte konservative Vorgabe.
 
 | Befehl | Ergebnis | Zeitpunkt |
 |---|---|---|
-| `dotnet build EInvoiceSender.slnx` | 0 Fehler, 0 Warnungen | 2026-08-04 |
+| `dotnet build EInvoiceSender.slnx -c Release` | 0 Fehler, 0 Warnungen | 2026-08-04 |
+| `dotnet test EInvoiceSender.slnx -c Release` | 295 Tests, alle grün | 2026-08-04 |
+| `./build/validate-golden-masters.sh` | 12 Dateien geprüft, 0 Abweichungen | 2026-08-04 |
+| veraPDF 3b auf der Ergebnisdatei | 389 Prüfpunkte, `isCompliant=true` | 2026-08-04 |
+| CEN-Schematron EN 16931 auf allen Golden Mastern | `status="valid"` | 2026-08-04 |

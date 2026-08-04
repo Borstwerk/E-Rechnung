@@ -97,13 +97,18 @@ public interface IPdfAnalyzer
 /// <param name="Author">Autor fuer die PDF-Metadaten, ueblicherweise der Verkaeufer.</param>
 /// <param name="Subject">Betreff fuer die PDF-Metadaten.</param>
 /// <param name="CreationDate">Erzeugungszeitpunkt, wird in XMP und Dokumentinfo geschrieben.</param>
+/// <param name="Attachment">
+/// Wie die XML einzubetten ist. Kommt vom XML-Writer, damit die PDF-Schicht
+/// nichts ueber Rechnungsformate wissen muss.
+/// </param>
 public sealed record PdfACompositionRequest(
     string SourcePdfPath,
     byte[] InvoiceXml,
     string Title,
     string Author,
     string Subject,
-    DateTimeOffset CreationDate);
+    DateTimeOffset CreationDate,
+    InvoiceAttachmentDescriptor Attachment);
 
 /// <summary>
 /// Erzeugt aus einer Original-PDF und der Rechnungs-XML eine PDF/A-3-Datei mit

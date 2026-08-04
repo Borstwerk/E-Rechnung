@@ -15,6 +15,9 @@ public interface IInvoiceXmlWriter
     /// <summary>Menschenlesbare Bezeichnung des Formats fuer den Bericht.</summary>
     string FormatDescription { get; }
 
+    /// <summary>Wie die erzeugte XML im PDF einzubetten ist.</summary>
+    InvoiceAttachmentDescriptor Attachment { get; }
+
     /// <summary>
     /// Erzeugt die XML als UTF-8-Bytes. Die Summen werden nicht neu berechnet,
     /// sondern in der uebergebenen, bereits geprueften Form geschrieben – so

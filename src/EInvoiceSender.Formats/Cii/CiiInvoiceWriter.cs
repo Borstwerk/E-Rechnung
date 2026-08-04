@@ -32,6 +32,13 @@ public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
     public string FormatDescription => CiiConstants.FormatDescription;
 
     /// <inheritdoc />
+    public InvoiceAttachmentDescriptor Attachment { get; } = new(
+        FileName: CiiConstants.EmbeddedFileName,
+        MimeType: CiiConstants.EmbeddedMimeType,
+        Relationship: CiiConstants.EmbeddedRelationship,
+        Description: CiiConstants.EmbeddedDescription);
+
+    /// <inheritdoc />
     public byte[] Write(Invoice invoice, InvoiceTotals totals)
     {
         ArgumentNullException.ThrowIfNull(invoice);

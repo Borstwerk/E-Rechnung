@@ -53,19 +53,29 @@ check_file() {
     exit_code=$?
     checked=$((checked + 1))
 
+    # Mustang meldet je Teilpruefung ein eigenes <summary>. Die oberste
+    # Zusammenfassung kann "valid" lauten, obwohl die PDF/A-Pruefung
+    # fehlgeschlagen ist – genau so ist es waehrend der Entwicklung passiert.
+    # Deshalb zaehlt hier jede einzelne Zusammenfassung.
+    local invalid_sections
+    invalid_sections="$(printf '%s' "${output}" | grep -c '<summary status="invalid"' || true)"
+
     local summary
     summary="$(printf '%s' "${output}" | grep -oE '<summary status="[a-z]+"' | head -n1)"
 
     if [[ "${expectation}" == "valid" ]]; then
-        if [[ ${exit_code} -eq 0 ]]; then
+        if [[ ${exit_code} -eq 0 && ${invalid_sections} -eq 0 ]]; then
             printf '  [ok]   %s\n' "$(basename "${file}")"
         else
-            printf '  [FEHL] %s – erwartet gueltig, Validator meldet Fehler\n' "$(basename "${file}")"
-            printf '%s\n' "${output}" | grep -E '<error|<message|criterion' | head -n 15 | sed 's/^/         /'
+            printf '  [FEHL] %s – erwartet gueltig, %s ungueltige Abschnitte\n' \
+                "$(basename "${file}")" "${invalid_sections}"
+            printf '%s\n' "${output}" \
+                | grep -oE 'errorMessage=[^],]*|criterion="[^"]*"' \
+                | head -n 8 | sed 's/^/         /'
             failures=$((failures + 1))
         fi
     else
-        if [[ ${exit_code} -ne 0 ]]; then
+        if [[ ${exit_code} -ne 0 || ${invalid_sections} -gt 0 ]]; then
             printf '  [ok]   %s – wie erwartet beanstandet\n' "$(basename "${file}")"
         else
             printf '  [FEHL] %s – erwartet ungueltig, Validator meldet aber Erfolg %s\n' \
