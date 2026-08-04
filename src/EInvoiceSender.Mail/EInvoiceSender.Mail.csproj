@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Mail-Schicht: Erzeugung von E-Mail-Entwuerfen (kein Versand).
+    Implementiert IEmailDraftService aus der Application-Schicht.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.Mail</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EInvoiceSender.Domain\EInvoiceSender.Domain.csproj" />
+    <ProjectReference Include="..\EInvoiceSender.Application\EInvoiceSender.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MimeKit" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

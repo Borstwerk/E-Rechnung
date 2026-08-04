@@ -1,0 +1,49 @@
+<Project>
+
+  <!--
+    Central Package Management.
+    Jede hier gepinnte Abhaengigkeit ist in docs/DEPENDENCIES.md bewertet
+    (Lizenz, Projektstatus, Einschraenkungen, Auswahlgrund).
+    Neue Abhaengigkeiten nur nach Bewertung durch den Hauptagenten, siehe AGENTS.md.
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="Anwendung">
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Protokollierung">
+    <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="PDF">
+    <PackageVersion Include="PdfSharp" Version="6.2.4" />
+    <PackageVersion Include="PDFtoImage" Version="5.3.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="E-Mail">
+    <PackageVersion Include="MimeKit" Version="4.17.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Plattform">
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Test">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10" />
+  </ItemGroup>
+
+</Project>

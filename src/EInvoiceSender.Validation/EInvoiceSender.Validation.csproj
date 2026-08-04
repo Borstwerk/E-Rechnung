@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Validation-Schicht: EN-16931-Geschaeftsregeln, Codelisten, Adapter fuer
+    externe Validatoren (gekapselt, austauschbar).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.Validation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EInvoiceSender.Domain\EInvoiceSender.Domain.csproj" />
+    <ProjectReference Include="..\EInvoiceSender.Application\EInvoiceSender.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

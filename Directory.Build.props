@@ -1,0 +1,45 @@
+<Project>
+
+  <!-- Zentrale Build-Einstellungen fuer alle Projekte der Solution. -->
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors></WarningsNotAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- Reproduzierbare Builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <DebugType>portable</DebugType>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+    <!-- Windows-Ziele auch auf Linux/macOS uebersetzbar (CI-Kompilierpruefung) -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <!-- Produkt-/Herstellerangaben zentral (auch vom Installer verwendet) -->
+    <Product>EInvoiceSender</Product>
+    <Company>EInvoiceSender Projekt</Company>
+    <Authors>EInvoiceSender Projekt</Authors>
+    <Copyright>Copyright (c) 2026</Copyright>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <NeutralLanguage>de-DE</NeutralLanguage>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Testprojekte -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CA1707;CA2007;CA1861;CA1861;xUnit1051</NoWarn>
+  </PropertyGroup>
+
+</Project>

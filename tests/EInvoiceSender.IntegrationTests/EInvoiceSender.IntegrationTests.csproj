@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Integrationstests: kompletter Weg von der Eingabe-PDF bis zur
+    validierten ZUGFeRD-Datei und zum E-Mail-Entwurf.
+    Laeuft plattformuebergreifend; Windows-spezifische Teile werden uebersprungen.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.IntegrationTests</RootNamespace>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EInvoiceSender.Domain\EInvoiceSender.Domain.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Application\EInvoiceSender.Application.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Formats\EInvoiceSender.Formats.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Validation\EInvoiceSender.Validation.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Infrastructure\EInvoiceSender.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Mail\EInvoiceSender.Mail.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+</Project>
