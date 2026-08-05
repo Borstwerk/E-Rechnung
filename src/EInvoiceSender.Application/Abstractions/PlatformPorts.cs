@@ -108,3 +108,27 @@ public interface IShellService
     /// <summary>Oeffnet eine URI, etwa einen <c>mailto:</c>-Verweis.</summary>
     Task OpenUriAsync(Uri uri, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Ein Arbeitsverzeichnis fuer genau einen Erzeugungsvorgang.
+///
+/// Alle Zwischendateien liegen darunter. Beim Verwerfen wird das gesamte
+/// Verzeichnis geloescht – auch bei einem Fehler oder einem Abbruch durch den
+/// Benutzer (docs/SECURITY.md, S8).
+/// </summary>
+public interface ITemporaryWorkspace : IDisposable
+{
+    /// <summary>Vollstaendiger Pfad des Arbeitsverzeichnisses.</summary>
+    string Path { get; }
+
+    /// <summary>Schreibt eine Zwischendatei und liefert ihren Pfad.</summary>
+    Task<string> WriteAsync(
+        string fileName, ReadOnlyMemory<byte> content, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Erzeugt Arbeitsverzeichnisse.</summary>
+public interface ITemporaryWorkspaceFactory
+{
+    /// <summary>Legt ein neues, leeres Arbeitsverzeichnis an.</summary>
+    ITemporaryWorkspace Create();
+}

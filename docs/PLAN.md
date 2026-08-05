@@ -44,7 +44,7 @@ abgedeckt.
 
 ---
 
-## M2 – PDF-Eingang und Analyse
+## M2 – PDF-Eingang und Analyse · **fertig bis auf die Vorschau**
 
 | # | Paket | Status |
 |---|---|---|
@@ -77,7 +77,7 @@ beschädigte Datei führt zu einer verständlichen Meldung statt zu einer Ausnah
 
 ---
 
-## M4 – XML-Erzeugung
+## M4 – XML-Erzeugung · **fertig**
 
 | # | Paket | Status |
 |---|---|---|
@@ -94,7 +94,7 @@ meldet für die gültigen Fälle keinen Fehler.
 
 ---
 
-## M5 – PDF/A-3 und Einbettung
+## M5 – PDF/A-3 und Einbettung · **fertig**
 
 | # | Paket | Status |
 |---|---|---|
@@ -110,7 +110,7 @@ meldet für die gültigen Fälle keinen Fehler.
 
 ---
 
-## M6 – Gesamtablauf und Berichte
+## M6 – Gesamtablauf und Berichte · **fertig**
 
 | # | Paket | Status |
 |---|---|---|

@@ -102,6 +102,49 @@ public static class VatExemptionReasonCodes
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
+    /// Prueft, ob der Code ein bekannter Basiscode ist **oder** ein Untercode
+    /// eines bekannten Basiscodes.
+    ///
+    /// Hintergrund: Die VATEX-Liste kennt zu mehreren Artikeln feiner
+    /// gegliederte Untercodes, etwa <c>VATEX-EU-132-1A</c> fuer
+    /// Artikel 132 Absatz 1 Buchstabe a. Diese Untercodes hier einzeln
+    /// aufzufuehren, wuerde bedeuten, sie aus dem Gedaechtnis zu erfinden – die
+    /// offizielle Liste war bei der Erstellung nicht abrufbar. Stattdessen wird
+    /// die Zugehoerigkeit zu einem bekannten Basiscode geprueft.
+    ///
+    /// Das ist bewusst grosszuegig: Ein unbekannter Untercode fuehrt ohnehin nur
+    /// zu einer Warnung, und die verbindliche Pruefung uebernimmt das
+    /// CEN-Schematron. Ein falscher Alarm bei einem gueltigen Code waere fuer
+    /// den Anwender dagegen aergerlich und verwirrend.
+    /// </summary>
+    public static bool IsValidOrKnownSubcode(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return false;
+        }
+
+        string trimmed = code.Trim();
+
+        if (IsValid(trimmed))
+        {
+            return true;
+        }
+
+        foreach (string known in Names.Keys)
+        {
+            if (trimmed.Length > known.Length
+                && trimmed.StartsWith(known, StringComparison.Ordinal)
+                && trimmed[known.Length] == '-')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Prueft, ob <paramref name="code"/> ein bekannter VATEX-Code ist.
     /// Anders als bei den uebrigen Codelisten wird hier <b>fallsensitiv</b>
     /// geprueft, wie in der VATEX-Liste veroeffentlicht – nur umgebende

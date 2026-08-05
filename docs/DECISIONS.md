@@ -218,3 +218,53 @@ liegen und nicht in die Fachlogik sickern.
 Shell-Öffnen) müssen `OperatingSystem.IsWindows()` prüfen und auf anderen
 Plattformen eine klar benannte Ersatzimplementierung verwenden – im Test
 sichtbar, im Produkt unter Windows nie aktiv.
+
+---
+
+## ADR-0009 – Eigene Regelprüfung als Benutzerführung, nicht als Freigabe
+
+**Datum:** 2026-08-05 · **Status:** aktiv
+
+**Entscheidung:** `En16931RuleValidator` prüft die erfassten Daten lokal und
+meldet Probleme in verständlichem Deutsch. Er ist ausdrücklich **kein Ersatz**
+für Mustang, das CEN-Schematron oder veraPDF. Die Freigabe erteilen
+ausschließlich die externen Validatoren.
+
+**Alternativen:** (a) Nur externe Validatoren – deren Meldungen sind englische
+Regeltexte wie `[BR-CO-13] failed`, für Endanwender unbrauchbar, und sie greifen
+erst, wenn bereits eine Datei erzeugt wurde. (b) Eigene Prüfung als alleinige
+Instanz – wäre eine Selbstbestätigung ohne unabhängigen Beleg.
+
+**Gründe:** Die Anwendung muss Fehler **vor** der Erzeugung melden, sonst
+erzeugt der Benutzer wiederholt ungültige Dateien. Gleichzeitig darf eine
+bestandene Eigenprüfung nicht als Konformitätsaussage missverstanden werden.
+
+**Auswirkungen:** Es gilt eine bewusste Asymmetrie: Was der eigene Validator
+beanstandet, wird nicht erzeugt. Was er durchlässt, ist damit **nicht** als
+normkonform bestätigt. Ein Basistest stellt sicher, dass keiner der acht vom
+CEN-Schematron bestätigten Golden Master von der Eigenprüfung beanstandet wird –
+ein zu strenger Validator wäre schädlicher als gar keiner.
+
+---
+
+## ADR-0010 – VATEX-Untercodes werden akzeptiert, nicht erfunden
+
+**Datum:** 2026-08-05 · **Status:** aktiv
+
+**Entscheidung:** `VatExemptionReasonCodes` enthält die VATEX-Basiscodes.
+Untercodes eines bekannten Basiscodes (etwa `VATEX-EU-132-1A` zu
+`VATEX-EU-132`) gelten als bekannt, ohne einzeln aufgeführt zu sein.
+
+**Alternativen:** (a) Alle Untercodes einzeln aufnehmen – die offizielle
+CEF-VATEX-Liste war aus dieser Umgebung nicht abrufbar; die Codes aus dem
+Gedächtnis zu ergänzen hieße, sie zu erfinden. (b) Untercodes als unbekannt
+melden – erzeugt eine Falschwarnung bei einer korrekten Rechnung.
+
+**Gründe:** Ein Fehlalarm bei einem gültigen Code kostet den Anwender Zeit und
+Vertrauen. Ein unbekannter Code führt ohnehin nur zu einer Warnung, nicht zu
+einem Abbruch, und die verbindliche Prüfung übernimmt das CEN-Schematron.
+
+**Auswirkungen:** Ein erfundener Code der Form `VATEX-EU-132-XYZ` würde nicht
+beanstandet. Das ist hingenommen: Die Warnung ist Benutzerführung, keine
+Konformitätsprüfung. Aufgefallen ist der Fall über den Golden Master
+`04-steuerfrei`, der zuvor eine unnötige Warnung erzeugte.

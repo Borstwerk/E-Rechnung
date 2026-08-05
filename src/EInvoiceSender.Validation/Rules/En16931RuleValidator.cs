@@ -515,7 +515,7 @@ public sealed class En16931RuleValidator : IBusinessRuleValidator
                     $"Betroffen: {label}", "BR-E-10");
             }
             else if (!string.IsNullOrWhiteSpace(reason.ReasonCode)
-                     && !VatExemptionReasonCodes.IsValid(reason.ReasonCode))
+                     && !VatExemptionReasonCodes.IsValidOrKnownSubcode(reason.ReasonCode))
             {
                 report.Warning(
                     "APP-VAT-013",

@@ -1,10 +1,10 @@
 # STATUS.md
 
-Letzte Aktualisierung: 2026-08-04 (zweiter Stand)
+Letzte Aktualisierung: 2026-08-05 (dritter Stand)
 
 ## Aktueller Meilenstein
 
-**M3 – Datenerfassung (WPF)** (als naechstes)
+**M2/M3 – PDF-Vorschau und WPF-Oberfläche** (als nächstes)
 
 **Hinweis zur Reihenfolge:** M4 (XML) und M5 (PDF/A) wurden bewusst vor M2/M3
 umgesetzt. Beide tragen das gesamte technische Risiko des Projekts; ohne den
@@ -60,6 +60,33 @@ Oberflaeche verfrueht gewesen. Der Nachweis liegt jetzt vor.
   389 Prüfpunkte, `isCompliant=true`.** Die eingebettete XML lässt sich wieder
   extrahieren und ist byte-identisch mit der erzeugten.
 
+### Kernstabilisierung ✅
+
+- Dauerhafte Ende-zu-Ende-Konformitätstests je Golden Master gegen die echten
+  Referenzwerkzeuge (Schematron, veraPDF, Factur-X-Prüfung, Rückextraktion,
+  Byte-Gleichheit, Anhangname, MIME-Typ, AFRelationship, Profil, XMP).
+- `MustangValidator` bewertet **jede** Teilzusammenfassung einzeln; ein
+  unlesbarer oder leerer Bericht gilt als Fehler.
+- `ProcessRunner`: Argumentliste, kein Shell-Aufruf, Zeitlimit, Prozessbaum
+  beenden, stdout und stderr nebenläufig.
+- ICC-Profil vollständig dokumentiert und per SHA-256 gepinnt.
+
+### M6 – Gesamtablauf und Berichte ✅
+
+- `CreateEInvoiceUseCase` mit neun Schritten, Fortschrittsmeldungen,
+  `CancellationToken`, strukturierten Fehlerobjekten.
+- Bestätigungssperre sitzt im Anwendungsfall, nicht in der Oberfläche.
+- Ergebnisprüfung: erneut öffnen, XML extrahieren, Byte-Gleichheit,
+  PDF/A-Kennzeichnung, fachliche Gegenprüfung der extrahierten Daten.
+- `FileStorage`: atomar über temporäre Datei, kein stillschweigendes
+  Überschreiben, Schutz gegen Path Traversal.
+- Validierungsbericht als JSON und als Text mit Prüfsumme, Zeitpunkt,
+  Standard, Profil und Validator-Versionen. Ein nicht ausgeführter Validator
+  steht ausdrücklich als „NICHT AUSGEFUEHRT" im Bericht.
+- Zwölf Ablauftests: Erfolg, fehlende Bestätigung, Validierungsfehler,
+  beschädigte PDF, nicht eingebettete Schrift, Timeout, Beanstandung,
+  Benutzerabbruch, Überschreibschutz, Aufräumen der temporären Dateien.
+
 ## In Arbeit
 
 Nichts offen. Der nächste Schritt beginnt bei null.
@@ -73,11 +100,10 @@ M7 (E-Mail-Entwurf), M8 (Installer).
 
 | Baustein | Zustand |
 |---|---|
-| `En16931RuleValidator` (Geschäftsregeln mit deutschen Meldungen) | Codelisten liegen vor, die Regelprüfung selbst fehlt noch |
 | WPF-Oberfläche (M2/M3) | nur Projektgerüst, keine Views |
-| `CreateEInvoiceUseCase` und Validierungsbericht (M6) | Ports definiert, Umsetzung offen |
 | `EmlDraftService` (M7) | Port definiert, Umsetzung offen |
-| `FileStorage`, `SettingsStore`, `ProcessRunner` | Ports definiert, Umsetzung offen |
+| `SettingsStore` (Vorlagen, DPAPI) | Port definiert, Umsetzung offen |
+| PDF-Vorschau (PDFtoImage) | offen |
 | Installer (M8) | offen, Werkzeugentscheidung steht noch aus |
 
 ## Bekannte Probleme und Einschränkungen
@@ -100,7 +126,7 @@ Keine. Alle offenen Punkte haben eine dokumentierte konservative Vorgabe.
 | Befehl | Ergebnis | Zeitpunkt |
 |---|---|---|
 | `dotnet build EInvoiceSender.slnx -c Release` | 0 Fehler, 0 Warnungen | 2026-08-04 |
-| `dotnet test EInvoiceSender.slnx -c Release` | 295 Tests, alle grün | 2026-08-04 |
+| `dotnet test EInvoiceSender.slnx -c Release` | 397 Tests, alle grün | 2026-08-05 |
 | `./build/validate-golden-masters.sh` | 12 Dateien geprüft, 0 Abweichungen | 2026-08-04 |
 | veraPDF 3b auf der Ergebnisdatei | 389 Prüfpunkte, `isCompliant=true` | 2026-08-04 |
 | CEN-Schematron EN 16931 auf allen Golden Mastern | `status="valid"` | 2026-08-04 |
