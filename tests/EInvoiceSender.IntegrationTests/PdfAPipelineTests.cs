@@ -7,6 +7,7 @@ using EInvoiceSender.Domain.Values;
 using EInvoiceSender.Formats.Cii;
 using EInvoiceSender.Infrastructure.PdfA;
 using Microsoft.Extensions.Logging.Abstractions;
+using EInvoiceSender.TestSupport;
 using Xunit;
 
 namespace EInvoiceSender.IntegrationTests;

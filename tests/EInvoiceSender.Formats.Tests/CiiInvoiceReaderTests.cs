@@ -2,8 +2,8 @@ using System.Text;
 using EInvoiceSender.Application.Abstractions;
 using EInvoiceSender.Domain.Calculation;
 using EInvoiceSender.Formats.Cii;
-using EInvoiceSender.Formats.Xml;
-using EInvoiceSender.Formats.Tests.Scenarios;
+using EInvoiceSender.Application.Xml;
+using EInvoiceSender.TestSupport;
 using Xunit;
 
 namespace EInvoiceSender.Formats.Tests;

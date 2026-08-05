@@ -1,7 +1,7 @@
 using System.Text;
 using EInvoiceSender.Domain.Calculation;
 using EInvoiceSender.Formats.Cii;
-using EInvoiceSender.Formats.Tests.Scenarios;
+using EInvoiceSender.TestSupport;
 using Xunit;
 
 namespace EInvoiceSender.Formats.Tests;

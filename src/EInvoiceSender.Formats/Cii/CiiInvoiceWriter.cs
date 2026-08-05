@@ -5,7 +5,7 @@ using EInvoiceSender.Domain.Calculation;
 using EInvoiceSender.Domain.Model;
 using EInvoiceSender.Domain.Money;
 using EInvoiceSender.Domain.Values;
-using EInvoiceSender.Formats.Xml;
+using EInvoiceSender.Application.Xml;
 
 namespace EInvoiceSender.Formats.Cii;
 

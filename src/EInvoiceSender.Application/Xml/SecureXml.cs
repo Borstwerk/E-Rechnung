@@ -1,6 +1,6 @@
 using System.Xml;
 
-namespace EInvoiceSender.Formats.Xml;
+namespace EInvoiceSender.Application.Xml;
 
 /// <summary>
 /// Sichere Einstellungen fuer die XML-Verarbeitung.
@@ -17,7 +17,11 @@ namespace EInvoiceSender.Formats.Xml;
 /// * Groessen- und Tiefenbegrenzung – begrenzt den Schaden durch absichtlich
 ///   tief verschachtelte Dokumente.
 ///
-/// Es darf im gesamten Projekt keinen anderen Weg geben, XML zu lesen.
+/// Es darf im gesamten Projekt keinen anderen Weg geben, XML zu lesen. Deshalb
+/// liegt diese Klasse in der Application-Schicht: Sowohl die Formatschicht
+/// (Rechnungs-XML) als auch die Validierungsschicht (Berichte externer
+/// Werkzeuge) brauchen sie, und eine zweite Fassung waere genau die
+/// Abweichung, die hier verhindert werden soll.
 /// </summary>
 public static class SecureXml
 {

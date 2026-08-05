@@ -223,3 +223,106 @@ Diese Werkzeuge sind **nicht** Teil des Kernprozesses. Die Anwendung führt ihre
 eigenen Prüfungen immer durch; externe Validatoren laufen zusätzlich, wenn sie
 konfiguriert sind, und werden im Bericht namentlich mit Version ausgewiesen.
 Details und die Grenzen dieser Konstruktion: `docs/DECISIONS.md`, ADR-0004.
+
+---
+
+## 7. Erzeugung des sRGB-ICC-Profils
+
+Das für den PDF/A-OutputIntent nötige Farbprofil wird programmatisch erzeugt
+(`SRgbIccProfile`, siehe ADR-0006). Es wird keine fremde `.icc`-Datei
+mitgeliefert.
+
+### 7.1 Technische Begründung
+
+Ein PDF/A-Dokument **muss** einen OutputIntent mit eingebettetem Ausgabeprofil
+enthalten, sonst ist die Farbwiedergabe nicht eindeutig definiert und die Datei
+nicht konform. Der naheliegende Weg – eine fertige Profildatei mitliefern –
+verlangt für jede einzelne Datei den Nachweis von Herkunft und Lizenz und die
+Aufnahme in die Drittanbieterhinweise des Installers. Ein ICC-v2-Matrix/TRC-Profil
+ist dagegen ein vollständig spezifiziertes, kompaktes Binärformat, das sich in
+rund 200 Zeilen erzeugen lässt. Das Ergebnis ist lizenzrechtlich eindeutig,
+reproduzierbar und ohne Herkunftsnachweis weitergebbar.
+
+### 7.2 Erzeugungsalgorithmus
+
+1. **Kopf (128 Byte)** nach ICC.1:2001-04 mit Gesamtgröße, Version, Geräteklasse,
+   Farbraum, Verbindungsraum, Erzeugungszeitpunkt, Dateikennung `acsp`,
+   Wiedergabeabsicht und der D50-Beleuchtung des Verbindungsraums.
+2. **Tag-Tabelle**: Anzahl der Tags, danach je Tag Signatur, Versatz und Länge.
+3. **Tag-Daten** in fester Reihenfolge, jeder Tag an einer durch vier teilbaren
+   Adresse ausgerichtet.
+
+Fließkommawerte werden als `s15Fixed16` geschrieben (Wert × 65536, kaufmännisch
+gerundet), Zeitstempel als sechs 16-Bit-Werte, alles in Big-Endian.
+
+### 7.3 Profilparameter
+
+| Feld | Wert |
+|---|---|
+| ICC-Version | 2.4.0 (`0x02400000`) |
+| Geräteklasse | `mntr` (Monitor) |
+| Datenfarbraum | `RGB ` |
+| Profilverbindungsraum | `XYZ ` |
+| Weißpunkt / Beleuchtung | D50 = (0,9642, 1,0000, 0,8249) |
+| Wiedergabeabsicht | 0 (wahrnehmungsorientiert) |
+| Erzeugungszeitpunkt | fest auf 2026-01-01T00:00:00Z |
+| Tags | `desc`, `cprt`, `wtpt`, `rXYZ`, `gXYZ`, `bXYZ`, `rTRC`, `gTRC`, `bTRC` |
+| Tonwertkurve | `curveType` mit einem Eintrag, Gamma 2,19921875 (`0x0233` als u8Fixed8) |
+
+### 7.4 Farbraum
+
+sRGB nach IEC 61966-2.1, Primärvalenzen auf den Weißpunkt D50 adaptiert:
+
+| Kanal | X | Y | Z |
+|---|---|---|---|
+| Rot | 0,4360 | 0,2225 | 0,0139 |
+| Grün | 0,3851 | 0,7169 | 0,0971 |
+| Blau | 0,1431 | 0,0606 | 0,7141 |
+
+### 7.5 Verwendung im OutputIntent
+
+Das Profil wird als PDF-Stream mit `/N 3` eingebettet und aus einem
+`/OutputIntent`-Wörterbuch heraus referenziert:
+
+| Eintrag | Wert |
+|---|---|
+| `/Type` | `/OutputIntent` |
+| `/S` | `/GTS_PDFA1` |
+| `/OutputCondition` | `sRGB IEC61966-2.1` |
+| `/OutputConditionIdentifier` | `sRGB IEC61966-2.1` |
+| `/DestOutputProfile` | Verweis auf den Profil-Stream |
+
+Das Array `/OutputIntents` hängt am Dokumentkatalog.
+
+### 7.6 Deterministische Erzeugung
+
+Die Erzeugung enthält keine variablen Anteile: Der Zeitstempel im Kopf ist fest
+verdrahtet, die Tag-Reihenfolge ist festgeschrieben, und es fließen weder
+Zufallswerte noch Umgebungsdaten ein. Zwei Läufe derselben Programmversion
+liefern byte-identische Profile. `GetBytes()` gibt außerdem eine Kopie zurück,
+damit ein Aufrufer den Zwischenspeicher nicht verändern kann.
+
+| Eigenschaft | Wert |
+|---|---|
+| Größe | 536 Byte |
+| SHA-256 | `4eddebbfa044ee963d28f6ac89d52db3f6cdee7106adb30d9424a6e60783b8e8` |
+
+Diese Prüfsumme ist in `IccProfileTests` gepinnt. Ändert sich die Erzeugung,
+schlägt der Test fehl; der Wert darf erst nach einem erneuten Durchlauf der
+veraPDF-Prüfung nachgezogen werden.
+
+### 7.7 Bekannte Einschränkungen
+
+- Die Tonwertkurve ist eine **reine Gammanäherung (2,2)**. Die echte
+  sRGB-Übertragungsfunktion hat einen linearen Abschnitt nahe Schwarz. Für die
+  PDF/A-Konformität ist das ohne Belang – der OutputIntent beschreibt die
+  Ausgabebedingung, er wandelt keine Farben um. Für farbverbindliche
+  Druckvorstufe wäre das Profil nicht geeignet; das ist kein Anwendungsfall
+  dieser Anwendung.
+- Das Profil enthält keinen `chad`-Tag (chromatische Adaption). Die
+  Primärvalenzen sind bereits auf D50 adaptiert, deshalb ist er entbehrlich.
+- Die Beschreibungstexte sind auf ASCII beschränkt; der Unicode- und der
+  ScriptCode-Teil des `desc`-Tags bleiben leer. Das ist nach ICC v2 zulässig.
+- **Verifiziert** ist das Profil ausschließlich über veraPDF 1.30.2 im Rahmen
+  der Ende-zu-Ende-Tests (Flavour 3b, `isCompliant=true`). Eine Prüfung mit
+  einem dedizierten ICC-Werkzeug ist nicht erfolgt.

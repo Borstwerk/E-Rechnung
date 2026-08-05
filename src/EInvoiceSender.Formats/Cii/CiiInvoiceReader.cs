@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
 using EInvoiceSender.Application.Abstractions;
-using EInvoiceSender.Formats.Xml;
+using EInvoiceSender.Application.Xml;
 
 namespace EInvoiceSender.Formats.Cii;
 

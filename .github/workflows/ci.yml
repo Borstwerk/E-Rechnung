@@ -42,11 +42,15 @@ jobs:
       - name: Bauen
         run: dotnet build EInvoiceSender.slnx -c Release --no-restore
 
-      - name: Tests
-        run: dotnet test EInvoiceSender.slnx -c Release --no-build --logger "trx;LogFileName=test-results.trx"
-
+      # Zuerst beschaffen: die Ende-zu-Ende-Tests bestehen darauf, dass die
+      # externen Validatoren tatsaechlich laufen (REQUIRE_EXTERNAL_VALIDATORS).
       - name: Externe Validatoren beschaffen
         run: ./build/fetch-validators.sh
+
+      - name: Tests
+        env:
+          REQUIRE_EXTERNAL_VALIDATORS: "1"
+        run: dotnet test EInvoiceSender.slnx -c Release --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Gegenpruefung der Golden Master mit CEN-Schematron und veraPDF
         run: ./build/validate-golden-masters.sh

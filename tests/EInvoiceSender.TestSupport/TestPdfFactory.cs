@@ -1,7 +1,7 @@
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 
-namespace EInvoiceSender.IntegrationTests;
+namespace EInvoiceSender.TestSupport;
 
 /// <summary>
 /// Erzeugt Eingangs-PDFs fuer die Tests.

@@ -1,7 +1,7 @@
 using EInvoiceSender.Domain.Model;
 using EInvoiceSender.Domain.Values;
 
-namespace EInvoiceSender.Formats.Tests.Scenarios;
+namespace EInvoiceSender.TestSupport;
 
 /// <summary>
 /// Ein benannter Testfall mit einer vollstaendigen Rechnung.

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Gemeinsame Testbausteine: der verbindliche Katalog der Testrechnungen und
+    die Erzeugung von Eingangs-PDFs. Liegt in einem eigenen Projekt, damit
+    Format-, Validierungs- und Integrationstests dieselben Faelle verwenden und
+    nicht auseinanderlaufen.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.TestSupport</RootNamespace>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EInvoiceSender.Domain\EInvoiceSender.Domain.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Application\EInvoiceSender.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PdfSharp" />
+  </ItemGroup>
+
+</Project>
