@@ -78,7 +78,21 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Java einrichten (fuer die Gegenpruefung)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Externe Validatoren beschaffen
+        shell: bash
+        run: ./build/fetch-validators.sh
+
+      # Verpflichtend: Ein UI-Meilenstein gilt erst als verifiziert, wenn ein
+      # Windows-Agent Build und Tests erfolgreich ausgefuehrt hat.
       - name: Tests unter Windows
+        env:
+          REQUIRE_EXTERNAL_VALIDATORS: "1"
         run: dotnet test EInvoiceSender.slnx -c Release
 
       - name: Self-contained win-x64 veroeffentlichen
