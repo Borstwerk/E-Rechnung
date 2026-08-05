@@ -6,8 +6,8 @@ using EInvoiceSender.Domain.Validation;
 using EInvoiceSender.Domain.Values;
 using EInvoiceSender.Formats.Cii;
 using EInvoiceSender.Infrastructure.PdfA;
-using Microsoft.Extensions.Logging.Abstractions;
 using EInvoiceSender.TestSupport;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace EInvoiceSender.IntegrationTests;

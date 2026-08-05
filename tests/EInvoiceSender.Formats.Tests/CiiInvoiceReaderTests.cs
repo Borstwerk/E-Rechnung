@@ -1,8 +1,8 @@
 using System.Text;
 using EInvoiceSender.Application.Abstractions;
+using EInvoiceSender.Application.Xml;
 using EInvoiceSender.Domain.Calculation;
 using EInvoiceSender.Formats.Cii;
-using EInvoiceSender.Application.Xml;
 using EInvoiceSender.TestSupport;
 using Xunit;
 

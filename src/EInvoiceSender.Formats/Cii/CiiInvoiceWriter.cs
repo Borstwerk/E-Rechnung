@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Xml;
 using EInvoiceSender.Application.Abstractions;
+using EInvoiceSender.Application.Xml;
 using EInvoiceSender.Domain.Calculation;
 using EInvoiceSender.Domain.Model;
 using EInvoiceSender.Domain.Money;
 using EInvoiceSender.Domain.Values;
-using EInvoiceSender.Application.Xml;
 
 namespace EInvoiceSender.Formats.Cii;
 

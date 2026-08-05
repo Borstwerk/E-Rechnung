@@ -1,5 +1,5 @@
-using Xunit;
 using EInvoiceSender.Domain.Files;
+using Xunit;
 
 namespace EInvoiceSender.Domain.Tests.Files;
 

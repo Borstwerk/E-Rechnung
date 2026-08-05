@@ -1,5 +1,5 @@
-using Xunit;
 using EInvoiceSender.Domain.Values;
+using Xunit;
 
 namespace EInvoiceSender.Domain.Tests.Values;
 
