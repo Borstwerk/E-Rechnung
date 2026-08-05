@@ -55,6 +55,9 @@ public sealed class ValidationReportBuilder
     /// <summary>Wurde bereits ein Fehler gemeldet?</summary>
     public bool HasErrors => _findings.Any(f => f.Severity == FindingSeverity.Error);
 
+    /// <summary>Wurde bereits eine Warnung gemeldet?</summary>
+    public bool HasWarnings() => _findings.Any(f => f.Severity == FindingSeverity.Warning);
+
     /// <summary>Nimmt einen Befund auf.</summary>
     public ValidationReportBuilder Add(ValidationFinding finding)
     {
@@ -68,24 +71,27 @@ public sealed class ValidationReportBuilder
         string ruleId,
         string message,
         string fieldPath = "",
-        string? technicalDetail = null)
-        => Add(ValidationFinding.Error(ruleId, message, fieldPath, technicalDetail));
+        string? technicalDetail = null,
+        string? normRule = null)
+        => Add(ValidationFinding.Error(ruleId, message, fieldPath, technicalDetail, normRule));
 
     /// <summary>Nimmt eine Warnung auf.</summary>
     public ValidationReportBuilder Warning(
         string ruleId,
         string message,
         string fieldPath = "",
-        string? technicalDetail = null)
-        => Add(ValidationFinding.Warning(ruleId, message, fieldPath, technicalDetail));
+        string? technicalDetail = null,
+        string? normRule = null)
+        => Add(ValidationFinding.Warning(ruleId, message, fieldPath, technicalDetail, normRule));
 
     /// <summary>Nimmt einen Hinweis auf.</summary>
     public ValidationReportBuilder Information(
         string ruleId,
         string message,
         string fieldPath = "",
-        string? technicalDetail = null)
-        => Add(ValidationFinding.Information(ruleId, message, fieldPath, technicalDetail));
+        string? technicalDetail = null,
+        string? normRule = null)
+        => Add(ValidationFinding.Information(ruleId, message, fieldPath, technicalDetail, normRule));
 
     /// <summary>Nimmt alle Befunde eines anderen Berichts auf.</summary>
     public ValidationReportBuilder AddRange(ValidationReport report)
