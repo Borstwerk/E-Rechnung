@@ -4,7 +4,7 @@ Letzte Aktualisierung: 2026-08-05 (vierter Stand)
 
 ## Aktueller Meilenstein
 
-**M8 – Installer und Release** (als nächstes)
+**M9 – Endabnahme** (blockiert: erfordert ein echtes Windows-System)
 
 **Hinweis zur Reihenfolge:** M4 (XML) und M5 (PDF/A) wurden bewusst vor M2/M3
 umgesetzt. Beide tragen das gesamte technische Risiko des Projekts; ohne den
@@ -114,6 +114,21 @@ Oberflaeche verfrueht gewesen. Der Nachweis liegt jetzt vor.
   Klartext abgelegt.
 - Die gesamte Anwendung einschließlich WPF **kompiliert** unter Linux.
 
+### M8 – Installer ✅ definiert, ⚠️ ungeprüft
+
+- WiX 5.0.2 (MS-RL, an der Primärquelle geprüft – ADR-0011), MSI, Installation
+  **pro Benutzer** ohne Administratorrechte.
+- Startmenüeintrag, optionale Desktopverknüpfung, `MajorUpgrade` mit stabilem
+  `UpgradeCode`, Downgrade-Schutz mit verständlicher Meldung.
+- Benutzerdaten bleiben bei der Deinstallation erhalten.
+- Dateiliste wird aus dem Veröffentlichungsverzeichnis eingelesen, damit keine
+  Laufzeitdatei vergessen werden kann.
+- Drittanbieterhinweise werden mitgeliefert.
+- **Ungeprüft:** Der Installer wurde in dieser Umgebung nie gebaut und nie
+  ausgeführt. WiX erzeugt MSI-Dateien nur unter Windows. Der Windows-CI-Job
+  baut ihn; Installation, Upgrade und Deinstallation muss ein Mensch auf einem
+  echten Windows-System durchführen.
+
 ## In Arbeit
 
 Nichts offen. Der nächste Schritt beginnt bei null.
@@ -127,8 +142,9 @@ M7 (E-Mail-Entwurf), M8 (Installer).
 
 | Baustein | Zustand |
 |---|---|
-| Installer (M8) | offen, Werkzeugentscheidung steht noch aus |
 | Windows-Laufzeitprüfung der Oberfläche (M9) | offen, erfordert echtes Windows |
+| Installer tatsächlich bauen und ausführen (M8/M9) | offen, erfordert echtes Windows |
+| Verhalten des „neuen Outlook" mit `.eml` (M7) | offen, erfordert echtes Windows 11 |
 | Vorlagenpflege in der Oberfläche | Speichern der Vorlage ist noch nicht mit einer Schaltfläche verbunden |
 | Nachlässe/Zuschläge auf Dokumentebene in der Oberfläche | Modell vorhanden, keine Eingabemaske |
 

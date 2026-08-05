@@ -268,3 +268,46 @@ einem Abbruch, und die verbindliche Prüfung übernimmt das CEN-Schematron.
 beanstandet. Das ist hingenommen: Die Warnung ist Benutzerführung, keine
 Konformitätsprüfung. Aufgefallen ist der Fall über den Golden Master
 `04-steuerfrei`, der zuvor eine unnötige Warnung erzeugte.
+
+---
+
+## ADR-0011 – Installer mit WiX v5, Installation pro Benutzer
+
+**Datum:** 2026-08-05 · **Status:** aktiv
+
+**Entscheidung:** Der Windows-Installer wird als MSI mit **WiX Toolset 5.0.2**
+über das MSBuild-SDK `WixToolset.Sdk` gebaut. Installiert wird **pro Benutzer**
+(`Scope="perUser"`) nach `%LOCALAPPDATA%`.
+
+**Prüfung der Lizenzlage an der Primärquelle** (2026-08-05): Die Datei
+`LICENSE.TXT` in `wixtoolset/wix` auf GitHub weist WiX als **Microsoft
+Reciprocal License (MS-RL)** aus – dieselbe Lizenz gilt für WiX v3. Der
+Lizenztext enthält **keine Gebührenklausel**. Die in der Vorrecherche genannte
+„Open Source Maintenance Fee" ist eine Sponsoring-Bitte des Herstellers
+FireGiant, kein Bestandteil der Lizenz; berichtet wurde eine erzwungene
+EULA-Zustimmung erst ab **v6**. Version 5.0.2 liegt vor dieser Änderung und ist
+damit unbelastet.
+
+**Alternativen:** (a) WiX v6/v7 – neuer, aber genau der Bereich mit der
+berichteten EULA-Erzwingung; ohne Not nicht nötig. (b) WiX v3.14 – ebenfalls
+MS-RL, aber altes Werkzeug ohne MSBuild-SDK-Anbindung. (c) Inno Setup – laut
+Vorrecherche werden gewerbliche Nutzer zum Lizenzkauf aufgefordert; das ist für
+ein Produkt, das gerade an Kleinunternehmen gehen soll, die schlechtere Lage.
+(d) MSIX – benötigt ein vertrauenswürdiges Zertifikat, für einen unsignierten
+MVP untauglich. (e) Velopack – MIT und attraktiv, bringt aber
+Auto-Update-Mechanik mit, die der MVP nicht braucht.
+
+**Gründe:** MS-RL ist eindeutig und gebührenfrei. Die Installation pro Benutzer
+kommt ohne Administratorrechte aus – passend dazu, dass die Anwendung ohnehin
+nur ins Benutzerprofil schreibt.
+
+**Auswirkungen:** Der Installer lässt sich **nur unter Windows bauen**; das
+`.wixproj` ist deshalb bewusst **nicht** Teil von `EInvoiceSender.slnx`, damit
+der Linux-Build der Solution nicht bricht. Gebaut wird ausschließlich im
+Windows-Job der CI. Benutzerdaten unter `%LOCALAPPDATA%\EInvoiceSender` bleiben
+bei einer Deinstallation erhalten.
+
+**Offen und ausdrücklich ungeprüft:** Neuinstallation, Upgrade über eine ältere
+Fassung, Deinstallation und Startmenüeintrag sind in dieser Umgebung **nicht
+ausführbar**. Sie müssen auf einem echten Windows-System geprüft werden, bevor
+ein Release freigegeben wird.

@@ -1,0 +1,41 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <!--
+    Windows-Installer (MSI).
+
+    Bewusst NICHT Teil von EInvoiceSender.slnx: WiX erzeugt MSI-Dateien nur
+    unter Windows. Auf einem Linux-Agenten wuerde die Solution sonst nicht mehr
+    bauen. Der Installer wird ausschliesslich im Windows-Job der CI gebaut.
+
+    Bauen:
+      dotnet build installer/EInvoiceSender.Setup -c Release ^
+        -p:PublishDir=..\..\artifacts\publish\win-x64\ ^
+        -p:ProductVersion=0.1.0
+  -->
+
+  <PropertyGroup>
+    <OutputName>EInvoiceSender-Setup</OutputName>
+    <OutputType>Package</OutputType>
+    <InstallerPlatform>x64</InstallerPlatform>
+
+    <!-- Zentral gepflegte Produktangaben -->
+    <ProductName>EInvoiceSender</ProductName>
+    <ProductManufacturer>EInvoiceSender Projekt</ProductManufacturer>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.0</ProductVersion>
+
+    <!-- Verzeichnis der zuvor veroeffentlichten Anwendung -->
+    <PublishDir Condition="'$(PublishDir)' == ''">..\..\artifacts\publish\win-x64\</PublishDir>
+
+    <DefineConstants>
+      ProductName=$(ProductName);
+      ProductManufacturer=$(ProductManufacturer);
+      ProductVersion=$(ProductVersion);
+      PublishDir=$(PublishDir)
+    </DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+</Project>

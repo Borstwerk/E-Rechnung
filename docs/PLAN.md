@@ -135,7 +135,7 @@ meldet für die gültigen Fälle keinen Fehler.
 
 ---
 
-## M8 – Installer und Release
+## M8 – Installer und Release · **definiert, Windows-Prüfung offen**
 
 | # | Paket | Status |
 |---|---|---|
@@ -146,12 +146,11 @@ meldet für die gültigen Fälle keinen Fehler.
 | 8.5 | Portable ZIP-Ausgabe | offen |
 | 8.6 | Prüfsummen aller Artefakte, Vorbereitung für Codesignierung | offen |
 
-**Offene Entscheidung zu 8.2:** WiX ab v6 verlangt von Organisationen mit mehr
-als 10.000 USD Jahresumsatz eine Sponsoring-Gebühr (Open Source Maintenance Fee);
-Inno Setup fordert von gewerblichen Nutzern den Kauf einer Lizenz. Beide Angaben
-stammen aus Sekundärquellen und werden zu Beginn von M8 an der Primärquelle
-geprüft. Vorläufige Vorgabe: **WiX v3.14 oder v5** (ohne Gebührenpflicht), sonst
-Inno Setup. Ergebnis wird als ADR-0009 festgehalten.
+**Entscheidung zu 8.2 getroffen:** WiX **5.0.2**. Die Lizenzlage wurde am
+2026-08-05 an der Primärquelle geprüft (`LICENSE.TXT` im Repository
+`wixtoolset/wix`): **MS-RL, ohne Gebührenklausel**. Die „Open Source
+Maintenance Fee" ist eine Sponsoring-Bitte, kein Lizenzbestandteil; die
+berichtete EULA-Erzwingung betrifft erst v6. Festgehalten in ADR-0011.
 
 ---
 

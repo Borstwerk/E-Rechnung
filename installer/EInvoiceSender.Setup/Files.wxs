@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Die zu installierenden Dateien.
+
+  Der Inhalt wird beim Bauen aus dem Veroeffentlichungsverzeichnis eingelesen
+  (HarvestDirectory). So ist ausgeschlossen, dass eine neu hinzugekommene
+  Laufzeitdatei vergessen wird – ein haeufiger Fehler bei von Hand gepflegten
+  Dateilisten.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="AnwendungsDateien" Directory="INSTALLFOLDER">
+      <Files Include="$(PublishDir)**" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

@@ -102,6 +102,28 @@ jobs:
           -p:PublishReadyToRun=true
           -o artifacts/publish/win-x64
 
+      # Der Installer wird nur hier gebaut: WiX erzeugt MSI-Dateien
+      # ausschliesslich unter Windows.
+      - name: Installer bauen
+        run: >
+          dotnet build installer/EInvoiceSender.Setup
+          -c Release
+          -p:PublishDir=${{ github.workspace }}\artifacts\publish\win-x64\
+          -p:ProductVersion=0.1.0
+
+      - name: Installer bereitstellen
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
+          Get-ChildItem -Recurse -Filter *.msi installer |
+            ForEach-Object { Copy-Item $_.FullName artifacts/release/ }
+
+      - name: Drittanbieterhinweise beilegen
+        shell: pwsh
+        run: |
+          Copy-Item installer/Drittanbieterhinweise/README.md `
+            artifacts/publish/win-x64/Drittanbieterhinweise.md -Force
+
       - name: Portable ZIP erzeugen
         shell: pwsh
         run: |

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Installationspaket fuer EInvoiceSender.
+
+  Festlegungen und ihre Gruende:
+
+  * Scope="perUser" – die Installation braucht keine Administratorrechte.
+    Das ist fuer Einzelunternehmer und kleine Betriebe die deutlich
+    unkompliziertere Variante, und die Anwendung schreibt ohnehin nur in das
+    Benutzerprofil.
+  * UpgradeCode bleibt ueber alle Versionen unveraendert. Nur so erkennt
+    Windows eine spaetere Fassung als Aktualisierung statt als zweite
+    Installation.
+  * MajorUpgrade mit AllowSameVersionUpgrades: eine neuere Fassung ersetzt die
+    alte, eine aeltere wird mit verstaendlicher Meldung abgelehnt.
+  * Benutzerdaten unter %LOCALAPPDATA%\EInvoiceSender werden bei der
+    Deinstallation NICHT entfernt. Vorlage, Einstellungen und Protokolle
+    gehoeren dem Benutzer; sie ungefragt zu loeschen waere uebergriffig.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="$(ProductName)"
+           Manufacturer="$(ProductManufacturer)"
+           Version="$(ProductVersion)"
+           UpgradeCode="7f3c1d92-4b6a-4d21-9d0e-2a5c8b1e7f40"
+           Scope="perUser"
+           Compressed="yes">
+
+    <SummaryInformation Description="Elektronische Rechnungen aus vorhandenen PDF-Rechnungen erstellen" />
+
+    <MajorUpgrade
+      AllowSameVersionUpgrades="yes"
+      DowngradeErrorMessage="Es ist bereits eine neuere Fassung von $(ProductName) installiert. Bitte deinstallieren Sie diese zuerst, wenn Sie eine aeltere Fassung einsetzen moechten." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Lizenzhinweise der Drittkomponenten, im Installationsdialog sichtbar -->
+    <WixVariable Id="WixUILicenseRtf" Value="Lizenzhinweise.rtf" />
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+    <Feature Id="Hauptfunktion" Title="$(ProductName)" Level="1"
+             Description="Die Anwendung und alle benoetigten Bestandteile.">
+      <ComponentGroupRef Id="AnwendungsDateien" />
+      <ComponentRef Id="StartmenuVerknuepfung" />
+    </Feature>
+
+    <Feature Id="Desktopverknuepfung" Title="Verknuepfung auf dem Desktop" Level="2"
+             Description="Legt zusaetzlich eine Verknuepfung auf dem Desktop an.">
+      <ComponentRef Id="DesktopVerknuepfung" />
+    </Feature>
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="HerstellerOrdner" Name="$(ProductManufacturer)">
+        <Directory Id="INSTALLFOLDER" Name="$(ProductName)" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="StartmenuOrdner" Name="$(ProductName)" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder" />
+
+    <!-- Startmenueintrag -->
+    <Component Id="StartmenuVerknuepfung" Directory="StartmenuOrdner" Guid="*">
+      <Shortcut Id="StartmenuEintrag"
+                Name="$(ProductName)"
+                Description="Elektronische Rechnung aus einer vorhandenen PDF-Rechnung erstellen"
+                Target="[INSTALLFOLDER]EInvoiceSender.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="StartmenuOrdnerEntfernen" Directory="StartmenuOrdner" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\$(ProductManufacturer)\$(ProductName)"
+                     Name="Startmenu" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- Optionale Desktopverknuepfung -->
+    <Component Id="DesktopVerknuepfung" Directory="DesktopFolder" Guid="*">
+      <Shortcut Id="DesktopEintrag"
+                Name="$(ProductName)"
+                Target="[INSTALLFOLDER]EInvoiceSender.exe"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RegistryValue Root="HKCU" Key="Software\$(ProductManufacturer)\$(ProductName)"
+                     Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Package>
+</Wix>
