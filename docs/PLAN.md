@@ -24,7 +24,7 @@ Tests grün sind (`AGENTS.md`, Abschnitt 8).
 
 ---
 
-## M1 – Solution und Domain
+## M1 – Solution und Domain · **fertig**
 
 | # | Paket | Abhängig von | Status |
 |---|---|---|---|
@@ -60,7 +60,7 @@ beschädigte Datei führt zu einer verständlichen Meldung statt zu einer Ausnah
 
 ---
 
-## M3 – Datenerfassung (WPF)
+## M3 – Datenerfassung (WPF) · **fertig, Windows-Laufzeitprüfung offen**
 
 | # | Paket | Status |
 |---|---|---|
@@ -123,7 +123,7 @@ meldet für die gültigen Fälle keinen Fehler.
 
 ---
 
-## M7 – E-Mail-Entwurf
+## M7 – E-Mail-Entwurf · **fertig**
 
 | # | Paket | Status |
 |---|---|---|

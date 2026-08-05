@@ -1,10 +1,10 @@
 # STATUS.md
 
-Letzte Aktualisierung: 2026-08-05 (dritter Stand)
+Letzte Aktualisierung: 2026-08-05 (vierter Stand)
 
 ## Aktueller Meilenstein
 
-**M2/M3 – PDF-Vorschau und WPF-Oberfläche** (als nächstes)
+**M8 – Installer und Release** (als nächstes)
 
 **Hinweis zur Reihenfolge:** M4 (XML) und M5 (PDF/A) wurden bewusst vor M2/M3
 umgesetzt. Beide tragen das gesamte technische Risiko des Projekts; ohne den
@@ -87,6 +87,33 @@ Oberflaeche verfrueht gewesen. Der Nachweis liegt jetzt vor.
   beschädigte PDF, nicht eingebettete Schrift, Timeout, Beanstandung,
   Benutzerabbruch, Überschreibschutz, Aufräumen der temporären Dateien.
 
+### M7 – E-Mail-Entwurf ✅
+
+- `EmlDraftService`: RFC-5322-konforme `.eml` mit Anhang, `X-Unsent: 1`,
+  ohne `Message-ID`, Textkörper als reiner Text. Alle drei Festlegungen sind
+  begründet und durch Tests abgesichert.
+- Immer ein Rückfallweg: `mailto:` ohne Anhang plus Hinweis auf den
+  Ausgabeordner. Ein fehlender Mailclient blockiert nichts.
+- **Nicht behauptet** wird die Verträglichkeit mit dem „neuen Outlook" – siehe
+  offene Punkte.
+
+### M2/M3 – Oberfläche ✅ (Windows-Laufzeitprüfung offen)
+
+- Neues Projekt `EInvoiceSender.Presentation` (plattformneutral, `net10.0`):
+  `InvoiceDraft` als Eingabemodell und `ShellViewModel` mit dem
+  Fünf-Schritte-Ablauf. Damit ist die Ablauflogik der Oberfläche auch auf
+  einem Linux-Agenten testbar – 19 Tests laufen dort tatsächlich.
+- WPF-Ansicht mit Drag-and-drop, Dateiauswahl, PDF-Vorschau, Positionsraster,
+  Live-Summen, Kontrollansicht mit Pflichtbestätigung, Fortschrittsliste,
+  Ergebnis mit Prüfsumme und E-Mail-Feldern.
+- Barrierefreiheit: `AutomationProperties` an allen Eingabefeldern,
+  Statuszeile als `LiveSetting`, Befunde tragen Wort **und** Zeichen, nicht
+  nur Farbe.
+- `JsonSettingsStore`: Vorlage als JSON, die IBAN unter Windows per DPAPI
+  geschützt. Ohne DPAPI wird sie **nicht** gespeichert statt still im
+  Klartext abgelegt.
+- Die gesamte Anwendung einschließlich WPF **kompiliert** unter Linux.
+
 ## In Arbeit
 
 Nichts offen. Der nächste Schritt beginnt bei null.
@@ -100,11 +127,10 @@ M7 (E-Mail-Entwurf), M8 (Installer).
 
 | Baustein | Zustand |
 |---|---|
-| WPF-Oberfläche (M2/M3) | nur Projektgerüst, keine Views |
-| `EmlDraftService` (M7) | Port definiert, Umsetzung offen |
-| `SettingsStore` (Vorlagen, DPAPI) | Port definiert, Umsetzung offen |
-| PDF-Vorschau (PDFtoImage) | offen |
 | Installer (M8) | offen, Werkzeugentscheidung steht noch aus |
+| Windows-Laufzeitprüfung der Oberfläche (M9) | offen, erfordert echtes Windows |
+| Vorlagenpflege in der Oberfläche | Speichern der Vorlage ist noch nicht mit einer Schaltfläche verbunden |
+| Nachlässe/Zuschläge auf Dokumentebene in der Oberfläche | Modell vorhanden, keine Eingabemaske |
 
 ## Bekannte Probleme und Einschränkungen
 
@@ -113,7 +139,7 @@ M7 (E-Mail-Entwurf), M8 (Installer).
 | **PDF/A-3-Konvertierung** | Beliebige PDFs können nicht nach PDF/A-3 konvertiert werden (keine permissiv lizenzierte .NET-Bibliothek kann das). Die Anwendung wertet geeignete PDFs auf und bricht sonst ab – ADR-0003. |
 | **PDF/A-Validierung ohne Java** | Ohne externen Validator prüft die Anwendung PDF/A nur strukturell (Teilmenge). Der Bericht weist das aus – ADR-0004. |
 | **„Neues Outlook"** | Verhalten beim Öffnen von `.eml` mit Anhang ist aus dieser Umgebung nicht prüfbar. Muss auf echtem Windows 11 verifiziert werden – ADR-0005. |
-| **UI-Laufzeitprüfung** | Die WPF-Oberfläche kann hier nur kompiliert, nicht ausgeführt werden. Smoke-Tests der UI gehören auf einen Windows-Agenten. |
+| **UI-Laufzeitprüfung** | Die WPF-Oberfläche kann hier nur **kompiliert**, nicht ausgeführt werden. Die Ablauflogik ist über das plattformneutrale Projekt `EInvoiceSender.Presentation` mit 19 Tests abgedeckt; das Zusammenspiel mit echten Fenstern, Dialogen und der PDF-Vorschau ist **ungeprüft**. Der Windows-CI-Job baut und testet, ersetzt aber keinen manuellen Durchlauf. |
 | **Installer-Build** | WiX und Inno Setup erzeugen MSI/EXE nur unter Windows. Der Installer wird deshalb ausschließlich im Windows-CI-Job gebaut. |
 | **Offizielle Spezifikationsseiten** | `ferd-net.de`, `fnfe-mpe.org`, `pdflib.com` antworten aus dieser Umgebung mit HTTP 403. Betroffene Angaben sind in `docs/STANDARDS.md` als **[S]** markiert. |
 
@@ -126,7 +152,7 @@ Keine. Alle offenen Punkte haben eine dokumentierte konservative Vorgabe.
 | Befehl | Ergebnis | Zeitpunkt |
 |---|---|---|
 | `dotnet build EInvoiceSender.slnx -c Release` | 0 Fehler, 0 Warnungen | 2026-08-04 |
-| `dotnet test EInvoiceSender.slnx -c Release` | 397 Tests, alle grün | 2026-08-05 |
+| `dotnet test EInvoiceSender.slnx -c Release` | 426 Tests, alle grün | 2026-08-05 |
 | `./build/validate-golden-masters.sh` | 12 Dateien geprüft, 0 Abweichungen | 2026-08-04 |
 | veraPDF 3b auf der Ergebnisdatei | 389 Prüfpunkte, `isCompliant=true` | 2026-08-04 |
 | CEN-Schematron EN 16931 auf allen Golden Mastern | `status="valid"` | 2026-08-04 |

@@ -28,7 +28,7 @@ namespace EInvoiceSender.Application.UseCases;
 /// richtigen Reihenfolge auf und entscheidet anhand der Befunde, ob es
 /// weitergeht.
 /// </summary>
-public sealed partial class CreateEInvoiceUseCase
+public sealed partial class CreateEInvoiceUseCase : ICreateEInvoiceUseCase
 {
     private readonly IPdfPreflightService _preflight;
     private readonly IBusinessRuleValidator _ruleValidator;
@@ -70,7 +70,7 @@ public sealed partial class CreateEInvoiceUseCase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>Fuehrt den gesamten Ablauf aus.</summary>
+    /// <inheritdoc />
     public async Task<CreateEInvoiceResult> ExecuteAsync(
         CreateEInvoiceRequest request,
         IProgress<PipelineProgress>? progress = null,

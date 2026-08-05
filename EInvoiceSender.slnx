@@ -6,6 +6,7 @@
     <Project Path="src/EInvoiceSender.Formats/EInvoiceSender.Formats.csproj" />
     <Project Path="src/EInvoiceSender.Infrastructure/EInvoiceSender.Infrastructure.csproj" />
     <Project Path="src/EInvoiceSender.Mail/EInvoiceSender.Mail.csproj" />
+    <Project Path="src/EInvoiceSender.Presentation/EInvoiceSender.Presentation.csproj" />
     <Project Path="src/EInvoiceSender.Validation/EInvoiceSender.Validation.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -14,6 +15,7 @@
     <Project Path="tests/EInvoiceSender.Formats.Tests/EInvoiceSender.Formats.Tests.csproj" />
     <Project Path="tests/EInvoiceSender.IntegrationTests/EInvoiceSender.IntegrationTests.csproj" />
     <Project Path="tests/EInvoiceSender.Mail.Tests/EInvoiceSender.Mail.Tests.csproj" />
+    <Project Path="tests/EInvoiceSender.Presentation.Tests/EInvoiceSender.Presentation.Tests.csproj" />
     <Project Path="tests/EInvoiceSender.TestSupport/EInvoiceSender.TestSupport.csproj" />
     <Project Path="tests/EInvoiceSender.Validation.Tests/EInvoiceSender.Validation.Tests.csproj" />
   </Folder>

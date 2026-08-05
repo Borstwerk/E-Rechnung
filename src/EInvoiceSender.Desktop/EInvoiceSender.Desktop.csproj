@@ -25,6 +25,7 @@
     <ProjectReference Include="..\EInvoiceSender.Validation\EInvoiceSender.Validation.csproj" />
     <ProjectReference Include="..\EInvoiceSender.Infrastructure\EInvoiceSender.Infrastructure.csproj" />
     <ProjectReference Include="..\EInvoiceSender.Mail\EInvoiceSender.Mail.csproj" />
+    <ProjectReference Include="..\EInvoiceSender.Presentation\EInvoiceSender.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -139,3 +139,19 @@ public sealed record CreateEInvoiceResult(
     string ProfileId,
     IReadOnlyList<ValidatorInfo> Validators,
     bool Canceled = false);
+
+/// <summary>
+/// Der Anwendungsfall "E-Rechnung erzeugen".
+///
+/// Als Schnittstelle herausgezogen, damit die Oberflaeche nicht von der
+/// konkreten Umsetzung abhaengt und der Ablauf der Oberflaeche ohne die
+/// gesamte Infrastruktur pruefbar bleibt.
+/// </summary>
+public interface ICreateEInvoiceUseCase
+{
+    /// <summary>Fuehrt den gesamten Ablauf aus.</summary>
+    Task<CreateEInvoiceResult> ExecuteAsync(
+        CreateEInvoiceRequest request,
+        IProgress<PipelineProgress>? progress = null,
+        CancellationToken cancellationToken = default);
+}

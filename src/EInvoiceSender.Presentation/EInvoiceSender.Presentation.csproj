@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ViewModels und Eingabemodelle der Oberflaeche.
+
+    Bewusst plattformneutral (net10.0, kein WPF): So laesst sich die gesamte
+    Ablauflogik der Oberflaeche auch auf einem Linux-Build-Agenten ausfuehren
+    und testen. In EInvoiceSender.Desktop bleiben nur die XAML-Ansichten und
+    die windows-spezifischen Dienste.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.Presentation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EInvoiceSender.Domain\EInvoiceSender.Domain.csproj" />
+    <ProjectReference Include="..\EInvoiceSender.Application\EInvoiceSender.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>
