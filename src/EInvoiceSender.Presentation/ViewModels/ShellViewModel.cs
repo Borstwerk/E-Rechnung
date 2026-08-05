@@ -41,6 +41,15 @@ public enum WizardStep
 ///
 /// Bewusst plattformneutral: Es gibt keine Abhaengigkeit auf WPF, damit der
 /// gesamte Ablauf auch auf einem Linux-Build-Agenten testbar bleibt.
+///
+/// **Regel fuer jedes await in dieser Klasse: <c>ConfigureAwait(true)</c>.**
+/// Die Klasse kennt WPF zwar nicht, laeuft dort aber auf dem Oberflaechen-Thread,
+/// und jede Zuweisung an eine gebundene Eigenschaft meldet an die Oberflaeche.
+/// Mit <c>ConfigureAwait(false)</c> laeuft die Fortsetzung nach dem await auf
+/// einem Threadpool-Thread; die Meldung kommt dann aus dem falschen Thread, und
+/// WPF wirft "Der aufrufende Thread kann nicht auf dieses Objekt zugreifen".
+/// Genau das ist beim ersten Start der Anwendung passiert. Bewacht wird die
+/// Regel von <c>UiThreadAffinityTests</c>.
 /// </summary>
 public sealed partial class ShellViewModel : ObservableObject, IDisposable
 {
@@ -172,7 +181,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     public async Task LoadTemplateAsync(CancellationToken cancellationToken)
     {
         CompanyTemplate template = await _settingsStore.LoadTemplateAsync(cancellationToken)
-            .ConfigureAwait(false);
+            .ConfigureAwait(true);
 
         ApplyTemplate(template);
     }
@@ -223,7 +232,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         try
         {
             PreflightReport = await _preflight.InspectAsync(filePath, cancellationToken)
-                .ConfigureAwait(false);
+                .ConfigureAwait(true);
 
             ShowFindings(PreflightReport.Findings);
 
@@ -318,7 +327,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             var progress = new Progress<PipelineProgress>(OnProgress);
 
             Result = await _useCase.ExecuteAsync(request, progress, _runningOperation.Token)
-                .ConfigureAwait(false);
+                .ConfigureAwait(true);
 
             ShowFindings(Result.Report);
 
@@ -366,7 +375,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
         }
 
         byte[] content = await File.ReadAllBytesAsync(outputFile.FullPath, cancellationToken)
-            .ConfigureAwait(false);
+            .ConfigureAwait(true);
 
         var draft = new EmailDraft(
             From: string.IsNullOrWhiteSpace(Draft.SellerEmail) ? null : Draft.SellerEmail,
@@ -381,7 +390,7 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
             ]);
 
         EmailDraftResult draftResult = await _emailDraftService
-            .CreateDraftAsync(draft, cancellationToken).ConfigureAwait(false);
+            .CreateDraftAsync(draft, cancellationToken).ConfigureAwait(true);
 
         EmailDraftPath = draftResult.DraftFilePath ?? string.Empty;
         StatusMessage = draftResult.Message;

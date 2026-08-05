@@ -36,7 +36,7 @@ Adapter implementieren die Ports (Abhängigkeit zeigt nach innen):
 | Projekt | Ziel-Framework | Darf abhängen von | Verantwortung |
 |---|---|---|---|
 | `Domain` | net10.0 | – | Rechnungsmodell, Beträge, Steuer, Rundung, Werttypen (IBAN, Land, Währung). Keine I/O. |
-| `Application` | net10.0 | Domain | Anwendungsfälle (`CreateEInvoiceUseCase`, `PrepareEmailUseCase`), Ports, Berichtsmodelle, Fortschrittsmeldungen |
+| `Application` | net10.0 | Domain | Anwendungsfall (`CreateEInvoiceUseCase`), Ports, Berichtsmodelle, Fortschrittsmeldungen |
 | `Formats` | net10.0 | Domain, Application | CII-XML nach EN 16931 erzeugen und lesen, sichere XML-Verarbeitung |
 | `Validation` | net10.0 | Domain, Application | EN-16931-Geschäftsregeln, Codelisten, deutsche Fehlertexte, Adapter für externe Validatoren |
 | `Infrastructure` | net10.0 | Domain, Application | PDF-Analyse, PDF/A-3-Erzeugung, ICC-Profil, Dateiablage, Einstellungen, Prozessausführung |

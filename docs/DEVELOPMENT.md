@@ -55,7 +55,7 @@ Details zu Testebenen und Umgebungsvariablen: `docs/TESTING.md`.
 | Projekt | Ziel-Framework | Verantwortung |
 |---|---|---|
 | `EInvoiceSender.Domain` | net10.0, keine Fremdpakete | Rechnungsmodell, Berechnungskern, Werttypen (IBAN, Land, Währung); enthält keine I/O. |
-| `EInvoiceSender.Application` | net10.0 | Anwendungsfälle (`CreateEInvoiceUseCase`, `PrepareEmailUseCase`), Ports (Interfaces), Berichtsmodelle, sichere XML-Basis (`SecureXml`). |
+| `EInvoiceSender.Application` | net10.0 | Anwendungsfall (`CreateEInvoiceUseCase`), Ports (Interfaces), Berichtsmodelle, sichere XML-Basis (`SecureXml`). |
 | `EInvoiceSender.Formats` | net10.0 | Erzeugt und liest die CII-XML nach EN 16931 (eigener Writer, kein ZUGFeRD-Fremdpaket). |
 | `EInvoiceSender.Validation` | net10.0 | EN-16931-Geschäftsregeln, Codelisten, deutsche Fehlertexte, Adapter für externe Validatoren. |
 | `EInvoiceSender.Infrastructure` | net10.0 | PDF-Analyse und -Vorprüfung, PDF/A-3-Erzeugung, ICC-Profil, Dateiablage, Einstellungen, Prozessausführung. |

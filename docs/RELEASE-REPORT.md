@@ -52,9 +52,9 @@ ohne diesen Gegenbeweis wäre die Prüfkette wertlos.
 | Validation.Tests | 122 |
 | IntegrationTests | 48 |
 | Formats.Tests | 40 |
-| Presentation.Tests | 19 |
+| Presentation.Tests | 23 |
 | Mail.Tests | 10 |
-| **Gesamt** | **426, alle grün** |
+| **Gesamt** | **430, alle grün** |
 
 Befehle: `dotnet build EInvoiceSender.slnx -c Release`,
 `REQUIRE_EXTERNAL_VALIDATORS=1 dotnet test EInvoiceSender.slnx -c Release`,
@@ -84,12 +84,43 @@ Diese Punkte sind **nicht** „vermutlich in Ordnung", sondern schlicht ungeprü
 
 | Bereich | Zustand | Warum |
 |---|---|---|
-| **WPF-Oberfläche zur Laufzeit** | ungeprüft | Die Anwendung **kompiliert** unter Linux, lässt sich dort aber nicht starten. Die Ablauflogik ist über `EInvoiceSender.Presentation` mit 19 Tests abgedeckt; das Zusammenspiel mit echten Fenstern, Dateidialogen, Drag-and-drop und der PDF-Vorschau ist nie gelaufen. |
+| **WPF-Oberfläche zur Laufzeit** | teilweise geprüft, siehe Hinweis | Die Anwendung **kompiliert** unter Linux, lässt sich dort aber nicht starten. Die Ablauflogik ist über `EInvoiceSender.Presentation` mit 23 Tests abgedeckt; das Zusammenspiel mit echten Fenstern, Dateidialogen, Drag-and-drop und der PDF-Vorschau ist nie gelaufen. **Beim ersten Start durch einen Menschen ist hier prompt ein Fehler aufgetreten** – siehe unten. |
 | **Installer** | nie gebaut, nie ausgeführt | WiX erzeugt MSI-Dateien nur unter Windows. Neuinstallation, Startmenüeintrag, Upgrade über eine ältere Fassung und Deinstallation sind ungeprüft. |
 | **`.eml` im „neuen Outlook"** | ungeprüft | Aus dieser Umgebung nicht testbar. Für HTML-Nachrichten ist ein Anhangsverlust berichtet; deshalb wird bewusst reiner Text verwendet. Ob `X-Unsent: 1` im aktuellen Build als Entwurf öffnet, muss ein Mensch prüfen. |
 | **DPAPI-Schutz der IBAN** | ungeprüft | Läuft nur unter Windows. Auf anderen Plattformen wird die IBAN bewusst **nicht** gespeichert. |
 | **Self-contained `win-x64`-Veröffentlichung** | ungeprüft | `PublishReadyToRun` unterstützt kein Cross-OS-Publishing. Der Windows-CI-Job ist eingerichtet, aber nie gelaufen. |
 | **PDF-Vorschau (PDFtoImage/PDFium)** | ungeprüft | Native Abhängigkeit, nur unter Windows im Zielbetrieb. |
+
+#### Was der erste echte Start zutage gefördert hat
+
+Beim ersten Start der Anwendung auf einem Windows-Rechner schlug die
+PDF-Auswahl sofort fehl:
+
+> `System.InvalidOperationException`: Der aufrufende Thread kann nicht auf
+> dieses Objekt zugreifen, da sich das Objekt im Besitz eines anderen Threads
+> befindet.
+
+Ursache: Das `ShellViewModel` hat seine `await`-Aufrufe mit
+`ConfigureAwait(false)` abgeschlossen. Damit läuft die Fortsetzung nach dem
+`await` auf einem Threadpool-Thread. Die anschließende Zuweisung
+`IsBusy = false` meldet über `NotifyCanExecuteChanged` an die angebundene
+Schaltfläche – aus dem falschen Thread, und WPF bricht ab.
+
+Der Fall ist lehrreich, weil **keiner der damals 426 Tests ihn finden konnte**: Ein
+Testlauf hat keinen Synchronisierungskontext, und ohne Kontext verhalten sich
+`ConfigureAwait(true)` und `ConfigureAwait(false)` identisch. Der Fehler war für
+die vorhandene Teststrategie unsichtbar, nicht bloß unentdeckt.
+
+Behoben durch `ConfigureAwait(true)` an allen fünf `await`-Stellen des
+ViewModels. Gegen einen Rückfall steht `UiThreadAffinityTests`: Der Test stellt
+einen echten Ein-Thread-Kontext bereit – den kleinsten Nachbau des
+WPF-Dispatchers – und prüft für alle vier abwartenden Befehle, dass jede
+Änderungsmeldung vom Oberflächen-Thread kommt. Vor der Behebung schlagen alle
+vier fehl, danach laufen sie durch.
+
+**Die Lehre für die restliche Liste oben:** Was in dieser Umgebung nicht
+gestartet werden kann, ist ungeprüft – und ungeprüft heißt hier nachweislich
+nicht „vermutlich in Ordnung".
 
 ### Fachliche Grenzen (bewusst, dokumentiert)
 

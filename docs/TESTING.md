@@ -13,9 +13,9 @@ tatsächlich existiert – keine Zielvorstellung.
 | `tests/EInvoiceSender.Formats.Tests` | 40 | CII-XML-Erzeugung, Golden Master, `SecureXml` |
 | `tests/EInvoiceSender.Validation.Tests` | 122 | EN-16931-Geschäftsregeln, Codelisten |
 | `tests/EInvoiceSender.Mail.Tests` | 10 | `.eml`-Entwurf, Kodierung, Header |
-| `tests/EInvoiceSender.Presentation.Tests` | 19 | ViewModel- und Ablauflogik der Oberfläche |
+| `tests/EInvoiceSender.Presentation.Tests` | 23 | ViewModel- und Ablauflogik der Oberfläche, Thread-Zugehörigkeit |
 | `tests/EInvoiceSender.IntegrationTests` | 48 | Gesamtablauf, PDF/A, externe Gegenprüfung |
-| **Summe** | **426** | laut `docs/STATUS.md`, alle grün |
+| **Summe** | **430** | laut `docs/STATUS.md`, alle grün |
 
 Daneben bestehen `tests/EInvoiceSender.TestSupport` (gemeinsame Testszenarien
 und PDF-Fabrik, kein eigenes Testprojekt im Sinn von zählbaren Tests) und
@@ -27,7 +27,7 @@ und PDF-Fabrik, kein eigenes Testprojekt im Sinn von zählbaren Tests) und
 
 ### Unit-Tests
 
-Der grösste Teil der 426 Tests: Werttypen mit Selbstprüfung (IBAN nach
+Der grösste Teil der 430 Tests: Werttypen mit Selbstprüfung (IBAN nach
 ISO 7064, Währung, Land, Einheit), Berechnungskern (`docs/STANDARDS.md`,
 Abschnitt 3: BR-CO-10 bis BR-CO-25, BR-S-08/09, BR-DEC-09…17),
 `SafeFileName` gegen Path Traversal und reservierte Windows-Namen, sowie die
@@ -76,6 +76,37 @@ plattformneutralen Projekts `EInvoiceSender.Presentation`
 (`InvoiceDraft`, `ShellViewModel`, Fünf-Schritte-Ablauf). Diese Tests laufen
 auf jedem Agenten, auch unter Linux, weil `Presentation` bewusst nicht auf
 `net10.0-windows` zielt (`docs/STATUS.md`, M2/M3).
+
+### Thread-Zugehörigkeit der Oberfläche
+
+`UiThreadAffinityTests` schliesst eine Lücke, die diese Testanlage von sich aus
+hat: Ein gewöhnlicher Testlauf besitzt **keinen Synchronisierungskontext**, und
+ohne Kontext verhalten sich `ConfigureAwait(true)` und `ConfigureAwait(false)`
+gleich. Ein `ConfigureAwait(false)` im ViewModel ist unter WPF trotzdem ein
+Fehler: Die Fortsetzung nach dem `await` läuft dann auf einem
+Threadpool-Thread, meldet von dort an gebundene Bedienelemente und lässt WPF
+mit „Der aufrufende Thread kann nicht auf dieses Objekt zugreifen" abbrechen.
+Genau das ist beim ersten echten Start passiert, ohne dass ein einziger Test
+angeschlagen hätte.
+
+Der Test stellt deshalb einen echten Ein-Thread-Kontext mit Nachrichtenschleife
+bereit – den kleinsten Nachbau des WPF-Dispatchers – führt dort jeden der vier
+abwartenden Befehle aus und prüft, dass **jede** Änderungsmeldung
+(`PropertyChanged` des ViewModels und des `InvoiceDraft`, `CollectionChanged`
+von `Findings` und `Progress`) vom Oberflächen-Thread kommt.
+
+Zwei Fallstricke sind im Testcode ausdrücklich vermerkt, weil sie den Test
+lautlos wirkungslos machen:
+
+- Die Stubs müssen **wirklich** auf einem fremden Thread fertig werden.
+  `Task.FromResult` läuft synchron weiter, `Task.Yield` kehrt selbst über den
+  Kontext zurück – beides bliebe auf dem Oberflächen-Thread.
+- Jeder Befehl braucht seine Vorbereitung, sonst kehrt er an seiner
+  Eingangsprüfung sofort zurück. Der Test schlägt in diesem Fall mit einer
+  eigenen Meldung fehl, statt stillschweigend nichts zu prüfen.
+
+Gegenprobe: Vor der Behebung schlagen alle vier Fälle fehl, danach laufen sie
+durch.
 
 ---
 
