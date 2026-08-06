@@ -102,7 +102,7 @@ Oberflaeche verfrueht gewesen. Der Nachweis liegt jetzt vor.
 - Neues Projekt `EInvoiceSender.Presentation` (plattformneutral, `net10.0`):
   `InvoiceDraft` als Eingabemodell und `ShellViewModel` mit dem
   Fünf-Schritte-Ablauf. Damit ist die Ablauflogik der Oberfläche auch auf
-  einem Linux-Agenten testbar – 23 Tests laufen dort tatsächlich.
+  einem Linux-Agenten testbar – 32 Tests laufen dort tatsächlich.
 - WPF-Ansicht mit Drag-and-drop, Dateiauswahl, PDF-Vorschau, Positionsraster,
   Live-Summen, Kontrollansicht mit Pflichtbestätigung, Fortschrittsliste,
   Ergebnis mit Prüfsumme und E-Mail-Feldern.
@@ -122,6 +122,20 @@ Oberflaeche verfrueht gewesen. Der Nachweis liegt jetzt vor.
   (siehe `docs/TESTING.md`). Der Fall zeigt, dass „kompiliert" und „läuft" hier
   zwei verschiedene Aussagen sind – die vorhandenen Tests konnten ihn
   prinzipbedingt nicht finden.
+- **Nachtrag 2026-08-05, zweiter Start:** Nach der Behebung wurden zwei weitere
+  Oberflächenfehler sichtbar, die beide nur im laufenden Programm auffallen:
+  - Die Befundliste zeigte den Klassennamen
+    `EInvoiceSender.Presentation.ViewModels.FindingViewModel` statt der Meldung.
+    Ursache: Für `FindingViewModel` gab es keine `DataTemplate`, also fiel WPF
+    auf `ToString()` zurück. Behoben durch eine implizite Vorlage in `App.xaml`,
+    die alle drei Befundlisten zugleich bedient; abgesichert durch
+    `FindingTemplateBindingTests`.
+  - „Weiter" blieb dauerhaft gesperrt, obwohl die PDF als verarbeitbar gemeldet
+    war. Ursache: `CanGoForward` und `CanGoBack` lesen `IsBusy`, aber `IsBusy`
+    benachrichtigte nur „Erzeugen" und „Abbrechen". Die einzige Neubewertung von
+    „Weiter" geschah beim Setzen von `PreflightReport` – und da war `IsBusy` noch
+    `true`. Behoben durch zwei ergänzte `NotifyCanExecuteChangedFor`;
+    abgesichert durch `CommandEnablementTests`.
 
 ### M8 – Installer ✅ definiert, ⚠️ ungeprüft
 
@@ -164,7 +178,7 @@ M7 (E-Mail-Entwurf), M8 (Installer).
 | **PDF/A-3-Konvertierung** | Beliebige PDFs können nicht nach PDF/A-3 konvertiert werden (keine permissiv lizenzierte .NET-Bibliothek kann das). Die Anwendung wertet geeignete PDFs auf und bricht sonst ab – ADR-0003. |
 | **PDF/A-Validierung ohne Java** | Ohne externen Validator prüft die Anwendung PDF/A nur strukturell (Teilmenge). Der Bericht weist das aus – ADR-0004. |
 | **„Neues Outlook"** | Verhalten beim Öffnen von `.eml` mit Anhang ist aus dieser Umgebung nicht prüfbar. Muss auf echtem Windows 11 verifiziert werden – ADR-0005. |
-| **UI-Laufzeitprüfung** | Die WPF-Oberfläche kann hier nur **kompiliert**, nicht ausgeführt werden. Die Ablauflogik ist über das plattformneutrale Projekt `EInvoiceSender.Presentation` mit 23 Tests abgedeckt; das Zusammenspiel mit echten Fenstern, Dialogen und der PDF-Vorschau ist **ungeprüft**. Der Windows-CI-Job baut und testet, ersetzt aber keinen manuellen Durchlauf. |
+| **UI-Laufzeitprüfung** | Die WPF-Oberfläche kann hier nur **kompiliert**, nicht ausgeführt werden. Die Ablauflogik ist über das plattformneutrale Projekt `EInvoiceSender.Presentation` mit 32 Tests abgedeckt; das Zusammenspiel mit echten Fenstern, Dialogen und der PDF-Vorschau ist **ungeprüft**. Der Windows-CI-Job baut und testet, ersetzt aber keinen manuellen Durchlauf. |
 | **Installer-Build** | WiX und Inno Setup erzeugen MSI/EXE nur unter Windows. Der Installer wird deshalb ausschließlich im Windows-CI-Job gebaut. |
 | **Offizielle Spezifikationsseiten** | `ferd-net.de`, `fnfe-mpe.org`, `pdflib.com` antworten aus dieser Umgebung mit HTTP 403. Betroffene Angaben sind in `docs/STANDARDS.md` als **[S]** markiert. |
 
@@ -177,7 +191,7 @@ Keine. Alle offenen Punkte haben eine dokumentierte konservative Vorgabe.
 | Befehl | Ergebnis | Zeitpunkt |
 |---|---|---|
 | `dotnet build EInvoiceSender.slnx -c Release` | 0 Fehler, 0 Warnungen | 2026-08-04 |
-| `dotnet test EInvoiceSender.slnx -c Release` | 430 Tests, alle grün | 2026-08-05 |
+| `dotnet test EInvoiceSender.slnx -c Release` | 439 Tests, alle grün | 2026-08-05 |
 | `./build/validate-golden-masters.sh` | 12 Dateien geprüft, 0 Abweichungen | 2026-08-04 |
 | veraPDF 3b auf der Ergebnisdatei | 389 Prüfpunkte, `isCompliant=true` | 2026-08-04 |
 | CEN-Schematron EN 16931 auf allen Golden Mastern | `status="valid"` | 2026-08-04 |

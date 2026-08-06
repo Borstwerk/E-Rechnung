@@ -49,7 +49,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         byte[] originalBytes = await File.ReadAllBytesAsync(source, TestContext.Current.CancellationToken);
 
         var progressMessages = new List<PipelineProgress>();
-        var progress = new Progress<PipelineProgress>(progressMessages.Add);
+        var progress = new ImmediateProgress<PipelineProgress>(progressMessages.Add);
 
         CreateEInvoiceResult result = await BuildUseCase().ExecuteAsync(
             Request(source), progress, TestContext.Current.CancellationToken);
@@ -252,7 +252,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         using var cts = new CancellationTokenSource();
 
         // Beim ersten Fortschrittsereignis abbrechen.
-        var progress = new Progress<PipelineProgress>(_ => cts.Cancel());
+        var progress = new ImmediateProgress<PipelineProgress>(_ => cts.Cancel());
 
         CreateEInvoiceResult result = await BuildUseCase()
             .ExecuteAsync(Request(source), progress, cts.Token);
@@ -440,4 +440,34 @@ internal sealed class StubValidator(string name, StubBehavior behavior) : IExter
 
         return Task.FromResult(report.Build());
     }
+}
+
+/// <summary>
+/// Liefert Fortschrittsmeldungen sofort und im meldenden Thread aus.
+///
+/// <see cref="Progress{T}"/> ist hier untauglich: Es stellt jede Meldung ueber
+/// den Synchronisierungskontext zu – im Test also ueber den Threadpool. Die
+/// Meldung trifft damit irgendwann ein, moeglicherweise erst nach dem Ende des
+/// Tests. Zwei Folgefehler wurden dadurch beobachtet:
+///
+/// - Eine Zusicherung prueft die Meldungsliste, bevor sie gefuellt ist. Der
+///   Test schlaegt dann sporadisch fehl, ohne dass sich am Programm etwas
+///   geaendert haette.
+/// - Ein Rueckruf ruft <c>Cancel</c> auf einer <c>CancellationTokenSource</c>
+///   auf, die das <c>using</c> des Tests bereits entsorgt hat. Das Ergebnis
+///   ist eine unbeobachtete <c>ObjectDisposedException</c> auf einem
+///   Threadpool-Thread, die xunit als "Catastrophic failure" meldet und die
+///   den gesamten Testlauf rot faerbt.
+///
+/// Im Test ist die sofortige Zustellung ausserdem das, was gemeint ist:
+/// "beim ersten Fortschrittsereignis abbrechen" soll genau dann geschehen und
+/// nicht irgendwann spaeter.
+///
+/// In der Oberflaeche bleibt <see cref="Progress{T}"/> richtig – dort ist das
+/// Zustellen ueber den Kontext genau der Zweck, weil die Meldung auf dem
+/// Oberflaechen-Thread ankommen muss.
+/// </summary>
+internal sealed class ImmediateProgress<T>(Action<T> report) : IProgress<T>
+{
+    public void Report(T value) => report(value);
 }

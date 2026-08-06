@@ -52,9 +52,9 @@ ohne diesen Gegenbeweis wäre die Prüfkette wertlos.
 | Validation.Tests | 122 |
 | IntegrationTests | 48 |
 | Formats.Tests | 40 |
-| Presentation.Tests | 23 |
+| Presentation.Tests | 32 |
 | Mail.Tests | 10 |
-| **Gesamt** | **430, alle grün** |
+| **Gesamt** | **439, alle grün** |
 
 Befehle: `dotnet build EInvoiceSender.slnx -c Release`,
 `REQUIRE_EXTERNAL_VALIDATORS=1 dotnet test EInvoiceSender.slnx -c Release`,
@@ -118,9 +118,37 @@ WPF-Dispatchers – und prüft für alle vier abwartenden Befehle, dass jede
 Änderungsmeldung vom Oberflächen-Thread kommt. Vor der Behebung schlagen alle
 vier fehl, danach laufen sie durch.
 
+Der zweite Start förderte prompt zwei weitere Fehler zutage, beide ebenfalls
+nur im laufenden Programm sichtbar und beide von WPF stillschweigend begangen:
+
+- **Die Befundliste zeigte den Klassennamen** statt der Meldung, weil für
+  `FindingViewModel` keine `DataTemplate` existierte. WPF fällt in diesem Fall
+  wortlos auf `ToString()` zurück.
+- **„Weiter" blieb dauerhaft gesperrt**, obwohl die Statuszeile die PDF als
+  verarbeitbar meldete. `CanGoForward` liest `IsBusy`, doch `IsBusy`
+  benachrichtigte nur „Erzeugen" und „Abbrechen"; die einzige Neubewertung von
+  „Weiter" fiel in den Moment, in dem `IsBusy` noch `true` war.
+
+Beide sind behoben und durch neue Tests abgesichert
+(`FindingTemplateBindingTests`, `CommandEnablementTests`). Bemerkenswert am
+zweiten Fall ist der Testentwurf: Ein Test, der schlicht `CanExecute` aufruft,
+kann ihn nicht finden, weil dieser Aufruf die Bedingung jedes Mal neu auswertet
+und darum immer die richtige Antwort gibt – auch wenn der Knopf auf dem
+Bildschirm falsch aussieht. Erst ein Nachbau des Knopfverhaltens deckt die
+Abweichung auf. Der erste Anlauf dieses Tests bestand gegen den fehlerhaften
+Stand und musste verworfen werden.
+
+Nebenbei fiel ein sporadisch fehlschlagender Integrationstest auf:
+`Progress<T>` stellt Meldungen über den Threadpool zu, sodass ein Rückruf
+`Cancel` auf einer bereits entsorgten `CancellationTokenSource` aufrufen
+konnte. Das Ergebnis war eine unbeobachtete `ObjectDisposedException`, die
+xunit als „Catastrophic failure" meldet. Tests verwenden jetzt eine sofort
+zustellende Fortschrittsmeldung.
+
 **Die Lehre für die restliche Liste oben:** Was in dieser Umgebung nicht
 gestartet werden kann, ist ungeprüft – und ungeprüft heißt hier nachweislich
-nicht „vermutlich in Ordnung".
+nicht „vermutlich in Ordnung". Drei Fehler in zwei Starts, keiner davon von 426
+Tests auffindbar.
 
 ### Fachliche Grenzen (bewusst, dokumentiert)
 

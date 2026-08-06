@@ -13,9 +13,9 @@ tatsächlich existiert – keine Zielvorstellung.
 | `tests/EInvoiceSender.Formats.Tests` | 40 | CII-XML-Erzeugung, Golden Master, `SecureXml` |
 | `tests/EInvoiceSender.Validation.Tests` | 122 | EN-16931-Geschäftsregeln, Codelisten |
 | `tests/EInvoiceSender.Mail.Tests` | 10 | `.eml`-Entwurf, Kodierung, Header |
-| `tests/EInvoiceSender.Presentation.Tests` | 23 | ViewModel- und Ablauflogik der Oberfläche, Thread-Zugehörigkeit |
+| `tests/EInvoiceSender.Presentation.Tests` | 32 | ViewModel- und Ablauflogik der Oberfläche, Thread-Zugehörigkeit |
 | `tests/EInvoiceSender.IntegrationTests` | 48 | Gesamtablauf, PDF/A, externe Gegenprüfung |
-| **Summe** | **430** | laut `docs/STATUS.md`, alle grün |
+| **Summe** | **439** | laut `docs/STATUS.md`, alle grün |
 
 Daneben bestehen `tests/EInvoiceSender.TestSupport` (gemeinsame Testszenarien
 und PDF-Fabrik, kein eigenes Testprojekt im Sinn von zählbaren Tests) und
@@ -27,7 +27,7 @@ und PDF-Fabrik, kein eigenes Testprojekt im Sinn von zählbaren Tests) und
 
 ### Unit-Tests
 
-Der grösste Teil der 430 Tests: Werttypen mit Selbstprüfung (IBAN nach
+Der grösste Teil der 439 Tests: Werttypen mit Selbstprüfung (IBAN nach
 ISO 7064, Währung, Land, Einheit), Berechnungskern (`docs/STANDARDS.md`,
 Abschnitt 3: BR-CO-10 bis BR-CO-25, BR-S-08/09, BR-DEC-09…17),
 `SafeFileName` gegen Path Traversal und reservierte Windows-Namen, sowie die
@@ -107,6 +107,65 @@ lautlos wirkungslos machen:
 
 Gegenprobe: Vor der Behebung schlagen alle vier Fälle fehl, danach laufen sie
 durch.
+
+### Freigabe der Schaltflächen
+
+`CommandEnablementTests` deckt eine zweite Lücke ab, die derselben Ursache
+entspringt – die Oberfläche zeigt etwas anderes an, als der Zustand hergibt.
+
+Eine WPF-Schaltfläche fragt einen `RelayCommand` **nicht** laufend nach seiner
+Freigabe. Sie fragt einmal beim Binden und danach nur noch, wenn der Befehl
+`CanExecuteChanged` meldet. Liest eine Freigabeprüfung also eine Eigenschaft,
+die den Befehl nicht benachrichtigt, bleibt der Knopf im zuletzt bewerteten
+Zustand hängen. Beim ersten Durchlauf blieb „Weiter" deshalb dauerhaft
+gesperrt, obwohl die Statuszeile die PDF als verarbeitbar meldete.
+
+**Der entscheidende Punkt für den Testentwurf:** Ein Test, der einfach
+`CanExecute(null)` aufruft, findet diesen Fehler **nie**. Dieser Aufruf wertet
+die Bedingung jedes Mal frisch aus und liefert deshalb immer die richtige
+Antwort – auch dann, wenn der Knopf auf dem Bildschirm seit Minuten falsch
+aussieht. Geprüft werden muss das *Ereignis*, nicht der Wert. Der erste Anlauf
+dieses Tests war genau deshalb wirkungslos und bestand gegen den fehlerhaften
+Stand.
+
+`ButtonSpy` bildet daher nach, wie ein echter Knopf seinen Zustand führt: einmal
+beim Binden fragen, danach nur auf Meldung. Nach jedem realistischen Ablauf
+vergleicht der Test, was der Anwender sähe, mit dem, was gälte. Der Test kennt
+die Verdrahtung nicht und findet damit auch künftige vergessene
+Benachrichtigungen. Gegenprobe: Er meldet gegen den fehlerhaften Stand beide
+betroffenen Befehle namentlich.
+
+### Anzeigevorlagen gegen ihr ViewModel
+
+`FindingTemplateBindingTests` prüft die XAML-Datei als Text gegen das ViewModel,
+das sie anzeigt. Hintergrund sind zwei Fehler, die WPF **stillschweigend**
+begeht:
+
+- Fehlt die `DataTemplate` ganz, zeigt WPF das Ergebnis von `ToString()`, also
+  den Klassennamen. Genau das stand beim ersten Durchlauf in der Befundliste.
+- Ist ein Bindungspfad falsch geschrieben, bleibt das Feld leer. WPF schreibt
+  eine Meldung ins Ausgabefenster des Debuggers und macht weiter; ohne
+  angehängten Debugger bemerkt das niemand.
+
+Der Test liest `src/EInvoiceSender.Desktop/App.xaml`, sucht die Vorlage für
+`FindingViewModel` und prüft, dass jeder gebundene Pfad dort auch existiert –
+in beiden Schreibweisen (`{Binding Pfad}` und `<Binding Path="Pfad" />`). Er
+läuft auf jedem Agenten, weil er die Datei als Text liest und kein WPF braucht.
+
+### Fortschrittsmeldungen in Tests
+
+`Progress<T>` stellt jede Meldung über den Synchronisierungskontext zu, in einem
+Test also über den Threadpool. Die Meldung trifft damit **irgendwann** ein,
+möglicherweise erst nach dem Ende des Tests. In den Integrationstests hatte das
+zwei Folgen: eine Zusicherung prüfte eine Liste, bevor sie gefüllt war, und ein
+Rückruf rief `Cancel` auf einer bereits entsorgten `CancellationTokenSource`.
+Letzteres erzeugte eine unbeobachtete `ObjectDisposedException` auf einem
+Threadpool-Thread, die xunit als „Catastrophic failure" meldet und den ganzen
+Lauf rot färbt – sporadisch, ohne Änderung am Programm.
+
+Tests verwenden deshalb `ImmediateProgress<T>`, das sofort und im meldenden
+Thread zustellt. In der Oberfläche bleibt `Progress<T>` richtig: Dort ist das
+Zustellen über den Kontext genau der Zweck.
 
 ---
 

@@ -122,11 +122,22 @@ public sealed partial class ShellViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _outputDirectory = string.Empty;
 
-    /// <summary>Laeuft gerade eine Erzeugung?</summary>
+    /// <summary>
+    /// Laeuft gerade eine Erzeugung?
+    ///
+    /// Alle vier Befehle unten lesen <c>IsBusy</c> in ihrer Freigabepruefung,
+    /// also muessen auch alle vier benachrichtigt werden. Fehlen "Zurueck" und
+    /// "Weiter", bleiben deren Schaltflaechen dauerhaft gesperrt: Waehrend der
+    /// Eingangspruefung ist <c>IsBusy</c> noch <c>true</c>, wenn
+    /// <c>PreflightReport</c> gesetzt wird und "Weiter" das erste und einzige
+    /// Mal neu bewertet wird.
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
+    [NotifyCanExecuteChangedFor(nameof(GoBackCommand))]
+    [NotifyCanExecuteChangedFor(nameof(GoForwardCommand))]
     private bool _isBusy;
 
     /// <summary>Ergebnis der Erzeugung.</summary>
