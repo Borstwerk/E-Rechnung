@@ -88,266 +88,405 @@ public sealed partial class EInvoiceService : IEInvoiceService
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var report = new ValidationReportBuilder();
-        var steps = new List<PipelineProgress>();
-        var validators = new List<ValidatorInfo>();
-        DateTimeOffset startedAt = _clock.Now;
+        var context = new CreationContext(request, progress, _clock.Now, cancellationToken);
 
-        // Die Bestaetigung wird vor allem anderen geprueft. Sie ist keine
-        // Formalie der Oberflaeche, sondern Voraussetzung des Vorgangs.
-        if (!request.ContentMatchConfirmed)
+        // Die Bestaetigung wird vor allem anderen geprueft - noch vor dem
+        // Anlegen eines Arbeitsverzeichnisses. Sie ist keine Formalie der
+        // Oberflaeche, sondern Voraussetzung des Vorgangs.
+        if (!UserConfirmedContentMatch(context))
         {
-            report.Error(
-                "APP-USE-001",
-                "Die Erzeugung wurde nicht gestartet, weil die Bestaetigung fehlt, dass die "
-                + "erfassten Rechnungsdaten mit der sichtbaren PDF-Rechnung uebereinstimmen.",
-                "ContentMatchConfirmed");
-
-            return Failed(report, steps, startedAt, validators);
+            return Failed(context);
         }
 
         using ITemporaryWorkspace workspace = _workspaceFactory.Create();
+        context.Workspace = workspace;
 
         try
         {
-            // --- 1. Eingangspruefung ---------------------------------------
-            Report(progress, steps, PipelineStep.Preflight, StepState.Running, 1, "PDF wird geprueft");
-
-            PdfPreflightReport preflight = await _preflight
-                .InspectAsync(request.SourcePdfPath, cancellationToken).ConfigureAwait(false);
-
-            report.AddRange(preflight.Findings);
-
-            if (!preflight.CanProceed)
+            if (!await SourcePdfIsSuitableAsync(context).ConfigureAwait(false))
             {
-                Report(progress, steps, PipelineStep.Preflight, StepState.Failed, 1,
-                    "Die PDF-Datei ist nicht geeignet");
-
-                return Failed(report, steps, startedAt, validators);
+                return Failed(context);
             }
 
-            // Eine bereits eingebettete Rechnung wird nie stillschweigend ersetzt.
-            if (preflight.HasExistingInvoice && !request.ExistingInvoiceReplacementConfirmed)
+            if (!InvoiceDataIsValid(context))
             {
-                report.Error(
-                    "APP-USE-002",
-                    "Die gewaehlte PDF-Datei enthaelt bereits eine Rechnung. Bestaetigen Sie "
-                    + "ausdruecklich, dass diese ersetzt werden soll, oder waehlen Sie die "
-                    + "urspruengliche PDF-Rechnung aus.",
-                    "SourcePdfPath",
-                    $"Vorhandenes Profil: {preflight.ExistingInvoiceProfile}");
-
-                Report(progress, steps, PipelineStep.Preflight, StepState.Failed, 1,
-                    "Bestaetigung zum Ersetzen fehlt");
-
-                return Failed(report, steps, startedAt, validators);
+                return Failed(context);
             }
 
-            Report(progress, steps, PipelineStep.Preflight,
-                preflight.Verdict == PreflightVerdict.SuitableWithWarnings
-                    ? StepState.SucceededWithWarnings
-                    : StepState.Succeeded,
-                1, "PDF geprueft");
+            CreateStructuredInvoice(context);
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // --- 2. Rechnungsdaten pruefen ---------------------------------
-            Report(progress, steps, PipelineStep.ValidateInvoiceData, StepState.Running, 2,
-                "Rechnungsdaten werden geprueft");
-
-            InvoiceTotals totals = InvoiceCalculator.Calculate(request.Invoice);
-            ValidationReport ruleReport = _ruleValidator.Validate(request.Invoice, totals);
-            report.AddRange(ruleReport);
-
-            if (ruleReport.HasErrors)
+            if (!StructuredInvoiceMatchesInput(context))
             {
-                Report(progress, steps, PipelineStep.ValidateInvoiceData, StepState.Failed, 2,
-                    $"{ruleReport.ErrorCount} Problem(e) in den Rechnungsdaten");
-
-                return Failed(report, steps, startedAt, validators);
+                return Failed(context);
             }
 
-            Report(progress, steps, PipelineStep.ValidateInvoiceData,
-                ruleReport.HasWarnings ? StepState.SucceededWithWarnings : StepState.Succeeded,
-                2, "Rechnungsdaten geprueft");
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // --- 3. XML erzeugen -------------------------------------------
-            Report(progress, steps, PipelineStep.CreateXml, StepState.Running, 3,
-                "Rechnungsdaten werden umgewandelt");
-
-            byte[] xml = _xmlWriter.Write(request.Invoice, totals);
-
-            Report(progress, steps, PipelineStep.CreateXml, StepState.Succeeded, 3,
-                "Rechnungsdaten umgewandelt");
-
-            // --- 4. XML gegenpruefen ---------------------------------------
-            Report(progress, steps, PipelineStep.VerifyXml, StepState.Running, 4,
-                "Erzeugte Daten werden gegengeprueft");
-
-            if (!VerifyXmlEcho(xml, request, totals, report))
+            if (!await ComposePdfAAsync(context).ConfigureAwait(false))
             {
-                Report(progress, steps, PipelineStep.VerifyXml, StepState.Failed, 4,
-                    "Die erzeugten Daten stimmen nicht mit der Eingabe ueberein");
-
-                return Failed(report, steps, startedAt, validators);
+                return Failed(context);
             }
 
-            Report(progress, steps, PipelineStep.VerifyXml, StepState.Succeeded, 4,
-                "Erzeugte Daten gegengeprueft");
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // --- 5. PDF/A-3 erzeugen ---------------------------------------
-            Report(progress, steps, PipelineStep.ComposePdfA, StepState.Running, 5,
-                "E-Rechnung wird erzeugt");
-
-            var compositionRequest = new PdfACompositionRequest(
-                SourcePdfPath: request.SourcePdfPath,
-                InvoiceXml: xml,
-                Title: $"Rechnung {request.Invoice.InvoiceNumber}",
-                Author: request.Invoice.Seller.Name,
-                Subject: $"Rechnung {request.Invoice.InvoiceNumber} an {request.Invoice.Buyer.Name}",
-                CreationDate: startedAt,
-                Attachment: _xmlWriter.Attachment);
-
-            CompositionResult composition = await _composer
-                .ComposeAsync(compositionRequest, cancellationToken).ConfigureAwait(false);
-
-            report.AddRange(composition.Report);
-
-            if (!composition.Succeeded || composition.PdfBytes is null)
+            if (!await EmbeddedInvoiceIsReadableAsync(context).ConfigureAwait(false))
             {
-                Report(progress, steps, PipelineStep.ComposePdfA, StepState.Failed, 5,
-                    "Die E-Rechnung konnte nicht erzeugt werden");
-
-                return Failed(report, steps, startedAt, validators);
+                return Failed(context);
             }
 
-            byte[] resultPdf = composition.PdfBytes;
-
-            Report(progress, steps, PipelineStep.ComposePdfA, StepState.Succeeded, 5,
-                "E-Rechnung erzeugt");
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // --- 6. Erneut oeffnen und auslesen ----------------------------
-            Report(progress, steps, PipelineStep.ReopenAndExtract, StepState.Running, 6,
-                "Ergebnis wird erneut geoeffnet");
-
-            string workingCopy = await workspace
-                .WriteAsync("ergebnis.pdf", resultPdf, cancellationToken).ConfigureAwait(false);
-
-            if (!await VerifyResultAsync(workingCopy, xml, request, totals, report, cancellationToken)
-                    .ConfigureAwait(false))
+            if (!await ReferenceValidatorsAcceptAsync(context).ConfigureAwait(false))
             {
-                Report(progress, steps, PipelineStep.ReopenAndExtract, StepState.Failed, 6,
-                    "Die erzeugte Datei liess sich nicht korrekt auslesen");
-
-                return Failed(report, steps, startedAt, validators);
+                return Failed(context);
             }
 
-            Report(progress, steps, PipelineStep.ReopenAndExtract, StepState.Succeeded, 6,
-                "Ergebnis geprueft");
+            BuildChecksum(context);
 
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // --- 7. Externe Validatoren ------------------------------------
-            Report(progress, steps, PipelineStep.ExternalValidation, StepState.Running, 7,
-                "Zusaetzliche Pruefung laeuft");
-
-            bool externalFailed = await RunExternalValidatorsAsync(
-                workingCopy, report, validators, cancellationToken).ConfigureAwait(false);
-
-            if (externalFailed)
-            {
-                Report(progress, steps, PipelineStep.ExternalValidation, StepState.Failed, 7,
-                    "Die zusaetzliche Pruefung hat die Datei beanstandet");
-
-                return Failed(report, steps, startedAt, validators);
-            }
-
-            Report(progress, steps, PipelineStep.ExternalValidation,
-                validators.Any(v => v.WasExecuted) ? StepState.Succeeded : StepState.Skipped,
-                7,
-                validators.Any(v => v.WasExecuted)
-                    ? "Zusaetzliche Pruefung bestanden"
-                    : "Kein externer Validator eingerichtet");
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // --- 8. Bericht erstellen --------------------------------------
-            Report(progress, steps, PipelineStep.BuildReport, StepState.Running, 8,
-                "Bericht wird erstellt");
-
-            string checksum = ComputeChecksum(resultPdf);
-
-            Report(progress, steps, PipelineStep.BuildReport, StepState.Succeeded, 8,
-                "Bericht erstellt");
-
-            // --- 9. Speichern ----------------------------------------------
-            Report(progress, steps, PipelineStep.Save, StepState.Running, 9, "Datei wird gespeichert");
-
-            string fileName = string.IsNullOrWhiteSpace(request.OutputFileName)
-                ? SafeFileName.BuildOutputFileName(
-                    request.Invoice.InvoiceNumber, request.Invoice.Buyer.Name)
-                : request.OutputFileName;
-
-            StoredFile stored = await _fileStorage.WriteAsync(
-                request.OutputDirectory, fileName, resultPdf,
-                request.OverwriteBehavior, cancellationToken).ConfigureAwait(false);
-
-            ValidationReport finalReport = report.Build();
-
-            StoredFile? jsonFile = null;
-            StoredFile? textFile = null;
-
-            if (request.WriteReportFiles)
-            {
-                (jsonFile, textFile) = await WriteReportsAsync(
-                    request, stored, checksum, finalReport, startedAt, validators, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            Report(progress, steps, PipelineStep.Save, StepState.Succeeded, 9, "Datei gespeichert");
-
-            LogCompleted(_logger, request.Invoice.InvoiceNumber, stored.SizeInBytes, checksum[..12]);
-
-            return new CreateEInvoiceResult(
-                Succeeded: true,
-                OutputFile: stored,
-                ReportJsonFile: jsonFile,
-                ReportTextFile: textFile,
-                Report: finalReport,
-                CompletedSteps: steps,
-                CreatedAt: startedAt,
-                StandardDescription: _xmlWriter.FormatDescription,
-                ProfileId: _xmlWriter.ProfileId,
-                Validators: validators);
+            return await SaveResultAsync(context).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
             // Der Benutzer hat abgebrochen. Es bleibt keine Datei zurueck, das
-            // Arbeitsverzeichnis wird im finally geloescht.
-            report.Information(
+            // Arbeitsverzeichnis wird beim Verwerfen geloescht.
+            context.Report.Information(
                 "APP-USE-090",
                 "Der Vorgang wurde abgebrochen. Es wurde keine Datei erzeugt.");
 
             LogCanceled(_logger, request.Invoice.InvoiceNumber);
 
-            return Failed(report, steps, startedAt, validators, canceled: true);
+            return Failed(context, canceled: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            report.Error(
+            context.Report.Error(
                 "APP-USE-091",
                 "Die Datei konnte nicht gespeichert werden. Pruefen Sie, ob das "
                 + "Ausgabeverzeichnis beschreibbar ist und genuegend Platz frei ist.",
                 "OutputDirectory",
                 $"{ex.GetType().Name}: {ex.Message}");
 
-            return Failed(report, steps, startedAt, validators);
+            return Failed(context);
+        }
+    }
+
+    // ===================================================== Die neun Schritte
+
+    private static bool UserConfirmedContentMatch(CreationContext context)
+    {
+        if (context.Request.ContentMatchConfirmed)
+        {
+            return true;
+        }
+
+        context.Report.Error(
+            "APP-USE-001",
+            "Die Erzeugung wurde nicht gestartet, weil die Bestaetigung fehlt, dass die "
+            + "erfassten Rechnungsdaten mit der sichtbaren PDF-Rechnung uebereinstimmen.",
+            "ContentMatchConfirmed");
+
+        return false;
+    }
+
+    private async Task<bool> SourcePdfIsSuitableAsync(CreationContext context)
+    {
+        context.Begin(PipelineStep.Preflight, 1, "PDF wird geprueft");
+
+        PdfPreflightReport preflight = await _preflight
+            .InspectAsync(context.Request.SourcePdfPath, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        context.Report.AddRange(preflight.Findings);
+
+        if (!preflight.CanProceed)
+        {
+            context.Fail(PipelineStep.Preflight, 1, "Die PDF-Datei ist nicht geeignet");
+
+            return false;
+        }
+
+        // Eine bereits eingebettete Rechnung wird nie stillschweigend ersetzt.
+        if (preflight.HasExistingInvoice && !context.Request.ExistingInvoiceReplacementConfirmed)
+        {
+            context.Report.Error(
+                "APP-USE-002",
+                "Die gewaehlte PDF-Datei enthaelt bereits eine Rechnung. Bestaetigen Sie "
+                + "ausdruecklich, dass diese ersetzt werden soll, oder waehlen Sie die "
+                + "urspruengliche PDF-Rechnung aus.",
+                "SourcePdfPath",
+                $"Vorhandenes Profil: {preflight.ExistingInvoiceProfile}");
+
+            context.Fail(PipelineStep.Preflight, 1, "Bestaetigung zum Ersetzen fehlt");
+
+            return false;
+        }
+
+        context.Succeed(
+            PipelineStep.Preflight, 1, "PDF geprueft",
+            withWarnings: preflight.Verdict == PreflightVerdict.SuitableWithWarnings);
+
+        return true;
+    }
+
+    private bool InvoiceDataIsValid(CreationContext context)
+    {
+        context.Begin(PipelineStep.ValidateInvoiceData, 2, "Rechnungsdaten werden geprueft");
+
+        context.Totals = InvoiceCalculator.Calculate(context.Request.Invoice);
+
+        ValidationReport ruleReport = _ruleValidator.Validate(context.Request.Invoice, context.Totals);
+        context.Report.AddRange(ruleReport);
+
+        if (ruleReport.HasErrors)
+        {
+            context.Fail(
+                PipelineStep.ValidateInvoiceData, 2,
+                $"{ruleReport.ErrorCount} Problem(e) in den Rechnungsdaten");
+
+            return false;
+        }
+
+        context.Succeed(
+            PipelineStep.ValidateInvoiceData, 2, "Rechnungsdaten geprueft",
+            withWarnings: ruleReport.HasWarnings);
+
+        return true;
+    }
+
+    private void CreateStructuredInvoice(CreationContext context)
+    {
+        context.Begin(PipelineStep.CreateXml, 3, "Rechnungsdaten werden umgewandelt");
+
+        context.Xml = _xmlWriter.Write(context.Request.Invoice, context.Totals!);
+
+        context.Succeed(PipelineStep.CreateXml, 3, "Rechnungsdaten umgewandelt");
+    }
+
+    private bool StructuredInvoiceMatchesInput(CreationContext context)
+    {
+        context.Begin(PipelineStep.VerifyXml, 4, "Erzeugte Daten werden gegengeprueft");
+
+        if (!VerifyXmlEcho(context.Xml!, context.Request, context.Totals!, context.Report))
+        {
+            context.Fail(
+                PipelineStep.VerifyXml, 4,
+                "Die erzeugten Daten stimmen nicht mit der Eingabe ueberein");
+
+            return false;
+        }
+
+        context.Succeed(PipelineStep.VerifyXml, 4, "Erzeugte Daten gegengeprueft");
+
+        return true;
+    }
+
+    private async Task<bool> ComposePdfAAsync(CreationContext context)
+    {
+        context.Begin(PipelineStep.ComposePdfA, 5, "E-Rechnung wird erzeugt");
+
+        Invoice invoice = context.Request.Invoice;
+
+        var compositionRequest = new PdfACompositionRequest(
+            SourcePdfPath: context.Request.SourcePdfPath,
+            InvoiceXml: context.Xml!,
+            Title: $"Rechnung {invoice.InvoiceNumber}",
+            Author: invoice.Seller.Name,
+            Subject: $"Rechnung {invoice.InvoiceNumber} an {invoice.Buyer.Name}",
+            CreationDate: context.StartedAt,
+            Attachment: _xmlWriter.Attachment);
+
+        CompositionResult composition = await _composer
+            .ComposeAsync(compositionRequest, context.CancellationToken).ConfigureAwait(false);
+
+        context.Report.AddRange(composition.Report);
+
+        if (!composition.Succeeded || composition.PdfBytes is null)
+        {
+            context.Fail(PipelineStep.ComposePdfA, 5, "Die E-Rechnung konnte nicht erzeugt werden");
+
+            return false;
+        }
+
+        context.ResultPdf = composition.PdfBytes;
+        context.Succeed(PipelineStep.ComposePdfA, 5, "E-Rechnung erzeugt");
+
+        return true;
+    }
+
+    private async Task<bool> EmbeddedInvoiceIsReadableAsync(CreationContext context)
+    {
+        context.Begin(PipelineStep.ReopenAndExtract, 6, "Ergebnis wird erneut geoeffnet");
+
+        context.WorkingCopy = await context.Workspace!
+            .WriteAsync("ergebnis.pdf", context.ResultPdf!, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        bool readable = await VerifyResultAsync(
+                context.WorkingCopy, context.Xml!, context.Request, context.Totals!,
+                context.Report, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        if (!readable)
+        {
+            context.Fail(
+                PipelineStep.ReopenAndExtract, 6,
+                "Die erzeugte Datei liess sich nicht korrekt auslesen");
+
+            return false;
+        }
+
+        context.Succeed(PipelineStep.ReopenAndExtract, 6, "Ergebnis geprueft");
+
+        return true;
+    }
+
+    private async Task<bool> ReferenceValidatorsAcceptAsync(CreationContext context)
+    {
+        context.Begin(PipelineStep.ExternalValidation, 7, "Zusaetzliche Pruefung laeuft");
+
+        bool rejected = await RunExternalValidatorsAsync(
+                context.WorkingCopy!, context.Report, context.Validators, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        if (rejected)
+        {
+            context.Fail(
+                PipelineStep.ExternalValidation, 7,
+                "Die zusaetzliche Pruefung hat die Datei beanstandet");
+
+            return false;
+        }
+
+        // Ein nicht eingerichteter Validator wird als uebersprungen ausgewiesen,
+        // nie als bestanden. Sonst saehe eine ungepruefte Datei aus wie eine
+        // gepruefte.
+        bool anyExecuted = context.Validators.Any(v => v.WasExecuted);
+
+        context.ReportStep(
+            PipelineStep.ExternalValidation,
+            anyExecuted ? StepState.Succeeded : StepState.Skipped,
+            7,
+            anyExecuted ? "Zusaetzliche Pruefung bestanden" : "Kein externer Validator eingerichtet");
+
+        return true;
+    }
+
+    private static void BuildChecksum(CreationContext context)
+    {
+        context.Begin(PipelineStep.BuildReport, 8, "Bericht wird erstellt");
+
+        context.Checksum = ComputeChecksum(context.ResultPdf!);
+
+        context.Succeed(PipelineStep.BuildReport, 8, "Bericht erstellt");
+    }
+
+    private async Task<CreateEInvoiceResult> SaveResultAsync(CreationContext context)
+    {
+        context.Begin(PipelineStep.Save, 9, "Datei wird gespeichert");
+
+        CreateEInvoiceRequest request = context.Request;
+
+        string fileName = string.IsNullOrWhiteSpace(request.OutputFileName)
+            ? SafeFileName.BuildOutputFileName(request.Invoice.InvoiceNumber, request.Invoice.Buyer.Name)
+            : request.OutputFileName;
+
+        StoredFile stored = await _fileStorage.WriteAsync(
+            request.OutputDirectory, fileName, context.ResultPdf!,
+            request.OverwriteBehavior, context.CancellationToken).ConfigureAwait(false);
+
+        ValidationReport finalReport = context.Report.Build();
+
+        StoredFile? jsonFile = null;
+        StoredFile? textFile = null;
+
+        if (request.WriteReportFiles)
+        {
+            (jsonFile, textFile) = await WriteReportsAsync(
+                    request, stored, context.Checksum!, finalReport, context.StartedAt,
+                    context.Validators, context.CancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        context.Succeed(PipelineStep.Save, 9, "Datei gespeichert");
+
+        LogCompleted(_logger, request.Invoice.InvoiceNumber, stored.SizeInBytes, context.Checksum![..12]);
+
+        return new CreateEInvoiceResult(
+            Succeeded: true,
+            OutputFile: stored,
+            ReportJsonFile: jsonFile,
+            ReportTextFile: textFile,
+            Report: finalReport,
+            CompletedSteps: context.Steps,
+            CreatedAt: context.StartedAt,
+            StandardDescription: _xmlWriter.FormatDescription,
+            ProfileId: _xmlWriter.ProfileId,
+            Validators: context.Validators);
+    }
+
+    /// <summary>
+    /// Der Zustand eines einzelnen Erzeugungsvorgangs.
+    ///
+    /// Buendelt das, was frueher als ein Dutzend lokaler Variablen durch die
+    /// lange Methode gereicht wurde. Die Zwischenergebnisse sind bewusst
+    /// veraenderlich: Sie entstehen der Reihe nach, und jeder Schritt setzt
+    /// voraus, dass der vorige erfolgreich war.
+    /// </summary>
+    private sealed class CreationContext(
+        CreateEInvoiceRequest request,
+        IProgress<PipelineProgress>? progress,
+        DateTimeOffset startedAt,
+        CancellationToken cancellationToken)
+    {
+        public CreateEInvoiceRequest Request { get; } = request;
+
+        public DateTimeOffset StartedAt { get; } = startedAt;
+
+        public CancellationToken CancellationToken { get; } = cancellationToken;
+
+        public ValidationReportBuilder Report { get; } = new();
+
+        public List<PipelineProgress> Steps { get; } = [];
+
+        public List<ValidatorInfo> Validators { get; } = [];
+
+        public ITemporaryWorkspace? Workspace { get; set; }
+
+        public InvoiceTotals? Totals { get; set; }
+
+        public byte[]? Xml { get; set; }
+
+        public byte[]? ResultPdf { get; set; }
+
+        public string? WorkingCopy { get; set; }
+
+        public string? Checksum { get; set; }
+
+        public void Begin(PipelineStep step, int number, string description)
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+            ReportStep(step, StepState.Running, number, description);
+        }
+
+        public void Succeed(PipelineStep step, int number, string description, bool withWarnings = false)
+            => ReportStep(
+                step,
+                withWarnings ? StepState.SucceededWithWarnings : StepState.Succeeded,
+                number,
+                description);
+
+        public void Fail(PipelineStep step, int number, string description)
+            => ReportStep(step, StepState.Failed, number, description);
+
+        /// <summary>
+        /// Meldet einen Schritt. "Laeuft gerade" geht nur an die Oberflaeche,
+        /// nicht in die Ergebnisliste – dort stehen die neun abgeschlossenen
+        /// Schritte.
+        /// </summary>
+        public void ReportStep(PipelineStep step, StepState state, int number, string description)
+        {
+            var message = new PipelineProgress(step, state, number, TotalSteps, description);
+
+            if (state != StepState.Running)
+            {
+                Steps.Add(message);
+            }
+
+            progress?.Report(message);
         }
     }
 
@@ -554,41 +693,19 @@ public sealed partial class EInvoiceService : IEInvoiceService
     private static string ComputeChecksum(byte[] content)
         => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(content)).ToLowerInvariant();
 
-    private static void Report(
-        IProgress<PipelineProgress>? progress,
-        List<PipelineProgress> steps,
-        PipelineStep step,
-        StepState state,
-        int index,
-        string description)
-    {
-        var message = new PipelineProgress(step, state, index, TotalSteps, description);
 
-        if (state != StepState.Running)
-        {
-            steps.Add(message);
-        }
-
-        progress?.Report(message);
-    }
-
-    private CreateEInvoiceResult Failed(
-        ValidationReportBuilder report,
-        IReadOnlyList<PipelineProgress> steps,
-        DateTimeOffset startedAt,
-        IReadOnlyList<ValidatorInfo> validators,
-        bool canceled = false)
+    private CreateEInvoiceResult Failed(CreationContext context, bool canceled = false)
         => new(
             Succeeded: false,
             OutputFile: null,
             ReportJsonFile: null,
             ReportTextFile: null,
-            Report: report.Build(),
-            CompletedSteps: steps,
-            CreatedAt: startedAt,
+            Report: context.Report.Build(),
+            CompletedSteps: context.Steps,
+            CreatedAt: context.StartedAt,
             StandardDescription: _xmlWriter.FormatDescription,
             ProfileId: _xmlWriter.ProfileId,
-            Validators: validators,
+            Validators: context.Validators,
             Canceled: canceled);
 
     [LoggerMessage(
