@@ -8,16 +8,50 @@
              d:DataContext="{d:DesignInstance Type=vm:InvoiceDataViewModel}"
              d:DesignHeight="620" d:DesignWidth="960">
 
+  <!--
+    Aufbau dieser Ansicht:
+
+    Jedes Feld bildet eine senkrechte Einheit aus Beschriftung, Eingabefeld
+    und Herkunftshinweis. Vorher stand der Hinweis in einer eigenen Rasterzeile
+    unter mehreren Feldern nebeneinander – er liess sich dann keinem Feld mehr
+    eindeutig zuordnen.
+
+    Die Abstände kommen aus den Rändern der Zellen, nicht aus den
+    Bedienelementen selbst. Deshalb tragen Eingabefelder hier nur einen kleinen
+    oberen Rand.
+  -->
   <UserControl.Resources>
     <Style x:Key="Feld" TargetType="TextBox">
-      <Setter Property="Margin" Value="0,3,12,3" />
+      <Setter Property="Margin" Value="0,1,0,0" />
+    </Style>
+
+    <Style x:Key="Auswahl" TargetType="ComboBox">
+      <Setter Property="Margin" Value="0,1,0,0" />
+    </Style>
+
+    <Style x:Key="Datumsfeld" TargetType="DatePicker">
+      <Setter Property="Margin" Value="0,1,0,0" />
+    </Style>
+
+    <!-- Eine Feldeinheit im Dokumentraster: linke und mittlere Spalte. -->
+    <Style x:Key="Rasterzelle" TargetType="StackPanel">
+      <Setter Property="Margin" Value="0,0,16,10" />
+    </Style>
+
+    <!-- Dieselbe Einheit ganz rechts – ohne Abstand zum Rand. -->
+    <Style x:Key="RasterzelleAussen" TargetType="StackPanel">
+      <Setter Property="Margin" Value="0,0,0,10" />
     </Style>
   </UserControl.Resources>
 
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel>
 
-      <!-- Was aus der PDF vorausgefuellt wurde -->
+      <!--
+        Was aus der PDF vorausgefüllt wurde. Dieser Hinweis steht bewusst nur
+        hier: Die Statuszeile des Fensters meldet den Stand des Arbeitsablaufs,
+        nicht dieselbe Zahl ein zweites Mal.
+      -->
       <Border Background="#EEF5FF" BorderBrush="#5A8FC8" BorderThickness="1" CornerRadius="3"
               Padding="10,8" Margin="0,0,0,8"
               Visibility="{Binding HasPrefillMessage, Converter={StaticResource BoolToVisibility}}">
@@ -28,14 +62,330 @@
         </StackPanel>
       </Border>
 
-      <!-- Dokument -->
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Dokument" />
+      <!-- Dokument: drei gleich breite Spalten, je Feld eine Einheit. -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Dokument" Margin="0,0,0,4" />
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.Column="0" Style="{StaticResource Rasterzelle}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Rechnungsnummer" />
+          <TextBox Style="{StaticResource Feld}" TabIndex="10"
+                   Text="{Binding Draft.InvoiceNumber, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="Rechnungsnummer" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=InvoiceNumber}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=InvoiceNumber}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="1" Style="{StaticResource Rasterzelle}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Rechnungsdatum" />
+          <DatePicker Style="{StaticResource Datumsfeld}" TabIndex="11"
+                      SelectedDate="{Binding Draft.IssueDate, Converter={StaticResource DateOnly}}"
+                      AutomationProperties.Name="Rechnungsdatum" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=IssueDate}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=IssueDate}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="0" Grid.Column="2" Style="{StaticResource RasterzelleAussen}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Fällig am" />
+          <DatePicker Style="{StaticResource Datumsfeld}" TabIndex="12"
+                      SelectedDate="{Binding Draft.DueDate, Converter={StaticResource DateOnly}}"
+                      AutomationProperties.Name="Fälligkeitsdatum" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=DueDate}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=DueDate}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="0" Style="{StaticResource Rasterzelle}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Währung" />
+          <ComboBox Style="{StaticResource Auswahl}" TabIndex="13"
+                    ItemsSource="{Binding Currencies}" DisplayMemberPath="Display"
+                    SelectedValuePath="Code" SelectedValue="{Binding Draft.Currency}"
+                    IsEditable="False" AutomationProperties.Name="Währung" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=Currency}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=Currency}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="1" Style="{StaticResource Rasterzelle}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Leistungsdatum" />
+          <DatePicker Style="{StaticResource Datumsfeld}" TabIndex="14"
+                      SelectedDate="{Binding Draft.DeliveryDate, Converter={StaticResource DateOnly}}"
+                      AutomationProperties.Name="Leistungsdatum" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=DeliveryDate}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=DeliveryDate}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Grid.Column="2" Style="{StaticResource RasterzelleAussen}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Zahlungsbedingungen" />
+          <TextBox Style="{StaticResource Feld}" TabIndex="15"
+                   Text="{Binding Draft.PaymentTerms, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="Zahlungsbedingungen" />
+        </StackPanel>
+      </Grid>
+
+      <!--
+        Verkäufer und Käufer als zwei gleich breite Karten nebeneinander.
+        Innerhalb einer Karte trägt ein gewöhnliches Raster die Felder: die
+        Beschriftung links, das Eingabefeld rechts, der Herkunftshinweis
+        unmittelbar darunter in derselben Spalte. PLZ und Ort teilen sich eine
+        Zeile, weil sie zusammen gelesen werden.
+      -->
+      <Grid Margin="0,4,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Margin="0,0,8,0" Padding="12,10,12,12"
+                BorderBrush="#D0D0D0" BorderThickness="1" CornerRadius="3">
+          <StackPanel>
+            <TextBlock Style="{StaticResource Abschnitt}" Text="Verkäufer (Sie)" Margin="0,0,0,8" />
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <!-- Je Feld eine Zeile, darunter je eine Zeile für den Herkunftshinweis. -->
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Name" Margin="0,0,8,0" />
+              <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="20"
+                       Text="{Binding Draft.SellerName, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Name des Rechnungsstellers" />
+              <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerName}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerName}" />
+
+              <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Straße" Margin="0,6,8,0" />
+              <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="21" Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerStreet, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Straße des Rechnungsstellers" />
+              <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerStreet}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerStreet}" />
+
+              <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="PLZ" Margin="0,6,8,0" />
+              <TextBox Grid.Row="4" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="22"
+                       Margin="0,6,12,0" MinWidth="70"
+                       Text="{Binding Draft.SellerPostalCode, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Postleitzahl des Rechnungsstellers" />
+              <TextBlock Grid.Row="4" Grid.Column="2" Style="{StaticResource Feldbeschriftung}"
+                         Text="Ort" Margin="0,6,8,0" />
+              <TextBox Grid.Row="4" Grid.Column="3" Style="{StaticResource Feld}" TabIndex="23"
+                       Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerCity, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Ort des Rechnungsstellers" />
+              <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Herkunftshinweis}"
+                         Margin="0,1,12,0"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerPostalCode}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerPostalCode}" />
+              <TextBlock Grid.Row="5" Grid.Column="3" Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerCity}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerCity}" />
+
+              <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Land" Margin="0,6,8,0" />
+              <ComboBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
+                        Style="{StaticResource Auswahl}" TabIndex="24" Margin="0,6,0,0"
+                        ItemsSource="{Binding Countries}"
+                        DisplayMemberPath="Display" SelectedValuePath="Code"
+                        SelectedValue="{Binding Draft.SellerCountry}"
+                        AutomationProperties.Name="Land des Rechnungsstellers" />
+              <TextBlock Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerCountry}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerCountry}" />
+
+              <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="USt-IdNr." Margin="0,6,8,0" />
+              <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="25" Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerVatId, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer" />
+              <TextBlock Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerVatId}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerVatId}" />
+
+              <!--
+                Die Steuernummer stand bisher nur in den Einstellungen. Die
+                Erkennung füllt sie aber ebenfalls, und in die erzeugte
+                Rechnung geht sie auch – ohne Feld liefe sie unbestätigt durch.
+              -->
+              <TextBlock Grid.Row="10" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Steuernummer" Margin="0,6,8,0" />
+              <TextBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="26" Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerTaxNumber, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Steuernummer des Rechnungsstellers" />
+              <TextBlock Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerTaxNumber}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerTaxNumber}" />
+
+              <TextBlock Grid.Row="12" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="E-Mail" Margin="0,6,8,0" />
+              <TextBox Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="27" Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerEmail, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="E-Mail des Rechnungsstellers" />
+              <TextBlock Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerEmail}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerEmail}" />
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Column="1" Margin="8,0,0,0" Padding="12,10,12,12"
+                BorderBrush="#D0D0D0" BorderThickness="1" CornerRadius="3">
+          <StackPanel>
+            <TextBlock Style="{StaticResource Abschnitt}" Text="Käufer (Empfänger)" Margin="0,0,0,8" />
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Name" Margin="0,0,8,0" />
+              <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="30"
+                       Text="{Binding Draft.BuyerName, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Name des Rechnungsempfängers" />
+              <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerName}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerName}" />
+
+              <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Straße" Margin="0,6,8,0" />
+              <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="31" Margin="0,6,0,0"
+                       Text="{Binding Draft.BuyerStreet, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Straße des Rechnungsempfängers" />
+              <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerStreet}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerStreet}" />
+
+              <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="PLZ" Margin="0,6,8,0" />
+              <TextBox Grid.Row="4" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="32"
+                       Margin="0,6,12,0" MinWidth="70"
+                       Text="{Binding Draft.BuyerPostalCode, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Postleitzahl des Rechnungsempfängers" />
+              <TextBlock Grid.Row="4" Grid.Column="2" Style="{StaticResource Feldbeschriftung}"
+                         Text="Ort" Margin="0,6,8,0" />
+              <TextBox Grid.Row="4" Grid.Column="3" Style="{StaticResource Feld}" TabIndex="33"
+                       Margin="0,6,0,0"
+                       Text="{Binding Draft.BuyerCity, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Ort des Rechnungsempfängers" />
+              <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Herkunftshinweis}"
+                         Margin="0,1,12,0"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerPostalCode}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerPostalCode}" />
+              <TextBlock Grid.Row="5" Grid.Column="3" Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerCity}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerCity}" />
+
+              <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Land" Margin="0,6,8,0" />
+              <ComboBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
+                        Style="{StaticResource Auswahl}" TabIndex="34" Margin="0,6,0,0"
+                        ItemsSource="{Binding Countries}"
+                        DisplayMemberPath="Display" SelectedValuePath="Code"
+                        SelectedValue="{Binding Draft.BuyerCountry}"
+                        AutomationProperties.Name="Land des Rechnungsempfängers" />
+              <TextBlock Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerCountry}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerCountry}" />
+
+              <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="USt-IdNr." Margin="0,6,8,0" />
+              <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="35" Margin="0,6,0,0"
+                       Text="{Binding Draft.BuyerVatId, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer des Empfängers" />
+              <TextBlock Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerVatId}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerVatId}" />
+
+              <TextBlock Grid.Row="10" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="E-Mail" Margin="0,6,8,0" />
+              <TextBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="36" Margin="0,6,0,0"
+                       Text="{Binding Draft.BuyerEmail, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="E-Mail des Rechnungsempfängers" />
+              <TextBlock Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerEmail}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerEmail}" />
+            </Grid>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <!--
+        Bankverbindung. Bewusst schmal gehalten und linksbündig: Über die volle
+        Fensterbreite gezogen wirkten die drei Felder verloren.
+      -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Bankverbindung" />
+      <Grid HorizontalAlignment="Left" MinWidth="420" MaxWidth="560">
+        <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -43,155 +393,37 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Rechnungsnummer" />
-        <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="10"
-                 Text="{Binding Draft.InvoiceNumber, UpdateSourceTrigger=PropertyChanged}"
-                 AutomationProperties.Name="Rechnungsnummer" />
-
-        <TextBlock Grid.Row="0" Grid.Column="2" Text="Rechnungsdatum" />
-        <DatePicker Grid.Row="0" Grid.Column="3" Margin="0,3,12,3" TabIndex="11"
-                    SelectedDate="{Binding Draft.IssueDate, Converter={StaticResource DateOnly}}"
-                    AutomationProperties.Name="Rechnungsdatum" />
-
-        <TextBlock Grid.Row="0" Grid.Column="4" Text="Faellig am" />
-        <DatePicker Grid.Row="0" Grid.Column="5" Margin="0,3,0,3" TabIndex="12"
-                    SelectedDate="{Binding Draft.DueDate, Converter={StaticResource DateOnly}}"
-                    AutomationProperties.Name="Faelligkeitsdatum" />
-
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="Waehrung" />
-        <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3,12,3" TabIndex="13"
-                  ItemsSource="{Binding Currencies}" DisplayMemberPath="Display"
-                  SelectedValuePath="Code" SelectedValue="{Binding Draft.Currency}"
-                  IsEditable="False" AutomationProperties.Name="Waehrung" />
-
-        <TextBlock Grid.Row="1" Grid.Column="2" Text="Leistungsdatum" />
-        <DatePicker Grid.Row="1" Grid.Column="3" Margin="0,3,12,3" TabIndex="14"
-                    SelectedDate="{Binding Draft.DeliveryDate, Converter={StaticResource DateOnly}}"
-                    AutomationProperties.Name="Leistungsdatum" />
-
-        <TextBlock Grid.Row="1" Grid.Column="4" Text="Zahlungsbedingungen" />
-        <TextBox Grid.Row="1" Grid.Column="5" Style="{StaticResource Feld}" TabIndex="15"
-                 Text="{Binding Draft.PaymentTerms, UpdateSourceTrigger=PropertyChanged}"
-                 AutomationProperties.Name="Zahlungsbedingungen" />
-
-        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=InvoiceNumber}"
-                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=InvoiceNumber}"
-                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
-        <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=IssueDate}"
-                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=IssueDate}"
-                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
-        <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=DueDate}"
-                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=DueDate}"
-                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
-      </Grid>
-
-      <!-- Verkaeufer und Kaeufer nebeneinander -->
-      <Grid Margin="0,8,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <StackPanel Grid.Column="0" Margin="0,0,16,0">
-          <TextBlock Style="{StaticResource Abschnitt}" Text="Verkaeufer (Sie)" />
-          <UniformGrid Columns="2">
-            <TextBlock Text="Name" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="20"
-                     Text="{Binding Draft.SellerName, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Name des Rechnungsstellers" />
-            <TextBlock />
-        <TextBlock Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerName}"
-                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerName}"
-                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
-            <TextBlock Text="Strasse" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="21"
-                     Text="{Binding Draft.SellerStreet, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Strasse des Rechnungsstellers" />
-            <TextBlock Text="PLZ" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="22"
-                     Text="{Binding Draft.SellerPostalCode, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Postleitzahl des Rechnungsstellers" />
-            <TextBlock Text="Ort" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="23"
-                     Text="{Binding Draft.SellerCity, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Ort des Rechnungsstellers" />
-            <TextBlock Text="Land" />
-            <ComboBox Margin="0,3,12,3" TabIndex="24" ItemsSource="{Binding Countries}"
-                      DisplayMemberPath="Display" SelectedValuePath="Code"
-                      SelectedValue="{Binding Draft.SellerCountry}"
-                      AutomationProperties.Name="Land des Rechnungsstellers" />
-            <TextBlock Text="USt-IdNr." />
-            <TextBox Style="{StaticResource Feld}" TabIndex="25"
-                     Text="{Binding Draft.SellerVatId, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer" />
-            <TextBlock Text="E-Mail" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="26"
-                     Text="{Binding Draft.SellerEmail, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="E-Mail des Rechnungsstellers" />
-          </UniformGrid>
-        </StackPanel>
-
-        <StackPanel Grid.Column="1">
-          <TextBlock Style="{StaticResource Abschnitt}" Text="Kaeufer (Empfaenger)" />
-          <UniformGrid Columns="2">
-            <TextBlock Text="Name" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="30"
-                     Text="{Binding Draft.BuyerName, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Name des Rechnungsempfaengers" />
-            <TextBlock />
-        <TextBlock Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerName}"
-                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerName}"
-                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
-            <TextBlock Text="Strasse" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="31"
-                     Text="{Binding Draft.BuyerStreet, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Strasse des Rechnungsempfaengers" />
-            <TextBlock Text="PLZ" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="32"
-                     Text="{Binding Draft.BuyerPostalCode, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Postleitzahl des Rechnungsempfaengers" />
-            <TextBlock Text="Ort" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="33"
-                     Text="{Binding Draft.BuyerCity, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Ort des Rechnungsempfaengers" />
-            <TextBlock Text="Land" />
-            <ComboBox Margin="0,3,12,3" TabIndex="34" ItemsSource="{Binding Countries}"
-                      DisplayMemberPath="Display" SelectedValuePath="Code"
-                      SelectedValue="{Binding Draft.BuyerCountry}"
-                      AutomationProperties.Name="Land des Rechnungsempfaengers" />
-            <TextBlock Text="USt-IdNr." />
-            <TextBox Style="{StaticResource Feld}" TabIndex="35"
-                     Text="{Binding Draft.BuyerVatId, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer des Empfaengers" />
-            <TextBlock Text="E-Mail" />
-            <TextBox Style="{StaticResource Feld}" TabIndex="36"
-                     Text="{Binding Draft.BuyerEmail, UpdateSourceTrigger=PropertyChanged}"
-                     AutomationProperties.Name="E-Mail des Rechnungsempfaengers" />
-          </UniformGrid>
-        </StackPanel>
-      </Grid>
-
-      <!-- Bankverbindung -->
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Bankverbindung" />
-      <UniformGrid Columns="6">
-        <TextBlock Text="Kontoinhaber" />
-        <TextBox Style="{StaticResource Feld}" TabIndex="40"
+        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                   Text="Kontoinhaber" Margin="0,0,8,0" />
+        <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="40"
                  Text="{Binding Draft.BankAccountHolder, UpdateSourceTrigger=PropertyChanged}"
                  AutomationProperties.Name="Kontoinhaber" />
-        <TextBlock Text="IBAN" />
-        <TextBox Style="{StaticResource Feld}" TabIndex="41"
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                   Text="IBAN" Margin="0,6,8,0" />
+        <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="41"
+                 Margin="0,6,0,0"
                  Text="{Binding Draft.BankIban, UpdateSourceTrigger=PropertyChanged}"
                  AutomationProperties.Name="IBAN" />
-        <TextBlock Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BankIban}"
-                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BankIban}"
-                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
-        <TextBlock Text="BIC (freiwillig)" />
-        <TextBox Style="{StaticResource Feld}" TabIndex="42"
+        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource Herkunftshinweis}"
+                   Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BankIban}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BankIban}" />
+
+        <!-- Die Freiwilligkeit steht in der Beschriftung, nicht als Zusatzzeile. -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                   Text="BIC (freiwillig)" Margin="0,6,8,0" />
+        <TextBox Grid.Row="3" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="42"
+                 Margin="0,6,0,0"
                  Text="{Binding Draft.BankBic, UpdateSourceTrigger=PropertyChanged}"
-                 AutomationProperties.Name="BIC" />
-      </UniformGrid>
+                 AutomationProperties.Name="BIC (freiwillige Angabe)" />
+        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource Herkunftshinweis}"
+                   Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BankBic}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BankBic}" />
+      </Grid>
 
       <!-- Positionen -->
       <TextBlock Style="{StaticResource Abschnitt}" Text="Positionen" />
@@ -216,30 +448,66 @@
         </DataGrid.Columns>
       </DataGrid>
 
-      <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-        <Button Content="Position _hinzufuegen" Command="{Binding AddLineCommand}" TabIndex="51" />
-        <Button Content="Position _entfernen" Command="{Binding RemoveLineCommand}" TabIndex="52" />
-        <Button Content="Summen _neu berechnen" Command="{Binding RecalculateTotalsCommand}" TabIndex="53" />
-      </StackPanel>
+      <!--
+        Schaltflächen und Summen teilen sich eine Zeile: Die Summen gehören
+        unmittelbar unter die Positionstabelle, an deren rechten Rand – dort
+        sucht sie jeder, der eine Rechnung liest.
+      -->
+      <Grid Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
 
-      <!-- Summen -->
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Berechnete Summen" />
-      <UniformGrid Columns="4" AutomationProperties.LiveSetting="Polite">
-        <TextBlock Text="Netto" />
-        <TextBlock Text="{Binding Totals.TaxBasisTotal, StringFormat=N2}" FontWeight="SemiBold" />
-        <TextBlock Text="Steuer" />
-        <TextBlock Text="{Binding Totals.TaxTotal, StringFormat=N2}" FontWeight="SemiBold" />
-        <TextBlock Text="Brutto" />
-        <TextBlock Text="{Binding Totals.GrandTotal, StringFormat=N2}" FontWeight="SemiBold" />
-        <TextBlock Text="Zahlbetrag" />
-        <TextBlock Text="{Binding Totals.DuePayableAmount, StringFormat=N2}" FontWeight="SemiBold" />
-      </UniformGrid>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Top">
+          <Button Content="Position _hinzufügen" Command="{Binding AddLineCommand}" TabIndex="51" />
+          <Button Content="Position _entfernen" Command="{Binding RemoveLineCommand}" TabIndex="52" />
+          <Button Content="Summen _neu berechnen" Command="{Binding RecalculateTotalsCommand}" TabIndex="53" />
+        </StackPanel>
+
+        <Grid Grid.Column="1" AutomationProperties.LiveSetting="Polite"
+              AutomationProperties.Name="Berechnete Summen">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Betragsbeschriftung}" Text="Netto" />
+          <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource Betrag}"
+                     Text="{Binding Totals.TaxBasisTotal, StringFormat=N2}" />
+
+          <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource Betragsbeschriftung}" Text="Steuer" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Betrag}"
+                     Text="{Binding Totals.TaxTotal, StringFormat=N2}" />
+
+          <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,4"
+                  BorderBrush="#C8C8C8" BorderThickness="0,1,0,0" />
+
+          <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Betragsbeschriftung}"
+                     Text="Brutto" FontWeight="SemiBold" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Betrag}"
+                     Text="{Binding Totals.GrandTotal, StringFormat=N2}" FontWeight="SemiBold" />
+
+          <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource Betragsbeschriftung}"
+                     Text="Zahlbetrag" FontWeight="Bold" FontSize="14" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource Betrag}"
+                     Text="{Binding Totals.DuePayableAmount, StringFormat=N2}"
+                     FontWeight="Bold" FontSize="14" />
+        </Grid>
+      </Grid>
 
       <!-- Befunde -->
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Pruefergebnis"
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Prüfergebnis"
                  Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
       <ItemsControl ItemsSource="{Binding Findings}"
-                    AutomationProperties.Name="Befunde der Datenpruefung" />
+                    AutomationProperties.Name="Befunde der Datenprüfung" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

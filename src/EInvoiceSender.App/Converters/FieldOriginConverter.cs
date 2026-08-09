@@ -16,10 +16,10 @@ namespace EInvoiceSender.App.Converters;
 ///          ConverterParameter=InvoiceNumber}
 /// </code>
 ///
-/// So bleibt die XAML lesbar, ohne fuer jedes der rund zwei Dutzend Felder
+/// So bleibt die XAML lesbar, ohne für jedes der rund zwei Dutzend Felder
 /// eine eigene Eigenschaft im ViewModel anzulegen.
 ///
-/// Der Hinweis enthaelt Zeichen **und** Wort. Farbe allein wuerde fuer
+/// Der Hinweis enthält Zeichen **und** Wort. Farbe allein würde für
 /// farbfehlsichtige Anwender nichts aussagen.
 /// </summary>
 public sealed class FieldOriginConverter : IValueConverter
@@ -36,19 +36,19 @@ public sealed class FieldOriginConverter : IValueConverter
         return origin switch
         {
             FieldOrigin.DetectedReliably => "✓ aus PDF erkannt",
-            FieldOrigin.DetectedUncertain => "? aus PDF erkannt – bitte pruefen",
+            FieldOrigin.DetectedUncertain => "? aus PDF erkannt – bitte prüfen",
             FieldOrigin.Template => "✓ aus gespeicherter Vorlage",
             _ => string.Empty,
         };
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException("Die Herkunft wird nur angezeigt, nie zurueckgeschrieben.");
+        => throw new NotSupportedException("Die Herkunft wird nur angezeigt, nie zurückgeschrieben.");
 }
 
 /// <summary>
 /// Blendet den Herkunftshinweis aus, solange ein Feld von Hand erfasst wurde.
-/// Ohne das staende unter jedem leeren Feld eine leere Zeile.
+/// Ohne ihn stünde unter jedem leeren Feld eine leere Zeile.
 /// </summary>
 public sealed class FieldOriginVisibilityConverter : IValueConverter
 {
@@ -60,5 +60,5 @@ public sealed class FieldOriginVisibilityConverter : IValueConverter
             : Visibility.Collapsed;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException("Die Herkunft wird nur angezeigt, nie zurueckgeschrieben.");
+        => throw new NotSupportedException("Die Herkunft wird nur angezeigt, nie zurückgeschrieben.");
 }
