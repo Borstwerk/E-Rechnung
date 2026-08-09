@@ -119,7 +119,7 @@ public sealed class InvoiceDraftTests
         Assert.Null(draft.DueDate);
     }
 
-    internal static InvoiceDraft FilledDraft()
+    public static InvoiceDraft FilledDraft()
     {
         var draft = new InvoiceDraft
         {
@@ -136,6 +136,7 @@ public sealed class InvoiceDraftTests
             BuyerStreet = "Kundenstrasse 7",
             BuyerPostalCode = "20095",
             BuyerCity = "Hamburg",
+            BuyerCountry = "DE",
             BuyerEmail = "einkauf@example.invalid",
             BankAccountHolder = "Musterbetrieb Beispiel GmbH",
             BankIban = "DE89370400440532013000",

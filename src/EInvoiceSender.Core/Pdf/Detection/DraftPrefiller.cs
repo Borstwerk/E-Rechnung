@@ -8,25 +8,25 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// <param name="FilledFields">Anzahl uebernommener Felder.</param>
 /// <param name="UncertainFields">Bezeichnungen der Felder, die zu pruefen sind.</param>
 /// <param name="SkippedLowConfidence">Werte, die zu unsicher zur Uebernahme waren.</param>
+/// <param name="SkippedProtected">Felder, die bereits einen hoeherrangigen Wert trugen.</param>
 public sealed record PrefillSummary(
     int FilledFields,
     IReadOnlyList<string> UncertainFields,
-    IReadOnlyList<string> SkippedLowConfidence);
+    IReadOnlyList<string> SkippedLowConfidence,
+    IReadOnlyList<string> SkippedProtected);
 
 /// <summary>
 /// Traegt ein Erkennungsergebnis in das Eingabeformular ein.
 ///
 /// Das ist die einzige Stelle, an der erkannte Werte den Weg ins Formular
-/// finden – und damit die Stelle, an der die Vertrauensstufe wirkt:
+/// finden. Jedes Feld laeuft durch dieselbe Entscheidung
+/// (<see cref="FieldOriginRules.CanReplace"/>) – es gibt keine Sonderregel
+/// pro Feld mehr. Damit gilt fuer alle Felder gleichermassen:
 ///
-/// * <see cref="DetectionConfidence.High"/> und
-///   <see cref="DetectionConfidence.Medium"/> fuellen ein Feld und werden dort
-///   gekennzeichnet.
-/// * <see cref="DetectionConfidence.Low"/> fuellt **nichts**. Solche Werte
-///   werden nur gezaehlt, damit die Oberflaeche sagen kann, dass etwas gefunden
-///   wurde, das der Anwender selbst beurteilen muss.
-///
-/// Ein Feld, das der Anwender bereits ausgefuellt hat, wird nie ueberschrieben.
+/// * Ein vom Anwender bearbeitetes Feld wird nie ueberschrieben.
+/// * Ein Programmstandard darf von jeder Quelle ersetzt werden.
+/// * Ein Wert aus der Firmenvorlage weicht nicht der PDF-Erkennung.
+/// * Ein unsicher gelesener Wert fuellt gar nichts.
 /// </summary>
 public static class DraftPrefiller
 {
@@ -37,141 +37,133 @@ public static class DraftPrefiller
         ArgumentNullException.ThrowIfNull(draft);
         ArgumentNullException.ThrowIfNull(detection);
 
-        var filled = 0;
-        var uncertain = new List<string>();
-        var skipped = new List<string>();
+        var log = new PrefillLog();
 
         draft.Prefill(d =>
         {
-            void Text(string label, string property, DetectedValue<string>? value, Action<string> set)
-            {
-                if (value is null)
-                {
-                    return;
-                }
-
-                if (!value.IsUsable)
-                {
-                    skipped.Add(label);
-
-                    return;
-                }
-
-                set(value.Value);
-                d.MarkOrigin(property, OriginFor(value.Confidence, ownCompany, value));
-                filled++;
-
-                if (value.Confidence == DetectionConfidence.Medium)
-                {
-                    uncertain.Add(label);
-                }
-            }
-
-            void Date(string label, string property, DetectedValue<DateOnly>? value, Action<DateOnly> set)
-            {
-                if (value is null)
-                {
-                    return;
-                }
-
-                if (!value.IsUsable)
-                {
-                    skipped.Add(label);
-
-                    return;
-                }
-
-                set(value.Value);
-                d.MarkOrigin(property, OriginFor(value.Confidence, ownCompany, null));
-                filled++;
-
-                if (value.Confidence == DetectionConfidence.Medium)
-                {
-                    uncertain.Add(label);
-                }
-            }
-
-            // --- Dokument --------------------------------------------------
-            if (string.IsNullOrWhiteSpace(d.InvoiceNumber))
-            {
-                Text("Rechnungsnummer", nameof(d.InvoiceNumber), detection.InvoiceNumber, v => d.InvoiceNumber = v);
-            }
-
-            Date("Rechnungsdatum", nameof(d.IssueDate), detection.IssueDate, v => d.IssueDate = v);
-            Date("Leistungsdatum", nameof(d.DeliveryDate), detection.DeliveryDate, v => d.DeliveryDate = v);
-            Date("Faelligkeitsdatum", nameof(d.DueDate), detection.DueDate, v => d.DueDate = v);
-            Text("Waehrung", nameof(d.Currency), detection.Currency, v => d.Currency = v);
-
-            // --- Verkaeufer ------------------------------------------------
-            Text("Verkaeufer", nameof(d.SellerName), detection.Seller.Name, v => d.SellerName = v);
-            Text("Strasse (Verkaeufer)", nameof(d.SellerStreet), detection.Seller.Street, v => d.SellerStreet = v);
-            Text("PLZ (Verkaeufer)", nameof(d.SellerPostalCode), detection.Seller.PostalCode, v => d.SellerPostalCode = v);
-            Text("Ort (Verkaeufer)", nameof(d.SellerCity), detection.Seller.City, v => d.SellerCity = v);
-            Text("Land (Verkaeufer)", nameof(d.SellerCountry), detection.Seller.Country, v => d.SellerCountry = v);
-            Text("USt-IdNr. (Verkaeufer)", nameof(d.SellerVatId), detection.Seller.VatId, v => d.SellerVatId = v);
-            Text("Steuernummer", nameof(d.SellerTaxNumber), detection.Seller.TaxNumber, v => d.SellerTaxNumber = v);
-            Text("E-Mail (Verkaeufer)", nameof(d.SellerEmail), detection.Seller.Email, v => d.SellerEmail = v);
-
-            // --- Kaeufer ---------------------------------------------------
-            Text("Kaeufer", nameof(d.BuyerName), detection.Buyer.Name, v => d.BuyerName = v);
-            Text("Strasse (Kaeufer)", nameof(d.BuyerStreet), detection.Buyer.Street, v => d.BuyerStreet = v);
-            Text("PLZ (Kaeufer)", nameof(d.BuyerPostalCode), detection.Buyer.PostalCode, v => d.BuyerPostalCode = v);
-            Text("Ort (Kaeufer)", nameof(d.BuyerCity), detection.Buyer.City, v => d.BuyerCity = v);
-            Text("USt-IdNr. (Kaeufer)", nameof(d.BuyerVatId), detection.Buyer.VatId, v => d.BuyerVatId = v);
-            Text("E-Mail (Kaeufer)", nameof(d.BuyerEmail), detection.Buyer.Email, v => d.BuyerEmail = v);
-
-            // --- Bankverbindung --------------------------------------------
-            Text("IBAN", nameof(d.BankIban), detection.Iban, v => d.BankIban = v);
-            Text("BIC", nameof(d.BankBic), detection.Bic, v => d.BankBic = v);
-
-            // --- Positionen ------------------------------------------------
-            // Bewusst nur bei ausreichender Sicherheit. Eine falsche Position
-            // veraendert den Rechnungsbetrag - der schlimmstmoegliche Fehler,
-            // den eine Vorbefuellung machen kann.
-            if (detection.LinesConfidence >= DetectionConfidence.Medium && d.Lines.Count == 0)
-            {
-                foreach (DetectedLine line in detection.Lines)
-                {
-                    InvoiceLineDraft target = d.AddLine();
-                    target.Name = line.Description;
-                    target.Quantity = Format(line.Quantity) ?? target.Quantity;
-                    target.Unit = line.Unit ?? target.Unit;
-                    target.NetUnitPrice = Format(line.NetUnitPrice) ?? target.NetUnitPrice;
-                    target.VatRate = Format(line.VatRate) ?? target.VatRate;
-                    filled++;
-                }
-
-                if (detection.Lines.Count > 0)
-                {
-                    uncertain.Add($"{detection.Lines.Count} Position(en)");
-                }
-            }
-            else if (detection.Lines.Count > 0)
-            {
-                skipped.Add($"{detection.Lines.Count} moegliche Position(en)");
-            }
+            ApplyDocumentFields(d, detection, ownCompany, log);
+            ApplyPartyFields(d, detection, ownCompany, log);
+            ApplyPaymentFields(d, detection, ownCompany, log);
         });
 
-        return new PrefillSummary(filled, uncertain, skipped);
+        return log.ToSummary();
+    }
+
+    private static void ApplyDocumentFields(
+        InvoiceDraft d, InvoiceDetectionResult detection, CompanyTemplate? own, PrefillLog log)
+    {
+        Set(d, log, own, "Rechnungsnummer", nameof(d.InvoiceNumber),
+            detection.InvoiceNumber, v => d.InvoiceNumber = v);
+        Set(d, log, own, "Waehrung", nameof(d.Currency),
+            detection.Currency, v => d.Currency = v);
+
+        SetDate(d, log, "Rechnungsdatum", nameof(d.IssueDate),
+            detection.IssueDate, v => d.IssueDate = v);
+        SetDate(d, log, "Leistungsdatum", nameof(d.DeliveryDate),
+            detection.DeliveryDate, v => d.DeliveryDate = v);
+        SetDate(d, log, "Faelligkeitsdatum", nameof(d.DueDate),
+            detection.DueDate, v => d.DueDate = v);
+    }
+
+    private static void ApplyPartyFields(
+        InvoiceDraft d, InvoiceDetectionResult detection, CompanyTemplate? own, PrefillLog log)
+    {
+        DetectedParty seller = detection.Seller;
+        Set(d, log, own, "Verkaeufer", nameof(d.SellerName), seller.Name, v => d.SellerName = v);
+        Set(d, log, own, "Strasse (Verkaeufer)", nameof(d.SellerStreet), seller.Street, v => d.SellerStreet = v);
+        Set(d, log, own, "PLZ (Verkaeufer)", nameof(d.SellerPostalCode), seller.PostalCode, v => d.SellerPostalCode = v);
+        Set(d, log, own, "Ort (Verkaeufer)", nameof(d.SellerCity), seller.City, v => d.SellerCity = v);
+        Set(d, log, own, "Land (Verkaeufer)", nameof(d.SellerCountry), seller.Country, v => d.SellerCountry = v);
+        Set(d, log, own, "USt-IdNr. (Verkaeufer)", nameof(d.SellerVatId), seller.VatId, v => d.SellerVatId = v);
+        Set(d, log, own, "Steuernummer", nameof(d.SellerTaxNumber), seller.TaxNumber, v => d.SellerTaxNumber = v);
+        Set(d, log, own, "E-Mail (Verkaeufer)", nameof(d.SellerEmail), seller.Email, v => d.SellerEmail = v);
+
+        DetectedParty buyer = detection.Buyer;
+        Set(d, log, own, "Kaeufer", nameof(d.BuyerName), buyer.Name, v => d.BuyerName = v);
+        Set(d, log, own, "Strasse (Kaeufer)", nameof(d.BuyerStreet), buyer.Street, v => d.BuyerStreet = v);
+        Set(d, log, own, "PLZ (Kaeufer)", nameof(d.BuyerPostalCode), buyer.PostalCode, v => d.BuyerPostalCode = v);
+        Set(d, log, own, "Ort (Kaeufer)", nameof(d.BuyerCity), buyer.City, v => d.BuyerCity = v);
+        Set(d, log, own, "Land (Kaeufer)", nameof(d.BuyerCountry), buyer.Country, v => d.BuyerCountry = v);
+        Set(d, log, own, "USt-IdNr. (Kaeufer)", nameof(d.BuyerVatId), buyer.VatId, v => d.BuyerVatId = v);
+        Set(d, log, own, "E-Mail (Kaeufer)", nameof(d.BuyerEmail), buyer.Email, v => d.BuyerEmail = v);
+    }
+
+    private static void ApplyPaymentFields(
+        InvoiceDraft d, InvoiceDetectionResult detection, CompanyTemplate? own, PrefillLog log)
+    {
+        Set(d, log, own, "IBAN", nameof(d.BankIban), detection.Iban, v => d.BankIban = v);
+        Set(d, log, own, "BIC", nameof(d.BankBic), detection.Bic, v => d.BankBic = v);
+    }
+
+    private static void Set(
+        InvoiceDraft draft,
+        PrefillLog log,
+        CompanyTemplate? ownCompany,
+        string label,
+        string property,
+        DetectedValue<string>? detected,
+        Action<string> assign)
+        => Set(draft, log, label, property, detected, OriginOf(detected, ownCompany), assign);
+
+    private static void SetDate(
+        InvoiceDraft draft,
+        PrefillLog log,
+        string label,
+        string property,
+        DetectedValue<DateOnly>? detected,
+        Action<DateOnly> assign)
+        => Set(draft, log, label, property, detected, OriginOf(detected), assign);
+
+    /// <summary>
+    /// Die gemeinsame Entscheidung fuer jedes Feld – unabhaengig vom Datentyp.
+    /// </summary>
+    private static void Set<T>(
+        InvoiceDraft draft,
+        PrefillLog log,
+        string label,
+        string property,
+        DetectedValue<T>? detected,
+        FieldOrigin proposedOrigin,
+        Action<T> assign)
+    {
+        if (detected is null)
+        {
+            return;
+        }
+
+        if (!detected.IsUsable)
+        {
+            log.Skipped(label);
+
+            return;
+        }
+
+        if (!FieldOriginRules.CanReplace(draft.OriginOf(property), proposedOrigin))
+        {
+            log.Protected(label);
+
+            return;
+        }
+
+        assign(detected.Value);
+        draft.MarkOrigin(property, proposedOrigin);
+        log.Filled(label, proposedOrigin);
     }
 
     /// <summary>
-    /// Ein Wert, der wortgleich in der gespeicherten Vorlage steht, wird als
-    /// "aus Vorlage" ausgewiesen. Das ist ehrlicher als "aus PDF erkannt": Die
+    /// Ein Wert, der wortgleich in der gespeicherten Vorlage steht, gilt als
+    /// aus der Vorlage stammend. Das ist ehrlicher als "aus PDF erkannt": Die
     /// PDF hat ihn nur bestaetigt.
     /// </summary>
-    private static FieldOrigin OriginFor(
-        DetectionConfidence confidence, CompanyTemplate? ownCompany, DetectedValue<string>? value)
-    {
-        if (ownCompany is not null && value is not null && ComesFromTemplate(ownCompany, value.Value))
-        {
-            return FieldOrigin.Template;
-        }
+    private static FieldOrigin OriginOf(DetectedValue<string>? value, CompanyTemplate? ownCompany)
+        => value is not null && ownCompany is not null && ComesFromTemplate(ownCompany, value.Value)
+            ? FieldOrigin.Template
+            : OriginOf(value);
 
-        return confidence == DetectionConfidence.High
+    private static FieldOrigin OriginOf<T>(DetectedValue<T>? value)
+        => value?.Confidence == DetectionConfidence.High
             ? FieldOrigin.DetectedReliably
             : FieldOrigin.DetectedUncertain;
-    }
 
     private static bool ComesFromTemplate(CompanyTemplate template, string value)
         => new[]
@@ -182,6 +174,28 @@ public static class DraftPrefiller
         }.Any(t => !string.IsNullOrWhiteSpace(t)
                    && string.Equals(t, value, StringComparison.OrdinalIgnoreCase));
 
-    private static string? Format(decimal? value)
-        => value?.ToString("0.##", CultureInfo.GetCultureInfo("de-DE"));
+    /// <summary>Sammelt, was die Vorbefuellung getan und was sie gelassen hat.</summary>
+    private sealed class PrefillLog
+    {
+        private readonly List<string> _uncertain = [];
+        private readonly List<string> _skipped = [];
+        private readonly List<string> _protectedFields = [];
+        private int _filled;
+
+        public void Filled(string label, FieldOrigin origin)
+        {
+            _filled++;
+
+            if (origin == FieldOrigin.DetectedUncertain)
+            {
+                _uncertain.Add(label);
+            }
+        }
+
+        public void Skipped(string label) => _skipped.Add(label);
+
+        public void Protected(string label) => _protectedFields.Add(label);
+
+        public PrefillSummary ToSummary() => new(_filled, _uncertain, _skipped, _protectedFields);
+    }
 }

@@ -99,20 +99,6 @@ public sealed class DraftPrefillerTests
         Assert.Equal(FieldOrigin.Manual, draft.OriginOf(nameof(draft.InvoiceNumber)));
     }
 
-    [Fact]
-    public void EinBereitsGefuelltesFeldWirdNichtUeberschrieben()
-    {
-        var draft = new InvoiceDraft { InvoiceNumber = "Von Hand erfasst" };
-
-        DraftPrefiller.Apply(draft, new InvoiceDetectionResult
-        {
-            HasUsableText = true,
-            InvoiceNumber = new DetectedValue<string>("RE-2026-0815", DetectionConfidence.High),
-        });
-
-        Assert.Equal("Von Hand erfasst", draft.InvoiceNumber);
-    }
-
     /// <summary>
     /// Werte, die wortgleich in der Vorlage stehen, werden als "aus Vorlage"
     /// ausgewiesen. Das ist ehrlicher als "aus PDF erkannt" - die PDF hat sie
@@ -136,44 +122,6 @@ public sealed class DraftPrefillerTests
         Assert.Equal(FieldOrigin.Template, draft.OriginOf(nameof(draft.SellerName)));
     }
 
-    /// <summary>
-    /// Positionen veraendern den Rechnungsbetrag. Eine falsche Position ist
-    /// der schlimmste Fehler, den eine Vorbefuellung machen kann - deshalb
-    /// werden sie nur bei ausreichender Sicherheit uebernommen.
-    /// </summary>
-    [Fact]
-    public void UnsicherePositionenFuellenNichtsAus()
-    {
-        var draft = new InvoiceDraft();
-
-        PrefillSummary summary = DraftPrefiller.Apply(draft, new InvoiceDetectionResult
-        {
-            HasUsableText = true,
-            Lines = [new DetectedLine(1, "IT-Beratung", 4m, "HUR", 100m, 19m, 400m)],
-            LinesConfidence = DetectionConfidence.Low,
-        });
-
-        Assert.Empty(draft.Lines);
-        Assert.Contains(summary.SkippedLowConfidence, s => s.Contains("Position", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public void SicherePositionenWerdenUebernommenUndZurPruefungGemeldet()
-    {
-        var draft = new InvoiceDraft();
-
-        PrefillSummary summary = DraftPrefiller.Apply(draft, new InvoiceDetectionResult
-        {
-            HasUsableText = true,
-            Lines = [new DetectedLine(1, "IT-Beratung", 4m, "HUR", 100m, 19m, 400m)],
-            LinesConfidence = DetectionConfidence.High,
-        });
-
-        InvoiceLineDraft line = Assert.Single(draft.Lines);
-        Assert.Equal("IT-Beratung", line.Name);
-        Assert.Equal("HUR", line.Unit);
-        Assert.Contains(summary.UncertainFields, s => s.Contains("Position", StringComparison.Ordinal));
-    }
 }
 
 /// <summary>

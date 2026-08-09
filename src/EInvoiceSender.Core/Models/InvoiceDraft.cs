@@ -32,7 +32,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     /// Menschen gegangen ist, braucht keine Warnung mehr.
     /// </summary>
     public FieldOrigin OriginOf(string propertyName)
-        => _origins.TryGetValue(propertyName, out FieldOrigin origin) ? origin : FieldOrigin.Manual;
+        => _origins.TryGetValue(propertyName, out FieldOrigin origin) ? origin : FieldOrigin.Default;
 
     /// <summary>
     /// Fuehrt eine Vorbefuellung aus. Aenderungen innerhalb von
@@ -84,10 +84,13 @@ public sealed partial class InvoiceDraft : ObservableObject
             return;
         }
 
-        if (_origins.Remove(e.PropertyName))
+        if (_origins.TryGetValue(e.PropertyName, out FieldOrigin origin) && origin == FieldOrigin.Manual)
         {
-            base.OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Origins)));
+            return;
         }
+
+        _origins[e.PropertyName] = FieldOrigin.Manual;
+        base.OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Origins)));
     }
 
     // --- Dokument ----------------------------------------------------------
@@ -145,6 +148,11 @@ public sealed partial class InvoiceDraft : ObservableObject
     [ObservableProperty]
     private string _sellerCity = string.Empty;
 
+    /// <summary>
+    /// Das eigene Land. Anders als beim Kaeufer ist eine Vorgabe hier
+    /// vertretbar: Der Anwender stellt seine eigenen Rechnungen aus und
+    /// ueberschreibt den Wert einmalig ueber die Firmenvorlage.
+    /// </summary>
     [ObservableProperty]
     private string _sellerCountry = "DE";
 
@@ -177,8 +185,17 @@ public sealed partial class InvoiceDraft : ObservableObject
     [ObservableProperty]
     private string _buyerCity = string.Empty;
 
+    /// <summary>
+    /// Das Land des Kaeufers.
+    ///
+    /// Bewusst **ohne** Vorgabe: Ein unbekanntes Land als "DE" auszugeben
+    /// waere eine Behauptung, die niemand aufgestellt hat. Bei einem
+    /// oesterreichischen oder niederlaendischen Kunden entstuende daraus eine
+    /// falsche Rechnung, ohne dass irgendwo eine Warnung erschiene. Bleibt das
+    /// Feld leer, beanstandet es die Datenpruefung sichtbar.
+    /// </summary>
     [ObservableProperty]
-    private string _buyerCountry = "DE";
+    private string _buyerCountry = string.Empty;
 
     [ObservableProperty]
     private string _buyerEmail = string.Empty;
@@ -381,10 +398,16 @@ public sealed partial class InvoiceDraft : ObservableObject
     {
         if (!CountryCode.TryParse(BuyerCountry, out CountryCode country))
         {
+            // Der Leerfall ist seit dem Wegfall der stillen DE-Vorbelegung der
+            // Regelfall bei einem neuen Formular und braucht deshalb einen
+            // eigenen, verstaendlichen Satz.
             report.Error(
                 "APP-EDT-004",
-                "Das Land des Rechnungsempfaengers muss aus genau zwei Buchstaben bestehen, "
-                + "zum Beispiel DE.",
+                string.IsNullOrWhiteSpace(BuyerCountry)
+                    ? "Das Land des Rechnungsempfaengers fehlt. Bitte waehlen Sie es aus; "
+                      + "es wird nicht angenommen."
+                    : "Das Land des Rechnungsempfaengers muss aus genau zwei Buchstaben bestehen, "
+                      + "zum Beispiel DE.",
                 "Buyer.Country");
 
             return null;
