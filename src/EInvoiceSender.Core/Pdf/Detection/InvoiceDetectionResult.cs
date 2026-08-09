@@ -1,15 +1,5 @@
 namespace EInvoiceSender.Core.Pdf.Detection;
 
-/// <summary>Eine erkannte Rechnungsposition.</summary>
-public sealed record DetectedLine(
-    int Number,
-    string Description,
-    decimal? Quantity,
-    string? Unit,
-    decimal? NetUnitPrice,
-    decimal? VatRate,
-    decimal? LineTotal);
-
 /// <summary>Erkannte Angaben zu einer Partei.</summary>
 public sealed record DetectedParty
 {
@@ -65,10 +55,7 @@ public sealed record InvoiceDetectionResult
     public DetectedValue<string>? InvoiceNumber { get; init; }
     public DetectedValue<DateOnly>? IssueDate { get; init; }
     public DetectedValue<DateOnly>? DeliveryDate { get; init; }
-    public DetectedValue<DateOnly>? BillingPeriodStart { get; init; }
-    public DetectedValue<DateOnly>? BillingPeriodEnd { get; init; }
     public DetectedValue<DateOnly>? DueDate { get; init; }
-    public DetectedValue<string>? PaymentTerms { get; init; }
     public DetectedValue<string>? Currency { get; init; }
 
     // --- Parteien ----------------------------------------------------------
@@ -82,21 +69,11 @@ public sealed record InvoiceDetectionResult
     // --- Summen ------------------------------------------------------------
     public DetectedTotals Totals { get; init; } = new();
 
-    /// <summary>
-    /// Erkannte Positionen. Bewusst konservativ: Bei unklarer Tabellenstruktur
-    /// bleibt diese Liste lieber leer, als eine falsche Position als sicher
-    /// auszugeben.
-    /// </summary>
-    public IReadOnlyList<DetectedLine> Lines { get; init; } = [];
-
-    /// <summary>Wie sicher die Positionserkennung insgesamt ist.</summary>
-    public DetectionConfidence LinesConfidence { get; init; } = DetectionConfidence.Low;
-
     /// <summary>Ein Ergebnis fuer eine Datei ohne auswertbaren Text.</summary>
     public static InvoiceDetectionResult WithoutText { get; } = new() { HasUsableText = false };
 
     /// <summary>Wurde ueberhaupt etwas Brauchbares gefunden?</summary>
     public bool HasAnything =>
         InvoiceNumber is not null || IssueDate is not null || Totals.Gross is not null
-        || Seller.HasAnything || Buyer.HasAnything || Lines.Count > 0;
+        || Seller.HasAnything || Buyer.HasAnything;
 }

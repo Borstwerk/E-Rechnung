@@ -365,18 +365,18 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     // ============================================== Fall 16/20: Positionen
 
     /// <summary>
-    /// Die Positionserkennung ist bewusst zurueckhaltend. Solange die
-    /// Tabellenstruktur nicht sicher erkannt wird, bleibt die Liste leer und
-    /// die Sicherheit niedrig – statt eine falsche Position als sicher
-    /// auszugeben.
+    /// Die Positionserkennung ist nicht umgesetzt. Dieser Test haelt fest, dass
+    /// die uebrigen Angaben trotzdem vollstaendig gelesen werden – die fehlende
+    /// Positionserkennung darf den Rest nicht mitreissen.
     /// </summary>
     [Fact]
-    public async Task PositionenWerdenKonservativBehandelt()
+    public async Task OhnePositionserkennungWerdenDieUebrigenAngabenGelesen()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
-        Assert.Equal(DetectionConfidence.Low, result.LinesConfidence);
-        Assert.All(result.Lines, l => Assert.False(string.IsNullOrWhiteSpace(l.Description)));
+        Assert.NotNull(result.InvoiceNumber);
+        Assert.NotNull(result.Totals.Gross);
+        Assert.NotNull(result.Iban);
     }
 
     [Fact]

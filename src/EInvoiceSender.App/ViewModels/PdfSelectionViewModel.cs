@@ -153,13 +153,13 @@ public sealed partial class PdfSelectionViewModel(
             AddNote(Detection.Totals.Gross is not null, "Gesamtbetrag");
             AddNote(Detection.Iban is not null, "IBAN");
 
-            DetectionNotes.Add(Detection.Lines.Count == 0
-                ? new DetectionNote(
-                    DetectionNoteKind.Missing,
-                    "Es wurden keine Rechnungspositionen erkannt. Bitte erfassen Sie sie von Hand.")
-                : new DetectionNote(
-                    DetectionNoteKind.Uncertain,
-                    $"{Detection.Lines.Count} Rechnungsposition(en) moeglicherweise erkannt – bitte pruefen."));
+            // Die Positionserkennung ist nicht umgesetzt. Der Hinweis sagt das
+            // ausdruecklich, damit niemand auf eine Automatik wartet, die es
+            // nicht gibt.
+            DetectionNotes.Add(new DetectionNote(
+                DetectionNoteKind.Missing,
+                "Rechnungspositionen werden noch nicht aus der PDF uebernommen. "
+                + "Bitte erfassen Sie sie im naechsten Schritt von Hand."));
         }
 
         OnPropertyChanged(nameof(HasDetectionNotes));
