@@ -98,10 +98,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Liegt eine Stoerung an?</summary>
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
-    /// <summary>Ausgabeverzeichnis der erzeugten Dateien.</summary>
-    [ObservableProperty]
-    private string _outputDirectory = string.Empty;
-
     /// <summary>Ueberschrift des aktuellen Schrittes.</summary>
     public string StepTitle => CurrentStep switch
     {
@@ -127,7 +123,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             if (!string.IsNullOrWhiteSpace(template.LastOutputDirectory))
             {
-                OutputDirectory = template.LastOutputDirectory;
+                Review.OutputDirectory = template.LastOutputDirectory;
             }
         }
         catch (IOException exception)
@@ -222,7 +218,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 SourcePdfPath: preflight.FilePath,
                 Invoice: invoice,
                 ContentMatchConfirmed: Review.ContentMatchConfirmed,
-                OutputDirectory: OutputDirectory,
+                OutputDirectory: Review.OutputDirectory,
                 ExistingInvoiceReplacementConfirmed: Review.ExistingInvoiceReplacementConfirmed);
 
             CreateEInvoiceResult result = await Generation.RunAsync(request).ConfigureAwait(true);
@@ -256,7 +252,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 .ConfigureAwait(true);
 
             await _settingsStore
-                .SaveTemplateAsync(template with { LastOutputDirectory = OutputDirectory }, cancellationToken)
+                .SaveTemplateAsync(template with { LastOutputDirectory = Review.OutputDirectory }, cancellationToken)
                 .ConfigureAwait(true);
         }
         catch (IOException)

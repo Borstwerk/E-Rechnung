@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EInvoiceSender.Core.Calculation;
@@ -47,6 +48,21 @@ public sealed partial class ReviewViewModel : StepViewModel
 
     /// <summary>Muss die Ersetzungsfrage ueberhaupt gestellt werden?</summary>
     public bool ShowsReplacementQuestion => SourceAlreadyContainsInvoice;
+
+    /// <summary>
+    /// Wohin die erzeugte Datei geschrieben wird.
+    ///
+    /// Steht bewusst in diesem Schritt und nicht nur in den Einstellungen: Der
+    /// Anwender soll den Ordner unmittelbar vor dem Erzeugen sehen und aendern
+    /// koennen. Die Vorgabe ist ein Unterordner der eigenen Dokumente – damit
+    /// geht nie ein leerer Pfad in den Kern.
+    /// </summary>
+    [ObservableProperty]
+    private string _outputDirectory = DefaultOutputDirectory;
+
+    /// <summary>Die Vorgabe, solange nichts gespeichert ist.</summary>
+    public static string DefaultOutputDirectory { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EInvoiceSender");
 
     /// <summary>Verkaeufer, einzeilig.</summary>
     public string SellerText => Invoice is null

@@ -51,6 +51,13 @@
           <TextBlock Text="{Binding PayableText}" FontWeight="SemiBold" />
         </UniformGrid>
 
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Speicherort" />
+        <TextBox Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}" TabIndex="58"
+                 AutomationProperties.Name="Ausgabeverzeichnis" />
+        <Button Content="Ordner _waehlen ..." Click="OnChooseFolderClicked" TabIndex="59"
+                HorizontalAlignment="Left" Margin="0,6,0,0"
+                AutomationProperties.HelpText="Waehlt den Ordner, in den die E-Rechnung geschrieben wird." />
+
         <CheckBox IsChecked="{Binding ContentMatchConfirmed}" Margin="0,24,0,0" TabIndex="60"
                   AutomationProperties.Name="Bestaetigung der Uebereinstimmung">
           <TextBlock TextWrapping="Wrap"
