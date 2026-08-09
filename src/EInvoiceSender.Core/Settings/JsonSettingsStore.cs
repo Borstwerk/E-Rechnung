@@ -11,19 +11,19 @@ namespace EInvoiceSender.Core.Settings;
 /// Speichert Vorlage und Einstellungen als JSON im lokalen Anwendungsdatenordner
 /// des Benutzers.
 ///
-/// **Schutz sensibler Werte:** Die IBAN ist die einzige wirklich schutzwuerdige
+/// **Schutz sensibler Werte:** Die IBAN ist die einzige wirklich schutzwürdige
 /// Angabe in der Vorlage. Sie wird unter Windows mit DPAPI im Geltungsbereich
-/// des angemeldeten Benutzers verschluesselt abgelegt, sodass ein anderes
+/// des angemeldeten Benutzers verschlüsselt abgelegt, sodass ein anderes
 /// Benutzerkonto auf demselben Rechner sie nicht lesen kann.
 ///
 /// Auf Plattformen ohne DPAPI (Linux, macOS – im Produkt nicht vorgesehen, aber
 /// in der Entwicklung und in Tests relevant) wird die IBAN **nicht** gespeichert.
-/// Sie still im Klartext abzulegen waere die schlechtere Wahl:
+/// Sie still im Klartext abzulegen wäre die schlechtere Wahl:
 /// <see cref="SupportsProtectedStorage"/> meldet den Zustand, und die
-/// Oberflaeche weist darauf hin.
+/// Oberfläche weist darauf hin.
 ///
-/// **Kennwoerter werden grundsaetzlich nicht gespeichert** – weder geschuetzt
-/// noch ungeschuetzt. Die Anwendung braucht keine.
+/// **Kennwörter werden grundsätzlich nicht gespeichert** – weder geschützt
+/// noch ungeschützt. Die Anwendung braucht keine.
 /// </summary>
 public sealed partial class JsonSettingsStore : ISettingsStore
 {
@@ -34,7 +34,7 @@ public sealed partial class JsonSettingsStore : ISettingsStore
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    /// <summary>Zusatz, an dem ein geschuetzter Wert erkennbar ist.</summary>
+    /// <summary>Zusatz, an dem ein geschützter Wert erkennbar ist.</summary>
     private const string ProtectedPrefix = "dpapi:";
 
     private readonly ILogger<JsonSettingsStore> _logger;
@@ -113,7 +113,7 @@ public sealed partial class JsonSettingsStore : ISettingsStore
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            // Eine beschaedigte Einstellungsdatei darf den Programmstart nicht
+            // Eine beschädigte Einstellungsdatei darf den Programmstart nicht
             // verhindern. Der Benutzer beginnt dann mit leeren Vorgaben.
             LogReadFailed(_logger, Path.GetFileName(path), ex.GetType().Name);
 
@@ -125,8 +125,8 @@ public sealed partial class JsonSettingsStore : ISettingsStore
     {
         Directory.CreateDirectory(_directory);
 
-        // Atomar schreiben, damit ein Absturz waehrend des Speicherns die
-        // vorhandene Vorlage nicht zerstoert.
+        // Atomar schreiben, damit ein Absturz während des Speicherns die
+        // vorhandene Vorlage nicht zerstört.
         string temporaryPath = path + ".tmp";
 
         await using (var stream = new FileStream(
@@ -140,7 +140,7 @@ public sealed partial class JsonSettingsStore : ISettingsStore
     }
 
     /// <summary>
-    /// Verschluesselt einen Wert mit DPAPI. Ist das nicht moeglich, wird der
+    /// Verschlüsselt einen Wert mit DPAPI. Ist das nicht möglich, wird der
     /// Wert verworfen statt im Klartext gespeichert.
     /// </summary>
     private string? Protect(string? value)
@@ -172,7 +172,7 @@ public sealed partial class JsonSettingsStore : ISettingsStore
         }
     }
 
-    /// <summary>Entschluesselt einen zuvor geschuetzten Wert.</summary>
+    /// <summary>Entschlüsselt einen zuvor geschützten Wert.</summary>
     private string? Unprotect(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -182,9 +182,9 @@ public sealed partial class JsonSettingsStore : ISettingsStore
 
         if (!value.StartsWith(ProtectedPrefix, StringComparison.Ordinal))
         {
-            // Ein unverschluesselter Wert kann aus einer aelteren Fassung oder
-            // einer von Hand bearbeiteten Datei stammen. Er wird uebernommen,
-            // beim naechsten Speichern aber geschuetzt abgelegt.
+            // Ein unverschlüsselter Wert kann aus einer älteren Fassung oder
+            // einer von Hand bearbeiteten Datei stammen. Er wird übernommen,
+            // beim nächsten Speichern aber geschützt abgelegt.
             return value;
         }
 
@@ -218,11 +218,11 @@ public sealed partial class JsonSettingsStore : ISettingsStore
 
     [LoggerMessage(
         EventId = 8002, Level = LogLevel.Warning,
-        Message = "Geschuetzte Ablage ist auf diesem System nicht verfuegbar. Die Bankverbindung wird nicht gespeichert.")]
+        Message = "Geschützte Ablage ist auf diesem System nicht verfügbar. Die Bankverbindung wird nicht gespeichert.")]
     private static partial void LogProtectionUnavailable(ILogger logger);
 
     [LoggerMessage(
         EventId = 8003, Level = LogLevel.Warning,
-        Message = "Ein geschuetzter Wert konnte nicht entschluesselt werden und wurde verworfen.")]
+        Message = "Ein geschützter Wert konnte nicht entschlüsselt werden und wurde verworfen.")]
     private static partial void LogUnprotectFailed(ILogger logger);
 }

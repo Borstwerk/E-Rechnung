@@ -8,9 +8,9 @@ namespace EInvoiceSender.Core.Pdf;
 public interface IInvoiceDataDetector
 {
     /// <summary>
-    /// Wertet die PDF oertlich aus. <paramref name="ownCompany"/> ist die
-    /// gespeicherte eigene Firmenvorlage; sie hilft dabei, Verkaeufer und
-    /// Kaeufer auseinanderzuhalten, und wird nur zum Vergleichen verwendet.
+    /// Wertet die PDF örtlich aus. <paramref name="ownCompany"/> ist die
+    /// gespeicherte eigene Firmenvorlage; sie hilft dabei, Verkäufer und
+    /// Käufer auseinanderzuhalten, und wird nur zum Vergleichen verwendet.
     /// </summary>
     Task<InvoiceDetectionResult> DetectAsync(
         string pdfPath,
@@ -25,16 +25,16 @@ public interface IInvoiceDataDetector
 /// damit der Anwender nicht abtippen muss, was ohnehin schon dasteht.
 ///
 /// **Was sie nicht ist:** eine Quelle der Wahrheit. Kein gelesener Wert geht
-/// je unmittelbar in die E-Rechnung; der Weg fuehrt immer ueber das Formular
-/// und die Bestaetigung durch den Menschen.
+/// je unmittelbar in die E-Rechnung; der Weg führt immer über das Formular
+/// und die Bestätigung durch den Menschen.
 ///
 /// Diese Klasse koordiniert nur. Die Erkennungsregeln stehen in den vier
 /// fachlich getrennten Detektoren unter <c>Detection</c>; die kleinen
 /// Umwandlungen in <c>DetectionParsers</c>.
 ///
-/// **Die Leitregel bei allen Zweifelsfaellen lautet: lieber nichts vorschlagen
+/// **Die Leitregel bei allen Zweifelsfällen lautet: lieber nichts vorschlagen
 /// als etwas Falsches.** Ein leeres Feld kostet Tippen. Ein falsch gefuelltes
-/// Feld, das jemand uebersieht, kostet eine fehlerhafte Rechnung.
+/// Feld, das jemand übersieht, kostet eine fehlerhafte Rechnung.
 /// </summary>
 public sealed partial class InvoiceDataDetector(
     IPdfTextExtractor extractor,

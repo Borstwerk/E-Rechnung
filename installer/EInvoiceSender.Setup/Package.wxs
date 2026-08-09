@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Installationspaket fuer EInvoiceSender.
+  Installationspaket für EInvoiceSender.
 
-  Festlegungen und ihre Gruende:
+  Festlegungen und ihre Gründe:
 
   * Scope="perUser" – die Installation braucht keine Administratorrechte.
-    Das ist fuer Einzelunternehmer und kleine Betriebe die deutlich
+    Das ist für Einzelunternehmer und kleine Betriebe die deutlich
     unkompliziertere Variante, und die Anwendung schreibt ohnehin nur in das
     Benutzerprofil.
-  * UpgradeCode bleibt ueber alle Versionen unveraendert. Nur so erkennt
-    Windows eine spaetere Fassung als Aktualisierung statt als zweite
+  * UpgradeCode bleibt über alle Versionen unverändert. Nur so erkennt
+    Windows eine spätere Fassung als Aktualisierung statt als zweite
     Installation.
   * MajorUpgrade mit AllowSameVersionUpgrades: eine neuere Fassung ersetzt die
-    alte, eine aeltere wird mit verstaendlicher Meldung abgelehnt.
+    alte, eine ältere wird mit verständlicher Meldung abgelehnt.
+  * Die Id-Attribute bleiben in ASCII geschrieben. Sie sind Kennungen,
+    keine angezeigten Texte, und werden in dieser Datei gegenseitig
+    referenziert. Angezeigt werden Title, Description und Name - dort stehen
+    Umlaute.
   * Benutzerdaten unter %LOCALAPPDATA%\EInvoiceSender werden bei der
     Deinstallation NICHT entfernt. Vorlage, Einstellungen und Protokolle
-    gehoeren dem Benutzer; sie ungefragt zu loeschen waere uebergriffig.
+    gehören dem Benutzer; sie ungefragt zu löschen wäre übergriffig.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
@@ -31,7 +35,7 @@
 
     <MajorUpgrade
       AllowSameVersionUpgrades="yes"
-      DowngradeErrorMessage="Es ist bereits eine neuere Fassung von $(ProductName) installiert. Bitte deinstallieren Sie diese zuerst, wenn Sie eine aeltere Fassung einsetzen moechten." />
+      DowngradeErrorMessage="Es ist bereits eine neuere Fassung von $(ProductName) installiert. Bitte deinstallieren Sie diese zuerst, wenn Sie eine ältere Fassung einsetzen möchten." />
 
     <MediaTemplate EmbedCab="yes" />
 
@@ -41,13 +45,13 @@
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
 
     <Feature Id="Hauptfunktion" Title="$(ProductName)" Level="1"
-             Description="Die Anwendung und alle benoetigten Bestandteile.">
+             Description="Die Anwendung und alle benötigten Bestandteile.">
       <ComponentGroupRef Id="AnwendungsDateien" />
       <ComponentRef Id="StartmenuVerknuepfung" />
     </Feature>
 
-    <Feature Id="Desktopverknuepfung" Title="Verknuepfung auf dem Desktop" Level="2"
-             Description="Legt zusaetzlich eine Verknuepfung auf dem Desktop an.">
+    <Feature Id="Desktopverknuepfung" Title="Verknüpfung auf dem Desktop" Level="2"
+             Description="Legt zusätzlich eine Verknüpfung auf dem Desktop an.">
       <ComponentRef Id="DesktopVerknuepfung" />
     </Feature>
 
@@ -63,7 +67,7 @@
 
     <StandardDirectory Id="DesktopFolder" />
 
-    <!-- Startmenueintrag -->
+    <!-- Startmenüeintrag -->
     <Component Id="StartmenuVerknuepfung" Directory="StartmenuOrdner" Guid="*">
       <Shortcut Id="StartmenuEintrag"
                 Name="$(ProductName)"
@@ -75,7 +79,7 @@
                      Name="Startmenu" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
-    <!-- Optionale Desktopverknuepfung -->
+    <!-- Optionale Desktopverknüpfung -->
     <Component Id="DesktopVerknuepfung" Directory="DesktopFolder" Guid="*">
       <Shortcut Id="DesktopEintrag"
                 Name="$(ProductName)"

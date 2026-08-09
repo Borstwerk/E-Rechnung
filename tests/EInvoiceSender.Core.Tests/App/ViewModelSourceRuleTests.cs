@@ -4,13 +4,13 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.App;
 
 /// <summary>
-/// Prueft die ViewModels der WPF-Anwendung als Quelltext.
+/// Prüft die ViewModels der WPF-Anwendung als Quelltext.
 ///
 /// **Warum als Quelltext und nicht zur Laufzeit?** Die ViewModels liegen in
 /// <c>EInvoiceSender.App</c>, einem WPF-Projekt. Ein Testprojekt, das darauf
-/// verweist, laeuft nur auf einem Windows-Rechner. Diese Pruefungen lesen die
+/// verweist, läuft nur auf einem Windows-Rechner. Diese Prüfungen lesen die
 /// Dateien deshalb als Text und laufen auf jedem Build-Agenten – und damit
-/// tatsaechlich bei jedem Lauf, nicht nur auf dem Entwicklerrechner.
+/// tatsächlich bei jedem Lauf, nicht nur auf dem Entwicklerrechner.
 ///
 /// Beide Regeln stammen aus Fehlern, die im laufenden Programm aufgetreten
 /// sind und die kein bestehender Test finden konnte.
@@ -19,20 +19,20 @@ public sealed class ViewModelSourceRuleTests
 {
     /// <summary>
     /// In einem ViewModel muss die Fortsetzung nach dem <c>await</c> auf den
-    /// Oberflaechen-Thread zurueckkehren.
+    /// Oberflächen-Thread zurückkehren.
     ///
-    /// Mit <c>ConfigureAwait(false)</c> laeuft sie auf einem Threadpool-Thread
+    /// Mit <c>ConfigureAwait(false)</c> läuft sie auf einem Threadpool-Thread
     /// und meldet von dort an gebundene Bedienelemente. WPF bricht dann ab mit
     /// "Der aufrufende Thread kann nicht auf dieses Objekt zugreifen". Genau so
     /// ist die Anwendung beim ersten Start gescheitert.
     ///
-    /// Ein Laufzeittest kann das hier nicht abfangen: Ein gewoehnlicher
+    /// Ein Laufzeittest kann das hier nicht abfangen: Ein gewöhnlicher
     /// Testlauf hat keinen Synchronisierungskontext, und ohne Kontext
     /// verhalten sich <c>ConfigureAwait(true)</c> und <c>ConfigureAwait(false)</c>
     /// gleich.
     /// </summary>
     [Fact]
-    public void KeinConfigureAwaitFalseInDerOberflaeche()
+    public void KeinConfigureAwaitFalseInDerOberfläche()
     {
         string[] treffer =
         [
@@ -44,26 +44,26 @@ public sealed class ViewModelSourceRuleTests
         Assert.True(
             treffer.Length == 0,
             $"ConfigureAwait(false) steht in: {string.Join(", ", treffer)}. In einem ViewModel "
-            + "kehrt die Fortsetzung damit nicht auf den Oberflaechen-Thread zurueck; jede "
-            + "anschliessende Meldung an ein gebundenes Bedienelement laesst WPF mit "
-            + "InvalidOperationException abbrechen. In der Oberflaeche gehoert immer "
+            + "kehrt die Fortsetzung damit nicht auf den Oberflächen-Thread zurück; jede "
+            + "anschließende Meldung an ein gebundenes Bedienelement lässt WPF mit "
+            + "InvalidOperationException abbrechen. In der Oberfläche gehört immer "
             + "ConfigureAwait(true) ans await.");
     }
 
     /// <summary>
-    /// Jede Eigenschaft, die eine Freigabepruefung liest, muss ihren Befehl
+    /// Jede Eigenschaft, die eine Freigabeprüfung liest, muss ihren Befehl
     /// auch benachrichtigen.
     ///
-    /// Eine WPF-Schaltflaeche fragt einen <c>RelayCommand</c> einmal beim
+    /// Eine WPF-Schaltfläche fragt einen <c>RelayCommand</c> einmal beim
     /// Binden und danach nur noch, wenn <c>CanExecuteChanged</c> gemeldet wird.
     /// Fehlt die Benachrichtigung, bleibt sie im zuletzt bewerteten Zustand
-    /// haengen – meist dauerhaft gesperrt. Genau so blieb "Weiter" gesperrt,
+    /// hängen – meist dauerhaft gesperrt. Genau so blieb "Weiter" gesperrt,
     /// obwohl die PDF verarbeitbar war.
     ///
     /// Ein Test, der schlicht <c>CanExecute</c> aufruft, findet das **nie**:
     /// Der Aufruf wertet die Bedingung jedes Mal frisch aus und liefert deshalb
-    /// immer die richtige Antwort, auch wenn die Schaltflaeche falsch aussieht.
-    /// Geprueft werden muss die Verdrahtung, nicht der Wert.
+    /// immer die richtige Antwort, auch wenn die Schaltfläche falsch aussieht.
+    /// Geprüft werden muss die Verdrahtung, nicht der Wert.
     /// </summary>
     [Theory]
     [MemberData(nameof(ViewModelFiles))]
@@ -80,12 +80,12 @@ public sealed class ViewModelSourceRuleTests
 
         foreach (Match command in CommandPattern.Matches(quelle))
         {
-            string pruefung = command.Groups["pruefung"].Value;
+            string prüfung = command.Groups["prüfung"].Value;
             string befehl = CommandName(command.Groups["methode"].Value);
 
             Match body = Regex.Match(
                 quelle,
-                @"private\s+bool\s+" + Regex.Escape(pruefung) + @"\(\)\s*=>(?<rumpf>.*?);\s*\n",
+                @"private\s+bool\s+" + Regex.Escape(prüfung) + @"\(\)\s*=>(?<rumpf>.*?);\s*\n",
                 RegexOptions.Singleline);
 
             if (!body.Success)
@@ -112,15 +112,15 @@ public sealed class ViewModelSourceRuleTests
 
                 if (!benachrichtigt)
                 {
-                    fehler.Add($"{eigenschaft} wird von {pruefung} gelesen, benachrichtigt aber {befehl} nicht");
+                    fehler.Add($"{eigenschaft} wird von {prüfung} gelesen, benachrichtigt aber {befehl} nicht");
                 }
             }
         }
 
         Assert.True(
             fehler.Count == 0,
-            $"In {dateiname}: {string.Join("; ", fehler)}. Die zugehoerige Schaltflaeche bleibt "
-            + "in WPF im alten Zustand haengen. Abhilfe: "
+            $"In {dateiname}: {string.Join("; ", fehler)}. Die zugehörige Schaltfläche bleibt "
+            + "in WPF im alten Zustand hängen. Abhilfe: "
             + "[NotifyCanExecuteChangedFor(nameof(<Befehl>Command))] an der gelesenen Eigenschaft.");
     }
 
@@ -142,7 +142,7 @@ public sealed class ViewModelSourceRuleTests
         RegexOptions.Compiled | RegexOptions.Singleline);
 
     private static readonly Regex CommandPattern = new(
-        @"\[RelayCommand\(CanExecute\s*=\s*nameof\((?<pruefung>\w+)\)\)\]\s*"
+        @"\[RelayCommand\(CanExecute\s*=\s*nameof\((?<prüfung>\w+)\)\)\]\s*"
         + @"public\s+(?:async\s+)?[\w<>]+\s+(?<methode>\w+)\s*\(",
         RegexOptions.Compiled);
 

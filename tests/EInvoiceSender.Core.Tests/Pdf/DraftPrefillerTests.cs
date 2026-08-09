@@ -7,10 +7,10 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Pdf;
 
 /// <summary>
-/// Prueft den Weg vom Erkennungsergebnis ins Formular.
+/// Prüft den Weg vom Erkennungsergebnis ins Formular.
 ///
-/// Hier entscheidet sich, ob die Zusage haelt, dass unsichere Werte **nicht**
-/// stillschweigend uebernommen werden. Das ist die eigentliche Schutzlinie der
+/// Hier entscheidet sich, ob die Zusage hält, dass unsichere Werte **nicht**
+/// stillschweigend übernommen werden. Das ist die eigentliche Schutzlinie der
 /// ganzen Erkennung.
 /// </summary>
 public sealed class DraftPrefillerTests
@@ -37,11 +37,11 @@ public sealed class DraftPrefillerTests
 
     /// <summary>
     /// Der wichtigste Test dieser Datei: Ein unsicherer Wert darf das Formular
-    /// nicht anfassen. Er wird gezaehlt, damit die Oberflaeche darauf hinweisen
+    /// nicht anfassen. Er wird gezählt, damit die Oberfläche darauf hinweisen
     /// kann - eingetragen wird er nicht.
     /// </summary>
     [Fact]
-    public void UnsichereWerteWerdenNichtUebernommen()
+    public void UnsichereWerteWerdenNichtÜbernommen()
     {
         var draft = new InvoiceDraft();
 
@@ -59,7 +59,7 @@ public sealed class DraftPrefillerTests
     }
 
     [Fact]
-    public void MittlereSicherheitWirdUebernommenAberZurPruefungGemeldet()
+    public void MittlereSicherheitWirdÜbernommenAberZurPrüfungGemeldet()
     {
         var draft = new InvoiceDraft();
 
@@ -82,7 +82,7 @@ public sealed class DraftPrefillerTests
     /// die Kennzeichnung verschwindet. Genau dann hat sie ihren Zweck erfuellt.
     /// </summary>
     [Fact]
-    public void NachManuellerAenderungGiltEinFeldNichtMehrAlsErkannt()
+    public void NachManuellerÄnderungGiltEinFeldNichtMehrAlsErkannt()
     {
         var draft = new InvoiceDraft();
 
@@ -102,7 +102,7 @@ public sealed class DraftPrefillerTests
     /// <summary>
     /// Werte, die wortgleich in der Vorlage stehen, werden als "aus Vorlage"
     /// ausgewiesen. Das ist ehrlicher als "aus PDF erkannt" - die PDF hat sie
-    /// nur bestaetigt.
+    /// nur bestätigt.
     /// </summary>
     [Fact]
     public void WerteAusDerVorlageWerdenAlsSolcheAusgewiesen()
@@ -125,13 +125,13 @@ public sealed class DraftPrefillerTests
 }
 
 /// <summary>
-/// Prueft den Abgleich zwischen dem aus der PDF gelesenen und dem berechneten
+/// Prüft den Abgleich zwischen dem aus der PDF gelesenen und dem berechneten
 /// Betrag.
 /// </summary>
 public sealed class TotalsCrossCheckTests
 {
     [Fact]
-    public void GleicheBetraegeWerdenBestaetigt()
+    public void GleicheBeträgeWerdenBestätigt()
     {
         TotalsComparison comparison = TotalsCrossCheck.Compare(
             new DetectedTotals { Gross = new DetectedValue<decimal>(1190.00m, DetectionConfidence.High) },
@@ -142,7 +142,7 @@ public sealed class TotalsCrossCheckTests
     }
 
     [Fact]
-    public void AbweichungWirdMitBeidenBetraegenGemeldet()
+    public void AbweichungWirdMitBeidenBeträgenGemeldet()
     {
         TotalsComparison comparison = TotalsCrossCheck.Compare(
             new DetectedTotals { Gross = new DetectedValue<decimal>(1190.00m, DetectionConfidence.High) },
@@ -156,7 +156,7 @@ public sealed class TotalsCrossCheckTests
 
     /// <summary>Ein Cent Unterschied ist eine Rundung, kein Fehler.</summary>
     [Fact]
-    public void KleineRundungsunterschiedeGeltenAlsUebereinstimmung()
+    public void KleineRundungsunterschiedeGeltenAlsÜbereinstimmung()
     {
         TotalsComparison comparison = TotalsCrossCheck.Compare(
             new DetectedTotals { Gross = new DetectedValue<decimal>(1190.01m, DetectionConfidence.High) },

@@ -6,14 +6,14 @@ using Microsoft.Extensions.Logging;
 namespace EInvoiceSender.Core.Pdf;
 
 /// <summary>
-/// Fuehrt die Eingangspruefung einer PDF-Datei durch.
+/// Führt die Eingangsprüfung einer PDF-Datei durch.
 ///
-/// Grundsatz fuer alle Meldungen: Wenn eine Datei abgelehnt wird, muss der
+/// Grundsatz für alle Meldungen: Wenn eine Datei abgelehnt wird, muss der
 /// Benutzer erfahren, **was er in seinem bisherigen Programm umstellen soll**.
 /// "Nicht geeignet" allein hilft niemandem weiter. Deshalb nennt jede
 /// Ablehnung eine konkrete Einstellung.
 ///
-/// Das Original wird ausschliesslich gelesen.
+/// Das Original wird ausschließlich gelesen.
 /// </summary>
 public sealed partial class PdfPreflightService : IPdfPreflightService
 {
@@ -21,7 +21,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     private readonly ILogger<PdfPreflightService> _logger;
     private readonly long _maxFileSizeInBytes;
 
-    /// <summary>Vorgabe fuer die groesste zulaessige Eingabedatei.</summary>
+    /// <summary>Vorgabe für die größte zulässige Eingabedatei.</summary>
     public const int DefaultMaxFileSizeMegabytes = 20;
 
     public PdfPreflightService(
@@ -46,14 +46,14 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
         var findings = new ValidationReportBuilder();
         string fileName = Path.GetFileName(filePath);
 
-        // --- Stufe 1: Existenz und Groesse, bevor irgendetwas geparst wird ---
+        // --- Stufe 1: Existenz und Größe, bevor irgendetwas geparst wird ---
         var info = new FileInfo(filePath);
 
         if (!info.Exists)
         {
             findings.Error(
                 "APP-PRE-001",
-                "Die Datei wurde nicht gefunden. Moeglicherweise wurde sie verschoben "
+                "Die Datei wurde nicht gefunden. Möglicherweise wurde sie verschoben "
                 + "oder umbenannt.",
                 "File");
 
@@ -74,16 +74,16 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
         {
             findings.Error(
                 "APP-PRE-003",
-                $"Die Datei ist mit {FormatMegabytes(info.Length)} MB groesser als die "
-                + $"zulaessigen {FormatMegabytes(_maxFileSizeInBytes)} MB. Verkleinern Sie "
-                + "die Datei, indem Sie beim PDF-Export eine geringere Bildaufloesung waehlen.",
+                $"Die Datei ist mit {FormatMegabytes(info.Length)} MB größer als die "
+                + $"zulässigen {FormatMegabytes(_maxFileSizeInBytes)} MB. Verkleinern Sie "
+                + "die Datei, indem Sie beim PDF-Export eine geringere Bildauflösung wählen.",
                 "File",
                 $"{info.Length} Bytes");
 
             return NotSuitable(filePath, fileName, info.Length, findings);
         }
 
-        // --- Stufe 2: Ist es ueberhaupt ein PDF? ---
+        // --- Stufe 2: Ist es überhaupt ein PDF? ---
         bool looksLikePdf = await _analyzer.LooksLikePdfAsync(filePath, cancellationToken)
             .ConfigureAwait(false);
 
@@ -92,7 +92,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
             findings.Error(
                 "APP-PRE-004",
                 "Die Datei ist keine PDF-Datei. Die Dateiendung allein entscheidet nicht – "
-                + "geprueft wird der tatsaechliche Inhalt. Bitte waehlen Sie die "
+                + "geprüft wird der tatsächliche Inhalt. Bitte wählen Sie die "
                 + "PDF-Fassung Ihrer Rechnung aus.",
                 "File",
                 "Die Datei beginnt nicht mit der Kennung '%PDF-'.");
@@ -144,7 +144,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     }
 
     /// <summary>
-    /// Uebersetzt die Hindernisse in Meldungen, die eine konkrete Handlung
+    /// Übersetzt die Hindernisse in Meldungen, die eine konkrete Handlung
     /// nennen. Jede Meldung beantwortet: Was ist das Problem, und was soll ich
     /// jetzt tun?
     /// </summary>
@@ -157,11 +157,11 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                 case PdfUpgradeBlocker.Encrypted:
                     findings.Error(
                         "APP-PRE-010",
-                        "Die PDF-Datei ist verschluesselt oder mit einem Kennwort geschuetzt. "
+                        "Die PDF-Datei ist verschlüsselt oder mit einem Kennwort geschützt. "
                         + "Speichern Sie die Rechnung in Ihrem Programm ohne Kennwortschutz "
-                        + "und ohne Berechtigungseinschraenkungen erneut.",
+                        + "und ohne Berechtigungseinschränkungen erneut.",
                         "File",
-                        "Verschluesselte Dokumente sind nach PDF/A nicht zulaessig.");
+                        "Verschlüsselte Dokumente sind nach PDF/A nicht zulässig.");
                     break;
 
                 case PdfUpgradeBlocker.FontsNotEmbedded:
@@ -169,7 +169,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                         "APP-PRE-011",
                         "In der PDF-Datei sind nicht alle Schriftarten eingebettet. "
                         + "Stellen Sie beim PDF-Export die Option \"Schriftarten einbetten\" "
-                        + "ein – in vielen Programmen heisst sie \"Alle Schriften einbetten\" "
+                        + "ein – in vielen Programmen heißt sie \"Alle Schriften einbetten\" "
                         + "oder \"Fonts embedden\". Am einfachsten ist es, direkt als PDF/A "
                         + "zu exportieren; dann ist die Einstellung automatisch gesetzt.",
                         "File",
@@ -180,9 +180,9 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                 case PdfUpgradeBlocker.ActiveContent:
                     findings.Error(
                         "APP-PRE-012",
-                        "Die PDF-Datei enthaelt aktive Inhalte wie JavaScript oder eine "
+                        "Die PDF-Datei enthält aktive Inhalte wie JavaScript oder eine "
                         + "automatisch startende Aktion. Solche Inhalte sind in einer "
-                        + "E-Rechnung nicht zulaessig. Exportieren Sie die Rechnung ohne "
+                        + "E-Rechnung nicht zulässig. Exportieren Sie die Rechnung ohne "
                         + "Formularfunktionen und ohne Skripte.",
                         "File",
                         "/OpenAction oder /Names /JavaScript im Dokumentkatalog gefunden.");
@@ -191,18 +191,18 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                 case PdfUpgradeBlocker.Damaged:
                     findings.Error(
                         "APP-PRE-013",
-                        "Die PDF-Datei konnte nicht vollstaendig gelesen werden. Sie ist "
-                        + "wahrscheinlich beschaedigt oder wurde beim Speichern abgeschnitten. "
+                        "Die PDF-Datei konnte nicht vollständig gelesen werden. Sie ist "
+                        + "wahrscheinlich beschädigt oder wurde beim Speichern abgeschnitten. "
                         + "Erzeugen Sie die Rechnung in Ihrem Programm neu.",
                         "File",
-                        "Die Querverweistabelle oder die Objektstruktur ist nicht aufloesbar.");
+                        "Die Querverweistabelle oder die Objektstruktur ist nicht auflösbar.");
                     break;
 
                 case PdfUpgradeBlocker.DigitallySigned:
                     findings.Error(
                         "APP-PRE-014",
                         "Die PDF-Datei ist digital signiert. Durch das Einbetten der "
-                        + "Rechnungsdaten wuerde die Signatur ungueltig. Verwenden Sie die "
+                        + "Rechnungsdaten würde die Signatur ungültig. Verwenden Sie die "
                         + "unsignierte Fassung; signieren Sie erst die fertige E-Rechnung.",
                         "File",
                         "Signaturfelder im AcroForm gefunden (/SigFlags ungleich null).");
@@ -221,7 +221,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     }
 
     /// <summary>
-    /// Ergaenzt Hinweise und Warnungen, die eine Verarbeitung nicht verhindern.
+    /// Ergänzt Hinweise und Warnungen, die eine Verarbeitung nicht verhindern.
     /// </summary>
     private static void AddInformationalFindings(
         PdfAnalysisResult analysis, ValidationReportBuilder findings)
@@ -232,9 +232,9 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
             // wissen, dass hier bereits Rechnungsdaten stecken.
             findings.Warning(
                 "APP-PRE-020",
-                "Die Datei enthaelt bereits eine eingebettete Rechnung. Wenn Sie "
+                "Die Datei enthält bereits eine eingebettete Rechnung. Wenn Sie "
                 + "fortfahren, werden diese Daten durch die neu erfassten ersetzt. "
-                + "Pruefen Sie, ob Sie wirklich die Ausgangsrechnung ausgewaehlt haben "
+                + "Prüfen Sie, ob Sie wirklich die Ausgangsrechnung ausgewählt haben "
                 + "und nicht eine bereits erzeugte E-Rechnung.",
                 "File",
                 $"Gefundenes Profil: {analysis.ExistingInvoiceProfile ?? "unbekannt"}");
@@ -249,7 +249,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
 
             findings.Information(
                 "APP-PRE-021",
-                $"Die Datei enthaelt den Anhang '{file.FileName}'. Er bleibt erhalten.",
+                $"Die Datei enthält den Anhang '{file.FileName}'. Er bleibt erhalten.",
                 "File",
                 $"{file.SizeInBytes} Bytes, Typ {file.MimeType ?? "unbekannt"}");
         }
@@ -277,7 +277,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
             ? null
             : analysis.DeclaredPdfAPart + (analysis.DeclaredPdfAConformance ?? string.Empty);
 
-    /// <summary>Baut einen Bericht fuer eine Datei, die gar nicht erst geoeffnet wurde.</summary>
+    /// <summary>Baut einen Bericht für eine Datei, die gar nicht erst geöffnet wurde.</summary>
     private static PdfPreflightReport NotSuitable(
         string filePath, string fileName, long size, ValidationReportBuilder findings)
         => new(
@@ -304,7 +304,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
 
     [LoggerMessage(
         EventId = 2020, Level = LogLevel.Information,
-        Message = "Eingangspruefung {FileName}: {Verdict}, {BlockerCount} Hindernis(se)")]
+        Message = "Eingangsprüfung {FileName}: {Verdict}, {BlockerCount} Hindernis(se)")]
     private static partial void LogPreflight(
         ILogger logger, string fileName, PreflightVerdict verdict, int blockerCount);
 }

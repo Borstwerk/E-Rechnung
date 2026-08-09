@@ -4,7 +4,7 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Values;
 
 /// <summary>
-/// Tests fuer <see cref="CurrencyCode"/>, <see cref="CountryCode"/>,
+/// Tests für <see cref="CurrencyCode"/>, <see cref="CountryCode"/>,
 /// <see cref="UnitCode"/> und die Erweiterungen in <see cref="CodeValues"/>.
 /// </summary>
 public sealed class CodeValuesTests
@@ -19,7 +19,7 @@ public sealed class CodeValuesTests
     }
 
     [Fact]
-    public void CurrencyCode_TryParse_TrimmtUndGrossbuchstaben()
+    public void CurrencyCode_TryParse_TrimmtUndGroßbuchstaben()
     {
         bool erfolg = CurrencyCode.TryParse("  eur  ", out CurrencyCode code);
 
@@ -30,7 +30,7 @@ public sealed class CodeValuesTests
     [Theory]
     [InlineData("EU")]
     [InlineData("EURO")]
-    public void CurrencyCode_TryParse_LehntFalscheLaengeAb(string eingabe)
+    public void CurrencyCode_TryParse_LehntFalscheLängeAb(string eingabe)
     {
         bool erfolg = CurrencyCode.TryParse(eingabe, out CurrencyCode code);
 
@@ -62,9 +62,9 @@ public sealed class CodeValuesTests
     }
 
     [Fact]
-    public void CurrencyCode_Parse_WirftFormatExceptionBeiUngueltigerEingabe()
+    public void CurrencyCode_Parse_WirftFormatExceptionBeiUngültigerEingabe()
     {
-        Assert.Throws<FormatException>(() => CurrencyCode.Parse("ungueltig"));
+        Assert.Throws<FormatException>(() => CurrencyCode.Parse("ungültig"));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class CodeValuesTests
     }
 
     [Fact]
-    public void CountryCode_TryParse_TrimmtUndGrossbuchstaben()
+    public void CountryCode_TryParse_TrimmtUndGroßbuchstaben()
     {
         bool erfolg = CountryCode.TryParse(" de ", out CountryCode code);
 
@@ -94,7 +94,7 @@ public sealed class CodeValuesTests
     [Theory]
     [InlineData("D")]
     [InlineData("DEU")]
-    public void CountryCode_TryParse_LehntFalscheLaengeAb(string eingabe)
+    public void CountryCode_TryParse_LehntFalscheLängeAb(string eingabe)
     {
         bool erfolg = CountryCode.TryParse(eingabe, out CountryCode code);
 
@@ -126,7 +126,7 @@ public sealed class CodeValuesTests
     }
 
     [Fact]
-    public void CountryCode_Parse_WirftFormatExceptionBeiUngueltigerEingabe()
+    public void CountryCode_Parse_WirftFormatExceptionBeiUngültigerEingabe()
     {
         Assert.Throws<FormatException>(() => CountryCode.Parse("123"));
     }
@@ -147,7 +147,7 @@ public sealed class CodeValuesTests
     }
 
     [Fact]
-    public void UnitCode_TryParse_TrimmtUndGrossbuchstaben()
+    public void UnitCode_TryParse_TrimmtUndGroßbuchstaben()
     {
         bool erfolg = UnitCode.TryParse(" hur ", out UnitCode code);
 
@@ -158,7 +158,7 @@ public sealed class CodeValuesTests
     [Fact]
     public void UnitCode_TryParse_ErlaubtZiffern()
     {
-        // C62 (Stueck) enthaelt eine Ziffer, im Unterschied zu Currency/Country.
+        // C62 (Stück) enthält eine Ziffer, im Unterschied zu Currency/Country.
         bool erfolg = UnitCode.TryParse("C62", out UnitCode code);
 
         Assert.True(erfolg);
@@ -190,7 +190,7 @@ public sealed class CodeValuesTests
     }
 
     [Fact]
-    public void UnitCode_Parse_WirftFormatExceptionBeiUngueltigerEingabe()
+    public void UnitCode_Parse_WirftFormatExceptionBeiUngültigerEingabe()
     {
         Assert.Throws<FormatException>(() => UnitCode.Parse("ZU-LANG"));
     }
@@ -221,7 +221,7 @@ public sealed class CodeValuesTests
     [InlineData(VatCategory.IntraCommunitySupply, "K")]
     [InlineData(VatCategory.ExportOutsideEu, "G")]
     [InlineData(VatCategory.OutsideScope, "O")]
-    public void ToCode_LiefertDenUntdid5305CodeFuerAlleWerte(VatCategory kategorie, string erwarteterCode)
+    public void ToCode_LiefertDenUntdid5305CodeFürAlleWerte(VatCategory kategorie, string erwarteterCode)
     {
         Assert.Equal(erwarteterCode, kategorie.ToCode());
     }
@@ -282,14 +282,14 @@ public sealed class CodeValuesTests
     [MemberData(nameof(AlleVatCategoryWerte))]
     public void Roundtrip_ToCodeUndTryParseVatCategorySindInvers(VatCategory kategorie)
     {
-        // Enum.GetValues sorgt dafuer, dass ein spaeter hinzugefuegter Wert diesen
+        // Enum.GetValues sorgt dafür, dass ein später hinzugefügter Wert diesen
         // Test bricht, falls ToCode/TryParseVatCategory nicht erweitert werden.
         string code = kategorie.ToCode();
 
-        bool erfolg = CodeValues.TryParseVatCategory(code, out VatCategory zurueckgelesen);
+        bool erfolg = CodeValues.TryParseVatCategory(code, out VatCategory zurückgelesen);
 
         Assert.True(erfolg);
-        Assert.Equal(kategorie, zurueckgelesen);
+        Assert.Equal(kategorie, zurückgelesen);
     }
 
     [Theory]
@@ -313,7 +313,7 @@ public sealed class CodeValuesTests
     [InlineData(VatCategory.OutsideScope, true)]
     [InlineData(VatCategory.StandardRate, false)]
     [InlineData(VatCategory.ZeroRated, false)]
-    public void RequiresExemptionReason_LiefertErwartetesErgebnisFuerAlleKategorien(VatCategory kategorie, bool erwartet)
+    public void RequiresExemptionReason_LiefertErwartetesErgebnisFürAlleKategorien(VatCategory kategorie, bool erwartet)
     {
         Assert.Equal(erwartet, kategorie.RequiresExemptionReason());
     }

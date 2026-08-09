@@ -4,14 +4,14 @@ using System.Text;
 namespace EInvoiceSender.Core.Tests.Support;
 
 /// <summary>
-/// Baut PDF-Dateien mit echtem, maschinenlesbarem Text – die Vorgabe fuer die
+/// Baut PDF-Dateien mit echtem, maschinenlesbarem Text – die Vorgabe für die
 /// Tests der Rechnungserkennung.
 ///
-/// Bewusst von Hand statt ueber PdfSharp: Textausgabe braucht dort eine
-/// Schriftdatei, deren Lizenz und Herkunft dann mitzudokumentieren waeren, und
-/// der Build-Agent hat keine zugesicherte Schriftausstattung. Hier genuegt die
-/// Standardschrift Helvetica. Sie wird nicht eingebettet – fuer die
-/// Textextraktion ist das gleichgueltig, und diese Dateien durchlaufen die
+/// Bewusst von Hand statt über PdfSharp: Textausgabe braucht dort eine
+/// Schriftdatei, deren Lizenz und Herkunft dann mitzudokumentieren wären, und
+/// der Build-Agent hat keine zugesicherte Schriftausstattung. Hier genügt die
+/// Standardschrift Helvetica. Sie wird nicht eingebettet – für die
+/// Textextraktion ist das gleichgültig, und diese Dateien durchlaufen die
 /// PDF/A-Aufwertung nie.
 ///
 /// Der Text wird in WinAnsi kodiert, damit deutsche Umlaute und das
@@ -26,10 +26,10 @@ public static class TextPdfBuilder
     private const int LineHeight = 14;
     private const int LinesPerPage = 52;
 
-    /// <summary>Erzeugt eine PDF, die die uebergebenen Zeilen enthaelt.</summary>
+    /// <summary>Erzeugt eine PDF, die die übergebenen Zeilen enthält.</summary>
     public static byte[] Create(params string[] lines) => Create((IEnumerable<string>)lines);
 
-    /// <summary>Erzeugt eine PDF, die die uebergebenen Zeilen enthaelt.</summary>
+    /// <summary>Erzeugt eine PDF, die die übergebenen Zeilen enthält.</summary>
     public static byte[] Create(IEnumerable<string> lines)
     {
         ArgumentNullException.ThrowIfNull(lines);
@@ -76,7 +76,7 @@ public static class TextPdfBuilder
 
     /// <summary>
     /// Erzeugt eine PDF mit zwei nebeneinander stehenden Spalten – der Fall
-    /// "Verkaeufer links, Kaeufer rechts", der in echten Rechnungen haeufig
+    /// "Verkäufer links, Käufer rechts", der in echten Rechnungen häufig
     /// ist. Die Zeilen werden paarweise auf dieselbe Grundlinie gesetzt.
     /// </summary>
     public static byte[] CreateTwoColumn(
@@ -166,7 +166,7 @@ public static class TextPdfBuilder
     }
 
     /// <summary>
-    /// Kodiert eine Zeichenkette nach WinAnsi und schuetzt die Zeichen, die in
+    /// Kodiert eine Zeichenkette nach WinAnsi und schützt die Zeichen, die in
     /// einer PDF-Zeichenkette eine Bedeutung haben.
     /// </summary>
     private static byte[] EscapeWinAnsi(string text)

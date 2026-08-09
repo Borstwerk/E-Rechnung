@@ -9,14 +9,14 @@ using EInvoiceSender.Core.Services;
 namespace EInvoiceSender.App.ViewModels;
 
 /// <summary>
-/// Fuehrt durch die fuenf Schritte.
+/// Führt durch die fünf Schritte.
 ///
 /// Dieses ViewModel bildet **keine** Fachlogik ab. Es kennt den aktuellen
 /// Schritt, gibt den Weg vor und reicht das Ergebnis eines Schrittes an den
-/// naechsten weiter. Gerechnet und geprueft wird ausschliesslich in
+/// nächsten weiter. Gerechnet und geprüft wird ausschließlich in
 /// <see cref="IEInvoiceService"/>.
 ///
-/// **Regel fuer jedes await: <c>ConfigureAwait(true)</c>** – siehe
+/// **Regel für jedes await: <c>ConfigureAwait(true)</c>** – siehe
 /// <see cref="StepViewModel"/>.
 /// </summary>
 public sealed partial class MainViewModel : ObservableObject, IDisposable
@@ -62,7 +62,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Der aktuell sichtbare Schritt.
     ///
-    /// Beide Navigationsbefehle lesen ihn, also muessen auch beide
+    /// Beide Navigationsbefehle lesen ihn, also müssen auch beide
     /// benachrichtigt werden.
     /// </summary>
     [ObservableProperty]
@@ -72,11 +72,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private WizardStep _currentStep = WizardStep.SelectPdf;
 
     /// <summary>
-    /// Laeuft gerade eine laengere Arbeit?
+    /// Läuft gerade eine längere Arbeit?
     ///
-    /// Alle Befehle unten lesen diesen Wert in ihrer Freigabepruefung, also
-    /// muessen auch alle benachrichtigt werden. Fehlt hier ein Eintrag, bleibt
-    /// die zugehoerige Schaltflaeche im zuletzt bewerteten Zustand haengen –
+    /// Alle Befehle unten lesen diesen Wert in ihrer Freigabeprüfung, also
+    /// müssen auch alle benachrichtigt werden. Fehlt hier ein Eintrag, bleibt
+    /// die zugehörige Schaltfläche im zuletzt bewerteten Zustand hängen –
     /// bewacht von <c>CommandEnablementTests</c>.
     /// </summary>
     [ObservableProperty]
@@ -85,33 +85,33 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(StartOverCommand))]
     private bool _isBusy;
 
-    /// <summary>Statuszeile fuer den Anwender.</summary>
+    /// <summary>Statuszeile für den Anwender.</summary>
     [ObservableProperty]
-    private string _statusMessage = "Waehlen Sie die PDF-Rechnung aus, die Sie versenden moechten.";
+    private string _statusMessage = "Wählen Sie die PDF-Rechnung aus, die Sie versenden möchten.";
 
     /// <summary>
-    /// Eine unerwartete Stoerung, die nicht zu einem einzelnen Feld gehoert.
+    /// Eine unerwartete Störung, die nicht zu einem einzelnen Feld gehört.
     /// Leer, solange alles in Ordnung ist.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorMessage = string.Empty;
 
-    /// <summary>Liegt eine Stoerung an?</summary>
+    /// <summary>Liegt eine Störung an?</summary>
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
 
-    /// <summary>Ueberschrift des aktuellen Schrittes.</summary>
+    /// <summary>Überschrift des aktuellen Schrittes.</summary>
     public string StepTitle => CurrentStep switch
     {
-        WizardStep.SelectPdf => "Schritt 1 von 5: PDF-Rechnung auswaehlen",
+        WizardStep.SelectPdf => "Schritt 1 von 5: PDF-Rechnung auswählen",
         WizardStep.EnterData => "Schritt 2 von 5: Rechnungsdaten erfassen",
         WizardStep.Review => "Schritt 3 von 5: Angaben mit der PDF vergleichen",
-        WizardStep.Generate => "Schritt 4 von 5: E-Rechnung erzeugen und pruefen",
+        WizardStep.Generate => "Schritt 4 von 5: E-Rechnung erzeugen und prüfen",
         WizardStep.Finish => "Schritt 5 von 5: Speichern und versenden",
         _ => "E-Rechnung erstellen",
     };
 
-    /// <summary>Laedt die gespeicherte Firmenvorlage beim Start.</summary>
+    /// <summary>Lädt die gespeicherte Firmenvorlage beim Start.</summary>
     public async Task LoadTemplateAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -130,14 +130,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (IOException exception)
         {
-            // Eine beschaedigte Vorlage darf den Start nicht verhindern.
+            // Eine beschädigte Vorlage darf den Start nicht verhindern.
             ErrorMessage = "Die gespeicherte Firmenvorlage konnte nicht gelesen werden. "
-                           + "Die Felder bleiben leer; ueber Einstellungen koennen Sie sie neu "
+                           + "Die Felder bleiben leer; über Einstellungen können Sie sie neu "
                            + $"erfassen. Technisch: {exception.Message}";
         }
     }
 
-    /// <summary>Geht einen Schritt zurueck.</summary>
+    /// <summary>Geht einen Schritt zurück.</summary>
     [RelayCommand(CanExecute = nameof(CanGoBack))]
     public void GoBack()
     {
@@ -184,10 +184,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     };
 
     /// <summary>
-    /// Uebergibt das Erkennungsergebnis aus Schritt 1 an das Formular.
+    /// Übergibt das Erkennungsergebnis aus Schritt 1 an das Formular.
     ///
-    /// Passiert genau einmal beim Uebergang, nicht bei jedem Blaettern – sonst
-    /// wuerden von Hand geaenderte Werte wieder ueberschrieben.
+    /// Passiert genau einmal beim Übergang, nicht bei jedem Blättern – sonst
+    /// würden von Hand geänderte Werte wieder überschrieben.
     /// </summary>
     private async Task PrefillFromDetectionAsync(CancellationToken cancellationToken)
     {
@@ -237,7 +237,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             PdfSelection.Report?.HasExistingInvoice == true);
 
         // Der aus der PDF gelesene Betrag ist keine rechtliche Wahrheit,
-        // sondern ein zweites, unabhaengiges Signal. Weicht er ab, sieht der
+        // sondern ein zweites, unabhängiges Signal. Weicht er ab, sieht der
         // Anwender das genau dort, wo er ohnehin vergleichen soll.
         Review.ShowTotalsComparison(PdfSelection.Detection is { HasUsableText: true } detection
             ? TotalsCrossCheck.Compare(detection.Totals, InvoiceData.Totals)
@@ -271,7 +271,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             {
                 Result.Show(result, invoice);
                 CurrentStep = WizardStep.Finish;
-                StatusMessage = "Die E-Rechnung wurde erzeugt und geprueft.";
+                StatusMessage = "Die E-Rechnung wurde erzeugt und geprüft.";
 
                 await RememberOutputDirectoryAsync(cancellationToken).ConfigureAwait(true);
             }
@@ -301,8 +301,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (IOException)
         {
-            // Das Merken des Ordners ist eine Annehmlichkeit. Schlaegt es fehl,
-            // ist die erzeugte Rechnung davon unberuehrt.
+            // Das Merken des Ordners ist eine Annehmlichkeit. Schlägt es fehl,
+            // ist die erzeugte Rechnung davon unberührt.
         }
     }
 
@@ -319,7 +319,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         CurrentStep = WizardStep.SelectPdf;
         ErrorMessage = string.Empty;
-        StatusMessage = "Waehlen Sie die naechste PDF-Rechnung aus.";
+        StatusMessage = "Wählen Sie die nächste PDF-Rechnung aus.";
     }
 
     private bool CanStartOver() => !IsBusy;

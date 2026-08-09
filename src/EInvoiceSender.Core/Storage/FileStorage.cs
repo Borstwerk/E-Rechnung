@@ -10,21 +10,21 @@ namespace EInvoiceSender.Core.Storage;
 /// Schreibt Ergebnisdateien in das Ausgabeverzeichnis.
 ///
 /// Sicherheitsvorgaben (docs/SECURITY.md, S3 und S4):
-/// * **Atomar.** Geschrieben wird zuerst in eine temporaere Datei im
+/// * **Atomar.** Geschrieben wird zuerst in eine temporäre Datei im
 ///   Zielverzeichnis, danach wird verschoben. Bricht der Vorgang ab, bleibt
-///   entweder die alte Datei oder gar keine zurueck – niemals eine halb
+///   entweder die alte Datei oder gar keine zurück – niemals eine halb
 ///   geschriebene.
-/// * **Kein stillschweigendes Ueberschreiben.** Vorgabe ist eine nummerierte
-///   Kopie. Ueberschreiben nur, wenn der Aufrufer es ausdruecklich verlangt.
+/// * **Kein stillschweigendes Überschreiben.** Vorgabe ist eine nummerierte
+///   Kopie. Überschreiben nur, wenn der Aufrufer es ausdrücklich verlangt.
 /// * **Kein Ausbrechen aus dem Zielverzeichnis.** Der Dateiname wird bereinigt
-///   und der zusammengesetzte Pfad danach geprueft. Selbst eine Rechnungsnummer
-///   wie "../../etc/passwd" kann so nichts ausserhalb des Ziels anlegen.
+///   und der zusammengesetzte Pfad danach geprüft. Selbst eine Rechnungsnummer
+///   wie "../../etc/passwd" kann so nichts außerhalb des Ziels anlegen.
 /// </summary>
 public sealed partial class FileStorage : IFileStorage
 {
     private readonly ILogger<FileStorage> _logger;
 
-    /// <summary>Hoechstzahl der Versuche fuer eine nummerierte Kopie.</summary>
+    /// <summary>Höchstzahl der Versuche für eine nummerierte Kopie.</summary>
     private const int MaxNumberedAttempts = 999;
 
     public FileStorage(ILogger<FileStorage> logger)
@@ -47,8 +47,8 @@ public sealed partial class FileStorage : IFileStorage
         string safeName = SanitizeFileName(fileName);
         string targetPath = ResolveTargetPath(targetDirectory, safeName, overwriteBehavior);
 
-        // Die temporaere Datei liegt im selben Verzeichnis. Nur dann ist das
-        // abschliessende Verschieben ein Umbenennen innerhalb desselben
+        // Die temporäre Datei liegt im selben Verzeichnis. Nur dann ist das
+        // abschließende Verschieben ein Umbenennen innerhalb desselben
         // Dateisystems und damit atomar.
         string temporaryPath = Path.Combine(
             targetDirectory,
@@ -96,14 +96,14 @@ public sealed partial class FileStorage : IFileStorage
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
-    /// <summary>Berechnet die Pruefsumme eines Puffers.</summary>
+    /// <summary>Berechnet die Prüfsumme eines Puffers.</summary>
     public static string ComputeSha256(ReadOnlySpan<byte> content)
         => Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant();
 
     /// <summary>
     /// Bereinigt den Dateinamen. Der Aufrufer darf hier einen beliebigen
-    /// Vorschlag uebergeben; was hier herauskommt, ist immer ein einzelner,
-    /// unter Windows zulaessiger Dateiname ohne Pfadanteile.
+    /// Vorschlag übergeben; was hier herauskommt, ist immer ein einzelner,
+    /// unter Windows zulässiger Dateiname ohne Pfadanteile.
     /// </summary>
     private static string SanitizeFileName(string fileName)
     {
@@ -119,22 +119,22 @@ public sealed partial class FileStorage : IFileStorage
     }
 
     /// <summary>
-    /// Ermittelt den endgueltigen Zielpfad und prueft, dass er das
-    /// Zielverzeichnis nicht verlaesst.
+    /// Ermittelt den endgültigen Zielpfad und prüft, dass er das
+    /// Zielverzeichnis nicht verlässt.
     /// </summary>
     private static string ResolveTargetPath(
         string targetDirectory, string safeName, OverwriteBehavior behavior)
     {
         string candidate = Path.GetFullPath(Path.Combine(targetDirectory, safeName));
 
-        // Guertel und Hosentraeger: Nach der Bereinigung darf kein Pfadanteil
-        // mehr enthalten sein, trotzdem wird das Ergebnis geprueft.
+        // Gürtel und Hosenträger: Nach der Bereinigung darf kein Pfadanteil
+        // mehr enthalten sein, trotzdem wird das Ergebnis geprüft.
         if (!candidate.StartsWith(
                 targetDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar,
                 StringComparison.Ordinal))
         {
             throw new UnauthorizedAccessException(
-                "Der ermittelte Ausgabepfad liegt ausserhalb des Zielverzeichnisses.");
+                "Der ermittelte Ausgabepfad liegt außerhalb des Zielverzeichnisses.");
         }
 
         if (!File.Exists(candidate))
@@ -164,7 +164,7 @@ public sealed partial class FileStorage : IFileStorage
                 }
 
                 throw new IOException(
-                    $"Es konnte kein freier Dateiname fuer '{safeName}' gefunden werden.");
+                    $"Es konnte kein freier Dateiname für '{safeName}' gefunden werden.");
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(behavior), behavior, null);
@@ -182,8 +182,8 @@ public sealed partial class FileStorage : IFileStorage
         }
         catch (IOException)
         {
-            // Die temporaere Datei bleibt liegen. Das ist unschoen, aber kein
-            // Grund, den eigentlichen Fehler zu ueberdecken.
+            // Die temporäre Datei bleibt liegen. Das ist unschön, aber kein
+            // Grund, den eigentlichen Fehler zu überdecken.
         }
         catch (UnauthorizedAccessException)
         {
@@ -198,17 +198,17 @@ public sealed partial class FileStorage : IFileStorage
 }
 
 /// <summary>
-/// Verwaltet ein Arbeitsverzeichnis fuer einen einzelnen Vorgang.
+/// Verwaltet ein Arbeitsverzeichnis für einen einzelnen Vorgang.
 ///
-/// Alle temporaeren Dateien eines Erzeugungslaufs liegen darunter und werden
-/// beim Verwerfen geloescht – auch bei einem Fehler oder einem Abbruch durch
+/// Alle temporären Dateien eines Erzeugungslaufs liegen darunter und werden
+/// beim Verwerfen gelöscht – auch bei einem Fehler oder einem Abbruch durch
 /// den Benutzer (docs/SECURITY.md, S8).
 /// </summary>
 public sealed class TemporaryWorkspace : ITemporaryWorkspace
 {
     private TemporaryWorkspace(string path) => Path = path;
 
-    /// <summary>Vollstaendiger Pfad des Arbeitsverzeichnisses.</summary>
+    /// <summary>Vollständiger Pfad des Arbeitsverzeichnisses.</summary>
     public string Path { get; }
 
     /// <summary>Legt ein neues, leeres Arbeitsverzeichnis an.</summary>
@@ -240,7 +240,7 @@ public sealed class TemporaryWorkspace : ITemporaryWorkspace
         return path;
     }
 
-    /// <summary>Loescht das Arbeitsverzeichnis samt Inhalt.</summary>
+    /// <summary>Löscht das Arbeitsverzeichnis samt Inhalt.</summary>
     public void Dispose()
     {
         try
@@ -252,7 +252,7 @@ public sealed class TemporaryWorkspace : ITemporaryWorkspace
         }
         catch (IOException)
         {
-            // Beim Aufraeumen darf nichts mehr schiefgehen koennen.
+            // Beim Aufräumen darf nichts mehr schiefgehen können.
         }
         catch (UnauthorizedAccessException)
         {
@@ -261,7 +261,7 @@ public sealed class TemporaryWorkspace : ITemporaryWorkspace
     }
 }
 
-/// <summary>Erzeugt Arbeitsverzeichnisse im temporaeren Verzeichnis des Systems.</summary>
+/// <summary>Erzeugt Arbeitsverzeichnisse im temporären Verzeichnis des Systems.</summary>
 public sealed class TemporaryWorkspaceFactory : ITemporaryWorkspaceFactory
 {
     /// <inheritdoc />

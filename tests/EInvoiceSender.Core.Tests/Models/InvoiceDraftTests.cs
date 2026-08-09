@@ -6,18 +6,18 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Models;
 
 /// <summary>
-/// Prueft das Eingabeformular.
+/// Prüft das Eingabeformular.
 ///
-/// Der Entwurf haelt jedes Feld als Zeichenkette, damit eine halb getippte
-/// Eingabe die Oberflaeche nicht blockiert. Erst
+/// Der Entwurf hält jedes Feld als Zeichenkette, damit eine halb getippte
+/// Eingabe die Oberfläche nicht blockiert. Erst
 /// <see cref="InvoiceDraft.TryBuildInvoice"/> macht daraus eine Rechnung – und
-/// meldet jeden unlesbaren Wert als verstaendlichen Befund statt mit einer
+/// meldet jeden unlesbaren Wert als verständlichen Befund statt mit einer
 /// Ausnahme.
 /// </summary>
 public sealed class InvoiceDraftTests
 {
     [Fact]
-    public void VollstaendigerEntwurfWirdZuEinerRechnung()
+    public void VollständigerEntwurfWirdZuEinerRechnung()
     {
         InvoiceDraft draft = FilledDraft();
 
@@ -44,7 +44,7 @@ public sealed class InvoiceDraftTests
     }
 
     [Fact]
-    public void UnlesbareZahlErzeugtEinenVerstaendlichenBefundStattEinerAusnahme()
+    public void UnlesbareZahlErzeugtEinenVerständlichenBefundStattEinerAusnahme()
     {
         InvoiceDraft draft = FilledDraft();
         draft.Lines[0].NetUnitPrice = "hundert Euro";
@@ -55,13 +55,13 @@ public sealed class InvoiceDraftTests
         Assert.True(report.HasErrors);
         Assert.Contains(
             report.Findings,
-            f => f.Message.Contains("keine gueltige Zahl", StringComparison.Ordinal));
+            f => f.Message.Contains("keine gültige Zahl", StringComparison.Ordinal));
     }
 
     /// <summary>
     /// Arbeitsteilung: Der Entwurf meldet nur, was er nicht **lesen** kann. Ob
     /// eine Pflichtangabe **fehlt**, entscheidet das Regelwerk EN 16931. Eine
-    /// leere Rechnungsnummer laesst sich lesen – sie ist eben leer – und wird
+    /// leere Rechnungsnummer lässt sich lesen – sie ist eben leer – und wird
     /// deshalb erst dort beanstandet.
     /// </summary>
     [Fact]
@@ -83,7 +83,7 @@ public sealed class InvoiceDraftTests
     }
 
     [Fact]
-    public void PositionenLassenSichHinzufuegenUndNeuNummerieren()
+    public void PositionenLassenSichHinzufügenUndNeuNummerieren()
     {
         var draft = new InvoiceDraft();
 
@@ -114,7 +114,7 @@ public sealed class InvoiceDraftTests
             SellerVatId = "DE123456789",
             SellerEmail = "rechnung@example.invalid",
             BuyerName = "Beispielkunde AG",
-            BuyerStreet = "Kundenstrasse 7",
+            BuyerStreet = "Kundenstraße 7",
             BuyerPostalCode = "20095",
             BuyerCity = "Hamburg",
             BuyerCountry = "DE",

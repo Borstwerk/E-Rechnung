@@ -4,16 +4,16 @@ namespace EInvoiceSender.Core.Zugferd;
 /// Feste Zeichenketten des Formats UN/CEFACT Cross Industry Invoice.
 ///
 /// Diese Werte sind in docs/STANDARDS.md belegt und dort mit Quelle und
-/// Vertrauensangabe dokumentiert. Sie duerfen nirgends im Code dupliziert
+/// Vertrauensangabe dokumentiert. Sie dürfen nirgends im Code dupliziert
 /// werden – bei einer Formatumstellung ist diese Datei die einzige Stelle,
-/// die sich aendert.
+/// die sich ändert.
 /// </summary>
 public static class CiiConstants
 {
     /// <summary>Namensraum des Wurzelelements.</summary>
     public const string NsRsm = "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100";
 
-    /// <summary>Namensraum der wiederverwendbaren Geschaeftsobjekte.</summary>
+    /// <summary>Namensraum der wiederverwendbaren Geschäftsobjekte.</summary>
     public const string NsRam = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100";
 
     /// <summary>Namensraum der unqualifizierten Datentypen.</summary>
@@ -22,16 +22,16 @@ public static class CiiConstants
     /// <summary>Namensraum der qualifizierten Datentypen.</summary>
     public const string NsQdt = "urn:un:unece:uncefact:data:standard:QualifiedDataType:100";
 
-    /// <summary>Praefix fuer <see cref="NsRsm"/>.</summary>
+    /// <summary>Präfix für <see cref="NsRsm"/>.</summary>
     public const string PrefixRsm = "rsm";
 
-    /// <summary>Praefix fuer <see cref="NsRam"/>.</summary>
+    /// <summary>Präfix für <see cref="NsRam"/>.</summary>
     public const string PrefixRam = "ram";
 
-    /// <summary>Praefix fuer <see cref="NsUdt"/>.</summary>
+    /// <summary>Präfix für <see cref="NsUdt"/>.</summary>
     public const string PrefixUdt = "udt";
 
-    /// <summary>Praefix fuer <see cref="NsQdt"/>.</summary>
+    /// <summary>Präfix für <see cref="NsQdt"/>.</summary>
     public const string PrefixQdt = "qdt";
 
     /// <summary>Name des Wurzelelements.</summary>
@@ -39,7 +39,7 @@ public static class CiiConstants
 
     /// <summary>
     /// Profilkennung des Profils EN 16931 (COMFORT).
-    /// Belegt aus zwei unabhaengigen Referenzimplementierungen, siehe
+    /// Belegt aus zwei unabhängigen Referenzimplementierungen, siehe
     /// docs/STANDARDS.md, Abschnitt 2.1.
     /// </summary>
     public const string ProfileEn16931 = "urn:cen.eu:en16931:2017";
@@ -50,10 +50,10 @@ public static class CiiConstants
     /// <summary>Steuerart Umsatzsteuer nach UNTDID 5153.</summary>
     public const string TaxTypeVat = "VAT";
 
-    /// <summary>Schemakennung fuer die Umsatzsteuer-Identifikationsnummer.</summary>
+    /// <summary>Schemakennung für die Umsatzsteuer-Identifikationsnummer.</summary>
     public const string TaxSchemeVatId = "VA";
 
-    /// <summary>Schemakennung fuer die Steuernummer des Finanzamts.</summary>
+    /// <summary>Schemakennung für die Steuernummer des Finanzamts.</summary>
     public const string TaxSchemeTaxNumber = "FC";
 
     /// <summary>Schemakennung einer elektronischen Adresse vom Typ E-Mail (EAS-Liste).</summary>
@@ -71,13 +71,13 @@ public static class CiiConstants
     /// <summary>Beschreibungstext des Anhangs im PDF.</summary>
     public const string EmbeddedDescription = "Factur-X/ZUGFeRD Rechnung";
 
-    /// <summary>Menschenlesbare Formatbezeichnung fuer den Validierungsbericht.</summary>
+    /// <summary>Menschenlesbare Formatbezeichnung für den Validierungsbericht.</summary>
     public const string FormatDescription =
         "ZUGFeRD 2.3 / Factur-X 1.07, Profil EN 16931 (CII D16B), PDF/A-3b";
 
     /// <summary>
     /// Bekannte Profilkennungen zur Erkennung eingehender Dateien.
-    /// Wird nur gelesen, nie geschrieben – erzeugt wird ausschliesslich
+    /// Wird nur gelesen, nie geschrieben – erzeugt wird ausschließlich
     /// <see cref="ProfileEn16931"/>.
     /// </summary>
     public static IReadOnlyDictionary<string, string> KnownProfiles { get; } =

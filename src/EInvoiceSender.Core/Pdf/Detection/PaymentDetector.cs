@@ -13,10 +13,10 @@ public sealed record DetectedPayment
 /// <summary>
 /// Erkennt IBAN und BIC.
 ///
-/// Bei der IBAN genuegt das Muster ausdruecklich nicht: Erst die Pruefsumme
+/// Bei der IBAN genügt das Muster ausdrücklich nicht: Erst die Prüfsumme
 /// nach ISO 7064 macht aus einer Zeichenfolge eine IBAN. Eine falsche
 /// Bankverbindung auf einer Rechnung ist teuer, deshalb wird eine syntaktisch
-/// passende, rechnerisch falsche IBAN verworfen statt uebernommen.
+/// passende, rechnerisch falsche IBAN verworfen statt übernommen.
 /// </summary>
 internal static class PaymentDetector
 {
@@ -42,7 +42,7 @@ internal static class PaymentDetector
                 return new DetectedValue<string>(
                     iban.Value, DetectionConfidence.High,
                     DetectionParsers.MaskIbans(line.Text),
-                    "Muster erkannt und Pruefsumme nach ISO 7064 bestaetigt.");
+                    "Muster erkannt und Prüfsumme nach ISO 7064 bestätigt.");
             }
         }
 

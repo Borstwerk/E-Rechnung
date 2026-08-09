@@ -4,7 +4,7 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Files;
 
 /// <summary>
-/// Tests fuer <see cref="SafeFileName"/>. Ein Teil der Faelle sind
+/// Tests für <see cref="SafeFileName"/>. Ein Teil der Fälle sind
 /// Sicherheitstests gegen Path Traversal (siehe docs/SECURITY.md, S3).
 /// </summary>
 public sealed class SafeFileNameTests
@@ -20,16 +20,16 @@ public sealed class SafeFileNameTests
     }
 
     [Fact]
-    public void Sanitize_EntferntSteuerzeichenUndZeilenumbrueche()
+    public void Sanitize_EntferntSteuerzeichenUndZeilenumbrüche()
     {
-        // Tabulator, Zeilenvorschub und Wagenruecklauf sind Steuerzeichen.
+        // Tabulator, Zeilenvorschub und Wagenrücklauf sind Steuerzeichen.
         string ergebnis = SafeFileName.Sanitize("A\t\n\rB");
 
         Assert.Equal("A_B", ergebnis);
     }
 
     [Fact]
-    public void Sanitize_MehrereUngueltigeZeichenHintereinanderWerdenZuEinemUnterstrich()
+    public void Sanitize_MehrereUngültigeZeichenHintereinanderWerdenZuEinemUnterstrich()
     {
         string ergebnis = SafeFileName.Sanitize("A<<<>>>B");
 
@@ -53,10 +53,10 @@ public sealed class SafeFileNameTests
         Assert.Equal("Müller_Straße", ergebnis);
     }
 
-    // --- Sicherheitstests: Path Traversal darf niemals zu einem Pfadwechsel fuehren. ---
+    // --- Sicherheitstests: Path Traversal darf niemals zu einem Pfadwechsel führen. ---
 
     [Fact]
-    public void Sicherheitstest_Sanitize_EntferntUnixPathTraversalVollstaendig()
+    public void Sicherheitstest_Sanitize_EntferntUnixPathTraversalVollständig()
     {
         string ergebnis = SafeFileName.Sanitize("../../etc/passwd");
 
@@ -67,7 +67,7 @@ public sealed class SafeFileNameTests
     }
 
     [Fact]
-    public void Sicherheitstest_Sanitize_EntferntWindowsPathTraversalVollstaendig()
+    public void Sicherheitstest_Sanitize_EntferntWindowsPathTraversalVollständig()
     {
         string ergebnis = SafeFileName.Sanitize("..\\..\\windows\\system32");
 
@@ -113,7 +113,7 @@ public sealed class SafeFileNameTests
     }
 
     [Fact]
-    public void Sanitize_KuerztUeberlangenNamenAufMaxLength()
+    public void Sanitize_KürztÜberlangenNamenAufMaxLength()
     {
         string lang = new string('a', 70);
 
@@ -129,15 +129,15 @@ public sealed class SafeFileNameTests
     [InlineData("PRN", "PRN_")]
     [InlineData("com1", "com1_")]
     [InlineData("NUL.txt", "NUL.txt_")]
-    public void Sanitize_HaengtUnterstrichAnReservierteWindowsNamenAn(string eingabe, string erwartet)
+    public void Sanitize_HängtUnterstrichAnReservierteWindowsNamenAn(string eingabe, string erwartet)
     {
         Assert.Equal(erwartet, SafeFileName.Sanitize(eingabe));
     }
 
     [Fact]
-    public void Sanitize_VeraendertNormalenNamenNicht_DerNurAehnlichWieReservierterNameIst()
+    public void Sanitize_VerändertNormalenNamenNicht_DerNurÄhnlichWieReservierterNameIst()
     {
-        // "Contract" beginnt wie "CON", ist aber kein reservierter Geraetename.
+        // "Contract" beginnt wie "CON", ist aber kein reservierter Gerätename.
         Assert.Equal("Contract", SafeFileName.Sanitize("Contract"));
     }
 
@@ -150,7 +150,7 @@ public sealed class SafeFileNameTests
     }
 
     [Fact]
-    public void Sicherheitstest_BuildOutputFileName_NeutralisiertGefaehrlicheRechnungsnummer()
+    public void Sicherheitstest_BuildOutputFileName_NeutralisiertGefährlicheRechnungsnummer()
     {
         string ergebnis = SafeFileName.BuildOutputFileName("../../etc/passwd", "Müller GmbH");
 
@@ -161,7 +161,7 @@ public sealed class SafeFileNameTests
     }
 
     [Fact]
-    public void AppendCounter_HaengtZaehlerInKlammernAn()
+    public void AppendCounter_HängtZählerInKlammernAn()
     {
         string ergebnis = SafeFileName.AppendCounter("Rechnung.pdf", 2);
 
@@ -169,7 +169,7 @@ public sealed class SafeFileNameTests
     }
 
     [Fact]
-    public void AppendCounter_BeruecksichtigtNurDieLetzteEndungBeiPunktenImNamen()
+    public void AppendCounter_BerücksichtigtNurDieLetzteEndungBeiPunktenImNamen()
     {
         string ergebnis = SafeFileName.AppendCounter("Archiv.2026.pdf", 3);
 
@@ -180,9 +180,9 @@ public sealed class SafeFileNameTests
     [InlineData(1)]
     [InlineData(0)]
     [InlineData(-1)]
-    public void AppendCounter_WirftBeiZaehlerKleinerZwei(int zaehler)
+    public void AppendCounter_WirftBeiZählerKleinerZwei(int zähler)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => SafeFileName.AppendCounter("Rechnung.pdf", zaehler));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SafeFileName.AppendCounter("Rechnung.pdf", zähler));
     }
 
     [Fact]

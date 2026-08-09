@@ -6,11 +6,11 @@ using EInvoiceSender.Core.Services;
 namespace EInvoiceSender.App.ViewModels;
 
 /// <summary>
-/// Schritt 4: Die E-Rechnung erzeugen und pruefen lassen.
+/// Schritt 4: Die E-Rechnung erzeugen und prüfen lassen.
 ///
-/// Der Kern meldet jeden der neun Arbeitsschritte einzeln zurueck. Die
-/// Oberflaeche zeigt sie mit, damit ein laengerer Lauf nachvollziehbar bleibt
-/// und ein Abbruch jederzeit moeglich ist.
+/// Der Kern meldet jeden der neun Arbeitsschritte einzeln zurück. Die
+/// Oberfläche zeigt sie mit, damit ein längerer Lauf nachvollziehbar bleibt
+/// und ein Abbruch jederzeit möglich ist.
 /// </summary>
 public sealed partial class GenerationViewModel(IEInvoiceService service) : StepViewModel, IDisposable
 {
@@ -27,7 +27,7 @@ public sealed partial class GenerationViewModel(IEInvoiceService service) : Step
     [ObservableProperty]
     private CreateEInvoiceResult? _result;
 
-    /// <summary>Fuehrt die Erzeugung aus und liefert das Ergebnis.</summary>
+    /// <summary>Führt die Erzeugung aus und liefert das Ergebnis.</summary>
     public async Task<CreateEInvoiceResult> RunAsync(CreateEInvoiceRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -41,9 +41,9 @@ public sealed partial class GenerationViewModel(IEInvoiceService service) : Step
 
         try
         {
-            // Progress<T> ist hier richtig: Es stellt die Meldungen ueber den
+            // Progress<T> ist hier richtig: Es stellt die Meldungen über den
             // erfassten Synchronisierungskontext zu, also auf dem
-            // Oberflaechen-Thread.
+            // Oberflächen-Thread.
             var progress = new Progress<PipelineProgress>(OnProgress);
 
             Result = await _service.CreateAsync(request, progress, _running.Token)
@@ -79,7 +79,7 @@ public sealed partial class GenerationViewModel(IEInvoiceService service) : Step
         }
     }
 
-    /// <summary>Setzt den Schritt auf den Anfangszustand zurueck.</summary>
+    /// <summary>Setzt den Schritt auf den Anfangszustand zurück.</summary>
     public void Reset()
     {
         Progress.Clear();

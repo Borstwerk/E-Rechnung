@@ -15,7 +15,7 @@ namespace EInvoiceSender.Core.Services;
 /// </summary>
 /// <param name="JavaExecutable">Pfad oder Name der Java-Laufzeit.</param>
 /// <param name="JarPath">Pfad zur Mustang-CLI-JAR.</param>
-/// <param name="Timeout">Zeitlimit fuer einen Pruefdurchlauf.</param>
+/// <param name="Timeout">Zeitlimit für einen Prüfdurchlauf.</param>
 public sealed record MustangOptions(string JavaExecutable, string JarPath, TimeSpan Timeout)
 {
     /// <summary>Vorgabewerte: Java aus dem Suchpfad, zwei Minuten Zeitlimit.</summary>
@@ -24,11 +24,11 @@ public sealed record MustangOptions(string JavaExecutable, string JarPath, TimeS
 
     /// <summary>
     /// Sucht die Mustang-JAR unter <c>tools/mustang/</c> – erst neben der
-    /// Anwendung, dann aufwaerts im Projektbaum.
+    /// Anwendung, dann aufwärts im Projektbaum.
     ///
     /// Findet sie nichts, wird trotzdem ein Wert geliefert. Der Validator
-    /// meldet sich dann als "nicht verfuegbar", und der Bericht weist die
-    /// Pruefung als NICHT AUSGEFUEHRT aus. Ein fehlendes Werkzeug darf den
+    /// meldet sich dann als "nicht verfügbar", und der Bericht weist die
+    /// Prüfung als NICHT AUSGEFÜHRT aus. Ein fehlendes Werkzeug darf den
     /// Start der Anwendung nicht verhindern, aber auch nie wie ein bestandener
     /// Test aussehen.
     /// </summary>
@@ -61,27 +61,27 @@ public sealed record MustangOptions(string JavaExecutable, string JarPath, TimeS
 }
 
 /// <summary>
-/// Bindet die Mustangproject-CLI als externen Pruefer an.
+/// Bindet die Mustangproject-CLI als externen Prüfer an.
 ///
-/// Mustang fuehrt in einem Durchlauf zwei getrennte Pruefungen aus:
-/// das offizielle CEN-Schematron fuer EN 16931 und – bei PDF-Dateien –
-/// veraPDF fuer PDF/A. Das Werkzeug laeuft vollstaendig offline; es werden
-/// keine Rechnungsdaten uebertragen.
+/// Mustang führt in einem Durchlauf zwei getrennte Prüfungen aus:
+/// das offizielle CEN-Schematron für EN 16931 und – bei PDF-Dateien –
+/// veraPDF für PDF/A. Das Werkzeug läuft vollständig offline; es werden
+/// keine Rechnungsdaten übertragen.
 ///
-/// **Dieser Validator ist das Freigabegate.** Die eigene Regelpruefung
-/// (<see cref="Rules.En16931RuleValidator"/>) dient der fruehen Benutzerfuehrung
-/// und ersetzt ihn ausdruecklich nicht.
+/// **Dieser Validator ist das Freigabegate.** Die eigene Regelprüfung
+/// (<see cref="Rules.En16931RuleValidator"/>) dient der frühen Benutzerführung
+/// und ersetzt ihn ausdrücklich nicht.
 ///
 /// Zwei Fallstricke, die hier bewusst behandelt werden:
 ///
-/// 1. **Jede Teilzusammenfassung zaehlt einzeln.** Der Bericht enthaelt mehrere
+/// 1. **Jede Teilzusammenfassung zählt einzeln.** Der Bericht enthält mehrere
 ///    <c>&lt;summary status="..."&gt;</c>-Elemente. Die oberste kann "valid"
-///    melden, obwohl die PDF/A-Pruefung fehlgeschlagen ist – genau so ist es
-///    waehrend der Entwicklung aufgetreten. Ein Ergebnis gilt nur als gueltig,
+///    melden, obwohl die PDF/A-Prüfung fehlgeschlagen ist – genau so ist es
+///    während der Entwicklung aufgetreten. Ein Ergebnis gilt nur als gültig,
 ///    wenn **keine** Teilzusammenfassung "invalid" meldet.
-/// 2. **Unlesbare Ausgabe ist ein Fehler, kein Erfolg.** Laesst sich der Bericht
-///    nicht auswerten, wird das als Fehler gemeldet. Andernfalls wuerde ein
-///    abgestuerztes Werkzeug wie eine bestandene Pruefung wirken.
+/// 2. **Unlesbare Ausgabe ist ein Fehler, kein Erfolg.** Lässt sich der Bericht
+///    nicht auswerten, wird das als Fehler gemeldet. Andernfalls würde ein
+///    abgestürztes Werkzeug wie eine bestandene Prüfung wirken.
 /// </summary>
 public sealed partial class MustangValidator : IExternalDocumentValidator
 {
@@ -141,9 +141,9 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
         {
             report.Warning(
                 "APP-EXT-001",
-                "Die zusaetzliche Pruefung mit dem externen Validator wurde uebersprungen, "
+                "Die zusätzliche Prüfung mit dem externen Validator wurde übersprungen, "
                 + "weil das Werkzeug auf diesem Rechner nicht eingerichtet ist. "
-                + "Die Datei wurde nur mit den eingebauten Pruefungen kontrolliert.",
+                + "Die Datei wurde nur mit den eingebauten Prüfungen kontrolliert.",
                 technicalDetail: $"Erwartete Datei: {_options.JarPath}");
 
             return report.Build();
@@ -162,7 +162,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
             report.Error(
                 "APP-EXT-002",
                 "Der externe Validator konnte nicht gestartet werden. "
-                + "Die Datei gilt damit als ungeprueft.",
+                + "Die Datei gilt damit als ungeprüft.",
                 technicalDetail: $"{ex.GetType().Name}: {ex.Message}");
 
             return report.Build();
@@ -172,10 +172,10 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
         {
             report.Error(
                 "APP-EXT-003",
-                "Die externe Pruefung wurde abgebrochen, weil sie zu lange gedauert hat. "
-                + "Die Datei gilt damit als ungeprueft.",
+                "Die externe Prüfung wurde abgebrochen, weil sie zu lange gedauert hat. "
+                + "Die Datei gilt damit als ungeprüft.",
                 technicalDetail:
-                    $"Zeitlimit {_options.Timeout.TotalSeconds:F0} s ueberschritten.");
+                    $"Zeitlimit {_options.Timeout.TotalSeconds:F0} s überschritten.");
 
             return report.Build();
         }
@@ -186,8 +186,8 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
     }
 
     /// <summary>
-    /// Wertet die Ausgabe aus. Streng: Nur ein vollstaendig gelesener Bericht
-    /// ohne einzige ungueltige Teilzusammenfassung gilt als bestanden.
+    /// Wertet die Ausgabe aus. Streng: Nur ein vollständig gelesener Bericht
+    /// ohne einzige ungültige Teilzusammenfassung gilt als bestanden.
     /// </summary>
     private void Evaluate(ProcessResult result, ValidationReportBuilder report)
     {
@@ -198,8 +198,8 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
         {
             report.Error(
                 "APP-EXT-004",
-                "Die Rueckmeldung des externen Validators konnte nicht ausgewertet werden. "
-                + "Die Datei gilt damit als ungeprueft.",
+                "Die Rückmeldung des externen Validators konnte nicht ausgewertet werden. "
+                + "Die Datei gilt damit als ungeprüft.",
                 technicalDetail: BuildTail(result));
 
             return;
@@ -221,7 +221,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
             report.Error(
                 "APP-EXT-005",
                 "Der externe Validator hat kein auswertbares Ergebnis geliefert. "
-                + "Die Datei gilt damit als ungeprueft.",
+                + "Die Datei gilt damit als ungeprüft.",
                 technicalDetail: BuildTail(result));
 
             return;
@@ -240,7 +240,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
                     $"Mustang-Abschnitt '{section.Section}' meldet Status '{section.Status}'.");
         }
 
-        // Einzelbefunde des Schematron als technische Details anhaengen.
+        // Einzelbefunde des Schematron als technische Details anhängen.
         foreach (XElement message in validation.Descendants()
                      .Where(e => e.Name.LocalName is "error" or "message"))
         {
@@ -258,18 +258,18 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
                 RuleId: (string?)message.Attribute("criterion") is { Length: > 0 }
                     ? "EXT-SCHEMATRON"
                     : "EXT-MELDUNG",
-                Message: "Der externe Validator hat einen Verstoss gemeldet.",
+                Message: "Der externe Validator hat einen Verstoß gemeldet.",
                 FieldPath: (string?)message.Attribute("location") ?? string.Empty,
                 TechnicalDetail: Shorten(text)));
         }
 
-        // Der Exitcode wird ergaenzend gewertet, aber nie allein.
+        // Der Exitcode wird ergänzend gewertet, aber nie allein.
         if (result.ExitCode != 0 && invalidSections.Count == 0)
         {
             report.Error(
                 "APP-EXT-011",
                 "Der externe Validator hat die Datei beanstandet.",
-                technicalDetail: $"Exitcode {result.ExitCode} bei formal gueltigem Bericht.");
+                technicalDetail: $"Exitcode {result.ExitCode} bei formal gültigem Bericht.");
         }
 
         if (invalidSections.Count == 0 && result.ExitCode == 0)
@@ -278,26 +278,26 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
 
             report.Information(
                 "APP-EXT-000",
-                "Die externe Pruefung wurde bestanden.",
+                "Die externe Prüfung wurde bestanden.",
                 technicalDetail: string.Join(
                     ", ",
                     summaries.Select(s => $"{s.Section}={s.Status}")));
         }
     }
 
-    /// <summary>Uebersetzt den Abschnittsnamen in eine verstaendliche Aussage.</summary>
+    /// <summary>Übersetzt den Abschnittsnamen in eine verständliche Aussage.</summary>
     private static string DescribeSection(string section) => section switch
     {
         "pdf" => "Die erzeugte Datei entspricht nicht dem Standard PDF/A-3. "
-                 + "Sie wird von manchen Empfaengern zurueckgewiesen.",
+                 + "Sie wird von manchen Empfängern zurückgewiesen.",
         "xml" => "Die strukturierten Rechnungsdaten entsprechen nicht der Norm EN 16931.",
-        _ => "Die externe Pruefung der erzeugten Datei ist fehlgeschlagen.",
+        _ => "Die externe Prüfung der erzeugten Datei ist fehlgeschlagen.",
     };
 
     /// <summary>
     /// Sucht das <c>&lt;validation&gt;</c>-Element in der Ausgabe. Mustang
-    /// schreibt davor Protokollzeilen, die uebersprungen werden muessen.
-    /// Gelesen wird ueber den abgesicherten XML-Leser.
+    /// schreibt davor Protokollzeilen, die übersprungen werden müssen.
+    /// Gelesen wird über den abgesicherten XML-Leser.
     /// </summary>
     private static XElement? TryExtractReport(string output)
     {
@@ -349,7 +349,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
     }
 
     /// <summary>
-    /// Baut einen kurzen technischen Auszug fuer den Detailbereich. Bewusst
+    /// Baut einen kurzen technischen Auszug für den Detailbereich. Bewusst
     /// begrenzt: Die Ausgabe kann sehr lang werden und darf den Bericht nicht
     /// unlesbar machen.
     /// </summary>
@@ -367,6 +367,6 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
 
     [LoggerMessage(
         EventId = 4001, Level = LogLevel.Information,
-        Message = "Externe Pruefung bestanden, {SummaryCount} Teilzusammenfassung(en) gueltig.")]
+        Message = "Externe Prüfung bestanden, {SummaryCount} Teilzusammenfassung(en) gültig.")]
     private static partial void LogValidationPassed(ILogger logger, int summaryCount);
 }

@@ -7,33 +7,33 @@ using Xunit;
 namespace EInvoiceSender.IntegrationTests;
 
 /// <summary>
-/// Prueft das programmatisch erzeugte sRGB-ICC-Profil (ADR-0006).
+/// Prüft das programmatisch erzeugte sRGB-ICC-Profil (ADR-0006).
 ///
-/// Das Profil ist Teil jeder Ausgabedatei. Aendert es sich unbeabsichtigt,
-/// aendert sich die Pruefsumme jeder erzeugten Rechnung – und im schlimmsten
-/// Fall faellt die PDF/A-Pruefung durch. Deshalb ist der Aufbau hier fest
-/// verankert und die Pruefsumme gepinnt.
+/// Das Profil ist Teil jeder Ausgabedatei. Ändert es sich unbeabsichtigt,
+/// ändert sich die Prüfsumme jeder erzeugten Rechnung – und im schlimmsten
+/// Fall fällt die PDF/A-Prüfung durch. Deshalb ist der Aufbau hier fest
+/// verankert und die Prüfsumme gepinnt.
 ///
-/// Die vollstaendige Beschreibung steht in docs/STANDARDS.md, Abschnitt 7.
+/// Die vollständige Beschreibung steht in docs/STANDARDS.md, Abschnitt 7.
 /// </summary>
 public sealed class IccProfileTests
 {
     /// <summary>
-    /// Erwartete SHA-256-Pruefsumme des erzeugten Profils.
+    /// Erwartete SHA-256-Prüfsumme des erzeugten Profils.
     ///
-    /// Dieser Wert darf nur bewusst geaendert werden. Schlaegt der Test fehl,
-    /// hat sich die Profilerzeugung geaendert; dann muessen die
+    /// Dieser Wert darf nur bewusst geändert werden. Schlägt der Test fehl,
+    /// hat sich die Profilerzeugung geändert; dann müssen die
     /// Ende-zu-Ende-Tests mit veraPDF erneut laufen und der Wert samt
     /// docs/STANDARDS.md nachgezogen werden.
     /// </summary>
     private const string ExpectedSha256 =
         "4eddebbfa044ee963d28f6ac89d52db3f6cdee7106adb30d9424a6e60783b8e8";
 
-    /// <summary>Erwartete Groesse in Bytes.</summary>
+    /// <summary>Erwartete Größe in Bytes.</summary>
     private const int ExpectedLength = 536;
 
     [Fact]
-    public void ProfilIstDeterministischUndEntsprichtDerGepinntenPruefsumme()
+    public void ProfilIstDeterministischUndEntsprichtDerGepinntenPrüfsumme()
     {
         byte[] first = SRgbIccProfile.GetBytes();
         byte[] second = SRgbIccProfile.GetBytes();
@@ -49,9 +49,9 @@ public sealed class IccProfileTests
     [Fact]
     public void AufrufeLiefernJeweilsEineEigeneKopie()
     {
-        // Die Bytes gehen in einen PDF-Stream. Wuerde immer dasselbe Feld
-        // zurueckgegeben, koennte ein Aufrufer das zwischengespeicherte Profil
-        // fuer alle spaeteren Dateien veraendern.
+        // Die Bytes gehen in einen PDF-Stream. Würde immer dasselbe Feld
+        // zurückgegeben, könnte ein Aufrufer das zwischengespeicherte Profil
+        // für alle späteren Dateien verändern.
         byte[] first = SRgbIccProfile.GetBytes();
         first[0] = 0xFF;
 
@@ -63,7 +63,7 @@ public sealed class IccProfileTests
     {
         byte[] profile = SRgbIccProfile.GetBytes();
 
-        // Groessenangabe im Kopf muss zur tatsaechlichen Groesse passen.
+        // Größenangabe im Kopf muss zur tatsächlichen Größe passen.
         Assert.Equal(profile.Length, BinaryPrimitives.ReadInt32BigEndian(profile));
 
         // Version 2.4.0
@@ -84,7 +84,7 @@ public sealed class IccProfileTests
     }
 
     [Fact]
-    public void AlleFuerEinMatrixProfilVorgeschriebenenTagsSindVorhanden()
+    public void AlleFürEinMatrixProfilVorgeschriebenenTagsSindVorhanden()
     {
         byte[] profile = SRgbIccProfile.GetBytes();
 
@@ -101,7 +101,7 @@ public sealed class IccProfileTests
             int offset = (int)BinaryPrimitives.ReadUInt32BigEndian(profile.AsSpan(position + 4));
             int size = (int)BinaryPrimitives.ReadUInt32BigEndian(profile.AsSpan(position + 8));
 
-            // Jeder Tag muss vollstaendig innerhalb des Profils liegen ...
+            // Jeder Tag muss vollständig innerhalb des Profils liegen ...
             Assert.InRange(offset, 132 + (tagCount * 12), profile.Length);
             Assert.InRange(offset + size, offset, profile.Length);
 
@@ -117,7 +117,7 @@ public sealed class IccProfileTests
     }
 
     [Fact]
-    public void FarbwertTagsTragenDieSRgbPrimaervalenzen()
+    public void FarbwertTagsTragenDieSRgbPrimärvalenzen()
     {
         byte[] profile = SRgbIccProfile.GetBytes();
 

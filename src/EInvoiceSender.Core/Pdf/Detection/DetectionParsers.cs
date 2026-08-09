@@ -7,15 +7,15 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// Die kleinen, deterministischen Bausteine der Erkennung: Muster, Datums- und
 /// Zahlenumwandlung, Maskierung.
 ///
-/// Hier steht bewusst keine Fachlogik darueber, **welcher** Wert wohin gehoert
+/// Hier steht bewusst keine Fachlogik darüber, **welcher** Wert wohin gehört
 /// – das entscheiden die einzelnen Detektoren. Diese Klasse beantwortet nur:
-/// "Laesst sich diese Zeichenfolge als Datum lesen?"
+/// "Lässt sich diese Zeichenfolge als Datum lesen?"
 /// </summary>
 internal static partial class DetectionParsers
 {
     /// <summary>
-    /// Liest das erste Datum aus einem Textstueck. Unterstuetzt die
-    /// gebraeuchlichen deutschen Schreibweisen und ISO-Datumswerte.
+    /// Liest das erste Datum aus einem Textstück. Unterstützt die
+    /// gebräuchlichen deutschen Schreibweisen und ISO-Datumswerte.
     /// </summary>
     public static bool TryParseFirstDate(string text, out DateOnly value)
     {
@@ -55,7 +55,7 @@ internal static partial class DetectionParsers
         return false;
     }
 
-    /// <summary>Enthaelt der Text ueberhaupt ein Datum?</summary>
+    /// <summary>Enthält der Text überhaupt ein Datum?</summary>
     public static bool LooksLikeDate(string text)
         => GermanDate().IsMatch(text) || IsoDate().IsMatch(text);
 
@@ -63,7 +63,7 @@ internal static partial class DetectionParsers
     /// Liest den letzten Betrag einer Zeile.
     ///
     /// In Summenzeilen steht der Wert rechts. Prozentangaben werden vorher
-    /// entfernt, sonst gewaenne in "Umsatzsteuer 19 % 190,00" die 19.
+    /// entfernt, sonst gewänne in "Umsatzsteuer 19 % 190,00" die 19.
     /// </summary>
     public static bool TryParseLastAmount(string text, out decimal value)
     {
@@ -92,7 +92,7 @@ internal static partial class DetectionParsers
     }
 
     /// <summary>
-    /// Maskiert IBAN-aehnliche Zeichenfolgen in einem Text, der angezeigt oder
+    /// Maskiert IBAN-ähnliche Zeichenfolgen in einem Text, der angezeigt oder
     /// protokolliert wird.
     /// </summary>
     public static string MaskIbans(string text)
@@ -106,7 +106,7 @@ internal static partial class DetectionParsers
         });
 
     /// <summary>
-    /// Liefert den Text hinter dem ersten Vorkommen eines Schluesselworts.
+    /// Liefert den Text hinter dem ersten Vorkommen eines Schlüsselworts.
     /// Nur dieser Teil kommt als Wert in Frage.
     /// </summary>
     public static string AfterKeyword(string line, string keyword)
@@ -116,7 +116,7 @@ internal static partial class DetectionParsers
         return index < 0 ? line : line[(index + keyword.Length)..];
     }
 
-    /// <summary>Findet das erste in der Zeile enthaltene Schluesselwort.</summary>
+    /// <summary>Findet das erste in der Zeile enthaltene Schlüsselwort.</summary>
     public static string? FirstKeywordIn(string line, IReadOnlyList<string> keywords)
     {
         string lower = line.ToLowerInvariant();

@@ -3,13 +3,13 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Tests.Support;
 
 /// <summary>
-/// Ein benannter Testfall mit einer vollstaendigen Rechnung.
+/// Ein benannter Testfall mit einer vollständigen Rechnung.
 /// </summary>
 /// <param name="Key">Kurzname; zugleich Dateiname des Golden Master.</param>
 /// <param name="Description">Was der Fall abdeckt.</param>
 /// <param name="Invoice">Die Rechnung.</param>
 /// <param name="ExpectedToBeValid">
-/// Erwartung fuer die Gegenpruefung mit dem CEN-Schematron.
+/// Erwartung für die Gegenprüfung mit dem CEN-Schematron.
 /// </param>
 public sealed record InvoiceScenario(
     string Key,
@@ -19,11 +19,11 @@ public sealed record InvoiceScenario(
 
 /// <summary>
 /// Der verbindliche Katalog der Testrechnungen aus docs/SPECIFICATION.md.
-/// Alle Angaben sind frei erfunden; die IBAN stammt aus einem oeffentlich
-/// publizierten Beispiel und gehoert zu keinem realen Konto.
+/// Alle Angaben sind frei erfunden; die IBAN stammt aus einem öffentlich
+/// publizierten Beispiel und gehört zu keinem realen Konto.
 ///
-/// Dieser Katalog ist die gemeinsame Grundlage fuer die Golden-Master-Tests der
-/// XML-Erzeugung, fuer die Regelpruefung und fuer die Ende-zu-Ende-Tests.
+/// Dieser Katalog ist die gemeinsame Grundlage für die Golden-Master-Tests der
+/// XML-Erzeugung, für die Regelprüfung und für die Ende-zu-Ende-Tests.
 /// </summary>
 public static class InvoiceScenarios
 {
@@ -50,8 +50,8 @@ public static class InvoiceScenarios
     private static BuyerParty Buyer { get; } = new(
         Name: "Beispielkunde AG",
         Address: new PostalAddress(
-            Street: "Kundenstrasse 7",
-            AdditionalLine: "Gebaeude B",
+            Street: "Kundenstraße 7",
+            AdditionalLine: "Gebäude B",
             PostalCode: "20095",
             City: "Hamburg",
             Country: CountryCode.Germany),
@@ -65,14 +65,22 @@ public static class InvoiceScenarios
         Terms: "Zahlbar innerhalb von 14 Tagen ohne Abzug.",
         Reference: "RE-2026-0001");
 
-    /// <summary>Alle Faelle des Katalogs.</summary>
+    /// <summary>
+    /// Alle Fälle des Katalogs.
+    ///
+    /// Der Schlüssel eines Falles ist zugleich der Dateiname seiner
+    /// Sollfassung und wird von den Prüfskripten der Gegenprüfung gelesen.
+    /// Deshalb steht dort weiterhin "ermaessigt" und nicht "ermäßigt": Ein
+    /// Dateiname ist eine Kennung, kein angezeigter Text. Die Beschreibung
+    /// daneben ist Text und trägt Umlaute.
+    /// </summary>
     public static IReadOnlyList<InvoiceScenario> All { get; } =
     [
         new("01-dienstleistung-19",
             "Einfache Dienstleistungsrechnung mit 19 Prozent Umsatzsteuer",
             Build("RE-2026-0001",
             [
-                Line(1, "Beratungsleistung Maerz 2026", 10m, UnitCode.Hour, 95.00m, VatCategory.StandardRate, 19m),
+                Line(1, "Beratungsleistung März 2026", 10m, UnitCode.Hour, 95.00m, VatCategory.StandardRate, 19m),
             ]),
             ExpectedToBeValid: true),
 
@@ -85,7 +93,7 @@ public static class InvoiceScenarios
             ExpectedToBeValid: true),
 
         new("03-mehrere-saetze",
-            "Rechnung mit mehreren Steuersaetzen",
+            "Rechnung mit mehreren Steuersätzen",
             Build("RE-2026-0003",
             [
                 Line(1, "Beratungsleistung", 4m, UnitCode.Hour, 120.00m, VatCategory.StandardRate, 19m),
@@ -95,7 +103,7 @@ public static class InvoiceScenarios
             ExpectedToBeValid: true),
 
         new("04-steuerfrei",
-            "Steuerfreie Position mit zulaessiger Begruendung",
+            "Steuerfreie Position mit zulässiger Begründung",
             Build("RE-2026-0004",
             [
                 Line(1, "Beratungsleistung", 2m, UnitCode.Hour, 150.00m, VatCategory.StandardRate, 19m),
@@ -141,7 +149,7 @@ public static class InvoiceScenarios
             ExpectedToBeValid: true),
 
         new("07-reverse-charge",
-            "Steuerschuldnerschaft des Leistungsempfaengers",
+            "Steuerschuldnerschaft des Leistungsempfängers",
             Build("RE-2026-0007",
             [
                 Line(1, "Softwareentwicklung", 20m, UnitCode.Hour, 110.00m, VatCategory.ReverseCharge, 0m),
@@ -150,7 +158,7 @@ public static class InvoiceScenarios
             [
                 new VatExemptionReason(
                     VatCategory.ReverseCharge,
-                    "Steuerschuldnerschaft des Leistungsempfaengers",
+                    "Steuerschuldnerschaft des Leistungsempfängers",
                     "VATEX-EU-AE"),
             ],
             buyerOverride: Buyer with { VatId = "ATU12345678", Address = Buyer.Address with { Country = CountryCode.Parse("AT") } }),
@@ -236,6 +244,6 @@ public static class InvoiceScenarios
             BillingPeriodEnd = billingPeriodEnd,
             BuyerReference = "BR-2026-4711",
             OrderReference = "BE-2026-0815",
-            Note = "Vielen Dank fuer Ihren Auftrag.",
+            Note = "Vielen Dank für Ihren Auftrag.",
         };
 }

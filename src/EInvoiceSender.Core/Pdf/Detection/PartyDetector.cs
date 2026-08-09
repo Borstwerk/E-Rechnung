@@ -3,33 +3,33 @@ using EInvoiceSender.Core.Services;
 
 namespace EInvoiceSender.Core.Pdf.Detection;
 
-/// <summary>Verkaeufer und Kaeufer, so weit erkennbar.</summary>
+/// <summary>Verkäufer und Käufer, so weit erkennbar.</summary>
 public sealed record DetectedParties(DetectedParty Seller, DetectedParty Buyer)
 {
     public static DetectedParties None { get; } = new(new DetectedParty(), new DetectedParty());
 }
 
 /// <summary>
-/// Trennt Verkaeufer und Kaeufer.
+/// Trennt Verkäufer und Käufer.
 ///
 /// Das ist die schwierigste Zuordnung des ganzen Verfahrens, denn beide
 /// Adressen sehen gleich aus. Genutzt werden zwei Signale:
 ///
 /// 1. **Die eigene Firmenvorlage.** Steht der gespeicherte Firmenname oder die
-///    gespeicherte USt-IdNr. im Dokument, ist das ein starkes Zeichen fuer den
-///    Verkaeufer - man stellt seine eigenen Rechnungen selbst aus.
-/// 2. **Schluesselwoerter wie "Rechnung an".** Was darunter steht, ist der
-///    Kaeufer.
+///    gespeicherte USt-IdNr. im Dokument, ist das ein starkes Zeichen für den
+///    Verkäufer - man stellt seine eigenen Rechnungen selbst aus.
+/// 2. **Schlüsselwörter wie "Rechnung an".** Was darunter steht, ist der
+///    Käufer.
 ///
-/// Fehlt beides, wird **nichts** zugeordnet. Eine vertauschte Adresse waere
-/// schlimmer als ein leeres Feld: Sie ergibt eine formal gueltige, inhaltlich
+/// Fehlt beides, wird **nichts** zugeordnet. Eine vertauschte Adresse wäre
+/// schlimmer als ein leeres Feld: Sie ergibt eine formal gültige, inhaltlich
 /// falsche Rechnung.
 /// </summary>
 internal static class PartyDetector
 {
     private static readonly string[] BuyerKeywords =
     [
-        "rechnung an", "rechnungsempfaenger", "rechnungsempfänger", "kunde:", "empfaenger",
+        "rechnung an", "rechnungsempfänger", "rechnungsempfänger", "kunde:", "empfänger",
         "empfänger", "bill to", "invoice to", "lieferanschrift", "rechnungsadresse",
     ];
 
@@ -56,8 +56,8 @@ internal static class PartyDetector
     private static readonly string[] MetadataTerms =
     [
         "rechnungsnummer", "rechnungs-nr", "rechnungsnr", "rechnungsdatum", "rechnung vom",
-        "leistungsdatum", "lieferdatum", "leistungszeitraum", "fällig", "faellig",
-        "zahlbar", "zahlungsziel", "zahlungsbedingung", "währung", "waehrung", "currency",
+        "leistungsdatum", "lieferdatum", "leistungszeitraum", "fällig", "fällig",
+        "zahlbar", "zahlungsziel", "zahlungsbedingung", "währung", "währung", "currency",
         "netto", "brutto", "umsatzsteuer", "mehrwertsteuer", "mwst", "steuersatz",
         "gesamtbetrag", "rechnungsbetrag", "gesamtsumme", "zwischensumme", "zahlbetrag",
         "iban", "bic", "swift", "seite", "kundennummer", "kunden-nr", "bestellnummer",

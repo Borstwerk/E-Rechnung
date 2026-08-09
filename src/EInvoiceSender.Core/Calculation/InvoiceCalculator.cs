@@ -3,19 +3,19 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Calculation;
 
 /// <summary>
-/// Berechnet alle abgeleiteten Betraege einer Rechnung nach EN 16931.
+/// Berechnet alle abgeleiteten Beträge einer Rechnung nach EN 16931.
 ///
 /// Die Reihenfolge der Rundungen ist bewusst festgelegt und darf nicht
-/// veraendert werden, ohne die Golden-Master-Tests neu zu bewerten:
+/// verändert werden, ohne die Golden-Master-Tests neu zu bewerten:
 /// zuerst jede Position auf zwei Nachkommastellen, dann die Steuerbasis je
-/// Kategorie und Satz, danach der Steuerbetrag je Aufschluesselung, zuletzt die
+/// Kategorie und Satz, danach der Steuerbetrag je Aufschlüsselung, zuletzt die
 /// Gesamtsummen. Genau so rechnet auch das CEN-Schematron
 /// (BR-CO-10, BR-CO-13 bis BR-CO-17).
 ///
 /// Die Klasse ist zustandslos und wirft nicht: unplausible Eingaben (etwa eine
 /// Preisbasismenge von null) werden hier neutral behandelt und von
-/// <c>EInvoiceSender.Validation</c> als verstaendlicher Fehler gemeldet.
-/// Ein Absturz waehrend der Eingabe waere fuer den Anwender wertlos.
+/// <c>EInvoiceSender.Validation</c> als verständlicher Fehler gemeldet.
+/// Ein Absturz während der Eingabe wäre für den Anwender wertlos.
 /// </summary>
 public static class InvoiceCalculator
 {
@@ -30,8 +30,8 @@ public static class InvoiceCalculator
     {
         ArgumentNullException.ThrowIfNull(line);
 
-        // Eine Preisbasismenge von null oder kleiner ist fachlich unzulaessig.
-        // Statt hier zu werfen, rechnen wir mit 1 weiter; die Regelpruefung
+        // Eine Preisbasismenge von null oder kleiner ist fachlich unzulässig.
+        // Statt hier zu werfen, rechnen wir mit 1 weiter; die Regelprüfung
         // meldet den Fehler mit Feldbezug, bevor irgendetwas erzeugt wird.
         decimal baseQuantity = line.PriceBaseQuantity > 0m ? line.PriceBaseQuantity : 1m;
 
@@ -42,17 +42,17 @@ public static class InvoiceCalculator
     }
 
     /// <summary>
-    /// Berechnet das vollstaendige Summenbild der Rechnung.
+    /// Berechnet das vollständige Summenbild der Rechnung.
     /// </summary>
     public static InvoiceTotals Calculate(Invoice invoice)
     {
         ArgumentNullException.ThrowIfNull(invoice);
 
-        // 1) Positionsnettobetraege (BT-131) und Summe (BT-106).
+        // 1) Positionsnettobeträge (BT-131) und Summe (BT-106).
         decimal[] lineNetAmounts = [.. invoice.Lines.Select(CalculateLineNetAmount)];
         decimal lineTotal = Amounts.Round(lineNetAmounts.Sum());
 
-        // 2) Nachlaesse (BT-107) und Zuschlaege (BT-108) auf Dokumentebene.
+        // 2) Nachlässe (BT-107) und Zuschläge (BT-108) auf Dokumentebene.
         decimal allowanceTotal = Amounts.Round(
             invoice.AllowancesAndCharges.Where(a => !a.IsCharge).Sum(a => a.Amount));
         decimal chargeTotal = Amounts.Round(
@@ -61,7 +61,7 @@ public static class InvoiceCalculator
         // 3) Nettosumme (BT-109) nach BR-CO-13.
         decimal taxBasisTotal = Amounts.Round(lineTotal - allowanceTotal + chargeTotal);
 
-        // 4) Steueraufschluesselung (BG-23) nach BR-S-08 und BR-CO-17.
+        // 4) Steueraufschlüsselung (BG-23) nach BR-S-08 und BR-CO-17.
         var breakdown = BuildVatBreakdown(invoice, lineNetAmounts);
 
         // 5) Gesamtsteuer (BT-110) nach BR-CO-14.
@@ -90,16 +90,16 @@ public static class InvoiceCalculator
     }
 
     /// <summary>
-    /// Bildet die Steueraufschluesselung je Kombination aus Kategorie und Satz.
+    /// Bildet die Steueraufschlüsselung je Kombination aus Kategorie und Satz.
     ///
-    /// BR-S-08: Die Steuerbasis einer Gruppe ist die Summe der zugehoerigen
-    /// Positionsnettobetraege zuzueglich der Zuschlaege und abzueglich der
-    /// Nachlaesse mit derselben Kategorie und demselben Satz.
+    /// BR-S-08: Die Steuerbasis einer Gruppe ist die Summe der zugehörigen
+    /// Positionsnettobeträge zuzüglich der Zuschläge und abzüglich der
+    /// Nachlässe mit derselben Kategorie und demselben Satz.
     /// BR-CO-17: Der Steuerbetrag ist die auf zwei Stellen gerundete Steuerbasis
     /// multipliziert mit dem Satz.
     ///
     /// Die Reihenfolge ist deterministisch (Kategoriecode, dann Satz), damit die
-    /// erzeugte XML zwischen zwei Laeufen byte-identisch bleibt.
+    /// erzeugte XML zwischen zwei Läufen byte-identisch bleibt.
     /// </summary>
     private static List<VatBreakdownEntry> BuildVatBreakdown(
         Invoice invoice,
@@ -133,11 +133,11 @@ public static class InvoiceCalculator
     }
 
     /// <summary>
-    /// Vereinheitlicht den Steuersatz fuer die Gruppierung auf vier
+    /// Vereinheitlicht den Steuersatz für die Gruppierung auf vier
     /// Nachkommastellen. Die unterschiedliche Schreibweise von 19 und 19,00
-    /// stoert dabei nicht: <c>decimal</c> vergleicht wertgleich und liefert fuer
+    /// stört dabei nicht: <c>decimal</c> vergleicht wertgleich und liefert für
     /// wertgleiche Zahlen denselben Hashcode, sodass beide in dieselbe
-    /// Aufschluesselung fallen.
+    /// Aufschlüsselung fallen.
     /// </summary>
     private static decimal NormalizeRate(decimal rate)
         => decimal.Round(rate, 4, MidpointRounding.AwayFromZero);

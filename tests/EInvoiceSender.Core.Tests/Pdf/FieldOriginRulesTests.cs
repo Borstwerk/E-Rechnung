@@ -6,7 +6,7 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Pdf;
 
 /// <summary>
-/// Prueft die eine Regel, die entscheidet, ob ein vorgeschlagener Wert einen
+/// Prüft die eine Regel, die entscheidet, ob ein vorgeschlagener Wert einen
 /// vorhandenen ersetzen darf.
 /// </summary>
 public sealed class FieldOriginRulesTests
@@ -17,7 +17,7 @@ public sealed class FieldOriginRulesTests
     [InlineData(FieldOrigin.Default, FieldOrigin.DetectedReliably, true)]
     [InlineData(FieldOrigin.Default, FieldOrigin.DetectedUncertain, true)]
     [InlineData(FieldOrigin.Default, FieldOrigin.Manual, true)]
-    // Die Firmenvorlage steht ueber der Erkennung.
+    // Die Firmenvorlage steht über der Erkennung.
     [InlineData(FieldOrigin.Template, FieldOrigin.DetectedReliably, false)]
     [InlineData(FieldOrigin.Template, FieldOrigin.DetectedUncertain, false)]
     [InlineData(FieldOrigin.Template, FieldOrigin.Manual, true)]
@@ -28,20 +28,20 @@ public sealed class FieldOriginRulesTests
     [InlineData(FieldOrigin.Manual, FieldOrigin.Template, false)]
     [InlineData(FieldOrigin.Manual, FieldOrigin.DetectedReliably, false)]
     [InlineData(FieldOrigin.Manual, FieldOrigin.DetectedUncertain, false)]
-    public void DieVorrangregelGiltFuerJedeKombination(
+    public void DieVorrangregelGiltFürJedeKombination(
         FieldOrigin current, FieldOrigin proposed, bool expected)
         => Assert.Equal(expected, FieldOriginRules.CanReplace(current, proposed));
 
     /// <summary>
-    /// Der Fall, der frueher falsch war: Ein nie angefasstes Feld galt als
-    /// Benutzereingabe und war damit unueberschreibbar.
+    /// Der Fall, der früher falsch war: Ein nie angefasstes Feld galt als
+    /// Benutzereingabe und war damit unüberschreibbar.
     /// </summary>
     [Fact]
     public void EinNieAngefasstesFeldGiltAlsProgrammstandard()
         => Assert.Equal(FieldOrigin.Default, new InvoiceDraft().OriginOf(nameof(InvoiceDraft.Currency)));
 
     [Fact]
-    public void EinVomAnwenderGeaendertesFeldGiltAlsManuell()
+    public void EinVomAnwenderGeändertesFeldGiltAlsManuell()
     {
         var draft = new InvoiceDraft();
 
@@ -52,11 +52,11 @@ public sealed class FieldOriginRulesTests
 }
 
 /// <summary>
-/// Prueft die Vorrangregel am echten Formular, Feld fuer Feld.
+/// Prüft die Vorrangregel am echten Formular, Feld für Feld.
 ///
-/// Diese Tests sind der Grund fuer die zentrale Regel: Frueher stand die
-/// Ueberschreibbedingung als Sonderfall an einem einzigen Feld – mit dem
-/// Ergebnis, dass sie fuer alle anderen gar nicht galt.
+/// Diese Tests sind der Grund für die zentrale Regel: Früher stand die
+/// Überschreibbedingung als Sonderfall an einem einzigen Feld – mit dem
+/// Ergebnis, dass sie für alle anderen gar nicht galt.
 /// </summary>
 public sealed class DraftOverwriteRulesTests
 {
@@ -74,7 +74,7 @@ public sealed class DraftOverwriteRulesTests
     /// <summary>Was der Anwender getippt hat, bleibt stehen – bei jedem Feld.</summary>
     [Theory]
     [MemberData(nameof(ProtectedFields))]
-    public void EineBenutzereingabeWirdVonKeinerErkennungUeberschrieben(string field)
+    public void EineBenutzereingabeWirdVonKeinerErkennungÜberschrieben(string field)
     {
         var draft = new InvoiceDraft();
         SetText(draft, field, "Von Hand");
@@ -105,7 +105,7 @@ public sealed class DraftOverwriteRulesTests
 
     /// <summary>
     /// Auch das Rechnungsdatum ist ein Programmstandard (heute) und darf
-    /// deshalb ersetzt werden – frueher blieb es stehen.
+    /// deshalb ersetzt werden – früher blieb es stehen.
     /// </summary>
     [Fact]
     public void DasVorbelegteRechnungsdatumWirdVonDerPdfErsetzt()
@@ -123,7 +123,7 @@ public sealed class DraftOverwriteRulesTests
 
     /// <summary>Ein Wert aus der Firmenvorlage weicht der PDF-Erkennung nicht.</summary>
     [Fact]
-    public void VorlagenwertWirdNichtVonDerErkennungUeberschrieben()
+    public void VorlagenwertWirdNichtVonDerErkennungÜberschrieben()
     {
         var draft = new InvoiceDraft();
         var template = new CompanyTemplate { SellerName = "Muster IT GmbH" };
@@ -151,7 +151,7 @@ public sealed class DraftOverwriteRulesTests
         Assert.Equal("Muster IT GmbH", draft.SellerName);
     }
 
-    /// <summary>Unsichere Werte fuellen kein Feld – unabhaengig davon, welches.</summary>
+    /// <summary>Unsichere Werte fuellen kein Feld – unabhängig davon, welches.</summary>
     [Theory]
     [MemberData(nameof(ProtectedFields))]
     public void UnsichereWerteFuellenNieEinFeld(string field)
@@ -172,12 +172,12 @@ public sealed class DraftOverwriteRulesTests
         IssueDate = new DetectedValue<DateOnly>(new DateOnly(2026, 8, 9), confidence),
         Seller = new DetectedParty
         {
-            Name = new DetectedValue<string>("Verkaeufer aus PDF", confidence),
+            Name = new DetectedValue<string>("Verkäufer aus PDF", confidence),
             Country = new DetectedValue<string>("AT", confidence),
         },
         Buyer = new DetectedParty
         {
-            Name = new DetectedValue<string>("Kaeufer aus PDF", confidence),
+            Name = new DetectedValue<string>("Käufer aus PDF", confidence),
             Country = new DetectedValue<string>("NL", confidence),
         },
         Iban = new DetectedValue<string>("DE89370400440532013000", confidence),

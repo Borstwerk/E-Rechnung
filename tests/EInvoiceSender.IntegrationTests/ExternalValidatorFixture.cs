@@ -6,14 +6,14 @@ using Xunit;
 namespace EInvoiceSender.IntegrationTests;
 
 /// <summary>
-/// Stellt den externen Validator fuer die Ende-zu-Ende-Tests bereit.
+/// Stellt den externen Validator für die Ende-zu-Ende-Tests bereit.
 ///
 /// Verhalten, wenn das Werkzeug fehlt:
 /// * Standardfall (Entwicklungsrechner): Die betroffenen Tests werden
-///   uebersprungen, damit ein frisch geklontes Repository nicht sofort rot ist.
+///   übersprungen, damit ein frisch geklontes Repository nicht sofort rot ist.
 /// * Ist die Umgebungsvariable <c>REQUIRE_EXTERNAL_VALIDATORS=1</c> gesetzt
-///   (so laeuft die CI), **scheitern** die Tests stattdessen. Nur so bleibt die
-///   Aussage belastbar: In der Pipeline gibt es kein stilles Ueberspringen des
+///   (so läuft die CI), **scheitern** die Tests stattdessen. Nur so bleibt die
+///   Aussage belastbar: In der Pipeline gibt es kein stilles Überspringen des
 ///   Freigabegates.
 /// </summary>
 public sealed class ExternalValidatorFixture
@@ -48,7 +48,7 @@ public sealed class ExternalValidatorFixture
 
     /// <summary>
     /// Verlangt einen einsatzbereiten Validator. Fehlt er, wird der Test je nach
-    /// Umgebung uebersprungen oder als Fehler gemeldet.
+    /// Umgebung übersprungen oder als Fehler gemeldet.
     /// </summary>
     public IExternalDocumentValidator RequireValidator()
     {

@@ -12,21 +12,21 @@ using Xunit;
 namespace EInvoiceSender.IntegrationTests;
 
 /// <summary>
-/// Dauerhafte Ende-zu-Ende-Konformitaetstests fuer die fertige Rechnungsdatei.
+/// Dauerhafte Ende-zu-Ende-Konformitätstests für die fertige Rechnungsdatei.
 ///
-/// Fuer jeden Golden Master wird die gesamte Kette geprueft:
-/// XML erzeugen, mit dem CEN-Schematron pruefen, in die PDF einbetten, die
-/// fertige Datei mit veraPDF und Mustang pruefen, erneut oeffnen, die XML
-/// extrahieren, auf Gleichheit pruefen und erneut gegen das Schematron laufen
-/// lassen. Zusaetzlich werden Anhangname, MIME-Typ, Dateibeziehung,
-/// Profilkennung und die XMP-Metadaten geprueft.
+/// Für jeden Golden Master wird die gesamte Kette geprüft:
+/// XML erzeugen, mit dem CEN-Schematron prüfen, in die PDF einbetten, die
+/// fertige Datei mit veraPDF und Mustang prüfen, erneut öffnen, die XML
+/// extrahieren, auf Gleichheit prüfen und erneut gegen das Schematron laufen
+/// lassen. Zusätzlich werden Anhangname, MIME-Typ, Dateibeziehung,
+/// Profilkennung und die XMP-Metadaten geprüft.
 ///
-/// Grundsatz: **Eine positive oberste Zusammenfassung genuegt nie.** Der
+/// Grundsatz: **Eine positive oberste Zusammenfassung genügt nie.** Der
 /// Validator-Adapter bewertet jede Teilzusammenfassung einzeln, und diese Tests
-/// pruefen zusaetzlich, dass ueberhaupt eine Aussage vorliegt.
+/// prüfen zusätzlich, dass überhaupt eine Aussage vorliegt.
 ///
 /// Die Laufzeit ist bewusst in Kauf genommen: Ohne die echten Referenzwerkzeuge
-/// waere die Aussage "normkonform" eine blosse Behauptung.
+/// wäre die Aussage "normkonform" eine bloße Behauptung.
 /// </summary>
 [Collection(ExternalValidatorTestGroup.Name)]
 public sealed class EndToEndConformanceTests : IDisposable
@@ -46,7 +46,7 @@ public sealed class EndToEndConformanceTests : IDisposable
     }
 
     /// <summary>
-    /// Die vollstaendige Kette fuer einen Golden Master.
+    /// Die vollständige Kette für einen Golden Master.
     /// </summary>
     [Theory]
     [MemberData(nameof(ValidScenarioKeys))]
@@ -82,7 +82,7 @@ public sealed class EndToEndConformanceTests : IDisposable
         Assert.True(composition.Succeeded, Describe(composition.Report));
         Assert.NotNull(composition.PdfBytes);
 
-        // Das Original darf sich unter keinen Umstaenden veraendert haben.
+        // Das Original darf sich unter keinen Umständen verändert haben.
         Assert.Equal(
             originalSource,
             await File.ReadAllBytesAsync(sourcePdfPath, TestContext.Current.CancellationToken));
@@ -92,7 +92,7 @@ public sealed class EndToEndConformanceTests : IDisposable
         ValidationReport pdfReport = await validator.ValidateAsync(resultPath, TestContext.Current.CancellationToken);
         AssertPassed(pdfReport, $"veraPDF und Schematron auf der fertigen PDF ({key})");
 
-        // --- 6. Erneut oeffnen ---------------------------------------------
+        // --- 6. Erneut öffnen ---------------------------------------------
         PdfAnalysisResult reopened = await _analyzer.AnalyzeAsync(resultPath, TestContext.Current.CancellationToken);
         Assert.Empty(reopened.UpgradeBlockers);
         Assert.Equal(scenario.Invoice.Lines.Count > 0, reopened.PageCount > 0);
@@ -123,7 +123,7 @@ public sealed class EndToEndConformanceTests : IDisposable
         Assert.Equal("B", reopened.DeclaredPdfAConformance);
         AssertXmpContents(composition.PdfBytes);
 
-        // --- 12. Summen im Ergebnis stimmen mit der Berechnung ueberein -----
+        // --- 12. Summen im Ergebnis stimmen mit der Berechnung überein -----
         InvoiceEcho? echo = _reader.ReadEcho(reopened.ExistingInvoiceXml!);
         Assert.NotNull(echo);
         Assert.Equal(scenario.Invoice.InvoiceNumber, echo.InvoiceNumber);
@@ -135,7 +135,7 @@ public sealed class EndToEndConformanceTests : IDisposable
     }
 
     /// <summary>
-    /// Ein Bericht, der keine einzige Aussage enthaelt, darf nicht als bestanden
+    /// Ein Bericht, der keine einzige Aussage enthält, darf nicht als bestanden
     /// gelten. Dieser Test sichert genau diese Eigenschaft des Adapters ab.
     /// </summary>
     [Fact]
@@ -144,7 +144,7 @@ public sealed class EndToEndConformanceTests : IDisposable
         IExternalDocumentValidator validator = _fixture.RequireValidator();
 
         // Eine Datei, mit der Mustang nichts anfangen kann.
-        string path = Temp(Encoding.UTF8.GetBytes("kein gueltiges Dokument"), ".xml");
+        string path = Temp(Encoding.UTF8.GetBytes("kein gültiges Dokument"), ".xml");
 
         ValidationReport report = await validator.ValidateAsync(path, TestContext.Current.CancellationToken);
 
@@ -154,12 +154,12 @@ public sealed class EndToEndConformanceTests : IDisposable
     }
 
     /// <summary>
-    /// Eine absichtlich verfaelschte Datei muss beanstandet werden. Ohne diesen
-    /// Nachweis koennte die gesamte Gegenpruefung wirkungslos sein, ohne dass es
-    /// auffaellt.
+    /// Eine absichtlich verfälschte Datei muss beanstandet werden. Ohne diesen
+    /// Nachweis könnte die gesamte Gegenprüfung wirkungslos sein, ohne dass es
+    /// auffällt.
     /// </summary>
     [Fact]
-    public async Task VerfaelschteSummeWirdVomSchematronBeanstandet()
+    public async Task VerfälschteSummeWirdVomSchematronBeanstandet()
     {
         IExternalDocumentValidator validator = _fixture.RequireValidator();
 
@@ -181,7 +181,7 @@ public sealed class EndToEndConformanceTests : IDisposable
     }
 
     /// <summary>
-    /// Prueft die XMP-Angaben direkt in den Bytes der fertigen Datei.
+    /// Prüft die XMP-Angaben direkt in den Bytes der fertigen Datei.
     /// </summary>
     private static void AssertXmpContents(byte[] pdfBytes)
     {
@@ -203,7 +203,7 @@ public sealed class EndToEndConformanceTests : IDisposable
 
     /// <summary>
     /// Verlangt einen bestandenen Bericht. Ein Bericht ohne jede Aussage gilt
-    /// ausdruecklich nicht als bestanden.
+    /// ausdrücklich nicht als bestanden.
     /// </summary>
     private static void AssertPassed(ValidationReport report, string step)
     {
@@ -253,7 +253,7 @@ public sealed class EndToEndConformanceTests : IDisposable
             }
             catch (IOException)
             {
-                // Aufraeumen darf einen Testlauf nicht scheitern lassen.
+                // Aufräumen darf einen Testlauf nicht scheitern lassen.
             }
         }
     }

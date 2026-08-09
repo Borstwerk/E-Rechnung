@@ -13,9 +13,9 @@ using EInvoiceSender.Core.Text;
 namespace EInvoiceSender.App.ViewModels;
 
 /// <summary>
-/// Schritt 1: Die vorhandene PDF-Rechnung auswaehlen und pruefen lassen.
+/// Schritt 1: Die vorhandene PDF-Rechnung auswählen und prüfen lassen.
 ///
-/// Die Datei wird ausschliesslich gelesen. Was hier abgelehnt wird, ist nicht
+/// Die Datei wird ausschließlich gelesen. Was hier abgelehnt wird, ist nicht
 /// "kaputt", sondern nur als Grundlage einer PDF/A-3-Datei ungeeignet – der
 /// Befund nennt jeweils den Grund.
 /// </summary>
@@ -36,10 +36,10 @@ public sealed partial class PdfSelectionViewModel(
     /// </summary>
     public InvoiceDetectionResult? Detection { get; private set; }
 
-    /// <summary>Die Zeilen der Erkennungsuebersicht, wie sie angezeigt werden.</summary>
+    /// <summary>Die Zeilen der Erkennungsübersicht, wie sie angezeigt werden.</summary>
     public ObservableCollection<DetectionNote> DetectionNotes { get; } = [];
 
-    /// <summary>Gibt es ueberhaupt etwas zu berichten?</summary>
+    /// <summary>Gibt es überhaupt etwas zu berichten?</summary>
     public bool HasDetectionNotes => DetectionNotes.Count > 0;
 
     [ObservableProperty]
@@ -58,7 +58,7 @@ public sealed partial class PdfSelectionViewModel(
     [ObservableProperty]
     private bool _isChecking;
 
-    /// <summary>Ist ueberhaupt eine Datei gewaehlt?</summary>
+    /// <summary>Ist überhaupt eine Datei gewählt?</summary>
     public bool HasFile => !string.IsNullOrWhiteSpace(FilePath);
 
     /// <summary>Der Dateiname ohne Pfad.</summary>
@@ -96,7 +96,7 @@ public sealed partial class PdfSelectionViewModel(
             CultureInfo.CurrentCulture,
             $"{Report.FileSizeInMegabytes.ToString("0.##", CultureInfo.CurrentCulture)} MB");
 
-    /// <summary>Prueft die ausgewaehlte Datei.</summary>
+    /// <summary>Prüft die ausgewählte Datei.</summary>
     [RelayCommand]
     public async Task InspectAsync(string? path, CancellationToken cancellationToken = default)
     {
@@ -113,13 +113,13 @@ public sealed partial class PdfSelectionViewModel(
             Report = await _service.AnalyzePdfAsync(path, cancellationToken).ConfigureAwait(true);
             ShowFindings(Report.Findings);
 
-            // Die Vorschau ist eine Annehmlichkeit, keine Bedingung: Schlaegt sie
+            // Die Vorschau ist eine Annehmlichkeit, keine Bedingung: Schlägt sie
             // fehl, bleibt der Ablauf trotzdem benutzbar.
             PreviewImage = await _preview.RenderFirstPageAsync(path, cancellationToken)
                 .ConfigureAwait(true);
 
-            // Die Datenerkennung laeuft erst, wenn die Datei ueberhaupt
-            // verwendbar ist. Fuer eine abgelehnte PDF waere sie sinnlos.
+            // Die Datenerkennung läuft erst, wenn die Datei überhaupt
+            // verwendbar ist. Für eine abgelehnte PDF wäre sie sinnlos.
             if (Report.CanProceed)
             {
                 await DetectAsync(path, cancellationToken).ConfigureAwait(true);
@@ -134,8 +134,8 @@ public sealed partial class PdfSelectionViewModel(
     /// <summary>
     /// Wertet den PDF-Text aus und stellt zusammen, was gefunden wurde.
     ///
-    /// Die Erkennung ist eine Komfortfunktion: Schlaegt sie fehl, bleibt der
-    /// Ablauf unberuehrt und die Daten werden von Hand erfasst.
+    /// Die Erkennung ist eine Komfortfunktion: Schlägt sie fehl, bleibt der
+    /// Ablauf unberührt und die Daten werden von Hand erfasst.
     /// </summary>
     private async Task DetectAsync(string path, CancellationToken cancellationToken)
     {
@@ -167,7 +167,7 @@ public sealed partial class PdfSelectionViewModel(
         }
     }
 
-    /// <summary>Setzt den Schritt auf den Anfangszustand zurueck.</summary>
+    /// <summary>Setzt den Schritt auf den Anfangszustand zurück.</summary>
     public void Reset()
     {
         FilePath = string.Empty;

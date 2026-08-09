@@ -16,7 +16,7 @@
         DragOver="OnDragOver">
 
   <!--
-    Das Hauptfenster traegt nur den Rahmen: Kopfzeile, Platz fuer den aktuellen
+    Das Hauptfenster trägt nur den Rahmen: Kopfzeile, Platz für den aktuellen
     Schritt, Statuszeile und Navigation. Die Schritte selbst sind eigene
     UserControls unter Views/Steps.
   -->
@@ -30,10 +30,10 @@
     </Grid.RowDefinitions>
 
     <!-- Kopfzeile -->
-    <TextBlock Grid.Row="0" Text="{Binding StepTitle}" Style="{StaticResource Ueberschrift}"
+    <TextBlock Grid.Row="0" Text="{Binding StepTitle}" Style="{StaticResource Überschrift}"
                AutomationProperties.LiveSetting="Polite" />
 
-    <!-- Globale Stoerungsanzeige -->
+    <!-- Globale Störungsanzeige -->
     <Border Grid.Row="1" Background="#FDECEC" BorderBrush="#C0392B" BorderThickness="1"
             CornerRadius="3" Padding="10,8" Margin="0,0,0,10"
             Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
@@ -57,11 +57,11 @@
     <!-- Navigation -->
     <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
       <Button Content="_Einstellungen ..." Click="OnSettingsClicked" TabIndex="90"
-              AutomationProperties.HelpText="Oeffnet die Firmenvorlage und die Standardwerte." />
+              AutomationProperties.HelpText="Öffnet die Firmenvorlage und die Standardwerte." />
       <Button Content="Neue _Rechnung" Command="{Binding StartOverCommand}" TabIndex="91"
               AutomationProperties.HelpText="Verwirft den aktuellen Stand und beginnt von vorn." />
       <Separator Width="16" Visibility="Hidden" />
-      <Button Content="_Zurueck" Command="{Binding GoBackCommand}" TabIndex="92" />
+      <Button Content="_Zurück" Command="{Binding GoBackCommand}" TabIndex="92" />
       <Button Content="_Weiter" Command="{Binding GoForwardCommand}" TabIndex="93" IsDefault="True" />
     </StackPanel>
   </Grid>

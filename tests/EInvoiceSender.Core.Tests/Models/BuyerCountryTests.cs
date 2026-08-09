@@ -5,10 +5,10 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Models;
 
 /// <summary>
-/// Prueft, dass ein unbekanntes Kaeuferland unbekannt bleibt.
+/// Prüft, dass ein unbekanntes Käuferland unbekannt bleibt.
 ///
-/// **Warum das zaehlt:** Ein still auf "DE" gesetztes Kaeuferland erzeugt bei
-/// einem oesterreichischen oder niederlaendischen Kunden eine formal gueltige,
+/// **Warum das zählt:** Ein still auf "DE" gesetztes Käuferland erzeugt bei
+/// einem österreichischen oder niederländischen Kunden eine formal gültige,
 /// inhaltlich falsche Rechnung – ohne dass irgendwo eine Warnung erschiene.
 /// Das Land steuert unter anderem, ob eine innergemeinschaftliche Lieferung
 /// vorliegt.
@@ -19,7 +19,7 @@ public sealed class BuyerCountryTests
     [InlineData("DE")]
     [InlineData("AT")]
     [InlineData("NL")]
-    public void EinAngegebenesKaeuferlandWirdUebernommen(string country)
+    public void EinAngegebenesKäuferlandWirdÜbernommen(string country)
     {
         InvoiceDraft draft = InvoiceDraftTests.FilledDraft();
         draft.BuyerCountry = country;
@@ -32,11 +32,11 @@ public sealed class BuyerCountryTests
     }
 
     /// <summary>
-    /// Der eigentliche Punkt: Ohne Angabe gibt es kein Land – und die Pruefung
+    /// Der eigentliche Punkt: Ohne Angabe gibt es kein Land – und die Prüfung
     /// sagt das, statt Deutschland anzunehmen.
     /// </summary>
     [Fact]
-    public void EinUnbekanntesKaeuferlandWirdBeanstandetStattAngenommen()
+    public void EinUnbekanntesKäuferlandWirdBeanstandetStattAngenommen()
     {
         InvoiceDraft draft = InvoiceDraftTests.FilledDraft();
         draft.BuyerCountry = string.Empty;
@@ -52,16 +52,16 @@ public sealed class BuyerCountryTests
     }
 
     /// <summary>
-    /// Ein neues Formular hat kein Kaeuferland. Frueher stand dort "DE", ohne
-    /// dass jemand es behauptet haette.
+    /// Ein neues Formular hat kein Käuferland. Früher stand dort "DE", ohne
+    /// dass jemand es behauptet hätte.
     /// </summary>
     [Fact]
-    public void EinNeuesFormularHatKeinKaeuferland()
+    public void EinNeuesFormularHatKeinKäuferland()
         => Assert.Equal(string.Empty, new InvoiceDraft().BuyerCountry);
 
     /// <summary>
     /// Beim eigenen Land ist eine Vorgabe vertretbar: Der Anwender stellt seine
-    /// eigenen Rechnungen aus und aendert den Wert einmalig ueber die Vorlage.
+    /// eigenen Rechnungen aus und ändert den Wert einmalig über die Vorlage.
     /// </summary>
     [Fact]
     public void DasEigeneLandDarfVorbelegtSeinUndGiltAlsProgrammstandard()

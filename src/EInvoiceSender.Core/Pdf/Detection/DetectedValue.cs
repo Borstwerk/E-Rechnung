@@ -1,11 +1,11 @@
 namespace EInvoiceSender.Core.Pdf.Detection;
 
 /// <summary>
-/// Ein aus dem PDF-Text gelesener Wert samt Begruendung.
+/// Ein aus dem PDF-Text gelesener Wert samt Begründung.
 ///
-/// Die Begruendung ist kein Beiwerk: Der Anwender soll nachvollziehen koennen,
-/// **warum** die Anwendung diesen Wert vorschlaegt, und ihn dadurch schneller
-/// bestaetigen oder verwerfen koennen.
+/// Die Begründung ist kein Beiwerk: Der Anwender soll nachvollziehen können,
+/// **warum** die Anwendung diesen Wert vorschlägt, und ihn dadurch schneller
+/// bestätigen oder verwerfen können.
 /// </summary>
 /// <param name="Value">Der gelesene Wert.</param>
 /// <param name="Confidence">Wie sicher die Zuordnung ist.</param>

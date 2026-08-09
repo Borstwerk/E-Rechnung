@@ -17,11 +17,11 @@
     </Grid.RowDefinitions>
 
     <TextBlock Grid.Row="0" TextWrapping="Wrap"
-               Text="Die E-Rechnung wird erzeugt und anschliessend geprueft. Der Vorgang laesst sich jederzeit abbrechen; es entsteht dann keine Datei." />
+               Text="Die E-Rechnung wird erzeugt und anschließend geprüft. Der Vorgang lässt sich jederzeit abbrechen; es entsteht dann keine Datei." />
 
     <ProgressBar Grid.Row="1" Height="6" Margin="0,12,0,0" IsIndeterminate="True"
                  Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}"
-                 AutomationProperties.Name="Die Erzeugung laeuft" />
+                 AutomationProperties.Name="Die Erzeugung läuft" />
 
     <ItemsControl Grid.Row="2" ItemsSource="{Binding Progress}" Margin="0,12,0,0"
                   AutomationProperties.Name="Fortschritt der Erzeugung"

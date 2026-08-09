@@ -5,10 +5,10 @@ using EInvoiceSender.Core.Services;
 namespace EInvoiceSender.Core.Pdf.Detection;
 
 /// <summary>Was die Vorbefuellung getan hat – Grundlage der Anzeige.</summary>
-/// <param name="FilledFields">Anzahl uebernommener Felder.</param>
-/// <param name="UncertainFields">Bezeichnungen der Felder, die zu pruefen sind.</param>
-/// <param name="SkippedLowConfidence">Werte, die zu unsicher zur Uebernahme waren.</param>
-/// <param name="SkippedProtected">Felder, die bereits einen hoeherrangigen Wert trugen.</param>
+/// <param name="FilledFields">Anzahl übernommener Felder.</param>
+/// <param name="UncertainFields">Bezeichnungen der Felder, die zu prüfen sind.</param>
+/// <param name="SkippedLowConfidence">Werte, die zu unsicher zur Übernahme waren.</param>
+/// <param name="SkippedProtected">Felder, die bereits einen höherrangigen Wert trugen.</param>
 public sealed record PrefillSummary(
     int FilledFields,
     IReadOnlyList<string> UncertainFields,
@@ -16,21 +16,21 @@ public sealed record PrefillSummary(
     IReadOnlyList<string> SkippedProtected);
 
 /// <summary>
-/// Traegt ein Erkennungsergebnis in das Eingabeformular ein.
+/// Trägt ein Erkennungsergebnis in das Eingabeformular ein.
 ///
 /// Das ist die einzige Stelle, an der erkannte Werte den Weg ins Formular
-/// finden. Jedes Feld laeuft durch dieselbe Entscheidung
+/// finden. Jedes Feld läuft durch dieselbe Entscheidung
 /// (<see cref="FieldOriginRules.CanReplace"/>) – es gibt keine Sonderregel
-/// pro Feld mehr. Damit gilt fuer alle Felder gleichermassen:
+/// pro Feld mehr. Damit gilt für alle Felder gleichermaßen:
 ///
-/// * Ein vom Anwender bearbeitetes Feld wird nie ueberschrieben.
+/// * Ein vom Anwender bearbeitetes Feld wird nie überschrieben.
 /// * Ein Programmstandard darf von jeder Quelle ersetzt werden.
 /// * Ein Wert aus der Firmenvorlage weicht nicht der PDF-Erkennung.
 /// * Ein unsicher gelesener Wert fuellt gar nichts.
 /// </summary>
 public static class DraftPrefiller
 {
-    /// <summary>Traegt das Erkennungsergebnis in den Entwurf ein.</summary>
+    /// <summary>Trägt das Erkennungsergebnis in den Entwurf ein.</summary>
     public static PrefillSummary Apply(
         InvoiceDraft draft, InvoiceDetectionResult detection, CompanyTemplate? ownCompany = null)
     {
@@ -115,7 +115,7 @@ public static class DraftPrefiller
         => Set(draft, log, label, property, detected, OriginOf(detected), assign);
 
     /// <summary>
-    /// Die gemeinsame Entscheidung fuer jedes Feld – unabhaengig vom Datentyp.
+    /// Die gemeinsame Entscheidung für jedes Feld – unabhängig vom Datentyp.
     /// </summary>
     private static void Set<T>(
         InvoiceDraft draft,
@@ -153,7 +153,7 @@ public static class DraftPrefiller
     /// <summary>
     /// Ein Wert, der wortgleich in der gespeicherten Vorlage steht, gilt als
     /// aus der Vorlage stammend. Das ist ehrlicher als "aus PDF erkannt": Die
-    /// PDF hat ihn nur bestaetigt.
+    /// PDF hat ihn nur bestätigt.
     /// </summary>
     private static FieldOrigin OriginOf(DetectedValue<string>? value, CompanyTemplate? ownCompany)
         => value is not null && ownCompany is not null && ComesFromTemplate(ownCompany, value.Value)

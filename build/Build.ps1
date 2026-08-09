@@ -1,11 +1,11 @@
-<#
+﻿<#
 .SYNOPSIS
     Stellt die Pakete wieder her und baut die Projektmappe in Release.
 
 .DESCRIPTION
-    Der uebliche Weg ist Visual Studio. Dieses Skript ist fuer den Fall
+    Der übliche Weg ist Visual Studio. Dieses Skript ist für den Fall
     gedacht, dass ein Build ohne IDE gebraucht wird - etwa vor einem
-    Veroeffentlichen oder in einer Pipeline.
+    Veröffentlichen oder in einer Pipeline.
 
     Bei einem Fehler endet das Skript mit einem Exitcode ungleich null.
 #>

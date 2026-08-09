@@ -9,23 +9,23 @@ using Microsoft.Extensions.Logging;
 namespace EInvoiceSender.Core.Services;
 
 /// <summary>
-/// Der vollstaendige Ablauf von der vorhandenen PDF bis zur gespeicherten
+/// Der vollständige Ablauf von der vorhandenen PDF bis zur gespeicherten
 /// E-Rechnung.
 ///
 /// Die Reihenfolge ist verbindlich und in docs/SPECIFICATION.md, Abschnitt 8
 /// festgelegt. Wichtige Eigenschaften:
 ///
-/// * **Nichts wird erzeugt ohne die Bestaetigung des Benutzers**, dass die
-///   strukturierten Daten mit der sichtbaren PDF uebereinstimmen. Die Sperre
-///   sitzt hier, nicht in der Oberflaeche.
+/// * **Nichts wird erzeugt ohne die Bestätigung des Benutzers**, dass die
+///   strukturierten Daten mit der sichtbaren PDF übereinstimmen. Die Sperre
+///   sitzt hier, nicht in der Oberfläche.
 /// * **Keine halb fertige Ausgabedatei.** Gespeichert wird erst, wenn alle
-///   verpflichtenden Pruefungen bestanden sind.
-/// * **Das Original bleibt unveraendert.** Es wird ausschliesslich gelesen.
-/// * **Temporaere Dateien verschwinden immer**, auch bei Fehler oder Abbruch.
-/// * **Ein Abbruch durch den Benutzer ist jederzeit moeglich** und hinterlaesst
+///   verpflichtenden Prüfungen bestanden sind.
+/// * **Das Original bleibt unverändert.** Es wird ausschließlich gelesen.
+/// * **Temporäre Dateien verschwinden immer**, auch bei Fehler oder Abbruch.
+/// * **Ein Abbruch durch den Benutzer ist jederzeit möglich** und hinterlässt
 ///   keine Datei.
 ///
-/// Der Anwendungsfall enthaelt selbst keine Fachlogik: Er ruft die Ports in der
+/// Der Anwendungsfall enthält selbst keine Fachlogik: Er ruft die Ports in der
 /// richtigen Reihenfolge auf und entscheidet anhand der Befunde, ob es
 /// weitergeht.
 /// </summary>
@@ -90,9 +90,9 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
         var context = new CreationContext(request, progress, _clock.Now, cancellationToken);
 
-        // Die Bestaetigung wird vor allem anderen geprueft - noch vor dem
+        // Die Bestätigung wird vor allem anderen geprüft - noch vor dem
         // Anlegen eines Arbeitsverzeichnisses. Sie ist keine Formalie der
-        // Oberflaeche, sondern Voraussetzung des Vorgangs.
+        // Oberfläche, sondern Voraussetzung des Vorgangs.
         if (!UserConfirmedContentMatch(context))
         {
             return Failed(context);
@@ -141,8 +141,8 @@ public sealed partial class EInvoiceService : IEInvoiceService
         }
         catch (OperationCanceledException)
         {
-            // Der Benutzer hat abgebrochen. Es bleibt keine Datei zurueck, das
-            // Arbeitsverzeichnis wird beim Verwerfen geloescht.
+            // Der Benutzer hat abgebrochen. Es bleibt keine Datei zurück, das
+            // Arbeitsverzeichnis wird beim Verwerfen gelöscht.
             context.Report.Information(
                 "APP-USE-090",
                 "Der Vorgang wurde abgebrochen. Es wurde keine Datei erzeugt.");
@@ -155,8 +155,8 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             context.Report.Error(
                 "APP-USE-091",
-                "Die Datei konnte nicht gespeichert werden. Pruefen Sie, ob das "
-                + "Ausgabeverzeichnis beschreibbar ist und genuegend Platz frei ist.",
+                "Die Datei konnte nicht gespeichert werden. Prüfen Sie, ob das "
+                + "Ausgabeverzeichnis beschreibbar ist und genügend Platz frei ist.",
                 "OutputDirectory",
                 $"{ex.GetType().Name}: {ex.Message}");
 
@@ -175,8 +175,8 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
         context.Report.Error(
             "APP-USE-001",
-            "Die Erzeugung wurde nicht gestartet, weil die Bestaetigung fehlt, dass die "
-            + "erfassten Rechnungsdaten mit der sichtbaren PDF-Rechnung uebereinstimmen.",
+            "Die Erzeugung wurde nicht gestartet, weil die Bestätigung fehlt, dass die "
+            + "erfassten Rechnungsdaten mit der sichtbaren PDF-Rechnung übereinstimmen.",
             "ContentMatchConfirmed");
 
         return false;
@@ -184,7 +184,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
     private async Task<bool> SourcePdfIsSuitableAsync(CreationContext context)
     {
-        context.Begin(PipelineStep.Preflight, 1, "PDF wird geprueft");
+        context.Begin(PipelineStep.Preflight, 1, "PDF wird geprüft");
 
         PdfPreflightReport preflight = await _preflight
             .InspectAsync(context.Request.SourcePdfPath, context.CancellationToken)
@@ -204,19 +204,19 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             context.Report.Error(
                 "APP-USE-002",
-                "Die gewaehlte PDF-Datei enthaelt bereits eine Rechnung. Bestaetigen Sie "
-                + "ausdruecklich, dass diese ersetzt werden soll, oder waehlen Sie die "
-                + "urspruengliche PDF-Rechnung aus.",
+                "Die gewählte PDF-Datei enthält bereits eine Rechnung. Bestätigen Sie "
+                + "ausdrücklich, dass diese ersetzt werden soll, oder wählen Sie die "
+                + "ursprüngliche PDF-Rechnung aus.",
                 "SourcePdfPath",
                 $"Vorhandenes Profil: {preflight.ExistingInvoiceProfile}");
 
-            context.Fail(PipelineStep.Preflight, 1, "Bestaetigung zum Ersetzen fehlt");
+            context.Fail(PipelineStep.Preflight, 1, "Bestätigung zum Ersetzen fehlt");
 
             return false;
         }
 
         context.Succeed(
-            PipelineStep.Preflight, 1, "PDF geprueft",
+            PipelineStep.Preflight, 1, "PDF geprüft",
             withWarnings: preflight.Verdict == PreflightVerdict.SuitableWithWarnings);
 
         return true;
@@ -224,7 +224,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
     private bool InvoiceDataIsValid(CreationContext context)
     {
-        context.Begin(PipelineStep.ValidateInvoiceData, 2, "Rechnungsdaten werden geprueft");
+        context.Begin(PipelineStep.ValidateInvoiceData, 2, "Rechnungsdaten werden geprüft");
 
         context.Totals = InvoiceCalculator.Calculate(context.Request.Invoice);
 
@@ -241,7 +241,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
         }
 
         context.Succeed(
-            PipelineStep.ValidateInvoiceData, 2, "Rechnungsdaten geprueft",
+            PipelineStep.ValidateInvoiceData, 2, "Rechnungsdaten geprüft",
             withWarnings: ruleReport.HasWarnings);
 
         return true;
@@ -258,18 +258,18 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
     private bool StructuredInvoiceMatchesInput(CreationContext context)
     {
-        context.Begin(PipelineStep.VerifyXml, 4, "Erzeugte Daten werden gegengeprueft");
+        context.Begin(PipelineStep.VerifyXml, 4, "Erzeugte Daten werden gegengeprüft");
 
         if (!VerifyXmlEcho(context.Xml!, context.Request, context.Totals!, context.Report))
         {
             context.Fail(
                 PipelineStep.VerifyXml, 4,
-                "Die erzeugten Daten stimmen nicht mit der Eingabe ueberein");
+                "Die erzeugten Daten stimmen nicht mit der Eingabe überein");
 
             return false;
         }
 
-        context.Succeed(PipelineStep.VerifyXml, 4, "Erzeugte Daten gegengeprueft");
+        context.Succeed(PipelineStep.VerifyXml, 4, "Erzeugte Daten gegengeprüft");
 
         return true;
     }
@@ -309,7 +309,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
     private async Task<bool> EmbeddedInvoiceIsReadableAsync(CreationContext context)
     {
-        context.Begin(PipelineStep.ReopenAndExtract, 6, "Ergebnis wird erneut geoeffnet");
+        context.Begin(PipelineStep.ReopenAndExtract, 6, "Ergebnis wird erneut geöffnet");
 
         context.WorkingCopy = await context.Workspace!
             .WriteAsync("ergebnis.pdf", context.ResultPdf!, context.CancellationToken)
@@ -324,19 +324,19 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             context.Fail(
                 PipelineStep.ReopenAndExtract, 6,
-                "Die erzeugte Datei liess sich nicht korrekt auslesen");
+                "Die erzeugte Datei ließ sich nicht korrekt auslesen");
 
             return false;
         }
 
-        context.Succeed(PipelineStep.ReopenAndExtract, 6, "Ergebnis geprueft");
+        context.Succeed(PipelineStep.ReopenAndExtract, 6, "Ergebnis geprüft");
 
         return true;
     }
 
     private async Task<bool> ReferenceValidatorsAcceptAsync(CreationContext context)
     {
-        context.Begin(PipelineStep.ExternalValidation, 7, "Zusaetzliche Pruefung laeuft");
+        context.Begin(PipelineStep.ExternalValidation, 7, "Zusätzliche Prüfung läuft");
 
         bool rejected = await RunExternalValidatorsAsync(
                 context.WorkingCopy!, context.Report, context.Validators, context.CancellationToken)
@@ -346,21 +346,21 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             context.Fail(
                 PipelineStep.ExternalValidation, 7,
-                "Die zusaetzliche Pruefung hat die Datei beanstandet");
+                "Die zusätzliche Prüfung hat die Datei beanstandet");
 
             return false;
         }
 
-        // Ein nicht eingerichteter Validator wird als uebersprungen ausgewiesen,
-        // nie als bestanden. Sonst saehe eine ungepruefte Datei aus wie eine
-        // gepruefte.
+        // Ein nicht eingerichteter Validator wird als übersprungen ausgewiesen,
+        // nie als bestanden. Sonst sähe eine ungeprüfte Datei aus wie eine
+        // geprüfte.
         bool anyExecuted = context.Validators.Any(v => v.WasExecuted);
 
         context.ReportStep(
             PipelineStep.ExternalValidation,
             anyExecuted ? StepState.Succeeded : StepState.Skipped,
             7,
-            anyExecuted ? "Zusaetzliche Pruefung bestanden" : "Kein externer Validator eingerichtet");
+            anyExecuted ? "Zusätzliche Prüfung bestanden" : "Kein externer Validator eingerichtet");
 
         return true;
     }
@@ -421,9 +421,9 @@ public sealed partial class EInvoiceService : IEInvoiceService
     /// <summary>
     /// Der Zustand eines einzelnen Erzeugungsvorgangs.
     ///
-    /// Buendelt das, was frueher als ein Dutzend lokaler Variablen durch die
+    /// Bündelt das, was früher als ein Dutzend lokaler Variablen durch die
     /// lange Methode gereicht wurde. Die Zwischenergebnisse sind bewusst
-    /// veraenderlich: Sie entstehen der Reihe nach, und jeder Schritt setzt
+    /// veränderlich: Sie entstehen der Reihe nach, und jeder Schritt setzt
     /// voraus, dass der vorige erfolgreich war.
     /// </summary>
     private sealed class CreationContext(
@@ -473,7 +473,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
             => ReportStep(step, StepState.Failed, number, description);
 
         /// <summary>
-        /// Meldet einen Schritt. "Laeuft gerade" geht nur an die Oberflaeche,
+        /// Meldet einen Schritt. "Läuft gerade" geht nur an die Oberfläche,
         /// nicht in die Ergebnisliste – dort stehen die neun abgeschlossenen
         /// Schritte.
         /// </summary>
@@ -491,8 +491,8 @@ public sealed partial class EInvoiceService : IEInvoiceService
     }
 
     /// <summary>
-    /// Liest die erzeugte XML zurueck und vergleicht sie mit dem, was erzeugt
-    /// werden sollte. Faengt Fehler im Writer ab, bevor eine Datei entsteht.
+    /// Liest die erzeugte XML zurück und vergleicht sie mit dem, was erzeugt
+    /// werden sollte. Fängt Fehler im Writer ab, bevor eine Datei entsteht.
     /// </summary>
     private bool VerifyXmlEcho(
         byte[] xml,
@@ -506,7 +506,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             report.Error(
                 "APP-USE-010",
-                "Die erzeugten Rechnungsdaten konnten nicht zurueckgelesen werden.",
+                "Die erzeugten Rechnungsdaten konnten nicht zurückgelesen werden.",
                 "Xml");
 
             return false;
@@ -558,7 +558,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
     }
 
     /// <summary>
-    /// Oeffnet die erzeugte Datei erneut, holt die XML heraus und vergleicht sie
+    /// Öffnet die erzeugte Datei erneut, holt die XML heraus und vergleicht sie
     /// mit der erzeugten. Das ist der Nachweis, dass die Einbettung wirklich
     /// funktioniert hat und nicht nur scheinbar.
     /// </summary>
@@ -588,7 +588,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
             report.Error(
                 "APP-USE-021",
                 "Die in der Datei enthaltenen Rechnungsdaten stimmen nicht mit den "
-                + "erzeugten ueberein.",
+                + "erzeugten überein.",
                 "Output",
                 $"Erzeugt {expectedXml.Length} Bytes, gelesen {reopened.ExistingInvoiceXml.Length} Bytes");
 
@@ -599,19 +599,19 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             report.Error(
                 "APP-USE-022",
-                "Die erzeugte Datei traegt nicht die erwartete PDF/A-3B-Kennzeichnung.",
+                "Die erzeugte Datei trägt nicht die erwartete PDF/A-3B-Kennzeichnung.",
                 "Output",
                 $"Gelesen: Teil {reopened.DeclaredPdfAPart}, Stufe {reopened.DeclaredPdfAConformance}");
 
             return false;
         }
 
-        // Die extrahierte XML wird erneut fachlich gegengeprueft.
+        // Die extrahierte XML wird erneut fachlich gegengeprüft.
         return VerifyXmlEcho(reopened.ExistingInvoiceXml, request, totals, report);
     }
 
     /// <summary>
-    /// Fuehrt alle eingerichteten externen Validatoren aus.
+    /// Führt alle eingerichteten externen Validatoren aus.
     /// Liefert true, wenn mindestens einer die Datei beanstandet hat.
     /// </summary>
     private async Task<bool> RunExternalValidatorsAsync(
@@ -632,13 +632,13 @@ public sealed partial class EInvoiceService : IEInvoiceService
                     validator.Name, null, WasExecuted: false,
                     "Auf diesem Rechner nicht eingerichtet."));
 
-                // Ausdruecklich als Warnung im Bericht: Der Benutzer soll wissen,
-                // dass die verbindliche Gegenpruefung nicht stattgefunden hat.
+                // Ausdrücklich als Warnung im Bericht: Der Benutzer soll wissen,
+                // dass die verbindliche Gegenprüfung nicht stattgefunden hat.
                 report.Warning(
                     "APP-USE-030",
-                    $"Die zusaetzliche Pruefung mit '{validator.Name}' wurde uebersprungen, "
+                    $"Die zusätzliche Prüfung mit '{validator.Name}' wurde übersprungen, "
                     + "weil das Werkzeug nicht eingerichtet ist. Die Datei wurde nur mit den "
-                    + "eingebauten Pruefungen kontrolliert.",
+                    + "eingebauten Prüfungen kontrolliert.",
                     "Validation");
 
                 continue;
@@ -680,11 +680,11 @@ public sealed partial class EInvoiceService : IEInvoiceService
             _xmlWriter.FormatDescription, _xmlWriter.ProfileId, validators);
 
         StoredFile jsonFile = await _fileStorage.WriteAsync(
-            request.OutputDirectory, $"{stem}-Pruefbericht.json", json,
+            request.OutputDirectory, $"{stem}-Prüfbericht.json", json,
             OverwriteBehavior.Overwrite, cancellationToken).ConfigureAwait(false);
 
         StoredFile textFile = await _fileStorage.WriteAsync(
-            request.OutputDirectory, $"{stem}-Pruefbericht.txt", text,
+            request.OutputDirectory, $"{stem}-Prüfbericht.txt", text,
             OverwriteBehavior.Overwrite, cancellationToken).ConfigureAwait(false);
 
         return (jsonFile, textFile);
@@ -710,7 +710,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
     [LoggerMessage(
         EventId = 6001, Level = LogLevel.Information,
-        Message = "E-Rechnung erzeugt: Nummer {InvoiceNumber}, {ByteCount} Bytes, Pruefsumme {ChecksumPrefix}")]
+        Message = "E-Rechnung erzeugt: Nummer {InvoiceNumber}, {ByteCount} Bytes, Prüfsumme {ChecksumPrefix}")]
     private static partial void LogCompleted(
         ILogger logger, string invoiceNumber, long byteCount, string checksumPrefix);
 

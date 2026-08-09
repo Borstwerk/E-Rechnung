@@ -12,13 +12,13 @@ using Xunit;
 namespace EInvoiceSender.IntegrationTests;
 
 /// <summary>
-/// Prueft den vollstaendigen Weg von der Eingangs-PDF bis zur fertigen
-/// ZUGFeRD-Datei und wieder zurueck.
+/// Prüft den vollständigen Weg von der Eingangs-PDF bis zur fertigen
+/// ZUGFeRD-Datei und wieder zurück.
 ///
 /// Der entscheidende Nachweis steckt in
-/// <see cref="ErzeugteDateiLaesstSichWiederOeffnenUndDieXmlExtrahieren"/>:
-/// Die erzeugte Datei wird erneut geoeffnet, die XML herausgeholt und mit der
-/// urspruenglich erzeugten verglichen. Erst damit ist belegt, dass die
+/// <see cref="ErzeugteDateiLässtSichWiederÖffnenUndDieXmlExtrahieren"/>:
+/// Die erzeugte Datei wird erneut geöffnet, die XML herausgeholt und mit der
+/// ursprünglich erzeugten verglichen. Erst damit ist belegt, dass die
 /// Einbettung wirklich funktioniert hat.
 /// </summary>
 public sealed class PdfAPipelineTests : IDisposable
@@ -61,7 +61,7 @@ public sealed class PdfAPipelineTests : IDisposable
     }
 
     [Fact]
-    public async Task NichtKonvertierbarePdfLiefertVerstaendlicheMeldungUndKeineDatei()
+    public async Task NichtKonvertierbarePdfLiefertVerständlicheMeldungUndKeineDatei()
     {
         string path = Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFont());
 
@@ -81,7 +81,7 @@ public sealed class PdfAPipelineTests : IDisposable
     }
 
     [Fact]
-    public async Task BeschaedigtePdfWirdAlsSolcheGemeldet()
+    public async Task BeschädigtePdfWirdAlsSolcheGemeldet()
     {
         string path = Temp(TestPdfFactory.CreateDamagedPdf());
 
@@ -101,7 +101,7 @@ public sealed class PdfAPipelineTests : IDisposable
     }
 
     [Fact]
-    public async Task ErzeugteDateiLaesstSichWiederOeffnenUndDieXmlExtrahieren()
+    public async Task ErzeugteDateiLässtSichWiederÖffnenUndDieXmlExtrahieren()
     {
         string path = Temp(TestPdfFactory.CreateSimplePdf());
         byte[] originalBytes = await File.ReadAllBytesAsync(path);
@@ -112,12 +112,12 @@ public sealed class PdfAPipelineTests : IDisposable
         Assert.True(result.Succeeded, Describe(result.Report));
         Assert.NotNull(result.PdfBytes);
 
-        // Das Original darf sich nicht veraendert haben.
+        // Das Original darf sich nicht verändert haben.
         Assert.Equal(originalBytes, await File.ReadAllBytesAsync(path));
 
         string outputPath = Temp(result.PdfBytes);
 
-        // Erneut oeffnen und die eingebettete XML herausholen.
+        // Erneut öffnen und die eingebettete XML herausholen.
         PdfAnalysisResult reopened = await _analyzer.AnalyzeAsync(outputPath);
 
         Assert.True(reopened.HasExistingInvoiceXml, "Die eingebettete XML wurde nicht wiedergefunden.");
@@ -161,13 +161,13 @@ public sealed class PdfAPipelineTests : IDisposable
     }
 
     /// <summary>
-    /// Legt die erzeugte Datei fuer die externe Gegenpruefung ab
+    /// Legt die erzeugte Datei für die externe Gegenprüfung ab
     /// (build/validate-golden-masters.sh mit veraPDF und CEN-Schematron).
-    /// Ohne diesen Schritt wuerde nur die eigene Pruefung die eigene Ausgabe
-    /// bestaetigen – das waere kein Nachweis.
+    /// Ohne diesen Schritt würde nur die eigene Prüfung die eigene Ausgabe
+    /// bestätigen – das wäre kein Nachweis.
     /// </summary>
     [Fact]
-    public async Task SchreibtErgebnisDateiFuerDieExterneGegenpruefung()
+    public async Task SchreibtErgebnisDateiFürDieExterneGegenprüfung()
     {
         string path = Temp(TestPdfFactory.CreateSimplePdf());
         CompositionResult result = await _composer.ComposeAsync(BuildRequest(path));
@@ -198,13 +198,13 @@ public sealed class PdfAPipelineTests : IDisposable
     }
 
     [Fact]
-    public void IccProfilHatGueltigenAufbau()
+    public void IccProfilHatGültigenAufbau()
     {
         byte[] profile = SRgbIccProfile.GetBytes();
 
         Assert.True(profile.Length > 128, "Ein ICC-Profil hat mindestens einen Kopf von 128 Byte.");
 
-        // Groesse im Kopf muss zur tatsaechlichen Groesse passen.
+        // Größe im Kopf muss zur tatsächlichen Größe passen.
         int declaredSize = System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(profile);
         Assert.Equal(profile.Length, declaredSize);
 
@@ -219,7 +219,7 @@ public sealed class PdfAPipelineTests : IDisposable
     }
 
     [Fact]
-    public void XmpPaketEnthaeltAllePflichtangaben()
+    public void XmpPaketEnthältAllePflichtangaben()
     {
         byte[] xmp = XmpMetadataBuilder.Build(
             "Rechnung RE-1", "Musterbetrieb", "Rechnung", "EInvoiceSender",
@@ -287,7 +287,7 @@ public sealed class PdfAPipelineTests : IDisposable
             VatId: "DE123456789"),
         Buyer = new BuyerParty(
             "Beispielkunde AG",
-            new PostalAddress("Kundenstrasse 7", null, "20095", "Hamburg", CountryCode.Germany),
+            new PostalAddress("Kundenstraße 7", null, "20095", "Hamburg", CountryCode.Germany),
             Email: "einkauf@example.invalid"),
         Lines =
         [
@@ -320,7 +320,7 @@ public sealed class PdfAPipelineTests : IDisposable
             }
             catch (IOException)
             {
-                // Aufraeumen darf einen Testlauf nicht scheitern lassen.
+                // Aufräumen darf einen Testlauf nicht scheitern lassen.
             }
         }
     }

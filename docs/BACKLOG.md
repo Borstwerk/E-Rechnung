@@ -1,6 +1,6 @@
 # Offene Punkte
 
-Nur echte, noch nicht erledigte Aufgaben. Abgeschlossenes gehoert nicht
+Nur echte, noch nicht erledigte Aufgaben. Abgeschlossenes gehört nicht
 hierher, sondern in die Commit-Historie.
 
 ## Funktion
@@ -8,28 +8,28 @@ hierher, sondern in die Commit-Historie.
 - **Positionserkennung aus Tabellen.** Die PDF-Erkennung liest Kopfdaten,
   Parteien, Bankangaben und Summen, aber keine Rechnungspositionen. Die
   Tabellenstruktur ist zwischen Rechnungsvorlagen zu uneinheitlich, um sie mit
-  den bisherigen zeilenbasierten Regeln zuverlaessig zu treffen. Dafuer braucht
-  es Spaltenerkennung ueber die Wortpositionen, die der Extraktor bereits
+  den bisherigen zeilenbasierten Regeln zuverlässig zu treffen. Dafür braucht
+  es Spaltenerkennung über die Wortpositionen, die der Extraktor bereits
   liefert.
-- **Kaeuferangaben weiter erkennen.** USt-IdNr., E-Mail und Land des Kaeufers
+- **Käuferangaben weiter erkennen.** USt-IdNr., E-Mail und Land des Käufers
   werden noch nicht gelesen. Das Land ist der wichtigste davon: Es steuert
   unter anderem, ob eine innergemeinschaftliche Lieferung vorliegt.
 
 ## Code
 
-- **InvoiceDraft verkleinern.** Mit 592 Zeilen die groesste Klasse des Kerns.
-  Die Umwandlung in das Domaenenmodell (`TryBuildInvoice` und die
-  Bau-Hilfsmethoden, rund 300 Zeilen) gehoert in eine eigene Klasse. Ein erster
-  Versuch wurde zurueckgenommen: Die mechanische Umschreibung der 55
-  unqualifizierten Feldzugriffe veraenderte Zeichenketten - unter anderem die
+- **InvoiceDraft verkleinern.** Mit 592 Zeilen die größte Klasse des Kerns.
+  Die Umwandlung in das Domänenmodell (`TryBuildInvoice` und die
+  Bau-Hilfsmethoden, rund 300 Zeilen) gehört in eine eigene Klasse. Ein erster
+  Versuch wurde zurückgenommen: Die mechanische Umschreibung der 55
+  unqualifizierten Feldzugriffe veränderte Zeichenketten - unter anderem die
   FieldPath-Angaben der Befunde - und Namen in Objektinitialisierern. Der
-  Umbau braucht einen werkzeuggestuetzten Rename, keine Textersetzung.
+  Umbau braucht einen werkzeuggestützten Rename, keine Textersetzung.
 
-## Nur auf einem Windows-Rechner pruefbar
+## Nur auf einem Windows-Rechner prüfbar
 
-- **Durchlauf durch alle fuenf Schritte** mit einer echten PDF: Dateidialog,
-  Drag-and-drop, PDF-Vorschau, Erkennungsuebersicht, Feldkennzeichnung,
+- **Durchlauf durch alle fünf Schritte** mit einer echten PDF: Dateidialog,
+  Drag-and-drop, PDF-Vorschau, Erkennungsübersicht, Feldkennzeichnung,
   Summenabgleich.
 - **Installer:** MSI bauen, installieren, aktualisieren, deinstallieren.
-- **`.eml` im klassischen und im neuen Outlook** praktisch oeffnen.
+- **`.eml` im klassischen und im neuen Outlook** praktisch öffnen.
 - **DPAPI-Schutz der IBAN** in den Einstellungen.

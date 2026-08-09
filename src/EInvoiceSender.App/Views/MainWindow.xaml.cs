@@ -9,7 +9,7 @@ namespace EInvoiceSender.App.Views;
 /// <summary>
 /// Das Hauptfenster.
 ///
-/// Der Code hier beschraenkt sich auf echte WPF-Aufgaben: Drag-and-drop,
+/// Der Code hier beschränkt sich auf echte WPF-Aufgaben: Drag-and-drop,
 /// Dateidialog, Unterfenster und das Ein- und Ausblenden des aktuellen
 /// Schrittes. Alles Weitere steht im <see cref="MainViewModel"/>.
 /// </summary>
@@ -40,7 +40,7 @@ public partial class MainWindow : Window
     /// Beim Anzeigen die gespeicherte Firmenvorlage laden.
     ///
     /// <c>async void</c> ist hier unvermeidbar – WPF-Ereignisse haben keine
-    /// andere Signatur. Deshalb faengt die Methode ihre Fehler selbst ab.
+    /// andere Signatur. Deshalb fängt die Methode ihre Fehler selbst ab.
     /// </summary>
     private async void OnLoadedAsync(object sender, RoutedEventArgs e)
     {
@@ -51,7 +51,7 @@ public partial class MainWindow : Window
         catch (Exception exception)
         {
             _viewModel.ErrorMessage =
-                "Die gespeicherten Vorgaben konnten nicht geladen werden. Sie koennen "
+                "Die gespeicherten Vorgaben konnten nicht geladen werden. Sie können "
                 + $"trotzdem weiterarbeiten. Technische Angabe: {exception.Message}";
         }
     }
@@ -75,7 +75,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Eine hereingezogene PDF pruefen. <c>async void</c> ist auch hier durch
+    /// Eine hereingezogene PDF prüfen. <c>async void</c> ist auch hier durch
     /// das WPF-Ereignis vorgegeben.
     /// </summary>
     private async void OnFileDropped(object sender, DragEventArgs e)
@@ -97,7 +97,7 @@ public partial class MainWindow : Window
         catch (Exception exception)
         {
             _viewModel.ErrorMessage =
-                $"Die Datei konnte nicht geprueft werden. Technische Angabe: {exception.Message}";
+                $"Die Datei konnte nicht geprüft werden. Technische Angabe: {exception.Message}";
         }
     }
 

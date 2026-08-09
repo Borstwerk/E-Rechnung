@@ -4,9 +4,9 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Money;
 
 /// <summary>
-/// Prueft die Rundungs- und Formatierungsregeln fuer Geldbetraege.
+/// Prüft die Rundungs- und Formatierungsregeln für Geldbeträge.
 /// Die Rundung muss der XPath-Funktion <c>round()</c> des CEN-Schematron
-/// entsprechen, also kaufmaennisch von der Null weg.
+/// entsprechen, also kaufmännisch von der Null weg.
 /// </summary>
 public sealed class AmountsTests
 {
@@ -19,7 +19,7 @@ public sealed class AmountsTests
     [InlineData("0.005", "0.01")]
     [InlineData("0.004", "0.00")]
     [InlineData("19", "19.00")]
-    public void RundetKaufmaennischVonDerNullWeg(string input, string expected)
+    public void RundetKaufmännischVonDerNullWeg(string input, string expected)
     {
         decimal value = decimal.Parse(input, System.Globalization.CultureInfo.InvariantCulture);
         decimal want = decimal.Parse(expected, System.Globalization.CultureInfo.InvariantCulture);
@@ -28,7 +28,7 @@ public sealed class AmountsTests
     }
 
     [Fact]
-    public void RundetAufFreiGewaehlteStellenzahl()
+    public void RundetAufFreiGewählteStellenzahl()
     {
         Assert.Equal(19.1235m, Amounts.Round(19.12345m, 4));
         Assert.Equal(19m, Amounts.Round(19.4m, 0));
@@ -67,7 +67,7 @@ public sealed class AmountsTests
     [InlineData("1234.567", "1234.57")]
     [InlineData("-0.5", "-0.50")]
     [InlineData("0", "0.00")]
-    public void SchreibtBetraegeImmerMitPunktUndZweiStellen(string input, string expected)
+    public void SchreibtBeträgeImmerMitPunktUndZweiStellen(string input, string expected)
     {
         decimal value = decimal.Parse(input, System.Globalization.CultureInfo.InvariantCulture);
 
@@ -80,7 +80,7 @@ public sealed class AmountsTests
     [InlineData("7", "7")]
     [InlineData("8.25", "8.25")]
     [InlineData("0", "0")]
-    public void SchreibtSteuersaetzeOhneUnnoetigeNullen(string input, string expected)
+    public void SchreibtSteuersätzeOhneUnnötigeNullen(string input, string expected)
     {
         decimal value = decimal.Parse(input, System.Globalization.CultureInfo.InvariantCulture);
 
@@ -88,9 +88,9 @@ public sealed class AmountsTests
     }
 
     [Fact]
-    public void FormatierungIstUnabhaengigVonDerSystemkultur()
+    public void FormatierungIstUnabhängigVonDerSystemkultur()
     {
-        // Unter einer deutschen Kultur waere das Dezimaltrennzeichen ein Komma.
+        // Unter einer deutschen Kultur wäre das Dezimaltrennzeichen ein Komma.
         // Die XML verlangt zwingend einen Punkt.
         var previous = System.Globalization.CultureInfo.CurrentCulture;
         try

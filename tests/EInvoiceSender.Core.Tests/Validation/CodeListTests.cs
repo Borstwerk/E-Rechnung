@@ -5,9 +5,9 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.CodeLists;
 
 /// <summary>
-/// Prueft die reinen Nachschlagefunktionen der statischen Codelisten:
+/// Prüft die reinen Nachschlagefunktionen der statischen Codelisten:
 /// bekannte Werte, Normalisierung (Gross-/Kleinschreibung, Leerzeichen),
-/// unbekannte Werte und die Nullbehandlung. Keine Geschaeftsregeln.
+/// unbekannte Werte und die Nullbehandlung. Keine Geschäftsregeln.
 /// </summary>
 public sealed class CodeListTests
 {
@@ -106,15 +106,15 @@ public sealed class CodeListTests
     [Fact]
     public void CountryCodeList_ContainsFullIsoRange()
     {
-        // Die Liste ist als vollstaendig dokumentiert (rund 249 Codes) -
+        // Die Liste ist als vollständig dokumentiert (rund 249 Codes) -
         // dieser Test soll ein versehentliches Zusammenstreichen erkennen.
         int total = CountAllCodes();
-        Assert.True(total > 200, $"Erwartet mehr als 200 Laendercodes, gefunden: {total}.");
+        Assert.True(total > 200, $"Erwartet mehr als 200 Ländercodes, gefunden: {total}.");
     }
 
     private static int CountAllCodes()
     {
-        // ISO 3166-1 alpha-2 belegt nur zweistellige Grossbuchstabenkombinationen.
+        // ISO 3166-1 alpha-2 belegt nur zweistellige Großbuchstabenkombinationen.
         int count = 0;
         for (char first = 'A'; first <= 'Z'; first++)
         {
@@ -181,7 +181,7 @@ public sealed class CodeListTests
     {
         foreach ((string code, string _) in UnitCodeList.CommonUnits)
         {
-            Assert.True(UnitCodeList.IsValid(code), $"CommonUnits-Code '{code}' ist nicht in UnitCodeList gueltig.");
+            Assert.True(UnitCodeList.IsValid(code), $"CommonUnits-Code '{code}' ist nicht in UnitCodeList gültig.");
         }
     }
 
@@ -236,7 +236,7 @@ public sealed class CodeListTests
         bool found = PaymentMeansCodes.TryGetName(58, out string? name);
 
         Assert.True(found);
-        Assert.Equal("SEPA-Ueberweisung", name);
+        Assert.Equal("SEPA-Überweisung", name);
     }
 
     [Fact]

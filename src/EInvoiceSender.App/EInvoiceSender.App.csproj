@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Die WPF-Anwendung. Enthaelt Fenster, Ansichten, ViewModels, die
-    Windows-spezifischen Dienste und die Zusammenstellung der Abhaengigkeiten.
-    Fachlogik steht ausschliesslich in EInvoiceSender.Core.
+    Die WPF-Anwendung. Enthält Fenster, Ansichten, ViewModels, die
+    Windows-spezifischen Dienste und die Zusammenstellung der Abhängigkeiten.
+    Fachlogik steht ausschließlich in EInvoiceSender.Core.
   -->
 
   <PropertyGroup>

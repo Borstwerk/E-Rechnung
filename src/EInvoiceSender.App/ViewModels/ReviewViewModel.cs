@@ -10,13 +10,13 @@ namespace EInvoiceSender.App.ViewModels;
 
 /// <summary>
 /// Schritt 3: Die sichtbare PDF neben den erfassten Daten zeigen und die
-/// Uebereinstimmung ausdruecklich bestaetigen lassen.
+/// Übereinstimmung ausdrücklich bestätigen lassen.
 ///
-/// Dieser Schritt traegt den fachlichen Kern der ganzen Anwendung: Die
+/// Dieser Schritt trägt den fachlichen Kern der ganzen Anwendung: Die
 /// strukturierten Daten sind vom Menschen eingegeben, nicht aus der PDF
 /// gelesen. Ob beides zusammenpasst, kann nur der Mensch entscheiden – deshalb
-/// die Pflichtbestaetigung. Ohne sie sperrt der Kern die Erzeugung, nicht bloss
-/// die Oberflaeche.
+/// die Pflichtbestätigung. Ohne sie sperrt der Kern die Erzeugung, nicht bloß
+/// die Oberfläche.
 /// </summary>
 public sealed partial class ReviewViewModel : StepViewModel
 {
@@ -30,15 +30,15 @@ public sealed partial class ReviewViewModel : StepViewModel
     private InvoiceTotals? _totals;
 
     /// <summary>
-    /// Bestaetigung, dass die erfassten Daten mit der sichtbaren PDF
-    /// uebereinstimmen.
+    /// Bestätigung, dass die erfassten Daten mit der sichtbaren PDF
+    /// übereinstimmen.
     /// </summary>
     [ObservableProperty]
     private bool _contentMatchConfirmed;
 
     /// <summary>
-    /// Bestaetigung, eine bereits eingebettete Rechnung zu ersetzen. Wird nur
-    /// abgefragt, wenn die gewaehlte PDF schon strukturierte Daten enthaelt.
+    /// Bestätigung, eine bereits eingebettete Rechnung zu ersetzen. Wird nur
+    /// abgefragt, wenn die gewählte PDF schon strukturierte Daten enthält.
     /// </summary>
     [ObservableProperty]
     private bool _existingInvoiceReplacementConfirmed;
@@ -47,15 +47,15 @@ public sealed partial class ReviewViewModel : StepViewModel
     [NotifyPropertyChangedFor(nameof(ShowsReplacementQuestion))]
     private bool _sourceAlreadyContainsInvoice;
 
-    /// <summary>Muss die Ersetzungsfrage ueberhaupt gestellt werden?</summary>
+    /// <summary>Muss die Ersetzungsfrage überhaupt gestellt werden?</summary>
     public bool ShowsReplacementQuestion => SourceAlreadyContainsInvoice;
 
     /// <summary>
     /// Wohin die erzeugte Datei geschrieben wird.
     ///
     /// Steht bewusst in diesem Schritt und nicht nur in den Einstellungen: Der
-    /// Anwender soll den Ordner unmittelbar vor dem Erzeugen sehen und aendern
-    /// koennen. Die Vorgabe ist ein Unterordner der eigenen Dokumente – damit
+    /// Anwender soll den Ordner unmittelbar vor dem Erzeugen sehen und ändern
+    /// können. Die Vorgabe ist ein Unterordner der eigenen Dokumente – damit
     /// geht nie ein leerer Pfad in den Kern.
     /// </summary>
     [ObservableProperty]
@@ -65,12 +65,12 @@ public sealed partial class ReviewViewModel : StepViewModel
     public static string DefaultOutputDirectory { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EInvoiceSender");
 
-    /// <summary>Verkaeufer, einzeilig.</summary>
+    /// <summary>Verkäufer, einzeilig.</summary>
     public string SellerText => Invoice is null
         ? string.Empty
         : $"{Invoice.Seller.Name}, {Invoice.Seller.Address.PostalCode} {Invoice.Seller.Address.City}";
 
-    /// <summary>Kaeufer, einzeilig.</summary>
+    /// <summary>Käufer, einzeilig.</summary>
     public string BuyerText => Invoice is null
         ? string.Empty
         : $"{Invoice.Buyer.Name}, {Invoice.Buyer.Address.PostalCode} {Invoice.Buyer.Address.City}";
@@ -95,7 +95,7 @@ public sealed partial class ReviewViewModel : StepViewModel
     /// <summary>Zahlbetrag.</summary>
     public string PayableText => Money(Totals?.DuePayableAmount);
 
-    /// <summary>Uebernimmt den Stand aus den vorigen Schritten.</summary>
+    /// <summary>Übernimmt den Stand aus den vorigen Schritten.</summary>
     public void Show(Invoice invoice, InvoiceTotals totals, ImageSource? preview, bool alreadyHybrid)
     {
         Invoice = invoice;
@@ -122,7 +122,7 @@ public sealed partial class ReviewViewModel : StepViewModel
     /// <summary>Liegt ein Abgleich vor?</summary>
     public bool HasTotalsComparison => TotalsComparison is not null;
 
-    /// <summary>Zeichen zur farbunabhaengigen Kennzeichnung des Abgleichs.</summary>
+    /// <summary>Zeichen zur farbunabhängigen Kennzeichnung des Abgleichs.</summary>
     public string TotalsComparisonGlyph => TotalsComparison switch
     {
         { WasPerformed: true, Matches: true } => "\u2713",
@@ -130,10 +130,10 @@ public sealed partial class ReviewViewModel : StepViewModel
         _ => "i",
     };
 
-    /// <summary>Uebernimmt das Ergebnis des Summenabgleichs.</summary>
+    /// <summary>Übernimmt das Ergebnis des Summenabgleichs.</summary>
     public void ShowTotalsComparison(TotalsComparison comparison) => TotalsComparison = comparison;
 
-    /// <summary>Setzt den Schritt auf den Anfangszustand zurueck.</summary>
+    /// <summary>Setzt den Schritt auf den Anfangszustand zurück.</summary>
     public void Reset()
     {
         ContentMatchConfirmed = false;

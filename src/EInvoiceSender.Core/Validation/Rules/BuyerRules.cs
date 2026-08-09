@@ -5,7 +5,7 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Validation.Rules;
 
 /// <summary>
-/// Regeln zum Rechnungsempfaenger.
+/// Regeln zum Rechnungsempfänger.
 /// </summary>
 internal static class BuyerRules
 {
@@ -15,17 +15,17 @@ internal static class BuyerRules
         {
             report.Error(
                 "APP-BUY-001",
-                "Der Name des Rechnungsempfaengers fehlt.",
+                "Der Name des Rechnungsempfängers fehlt.",
                 "Buyer.Name", normRule: "BR-07");
         }
 
-        AddressRules.Validate(buyer.Address, "Buyer.Address", "des Rechnungsempfaengers", "APP-BUY-002", report);
+        AddressRules.Validate(buyer.Address, "Buyer.Address", "des Rechnungsempfängers", "APP-BUY-002", report);
 
         if (!CountryCodeList.IsValid(buyer.Address.Country.Value))
         {
             report.Error(
                 "APP-BUY-003",
-                $"'{buyer.Address.Country.Value}' ist kein bekanntes Laenderkennzeichen.",
+                $"'{buyer.Address.Country.Value}' ist kein bekanntes Länderkennzeichen.",
                 "Buyer.Address.Country", normRule: "BR-11");
         }
 
@@ -33,7 +33,7 @@ internal static class BuyerRules
         {
             report.Error(
                 "APP-BUY-004",
-                "Die E-Mail-Adresse des Rechnungsempfaengers ist nicht gueltig.",
+                "Die E-Mail-Adresse des Rechnungsempfängers ist nicht gültig.",
                 "Buyer.Email");
         }
 
@@ -41,8 +41,8 @@ internal static class BuyerRules
         {
             report.Warning(
                 "APP-BUY-005",
-                "Fuer den Empfaenger ist keine elektronische Adresse hinterlegt. "
-                + "Ohne sie laesst sich die Rechnung nicht per E-Mail versenden.",
+                "Für den Empfänger ist keine elektronische Adresse hinterlegt. "
+                + "Ohne sie lässt sich die Rechnung nicht per E-Mail versenden.",
                 "Buyer.Email");
         }
 
@@ -51,7 +51,7 @@ internal static class BuyerRules
         {
             report.Warning(
                 "APP-BUY-006",
-                "Zur elektronischen Adresse des Empfaengers fehlt die Angabe, um "
+                "Zur elektronischen Adresse des Empfängers fehlt die Angabe, um "
                 + "welche Art von Adresse es sich handelt.",
                 "Buyer.ElectronicAddressScheme",
                 "Ohne Angabe wird 'EM' (E-Mail) verwendet.", "BR-63");

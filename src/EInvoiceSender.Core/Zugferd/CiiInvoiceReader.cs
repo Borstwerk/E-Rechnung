@@ -7,23 +7,23 @@ using EInvoiceSender.Core.Services;
 namespace EInvoiceSender.Core.Zugferd;
 
 /// <summary>
-/// Liest die Kerndaten einer CII-Rechnungs-XML zurueck.
+/// Liest die Kerndaten einer CII-Rechnungs-XML zurück.
 ///
-/// Zweck ist nicht, das Dokument vollstaendig abzubilden, sondern zwei Fragen zu
+/// Zweck ist nicht, das Dokument vollständig abzubilden, sondern zwei Fragen zu
 /// beantworten:
 /// 1. Welches Profil hat diese Datei? (Erkennung bereits hybrider PDFs)
-/// 2. Enthaelt die erzeugte Datei tatsaechlich das, was erzeugt werden sollte?
-///    (Gegenpruefung des Ergebnisses nach dem erneuten Oeffnen)
+/// 2. Enthält die erzeugte Datei tatsächlich das, was erzeugt werden sollte?
+///    (Gegenprüfung des Ergebnisses nach dem erneuten Öffnen)
 ///
-/// Der Baum wird ueber <see cref="XDocument"/> aufgebaut, aber ausschliesslich
+/// Der Baum wird über <see cref="XDocument"/> aufgebaut, aber ausschließlich
 /// mit dem abgesicherten Leser aus <see cref="SecureXml"/>: DTD-Verarbeitung ist
-/// verboten, externe Verweise werden nicht aufgeloest, und Groesse wie Tiefe
-/// sind begrenzt. Eingehende XML aus fremden PDFs ist nicht vertrauenswuerdig.
+/// verboten, externe Verweise werden nicht aufgelöst, und Größe wie Tiefe
+/// sind begrenzt. Eingehende XML aus fremden PDFs ist nicht vertrauenswürdig.
 ///
-/// Bewusst nicht ueber einen vorwaertsgerichteten <see cref="XmlReader"/>
+/// Bewusst nicht über einen vorwärtsgerichteten <see cref="XmlReader"/>
 /// implementiert: Dort verschiebt <c>ReadElementContentAsString</c> die Position
 /// bereits auf den Folgeknoten, was in einer Leseschleife lautlos Elemente
-/// ueberspringt. Dieser Fehler ist in der Entwicklung genau so aufgetreten.
+/// überspringt. Dieser Fehler ist in der Entwicklung genau so aufgetreten.
 /// </summary>
 public sealed class CiiInvoiceReader : IInvoiceXmlReader
 {
@@ -83,9 +83,9 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
     }
 
     /// <summary>
-    /// Laedt das Dokument abgesichert. Liefert null statt einer Ausnahme, wenn
+    /// Lädt das Dokument abgesichert. Liefert null statt einer Ausnahme, wenn
     /// die Eingabe keine brauchbare XML ist – der Aufrufer soll dem Anwender
-    /// eine verstaendliche Meldung zeigen, keinen Stapelabzug.
+    /// eine verständliche Meldung zeigen, keinen Stapelabzug.
     /// </summary>
     private static XDocument? TryLoad(byte[] xml)
     {
@@ -102,7 +102,7 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
         }
         catch (InvalidDataException)
         {
-            // Groessenbegrenzung aus SecureXml.
+            // Größenbegrenzung aus SecureXml.
             return null;
         }
     }

@@ -3,33 +3,33 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
-/// Ein einzelner Pruefbefund. Traegt immer beides: die technische Regel-ID fuer
+/// Ein einzelner Prüfbefund. Trägt immer beides: die technische Regel-ID für
 /// den Detailbereich und einen deutschen Satz, den ein normaler Anwender
 /// versteht. Siehe docs/SPECIFICATION.md, Abschnitt 6.
 /// </summary>
 /// <param name="Severity">Schweregrad. Nur <c>Error</c> verhindert die Erzeugung.</param>
 /// <param name="RuleId">
 /// **Stabile interne Kennung** des Befundes, z. B. <c>APP-SUM-003</c>. Sie
-/// aendert sich nicht mehr, sobald sie vergeben ist, und ist der Schluessel
-/// fuer Dokumentation, Uebersetzung und Fehlersuche. Befunde externer
-/// Werkzeuge tragen das Praefix <c>EXT-</c>.
+/// ändert sich nicht mehr, sobald sie vergeben ist, und ist der Schlüssel
+/// für Dokumentation, Übersetzung und Fehlersuche. Befunde externer
+/// Werkzeuge tragen das Präfix <c>EXT-</c>.
 /// </param>
-/// <param name="Message">Verstaendliche deutsche Erlaeuterung fuer den Anwender.</param>
+/// <param name="Message">Verständliche deutsche Erläuterung für den Anwender.</param>
 /// <param name="FieldPath">
-/// Feldbezug fuer die Oberflaeche, z. B. <c>Lines[2].Quantity</c>. Leer, wenn
+/// Feldbezug für die Oberfläche, z. B. <c>Lines[2].Quantity</c>. Leer, wenn
 /// der Befund das ganze Dokument betrifft.
 /// </param>
 /// <param name="TechnicalDetail">
-/// Optionaler technischer Zusatz fuer den aufklappbaren Detailbereich,
+/// Optionaler technischer Zusatz für den aufklappbaren Detailbereich,
 /// etwa die konkrete Rechnung mit Ist- und Sollwert.
 /// </param>
 /// <param name="NormRule">
-/// Die zugehoerige Regel der Norm EN 16931 (z. B. <c>BR-CO-13</c>), soweit es
-/// eine gibt. Bleibt leer, wenn die Pruefung eine reine Benutzerfuehrung ohne
+/// Die zugehörige Regel der Norm EN 16931 (z. B. <c>BR-CO-13</c>), soweit es
+/// eine gibt. Bleibt leer, wenn die Prüfung eine reine Benutzerführung ohne
 /// Entsprechung in der Norm ist. Wird im Detailbereich angezeigt.
 ///
-/// Wichtig: Eine bestandene eigene Pruefung ersetzt **nicht** die Pruefung
-/// durch das offizielle Schematron. Die Freigabe erteilen ausschliesslich die
+/// Wichtig: Eine bestandene eigene Prüfung ersetzt **nicht** die Prüfung
+/// durch das offizielle Schematron. Die Freigabe erteilen ausschließlich die
 /// externen Validatoren (docs/DECISIONS.md, ADR-0004).
 /// </param>
 public sealed record ValidationFinding(
@@ -68,7 +68,7 @@ public sealed record ValidationFinding(
         => new(FindingSeverity.Information, ruleId, message, fieldPath, technicalDetail, normRule);
 
     /// <summary>
-    /// Vollstaendige technische Beschreibung fuer den aufklappbaren
+    /// Vollständige technische Beschreibung für den aufklappbaren
     /// Detailbereich: interne Kennung, Normregel und Zusatzangabe.
     /// </summary>
     public string BuildTechnicalSummary()

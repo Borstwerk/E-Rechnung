@@ -4,8 +4,8 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
-/// Sammlung von Pruefbefunden eines Pruefschritts.
-/// Unveraenderlich; zum Aufbauen dient <see cref="ValidationReportBuilder"/>.
+/// Sammlung von Prüfbefunden eines Prüfschritts.
+/// Unveränderlich; zum Aufbauen dient <see cref="ValidationReportBuilder"/>.
 /// </summary>
 public sealed class ValidationReport
 {
@@ -21,10 +21,10 @@ public sealed class ValidationReport
     /// <summary>Alle Befunde in der Reihenfolge ihrer Ermittlung.</summary>
     public IReadOnlyList<ValidationFinding> Findings { get; }
 
-    /// <summary>Enthaelt der Bericht mindestens einen Fehler?</summary>
+    /// <summary>Enthält der Bericht mindestens einen Fehler?</summary>
     public bool HasErrors => Findings.Any(f => f.Severity == FindingSeverity.Error);
 
-    /// <summary>Enthaelt der Bericht mindestens eine Warnung?</summary>
+    /// <summary>Enthält der Bericht mindestens eine Warnung?</summary>
     public bool HasWarnings => Findings.Any(f => f.Severity == FindingSeverity.Warning);
 
     /// <summary>Anzahl der Fehler.</summary>
@@ -42,8 +42,8 @@ public sealed class ValidationReport
 }
 
 /// <summary>
-/// Aufbauhilfe fuer <see cref="ValidationReport"/>. Bewusst nicht threadsicher –
-/// jede Pruefung baut ihren eigenen Bericht.
+/// Aufbauhilfe für <see cref="ValidationReport"/>. Bewusst nicht threadsicher –
+/// jede Prüfung baut ihren eigenen Bericht.
 /// </summary>
 public sealed class ValidationReportBuilder
 {
@@ -101,6 +101,6 @@ public sealed class ValidationReportBuilder
         return this;
     }
 
-    /// <summary>Schliesst den Bericht ab.</summary>
+    /// <summary>Schließt den Bericht ab.</summary>
     public ValidationReport Build() => new(_findings);
 }

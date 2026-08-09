@@ -8,14 +8,14 @@ using PdfSharp.Pdf.IO;
 namespace EInvoiceSender.Core.Pdf;
 
 /// <summary>
-/// Untersucht PDF-Dateien, ohne sie zu veraendern.
+/// Untersucht PDF-Dateien, ohne sie zu verändern.
 ///
 /// Zwei Aufgaben:
-/// 1. Feststellen, ob die Datei ueberhaupt ein PDF ist und was sie enthaelt
-///    (Seiten, Anhaenge, bereits eingebettete Rechnungsdaten).
+/// 1. Feststellen, ob die Datei überhaupt ein PDF ist und was sie enthält
+///    (Seiten, Anhänge, bereits eingebettete Rechnungsdaten).
 /// 2. Feststellen, ob sie zu PDF/A-3 aufgewertet werden kann.
 ///
-/// Der Analysator wirft bei beschaedigten Dateien nicht, sondern meldet den
+/// Der Analysator wirft bei beschädigten Dateien nicht, sondern meldet den
 /// Zustand als Hindernis. Ein Stapelabzug hilft dem Anwender nicht weiter.
 /// </summary>
 public sealed partial class PdfAnalyzer : IPdfAnalyzer
@@ -118,16 +118,16 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         }
         // Bewusst breit gefasst: PDFsharp meldet Strukturfehler fremder Dateien
         // teils als nackte Exception ("The StartXRef table could not be found").
-        // Eingehende PDFs sind nicht vertrauenswuerdig – jeder Lesefehler ist
+        // Eingehende PDFs sind nicht vertrauenswürdig – jeder Lesefehler ist
         // ein Betriebsfall und darf die Anwendung nicht beenden.
         catch (Exception ex) when (ex is not OperationCanceledException
                                       and not OutOfMemoryException
                                       and not StackOverflowException)
         {
-            // Eine beschaedigte Datei ist ein erwarteter Betriebsfall, kein Programmfehler.
+            // Eine beschädigte Datei ist ein erwarteter Betriebsfall, kein Programmfehler.
             // Ein Kennwortschutz meldet sich als Lesefehler. Er ist fachlich
             // etwas anderes als eine kaputte Datei und bekommt eine eigene,
-            // fuer den Anwender brauchbare Erklaerung.
+            // für den Anwender brauchbare Erklärung.
             bool looksPasswordProtected =
                 ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase)
                 || ex.Message.Contains("encrypt", StringComparison.OrdinalIgnoreCase);
@@ -152,9 +152,9 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     }
 
     /// <summary>
-    /// Prueft alle Seiten auf Schriften ohne eingebettete Schriftdatei.
-    /// Nicht eingebettete Schriften sind der haeufigste Grund, warum ein PDF
-    /// nicht PDF/A-faehig ist.
+    /// Prüft alle Seiten auf Schriften ohne eingebettete Schriftdatei.
+    /// Nicht eingebettete Schriften sind der häufigste Grund, warum ein PDF
+    /// nicht PDF/A-fähig ist.
     /// </summary>
     private static bool AllFontsEmbedded(PdfDocument document)
     {
@@ -232,7 +232,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
             return false;
         }
 
-        // SigFlags ungleich null bedeutet: Das Dokument enthaelt Signaturfelder.
+        // SigFlags ungleich null bedeutet: Das Dokument enthält Signaturfelder.
         return acroForm.Elements.ContainsKey("/SigFlags")
                && acroForm.Elements.GetInteger("/SigFlags") != 0;
     }
@@ -288,8 +288,8 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
                 continue;
             }
 
-            // Die XML stammt aus einer fremden Datei und wird ausschliesslich
-            // ueber den abgesicherten Leser ausgewertet.
+            // Die XML stammt aus einer fremden Datei und wird ausschließlich
+            // über den abgesicherten Leser ausgewertet.
             string? profile = _xmlReader.ReadProfileId(xml);
 
             return (xml, profile);
@@ -298,7 +298,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         return (null, null);
     }
 
-    /// <summary>Obergrenze fuer eine eingebettete XML, siehe SecureXml.</summary>
+    /// <summary>Obergrenze für eine eingebettete XML, siehe SecureXml.</summary>
     private const int SecureXmlLimit = 8 * 1024 * 1024;
 
     /// <summary>
@@ -306,7 +306,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     ///
     /// Eine korrekt aufgebaute Hybridrechnung verweist auf dieselbe
     /// Dateibeschreibung aus zwei Richtungen: aus dem Namensbaum
-    /// /Names /EmbeddedFiles und aus dem Feld /AF. Ohne Entdopplung wuerde
+    /// /Names /EmbeddedFiles und aus dem Feld /AF. Ohne Entdopplung würde
     /// derselbe Anhang doppelt gemeldet.
     /// </summary>
     private static IEnumerable<(string FileName, PdfDictionary Specification)> EnumerateFileSpecifications(
@@ -373,8 +373,8 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     /// <summary>
     /// Liest die PDF/A-Kennzeichnung aus dem XMP-Paket.
     /// Bewusst mit einer einfachen Textsuche statt mit einem XML-Parser: Das
-    /// XMP fremder Dateien ist nicht vertrauenswuerdig, und fuer die reine
-    /// Anzeige genuegt der Fund der beiden Felder.
+    /// XMP fremder Dateien ist nicht vertrauenswürdig, und für die reine
+    /// Anzeige genügt der Fund der beiden Felder.
     /// </summary>
     private static (string? Part, string? Conformance) ReadDeclaredPdfALevel(PdfDictionary catalog)
     {
@@ -413,7 +413,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     }
 
     /// <summary>
-    /// Loest die <c>#hh</c>-Maskierung eines PDF-Namens auf, damit im Bericht
+    /// Löst die <c>#hh</c>-Maskierung eines PDF-Namens auf, damit im Bericht
     /// "text/xml" steht und nicht "text#2Fxml".
     /// </summary>
     private static string? DecodePdfName(string? name)
@@ -455,7 +455,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
 
     [LoggerMessage(
         EventId = 2010, Level = LogLevel.Warning,
-        Message = "PDF konnte nicht analysiert werden ({Reason}). Datei wird als beschaedigt gemeldet.")]
+        Message = "PDF konnte nicht analysiert werden ({Reason}). Datei wird als beschädigt gemeldet.")]
     private static partial void LogAnalysisFailed(ILogger logger, string reason);
 
     /// <summary>Wandelt die interne Versionszahl (z. B. 17) in "1.7".</summary>

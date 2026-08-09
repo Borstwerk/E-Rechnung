@@ -13,7 +13,7 @@ namespace EInvoiceSender.Core.Tests.App;
 /// in einer eigenen Rasterzeile unter mehreren Feldern nebeneinander. Welches
 /// „✓ aus PDF erkannt“ zu welchem Feld gehörte, war nicht zu erkennen. Beim
 /// Umbau zu Feldeinheiten kann so etwas wieder entstehen – WPF meldet weder
-/// einen verrutschten Hinweis noch ein Bedienelement ausserhalb seines Rasters.
+/// einen verrutschten Hinweis noch ein Bedienelement außerhalb seines Rasters.
 ///
 /// Die Tests lesen die XAML als Text. Sie brauchen deshalb weder WPF noch einen
 /// Windows-Rechner und laufen im selben Durchlauf wie alle übrigen Tests.
@@ -73,7 +73,7 @@ public sealed class InvoiceDataLayoutTests
     ///
     /// Geprüft wird die räumliche Zuordnung, so wie WPF sie auswertet: Im
     /// Raster steht der Hinweis in der Spalte seines Feldes, unmittelbar eine
-    /// Zeile darunter. Ausserhalb eines Rasters steht er als Nachbar in
+    /// Zeile darunter. Außerhalb eines Rasters steht er als Nachbar in
     /// derselben Feldeinheit.
     /// </summary>
     [Fact]
@@ -114,9 +114,9 @@ public sealed class InvoiceDataLayoutTests
     /// übereinander. Genau das passiert beim Einfügen eines Feldes leicht.
     /// </summary>
     [Fact]
-    public void KeinBedienelementLiegtAusserhalbSeinesRasters()
+    public void KeinBedienelementLiegtAußerhalbSeinesRasters()
     {
-        var zuGross = new List<string>();
+        var zuGroß = new List<string>();
 
         foreach (XElement grid in View().Descendants(Presentation + "Grid"))
         {
@@ -126,25 +126,25 @@ public sealed class InvoiceDataLayoutTests
             Assert.True(
                 rows > 0 || columns > 0,
                 "Dieses Raster hat weder Zeilen- noch Spaltendefinitionen. Dann prüft der Test "
-                + "nichts – vermutlich heissen die Elemente anders als erwartet.");
+                + "nichts – vermutlich heißen die Elemente anders als erwartet.");
 
             foreach (XElement child in grid.Elements().Where(e => !e.Name.LocalName.Contains('.')))
             {
-                zuGross.AddRange(TooFarOut(child, "Grid.Row", "Grid.RowSpan", rows, "Zeile"));
-                zuGross.AddRange(TooFarOut(child, "Grid.Column", "Grid.ColumnSpan", columns, "Spalte"));
+                zuGroß.AddRange(TooFarOut(child, "Grid.Row", "Grid.RowSpan", rows, "Zeile"));
+                zuGroß.AddRange(TooFarOut(child, "Grid.Column", "Grid.ColumnSpan", columns, "Spalte"));
             }
         }
 
         Assert.True(
-            zuGross.Count == 0,
-            "Diese Bedienelemente liegen ausserhalb ihres Rasters: "
-            + $"{string.Join("; ", zuGross)}. WPF schiebt sie stillschweigend in die letzte "
+            zuGroß.Count == 0,
+            "Diese Bedienelemente liegen außerhalb ihres Rasters: "
+            + $"{string.Join("; ", zuGroß)}. WPF schiebt sie stillschweigend in die letzte "
             + "vorhandene Zeile beziehungsweise Spalte, wo sie andere Felder überdecken.");
     }
 
     /// <summary>
     /// Meldet, wenn ein Element über die letzte vorhandene Zeile oder Spalte
-    /// hinausragt. Ohne Rasterangaben gilt nichts als zu weit aussen.
+    /// hinausragt. Ohne Rasterangaben gilt nichts als zu weit außen.
     /// </summary>
     private static IEnumerable<string> TooFarOut(
         XElement child, string index, string span, int defined, string what)
@@ -166,7 +166,7 @@ public sealed class InvoiceDataLayoutTests
     /// <summary>
     /// Steht der Hinweis bei dem Feld, dessen Herkunft er nennt? Geprüft wird
     /// beides: die Lage **und** die gebundene Eigenschaft. Nur die Lage zu
-    /// prüfen liesse einen Hinweis durchgehen, der neben dem falschen Feld
+    /// prüfen ließe einen Hinweis durchgehen, der neben dem falschen Feld
     /// steht.
     /// </summary>
     private static bool StandsWithItsField(XElement hint)

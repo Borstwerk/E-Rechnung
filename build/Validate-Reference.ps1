@@ -1,14 +1,14 @@
-<#
+﻿<#
 .SYNOPSIS
-    Prueft die Golden Master mit den externen Referenzwerkzeugen.
+    Prüft die Golden Master mit den externen Referenzwerkzeugen.
 
 .DESCRIPTION
-    Geprueft wird gegen das offizielle CEN-Schematron und veraPDF, beide ueber
-    die Mustangproject-CLI. Beides laeuft vollstaendig oertlich; es werden
-    keine Rechnungsdaten uebertragen.
+    Geprüft wird gegen das offizielle CEN-Schematron und veraPDF, beide über
+    die Mustangproject-CLI. Beides läuft vollständig örtlich; es werden
+    keine Rechnungsdaten übertragen.
 
-    Zwei Aussagen muessen zutreffen:
-      - alle acht gueltigen Golden Master werden als gueltig bestaetigt,
+    Zwei Aussagen müssen zutreffen:
+      - alle acht gültigen Golden Master werden als gültig bestätigt,
       - alle absichtlich fehlerhaften Dateien werden beanstandet.
 
     Fehlt Java oder die Mustang-JAR, sagt das Skript genau das - und meldet
@@ -35,12 +35,12 @@ if (-not $jar) {
 
 New-Item -ItemType Directory -Force -Path $ReportDirectory | Out-Null
 
-Write-Host "Referenzpruefung mit $($jar.Name) ..." -ForegroundColor Cyan
+Write-Host "Referenzprüfung mit $($jar.Name) ..." -ForegroundColor Cyan
 
 $env:REQUIRE_EXTERNAL_VALIDATORS = '1'
 dotnet test (Join-Path $root 'tests' 'EInvoiceSender.IntegrationTests') -c Release `
-    --logger "trx;LogFileName=referenzpruefung.trx" `
+    --logger "trx;LogFileName=referenzprüfung.trx" `
     --results-directory $ReportDirectory
-if ($LASTEXITCODE -ne 0) { throw "Die Referenzpruefung ist fehlgeschlagen. Bericht: $ReportDirectory" }
+if ($LASTEXITCODE -ne 0) { throw "Die Referenzprüfung ist fehlgeschlagen. Bericht: $ReportDirectory" }
 
-Write-Host "Referenzpruefung bestanden. Bericht: $ReportDirectory" -ForegroundColor Green
+Write-Host "Referenzprüfung bestanden. Bericht: $ReportDirectory" -ForegroundColor Green

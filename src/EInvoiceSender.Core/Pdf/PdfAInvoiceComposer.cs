@@ -11,26 +11,26 @@ namespace EInvoiceSender.Core.Pdf;
 /// Erzeugt aus einer vorhandenen PDF und der Rechnungs-XML eine
 /// PDF/A-3b-Datei mit eingebetteter XML.
 ///
-/// Wichtig zum Verstaendnis dessen, was hier geschieht – und was nicht:
+/// Wichtig zum Verständnis dessen, was hier geschieht – und was nicht:
 ///
 /// Diese Klasse **konvertiert kein beliebiges PDF nach PDF/A**. Es gibt keine
-/// permissiv lizenzierte .NET-Bibliothek, die Schriften nachtraeglich einbettet,
-/// Farbraeume normalisiert oder Transparenz aufloest (ADR-0003). Was hier
-/// geschieht, ist eine **Aufwertung**: Ein bereits geeignetes PDF erhaelt die
+/// permissiv lizenzierte .NET-Bibliothek, die Schriften nachträglich einbettet,
+/// Farbräume normalisiert oder Transparenz auflöst (ADR-0003). Was hier
+/// geschieht, ist eine **Aufwertung**: Ein bereits geeignetes PDF erhält die
 /// fehlenden PDF/A-3-Bestandteile.
 ///
 /// Ist das Eingangsdokument nicht geeignet, bricht der Vorgang ab und liefert
-/// eine verstaendliche Begruendung. Es wird niemals eine Datei ausgegeben, die
-/// nur so aussieht, als waere sie konform.
+/// eine verständliche Begründung. Es wird niemals eine Datei ausgegeben, die
+/// nur so aussieht, als wäre sie konform.
 ///
-/// Die Originaldatei wird ausschliesslich gelesen und nie veraendert.
+/// Die Originaldatei wird ausschließlich gelesen und nie verändert.
 /// </summary>
 public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
 {
     private readonly IPdfAnalyzer _analyzer;
     private readonly ILogger<PdfAInvoiceComposer> _logger;
 
-    /// <summary>Programmkennung fuer die PDF-Metadaten.</summary>
+    /// <summary>Programmkennung für die PDF-Metadaten.</summary>
     public const string ProducerName = "EInvoiceSender";
 
     public PdfAInvoiceComposer(IPdfAnalyzer analyzer, ILogger<PdfAInvoiceComposer> logger)
@@ -71,7 +71,7 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
         {
             report.Warning(
                 "APP-PDF-020",
-                "Die gewaehlte PDF-Datei enthaelt bereits eine Rechnungs-XML. "
+                "Die gewählte PDF-Datei enthält bereits eine Rechnungs-XML. "
                 + "Diese wird durch die neu erzeugte ersetzt.",
                 technicalDetail: $"Bisheriges Profil: {analysis.ExistingInvoiceProfile ?? "unbekannt"}");
         }
@@ -90,7 +90,7 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
         {
             report.Error(
                 "APP-PDF-030",
-                "Die PDF-Datei konnte nicht verarbeitet werden. Sie ist vermutlich beschaedigt.",
+                "Die PDF-Datei konnte nicht verarbeitet werden. Sie ist vermutlich beschädigt.",
                 technicalDetail: ex.Message);
 
             return CompositionResult.Failed(report.Build());
@@ -109,8 +109,8 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
     private static byte[] Upgrade(PdfACompositionRequest request, PdfAnalysisResult analysis)
     {
         // Das Original wird nur gelesen. Der Datenstrom wird bewusst separat
-        // geoeffnet und nach dem Einlesen sofort geschlossen, damit die Datei
-        // nicht laenger als noetig gesperrt ist.
+        // geöffnet und nach dem Einlesen sofort geschlossen, damit die Datei
+        // nicht länger als nötig gesperrt ist.
         using var source = new FileStream(
             request.SourcePdfPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         using PdfDocument document = PdfReader.Open(source, PdfDocumentOpenMode.Modify);
@@ -145,7 +145,7 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
 
     /// <summary>
     /// Setzt die Dokumentinformationen. PDF/A verlangt, dass sie mit den
-    /// XMP-Angaben uebereinstimmen – deshalb stammen beide aus derselben Quelle.
+    /// XMP-Angaben übereinstimmen – deshalb stammen beide aus derselben Quelle.
     /// </summary>
     private static void WriteDocumentInformation(PdfDocument document, PdfACompositionRequest request)
     {
@@ -154,23 +154,23 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
         document.Info.Subject = request.Subject;
         document.Info.Creator = ProducerName;
 
-        // /Producer ist in PdfSharp schreibgeschuetzt, muss aber mit der
-        // XMP-Angabe uebereinstimmen – PDF/A verlangt das. Deshalb direkt im
-        // Info-Woerterbuch setzen.
+        // /Producer ist in PdfSharp schreibgeschützt, muss aber mit der
+        // XMP-Angabe übereinstimmen – PDF/A verlangt das. Deshalb direkt im
+        // Info-Wörterbuch setzen.
         document.Info.Elements["/Producer"] = new PdfString(ProducerName);
         document.Info.CreationDate = request.CreationDate.UtcDateTime;
         document.Info.ModificationDate = request.CreationDate.UtcDateTime;
     }
 
     /// <summary>
-    /// Bettet die Rechnungs-XML als Dateianhang ein und verknuepft sie ueber
+    /// Bettet die Rechnungs-XML als Dateianhang ein und verknüpft sie über
     /// <c>/AF</c> mit dem Dokument.
     ///
-    /// Beides ist noetig: Der Namensbaum <c>/Names /EmbeddedFiles</c> macht den
-    /// Anhang fuer Betrachter sichtbar, das Feld <c>/AF</c> mit
-    /// <c>/AFRelationship /Alternative</c> macht ihn fuer eine
-    /// Rechnungsverarbeitung als zugehoerige Datei erkennbar. Fehlt <c>/AF</c>,
-    /// ist die Datei keine gueltige Hybridrechnung.
+    /// Beides ist nötig: Der Namensbaum <c>/Names /EmbeddedFiles</c> macht den
+    /// Anhang für Betrachter sichtbar, das Feld <c>/AF</c> mit
+    /// <c>/AFRelationship /Alternative</c> macht ihn für eine
+    /// Rechnungsverarbeitung als zugehörige Datei erkennbar. Fehlt <c>/AF</c>,
+    /// ist die Datei keine gültige Hybridrechnung.
     /// </summary>
     private static void AttachInvoiceXml(
         PdfDocument document,
@@ -181,10 +181,10 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
         var embeddedStream = new PdfDictionary(document);
         embeddedStream.Elements["/Type"] = new PdfName("/EmbeddedFile");
 
-        // Den MIME-Typ unveraendert uebergeben: PDFsharp maskiert Sonderzeichen
+        // Den MIME-Typ unverändert übergeben: PDFsharp maskiert Sonderzeichen
         // beim Schreiben selbst ("text/xml" wird zu "/text#2Fxml"). Eine eigene
-        // Maskierung wuerde ein zweites Mal maskiert und ergaebe den ungueltigen
-        // Namen "/text#232Fxml" – von veraPDF als Verstoss gegen
+        // Maskierung würde ein zweites Mal maskiert und ergäbe den ungültigen
+        // Namen "/text#232Fxml" – von veraPDF als Verstoß gegen
         // ISO 19005-3, Abschnitt 6.8 beanstandet.
         embeddedStream.Elements["/Subtype"] = new PdfName("/" + attachment.MimeType);
         embeddedStream.CreateStream(invoiceXml);
@@ -232,16 +232,16 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
     }
 
     /// <summary>
-    /// Ergaenzt den OutputIntent mit eingebettetem sRGB-Profil.
+    /// Ergänzt den OutputIntent mit eingebettetem sRGB-Profil.
     /// Ohne ihn ist kein Dokument PDF/A-konform, weil die Farbwiedergabe sonst
-    /// nicht eindeutig definiert waere.
+    /// nicht eindeutig definiert wäre.
     /// </summary>
     private static void AddOutputIntent(PdfDocument document)
     {
         PdfDictionary catalog = document.Internals.Catalog;
 
         // Ein bereits vorhandener OutputIntent wird ersetzt: Wir kennen nur
-        // fuer unser eigenes Profil die Zusicherung, dass es gueltig ist.
+        // für unser eigenes Profil die Zusicherung, dass es gültig ist.
         byte[] iccProfile = SRgbIccProfile.GetBytes();
 
         var profileStream = new PdfDictionary(document);
@@ -280,16 +280,16 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
             @"\D\:yyyyMMddHHmmss\Z", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// Uebersetzt ein technisches Hindernis in eine Erklaerung, mit der ein
+    /// Übersetzt ein technisches Hindernis in eine Erklärung, mit der ein
     /// Anwender etwas anfangen kann – samt Hinweis, was er tun kann.
     /// </summary>
     private static ValidationFinding DescribeBlocker(PdfUpgradeBlocker blocker) => blocker switch
     {
         PdfUpgradeBlocker.Encrypted => ValidationFinding.Error(
             "APP-PDF-001",
-            "Die PDF-Datei ist verschluesselt oder mit einem Kennwort geschuetzt. "
-            + "Bitte speichern Sie die Rechnung ohne Schutz und waehlen Sie sie erneut aus.",
-            technicalDetail: "Verschluesselte Dokumente sind nach PDF/A nicht zulaessig."),
+            "Die PDF-Datei ist verschlüsselt oder mit einem Kennwort geschützt. "
+            + "Bitte speichern Sie die Rechnung ohne Schutz und wählen Sie sie erneut aus.",
+            technicalDetail: "Verschlüsselte Dokumente sind nach PDF/A nicht zulässig."),
 
         PdfUpgradeBlocker.FontsNotEmbedded => ValidationFinding.Error(
             "APP-PDF-002",
@@ -301,20 +301,20 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
 
         PdfUpgradeBlocker.ActiveContent => ValidationFinding.Error(
             "APP-PDF-003",
-            "Die PDF-Datei enthaelt aktive Inhalte wie JavaScript oder automatisch "
-            + "startende Aktionen. Solche Inhalte sind in einer E-Rechnung nicht zulaessig.",
+            "Die PDF-Datei enthält aktive Inhalte wie JavaScript oder automatisch "
+            + "startende Aktionen. Solche Inhalte sind in einer E-Rechnung nicht zulässig.",
             technicalDetail: "JavaScript, /OpenAction oder /Launch im Dokument gefunden."),
 
         PdfUpgradeBlocker.Damaged => ValidationFinding.Error(
             "APP-PDF-004",
-            "Die PDF-Datei konnte nicht vollstaendig gelesen werden. "
-            + "Sie ist vermutlich beschaedigt. Bitte erzeugen Sie die Rechnung neu.",
-            technicalDetail: "Der PDF-Parser konnte die Struktur nicht aufloesen."),
+            "Die PDF-Datei konnte nicht vollständig gelesen werden. "
+            + "Sie ist vermutlich beschädigt. Bitte erzeugen Sie die Rechnung neu.",
+            technicalDetail: "Der PDF-Parser konnte die Struktur nicht auflösen."),
 
         PdfUpgradeBlocker.DigitallySigned => ValidationFinding.Error(
             "APP-PDF-005",
             "Die PDF-Datei ist digital signiert. Durch das Einbetten der Rechnungsdaten "
-            + "wuerde die Signatur ungueltig. Bitte verwenden Sie die Fassung ohne Signatur.",
+            + "würde die Signatur ungültig. Bitte verwenden Sie die Fassung ohne Signatur.",
             technicalDetail: "/Sig-Feld im AcroForm des Dokuments gefunden."),
 
         _ => ValidationFinding.Error(

@@ -5,25 +5,25 @@ namespace EInvoiceSender.Core.Validation.Rules;
 
 /// <summary>
 /// Was mehrere Regelgruppen gleich brauchen: die geduldete
-/// Rundungsabweichung, die Ausgabe von Betraegen und Datumsangaben in
-/// Meldungstexten und zwei grobe Formpruefungen.
+/// Rundungsabweichung, die Ausgabe von Beträgen und Datumsangaben in
+/// Meldungstexten und zwei grobe Formprüfungen.
 ///
 /// Die Formatierung steht hier, damit alle Meldungen dieselbe Schreibweise
-/// verwenden - eine Meldung, in der Betraege mal mit Punkt und mal mit Komma
+/// verwenden - eine Meldung, in der Beträge mal mit Punkt und mal mit Komma
 /// erscheinen, wirkt fehlerhaft, auch wenn sie es nicht ist.
 /// </summary>
 internal static class SharedRules
 {
-    /// <summary>Groesste geduldete Abweichung bei Summenvergleichen.</summary>
+    /// <summary>Größte geduldete Abweichung bei Summenvergleichen.</summary>
     public const decimal ToleranceInCurrency = 0.01m;
 
     /// <summary>
-    /// Sehr einfache Syntaxpruefung fuer E-Mail-Adressen: genau ein
+    /// Sehr einfache Syntaxprüfung für E-Mail-Adressen: genau ein
     /// At-Zeichen, davor und danach etwas, im hinteren Teil ein Punkt.
     ///
     /// Bewusst nicht strenger - eine formal korrekte Adresse kann trotzdem
-    /// unzustellbar sein, und eine zu strenge Pruefung lehnt gueltige Adressen
-    /// ab. Das waere der schlimmere Fehler.
+    /// unzustellbar sein, und eine zu strenge Prüfung lehnt gültige Adressen
+    /// ab. Das wäre der schlimmere Fehler.
     /// </summary>
     public static bool LooksLikeEmail(string value)
     {
@@ -50,11 +50,11 @@ internal static class SharedRules
         => value.ToString("dd.MM.yyyy", CultureInfo.GetCultureInfo("de-DE"));
 
     /// <summary>
-    /// Prueft die Form einer Umsatzsteuer-Identifikationsnummer: zwei
-    /// Buchstaben als Laenderkennzeichen, danach mindestens zwei alphanumerische
-    /// Zeichen. Die laenderspezifischen Pruefziffern werden bewusst nicht
-    /// geprueft – dafuer waere ein Abgleich mit dem MIAS-Dienst noetig, und der
-    /// wuerde Daten nach draussen geben.
+    /// Prüft die Form einer Umsatzsteuer-Identifikationsnummer: zwei
+    /// Buchstaben als Länderkennzeichen, danach mindestens zwei alphanumerische
+    /// Zeichen. Die länderspezifischen Prüfziffern werden bewusst nicht
+    /// geprüft – dafür wäre ein Abgleich mit dem MIAS-Dienst nötig, und der
+    /// würde Daten nach draußen geben.
     /// </summary>
     public static bool LooksLikeVatId(string value)
     {

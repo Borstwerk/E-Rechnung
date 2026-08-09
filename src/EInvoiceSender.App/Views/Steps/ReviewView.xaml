@@ -9,7 +9,7 @@
              d:DesignHeight="520" d:DesignWidth="960">
 
   <!--
-    Der wichtigste Schritt: Links steht, was der Empfaenger sieht, rechts das,
+    Der wichtigste Schritt: Links steht, was der Empfänger sieht, rechts das,
     was maschinell gelesen wird. Nur ein Mensch kann beurteilen, ob beides
     dasselbe aussagt.
   -->
@@ -22,7 +22,7 @@
     <Border Grid.Column="0" BorderBrush="#C8C8C8" BorderThickness="1" Margin="0,0,12,0"
             Background="#FAFAFA">
       <Grid>
-        <TextBlock Text="Keine Vorschau verfuegbar." HorizontalAlignment="Center"
+        <TextBlock Text="Keine Vorschau verfügbar." HorizontalAlignment="Center"
                    VerticalAlignment="Center" Foreground="#777" />
         <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="6"
                AutomationProperties.Name="Vorschau der PDF-Rechnung" />
@@ -33,9 +33,9 @@
       <StackPanel>
         <TextBlock Style="{StaticResource Abschnitt}" Text="Erfasste Kerndaten" />
         <UniformGrid Columns="2">
-          <TextBlock Text="Verkaeufer" />
+          <TextBlock Text="Verkäufer" />
           <TextBlock Text="{Binding SellerText}" TextWrapping="Wrap" FontWeight="SemiBold" />
-          <TextBlock Text="Kaeufer" />
+          <TextBlock Text="Käufer" />
           <TextBlock Text="{Binding BuyerText}" TextWrapping="Wrap" FontWeight="SemiBold" />
           <TextBlock Text="Rechnungsnummer" />
           <TextBlock Text="{Binding InvoiceNumberText}" FontWeight="SemiBold" />
@@ -53,7 +53,7 @@
 
         <!--
           Abgleich mit dem aus der PDF gelesenen Betrag. Das ist ein zweites,
-          unabhaengiges Signal - keine rechtliche Wahrheit. Eine Abweichung
+          unabhängiges Signal - keine rechtliche Wahrheit. Eine Abweichung
           blockiert deshalb nichts, sie weist nur hin.
         -->
         <Border BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,14,0,0"
@@ -70,21 +70,21 @@
         <TextBlock Style="{StaticResource Abschnitt}" Text="Speicherort" />
         <TextBox Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}" TabIndex="58"
                  AutomationProperties.Name="Ausgabeverzeichnis" />
-        <Button Content="Ordner _waehlen ..." Click="OnChooseFolderClicked" TabIndex="59"
+        <Button Content="Ordner _wählen ..." Click="OnChooseFolderClicked" TabIndex="59"
                 HorizontalAlignment="Left" Margin="0,6,0,0"
-                AutomationProperties.HelpText="Waehlt den Ordner, in den die E-Rechnung geschrieben wird." />
+                AutomationProperties.HelpText="Wählt den Ordner, in den die E-Rechnung geschrieben wird." />
 
         <CheckBox IsChecked="{Binding ContentMatchConfirmed}" Margin="0,24,0,0" TabIndex="60"
-                  AutomationProperties.Name="Bestaetigung der Uebereinstimmung">
+                  AutomationProperties.Name="Bestätigung der Übereinstimmung">
           <TextBlock TextWrapping="Wrap"
-                     Text="Ich habe geprueft, dass die strukturierten Rechnungsdaten mit der sichtbaren PDF-Rechnung uebereinstimmen." />
+                     Text="Ich habe geprüft, dass die strukturierten Rechnungsdaten mit der sichtbaren PDF-Rechnung übereinstimmen." />
         </CheckBox>
 
         <CheckBox IsChecked="{Binding ExistingInvoiceReplacementConfirmed}" TabIndex="61"
                   Visibility="{Binding ShowsReplacementQuestion, Converter={StaticResource BoolToVisibility}}"
-                  AutomationProperties.Name="Bestaetigung zum Ersetzen vorhandener Rechnungsdaten">
+                  AutomationProperties.Name="Bestätigung zum Ersetzen vorhandener Rechnungsdaten">
           <TextBlock TextWrapping="Wrap" Foreground="#8A5A00"
-                     Text="Diese PDF enthaelt bereits strukturierte Rechnungsdaten. Ich moechte sie durch die hier erfassten ersetzen." />
+                     Text="Diese PDF enthält bereits strukturierte Rechnungsdaten. Ich möchte sie durch die hier erfassten ersetzen." />
         </CheckBox>
 
         <ItemsControl ItemsSource="{Binding Findings}" Margin="0,12,0,0"

@@ -8,13 +8,13 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Pdf;
 
 /// <summary>
-/// Haelt fest, was der Extraktor bei verschiedenen Seitenaufteilungen
-/// tatsaechlich leistet.
+/// Hält fest, was der Extraktor bei verschiedenen Seitenaufteilungen
+/// tatsächlich leistet.
 ///
 /// **Diese Tests sind zuerst Dokumentation, nicht Anforderung.** Sie
-/// beschreiben den heutigen Stand, damit ein spaeterer Ausbau der
-/// Layouterkennung sieht, wovon er ausgeht – und damit ein Rueckschritt
-/// auffaellt. Wo der Extraktor an eine Grenze stoesst, steht das ausdruecklich
+/// beschreiben den heutigen Stand, damit ein späterer Ausbau der
+/// Layouterkennung sieht, wovon er ausgeht – und damit ein Rückschritt
+/// auffällt. Wo der Extraktor an eine Grenze stößt, steht das ausdrücklich
 /// im Test, statt die Erwartung stillschweigend abzusenken.
 /// </summary>
 public sealed class PdfLayoutTests : IDisposable
@@ -35,7 +35,7 @@ public sealed class PdfLayoutTests : IDisposable
     public async Task ZweiSpaltenLandenInEinerZeile()
     {
         string path = Temp(TextPdfBuilder.CreateTwoColumn(
-            left: ["Muster IT GmbH", "Musterstrasse 10", "18055 Rostock"],
+            left: ["Muster IT GmbH", "Musterstraße 10", "18055 Rostock"],
             right: ["Rechnung an", "Beispielkunde AG", "20095 Hamburg"],
             below: ["Rechnungsnummer: RE-2026-0815", "Gesamtbetrag 1.190,00 EUR"]));
 
@@ -61,14 +61,14 @@ public sealed class PdfLayoutTests : IDisposable
     public async Task ImZweispaltigenKopfWirdDerKäufernameSauberGetrennt()
     {
         string path = Temp(TextPdfBuilder.CreateTwoColumn(
-            left: ["Muster IT GmbH", "Musterstrasse 10", "18055 Rostock", "USt-IdNr. DE123456789"],
-            right: ["Rechnung an", "Beispielkunde AG", "Kundenstrasse 7", "20095 Hamburg"],
+            left: ["Muster IT GmbH", "Musterstraße 10", "18055 Rostock", "USt-IdNr. DE123456789"],
+            right: ["Rechnung an", "Beispielkunde AG", "Kundenstraße 7", "20095 Hamburg"],
             below: ["Rechnungsnummer: RE-2026-0815", "Gesamtbetrag 1.190,00 EUR"]));
 
         InvoiceDetectionResult result = await _detector.DetectAsync(
             path, null, TestContext.Current.CancellationToken);
 
-        // Die Kopfdaten kommen unabhaengig vom Layout sauber durch.
+        // Die Kopfdaten kommen unabhängig vom Layout sauber durch.
         Assert.Equal("RE-2026-0815", result.InvoiceNumber?.Value);
         Assert.Equal(1190.00m, result.Totals.Gross?.Value);
 
@@ -77,11 +77,11 @@ public sealed class PdfLayoutTests : IDisposable
     }
 
     /// <summary>
-    /// Der einspaltige Adressblock – die haeufigere Form – wird sauber
-    /// getrennt. Das ist der Fall, fuer den die Erkennung ausgelegt ist.
+    /// Der einspaltige Adressblock – die häufigere Form – wird sauber
+    /// getrennt. Das ist der Fall, für den die Erkennung ausgelegt ist.
     /// </summary>
     [Fact]
-    public async Task ImEinspaltigenBlockWirdDerKaeuferSauberErkannt()
+    public async Task ImEinspaltigenBlockWirdDerKäuferSauberErkannt()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
@@ -91,8 +91,8 @@ public sealed class PdfLayoutTests : IDisposable
     }
 
     /// <summary>
-    /// Eine mehrspaltige Positionstabelle wird als Text vollstaendig gelesen –
-    /// nur eben nicht in Felder zerlegt. Der Test haelt beides fest: Der Text
+    /// Eine mehrspaltige Positionstabelle wird als Text vollständig gelesen –
+    /// nur eben nicht in Felder zerlegt. Der Test hält beides fest: Der Text
     /// ist da, die Positionserkennung fehlt.
     /// </summary>
     [Fact]
@@ -100,7 +100,7 @@ public sealed class PdfLayoutTests : IDisposable
     {
         var lines = new List<string>
         {
-            "Muster IT GmbH", "Musterstrasse 10", "18055 Rostock",
+            "Muster IT GmbH", "Musterstraße 10", "18055 Rostock",
             "Rechnungsnummer: RE-2026-0815",
             "Pos Bezeichnung Menge Einheit Einzelpreis Betrag",
             "1 IT-Beratung 10 Std 100,00 1.000,00",
@@ -125,14 +125,14 @@ public sealed class PdfLayoutTests : IDisposable
 
     /// <summary>
     /// Bei einer mehrseitigen Rechnung stehen die Summen auf der letzten Seite.
-    /// Sie muessen trotzdem gefunden werden.
+    /// Sie müssen trotzdem gefunden werden.
     /// </summary>
     [Fact]
     public async Task BeiMehrerenSeitenWerdenDieSummenAufDerLetztenSeiteGefunden()
     {
         var lines = new List<string>
         {
-            "Muster IT GmbH", "Musterstrasse 10", "18055 Rostock",
+            "Muster IT GmbH", "Musterstraße 10", "18055 Rostock",
             "Rechnungsnummer: RE-2026-0815", "Rechnungsdatum: 09.08.2026",
         };
 

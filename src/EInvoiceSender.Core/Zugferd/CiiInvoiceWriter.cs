@@ -12,14 +12,14 @@ namespace EInvoiceSender.Core.Zugferd;
 /// Profil EN 16931.
 ///
 /// Die Reihenfolge der Elemente ist durch das XSD fest vorgegeben und darf
-/// nicht veraendert werden – jede Abweichung fuehrt zu einer ungueltigen Datei.
+/// nicht verändert werden – jede Abweichung führt zu einer ungültigen Datei.
 /// Die Reihenfolge ist unten je Block als Kommentar vermerkt und wird durch die
-/// Gegenpruefung mit dem CEN-Schematron abgesichert
+/// Gegenprüfung mit dem CEN-Schematron abgesichert
 /// (build/validate-golden-masters.sh).
 ///
-/// Der Writer rechnet nichts. Er schreibt ausschliesslich die uebergebenen,
-/// bereits geprueften Summen – so kann die Datei nicht von dem abweichen,
-/// was der Benutzer in der Kontrollansicht bestaetigt hat.
+/// Der Writer rechnet nichts. Er schreibt ausschließlich die übergebenen,
+/// bereits geprüften Summen – so kann die Datei nicht von dem abweichen,
+/// was der Benutzer in der Kontrollansicht bestätigt hat.
 /// </summary>
 public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
 {
@@ -280,7 +280,7 @@ public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
 
             if (!string.IsNullOrWhiteSpace(seller.Email))
             {
-                // BT-34: elektronische Adresse des Verkaeufers
+                // BT-34: elektronische Adresse des Verkäufers
                 Ram(w, "URIUniversalCommunication", () =>
                     RamTextWithAttribute(w, "URIID", seller.Email,
                         "schemeID", CiiConstants.ElectronicAddressSchemeEmail));
@@ -555,7 +555,7 @@ public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
             RamText(w, "AllowanceTotalAmount", Amounts.ToXmlString(totals.AllowanceTotal));
             RamText(w, "TaxBasisTotalAmount", Amounts.ToXmlString(totals.TaxBasisTotal));
 
-            // BR-53: Der Gesamtsteuerbetrag traegt zwingend die Waehrung.
+            // BR-53: Der Gesamtsteuerbetrag trägt zwingend die Währung.
             RamTextWithAttribute(
                 w, "TaxTotalAmount", Amounts.ToXmlString(totals.TaxTotal),
                 "currencyID", invoice.Currency.Value);
@@ -597,8 +597,8 @@ public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
 
     /// <summary>
     /// Schreibt eine Mengenangabe mit Einheitencode.
-    /// Mengen duerfen mehr als zwei Nachkommastellen haben; es wird die
-    /// kuerzeste verlustfreie Schreibweise verwendet.
+    /// Mengen dürfen mehr als zwei Nachkommastellen haben; es wird die
+    /// kürzeste verlustfreie Schreibweise verwendet.
     /// </summary>
     private static void WriteQuantity(XmlWriter w, string localName, decimal quantity, UnitCode unit)
     {
@@ -610,7 +610,7 @@ public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
 
     /// <summary>
     /// Schreibt ein Datum im Format 102 (<c>JJJJMMTT</c>).
-    /// Die Norm laesst hier keinen Zeitanteil und keine Zeitzone zu.
+    /// Die Norm lässt hier keinen Zeitanteil und keine Zeitzone zu.
     /// </summary>
     private static void WriteDateTimeString(XmlWriter w, DateOnly date)
     {

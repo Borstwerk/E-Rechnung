@@ -5,15 +5,15 @@ using EInvoiceSender.Core.Validation;
 namespace EInvoiceSender.App.ViewModels;
 
 /// <summary>
-/// Gemeinsame Grundlage der fuenf Schrittansichten.
+/// Gemeinsame Grundlage der fünf Schrittansichten.
 ///
-/// Enthaelt nur, was wirklich jeder Schritt braucht: die Liste der Befunde und
+/// Enthält nur, was wirklich jeder Schritt braucht: die Liste der Befunde und
 /// die immer gleiche Art, sie anzuzeigen. Fachlogik steht in
 /// <c>EInvoiceSender.Core</c>.
 ///
-/// **Regel fuer jedes await in einem ViewModel: <c>ConfigureAwait(true)</c>.**
-/// Die Fortsetzung nach dem await muss auf den Oberflaechen-Thread
-/// zurueckkehren, sonst meldet das ViewModel aus einem Threadpool-Thread an
+/// **Regel für jedes await in einem ViewModel: <c>ConfigureAwait(true)</c>.**
+/// Die Fortsetzung nach dem await muss auf den Oberflächen-Thread
+/// zurückkehren, sonst meldet das ViewModel aus einem Threadpool-Thread an
 /// gebundene Bedienelemente und WPF wirft "Der aufrufende Thread kann nicht auf
 /// dieses Objekt zugreifen". Bewacht wird die Regel von
 /// <c>UiThreadAffinityTests</c>.
@@ -27,8 +27,8 @@ public abstract partial class StepViewModel : ObservableObject
     public bool HasFindings => Findings.Count > 0;
 
     /// <summary>
-    /// Zeigt einen Pruefbericht an. Fehler stehen oben, danach Warnungen, dann
-    /// Hinweise – der Anwender soll zuerst sehen, was ihn wirklich aufhaelt.
+    /// Zeigt einen Prüfbericht an. Fehler stehen oben, danach Warnungen, dann
+    /// Hinweise – der Anwender soll zuerst sehen, was ihn wirklich aufhält.
     /// </summary>
     protected void ShowFindings(ValidationReport report)
     {

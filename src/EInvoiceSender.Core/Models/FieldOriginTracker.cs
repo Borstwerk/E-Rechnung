@@ -4,18 +4,18 @@ namespace EInvoiceSender.Core.Models;
 /// Merkt sich je Formularfeld, woher sein Inhalt stammt.
 ///
 /// Bewusst eine eigene Klasse und per Komposition eingebunden: Das Formular
-/// haelt die Werte, dieser Verfolger haelt ihre Herkunft. Zusammen waren das
-/// zwei Aufgaben in einer ohnehin grossen Klasse.
+/// hält die Werte, dieser Verfolger hält ihre Herkunft. Zusammen waren das
+/// zwei Aufgaben in einer ohnehin großen Klasse.
 /// </summary>
 public sealed class FieldOriginTracker
 {
     private readonly Dictionary<string, FieldOrigin> _origins = [];
 
-    /// <summary>Laeuft gerade eine Vorbefuellung?</summary>
+    /// <summary>Läuft gerade eine Vorbefuellung?</summary>
     public bool IsPrefilling { get; private set; }
 
     /// <summary>
-    /// Alle vermerkten Herkuenfte. Die Oberflaeche bindet daran, um die
+    /// Alle vermerkten Herkünfte. Die Oberfläche bindet daran, um die
     /// Kennzeichnung neben den Feldern anzuzeigen.
     /// </summary>
     public IReadOnlyDictionary<string, FieldOrigin> Origins => _origins;
@@ -23,9 +23,9 @@ public sealed class FieldOriginTracker
     /// <summary>
     /// Woher der Inhalt eines Feldes stammt.
     ///
-    /// Ein nie vermerktes Feld traegt einen Programmstandard. Genau das war
-    /// frueher falsch: Es galt als Benutzereingabe und war damit
-    /// unueberschreibbar.
+    /// Ein nie vermerktes Feld trägt einen Programmstandard. Genau das war
+    /// früher falsch: Es galt als Benutzereingabe und war damit
+    /// unüberschreibbar.
     /// </summary>
     public FieldOrigin OriginOf(string propertyName)
         => _origins.TryGetValue(propertyName, out FieldOrigin origin) ? origin : FieldOrigin.Default;
@@ -39,8 +39,8 @@ public sealed class FieldOriginTracker
     }
 
     /// <summary>
-    /// Vermerkt eine Aenderung durch den Anwender. Liefert <c>true</c>, wenn
-    /// sich dadurch etwas geaendert hat – dann muss die Oberflaeche die
+    /// Vermerkt eine Änderung durch den Anwender. Liefert <c>true</c>, wenn
+    /// sich dadurch etwas geändert hat – dann muss die Oberfläche die
     /// Kennzeichnung neu zeichnen.
     /// </summary>
     public bool MarkAsManual(string propertyName)
@@ -56,7 +56,7 @@ public sealed class FieldOriginTracker
     }
 
     /// <summary>
-    /// Fuehrt eine Vorbefuellung aus. Aenderungen innerhalb von
+    /// Führt eine Vorbefuellung aus. Änderungen innerhalb von
     /// <paramref name="fill"/> gelten nicht als Benutzereingabe.
     /// </summary>
     public void DuringPrefill(Action fill)

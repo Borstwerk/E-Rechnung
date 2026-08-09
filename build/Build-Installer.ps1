@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
-    Baut das MSI-Paket und legt es mit Pruefsumme im Release-Ordner ab.
+    Baut das MSI-Paket und legt es mit Prüfsumme im Release-Ordner ab.
 
 .DESCRIPTION
-    Der Installer setzt eine fertige Veroeffentlichung voraus. Fehlt sie oder
-    ist sie aelter als der Quelltext, wird Publish.ps1 vorher ausgefuehrt.
+    Der Installer setzt eine fertige Veröffentlichung voraus. Fehlt sie oder
+    ist sie älter als der Quelltext, wird Publish.ps1 vorher ausgeführt.
 
     WiX erzeugt MSI-Dateien nur unter Windows.
 #>
@@ -20,7 +20,7 @@ $releaseDirectory = Join-Path $root 'artifacts' 'release'
 $setupProject = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'EInvoiceSender.Setup.wixproj'
 
 if (-not $IsWindows) {
-    throw "Der Installer laesst sich nur unter Windows bauen: WiX erzeugt MSI-Dateien nur dort."
+    throw "Der Installer lässt sich nur unter Windows bauen: WiX erzeugt MSI-Dateien nur dort."
 }
 
 if (-not $SkipPublish -or -not (Test-Path (Join-Path $publishDirectory 'EInvoiceSender.exe'))) {
@@ -41,12 +41,12 @@ if (-not $msi) { throw "Es wurde keine MSI-Datei gefunden." }
 $target = Join-Path $releaseDirectory $msi.Name
 Copy-Item $msi.FullName $target -Force
 
-# Tragbare Fassung als ZIP, fuer Anwender ohne Installationsrechte.
+# Tragbare Fassung als ZIP, für Anwender ohne Installationsrechte.
 $zip = Join-Path $releaseDirectory 'EInvoiceSender-portable-win-x64.zip'
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $publishDirectory '*') -DestinationPath $zip
 
-# Pruefsummen ueber alle Artefakte, damit sich die Auslieferung nachweisen laesst.
+# Prüfsummen über alle Artefakte, damit sich die Auslieferung nachweisen lässt.
 $checksums = Join-Path $releaseDirectory 'SHA256SUMS.txt'
 Get-ChildItem $releaseDirectory -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
     $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()

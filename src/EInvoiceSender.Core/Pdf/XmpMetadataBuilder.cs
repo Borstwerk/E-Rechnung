@@ -5,7 +5,7 @@ using System.Text;
 namespace EInvoiceSender.Core.Pdf;
 
 /// <summary>
-/// Baut das XMP-Metadatenpaket fuer eine ZUGFeRD-/Factur-X-Datei.
+/// Baut das XMP-Metadatenpaket für eine ZUGFeRD-/Factur-X-Datei.
 ///
 /// Ohne dieses Paket ist die Datei weder PDF/A-konform noch als Hybridrechnung
 /// erkennbar. Erforderlich sind drei Bestandteile:
@@ -24,35 +24,35 @@ public static class XmpMetadataBuilder
     /// <summary>Namensraum des Factur-X-Erweiterungsschemas.</summary>
     public const string FacturXNamespace = "urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#";
 
-    /// <summary>Praefix des Factur-X-Erweiterungsschemas.</summary>
+    /// <summary>Präfix des Factur-X-Erweiterungsschemas.</summary>
     public const string FacturXPrefix = "fx";
 
-    /// <summary>Wert von <c>fx:DocumentType</c> fuer eine Rechnung.</summary>
+    /// <summary>Wert von <c>fx:DocumentType</c> für eine Rechnung.</summary>
     public const string DocumentType = "INVOICE";
 
     /// <summary>Wert von <c>fx:Version</c>.</summary>
     public const string FacturXVersion = "1.0";
 
-    /// <summary>Wert von <c>fx:ConformanceLevel</c> fuer das Profil EN 16931.</summary>
+    /// <summary>Wert von <c>fx:ConformanceLevel</c> für das Profil EN 16931.</summary>
     public const string ConformanceLevel = "EN 16931";
 
     /// <summary>PDF/A-Teil.</summary>
     public const string PdfAPart = "3";
 
-    /// <summary>PDF/A-Konformitaetsstufe.</summary>
+    /// <summary>PDF/A-Konformitätsstufe.</summary>
     public const string PdfAConformance = "B";
 
     /// <summary>
     /// Kennung des XMP-Pakets. Dieser Wert ist in der XMP-Spezifikation fest
-    /// vorgegeben und darf nicht veraendert werden.
+    /// vorgegeben und darf nicht verändert werden.
     /// </summary>
     private const string PacketId = "W5M0MpCehiHzreSzNTczkc9d";
 
     /// <summary>
-    /// Erzeugt das vollstaendige XMP-Paket als UTF-8-Bytes.
+    /// Erzeugt das vollständige XMP-Paket als UTF-8-Bytes.
     /// </summary>
     /// <param name="title">Dokumenttitel (<c>dc:title</c>).</param>
-    /// <param name="author">Verfasser, ueblicherweise der Verkaeufer (<c>dc:creator</c>).</param>
+    /// <param name="author">Verfasser, üblicherweise der Verkäufer (<c>dc:creator</c>).</param>
     /// <param name="subject">Kurzbeschreibung (<c>dc:description</c>).</param>
     /// <param name="producer">Erzeugendes Programm (<c>pdf:Producer</c>).</param>
     /// <param name="creationDate">Erzeugungszeitpunkt.</param>
@@ -121,8 +121,8 @@ public static class XmpMetadataBuilder
         builder.Append("  </rdf:RDF>\n");
         builder.Append("</x:xmpmeta>\n");
 
-        // Auffuellbereich, damit ein spaeteres Werkzeug das Paket an Ort und
-        // Stelle aendern kann, ohne die Datei umzubauen.
+        // Auffuellbereich, damit ein späteres Werkzeug das Paket an Ort und
+        // Stelle ändern kann, ohne die Datei umzubauen.
         for (int i = 0; i < 20; i++)
         {
             builder.Append("                                                                          \n");
@@ -135,7 +135,7 @@ public static class XmpMetadataBuilder
 
     /// <summary>
     /// Schreibt die Deklaration des Factur-X-Erweiterungsschemas.
-    /// PDF/A verlangt fuer jedes fremde Schema eine solche Beschreibung samt
+    /// PDF/A verlangt für jedes fremde Schema eine solche Beschreibung samt
     /// aller verwendeten Eigenschaften.
     /// </summary>
     private static void AppendExtensionSchema(StringBuilder builder)
@@ -194,9 +194,9 @@ public static class XmpMetadataBuilder
     }
 
     /// <summary>
-    /// Maskiert Text fuer die Einbettung in XML. Die Werte stammen aus
-    /// Benutzereingaben (Firmenname, Betreff) und duerfen das Paket nicht
-    /// zerstoeren koennen.
+    /// Maskiert Text für die Einbettung in XML. Die Werte stammen aus
+    /// Benutzereingaben (Firmenname, Betreff) und dürfen das Paket nicht
+    /// zerstören können.
     /// </summary>
     private static string Escape(string? value)
         => SecurityElement.Escape(value ?? string.Empty) ?? string.Empty;

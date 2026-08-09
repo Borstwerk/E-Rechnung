@@ -4,8 +4,8 @@ using EInvoiceSender.App.ViewModels;
 namespace EInvoiceSender.App.Views.Dialogs;
 
 /// <summary>
-/// Die Einstellungen. Gespeichert wird ausschliesslich auf Knopfdruck – es gibt
-/// bewusst kein stilles Uebernehmen beim Schliessen.
+/// Die Einstellungen. Gespeichert wird ausschließlich auf Knopfdruck – es gibt
+/// bewusst kein stilles Übernehmen beim Schließen.
 /// </summary>
 public partial class SettingsWindow : Window
 {

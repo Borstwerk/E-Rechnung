@@ -6,8 +6,8 @@ using Microsoft.Win32;
 namespace EInvoiceSender.App.Views.Steps;
 
 /// <summary>
-/// Schritt 1. Der Code-behind oeffnet nur den Windows-Dateidialog – eine
-/// Aufgabe, die ohne WPF-Bezug nicht loesbar ist.
+/// Schritt 1. Der Code-behind öffnet nur den Windows-Dateidialog – eine
+/// Aufgabe, die ohne WPF-Bezug nicht lösbar ist.
 /// </summary>
 public partial class PdfSelectionView : UserControl
 {
@@ -15,7 +15,7 @@ public partial class PdfSelectionView : UserControl
 
     /// <summary>
     /// <c>async void</c> ist durch das WPF-Ereignis vorgegeben; die Methode
-    /// faengt ihre Fehler deshalb selbst ab.
+    /// fängt ihre Fehler deshalb selbst ab.
     /// </summary>
     private async void OnSelectClicked(object sender, RoutedEventArgs e)
     {
@@ -26,7 +26,7 @@ public partial class PdfSelectionView : UserControl
 
         var dialog = new OpenFileDialog
         {
-            Title = "PDF-Rechnung auswaehlen",
+            Title = "PDF-Rechnung auswählen",
             Filter = "PDF-Dateien (*.pdf)|*.pdf",
             CheckFileExists = true,
         };
@@ -43,7 +43,7 @@ public partial class PdfSelectionView : UserControl
         catch (Exception exception)
         {
             MessageBox.Show(
-                "Die Datei konnte nicht geprueft werden.\n\nTechnische Angabe:\n" + exception.Message,
+                "Die Datei konnte nicht geprüft werden.\n\nTechnische Angabe:\n" + exception.Message,
                 "EInvoiceSender", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }

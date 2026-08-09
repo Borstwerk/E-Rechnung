@@ -23,7 +23,7 @@ public sealed record DetectionEntry(DetectionEntryKind Kind, string Text);
 /// Fasst ein Erkennungsergebnis in Sätzen zusammen, die ein Anwender liest.
 ///
 /// **Warum mit Werten:** Vorher stand dort nur „Rechnungsnummer erkannt“. Ob
-/// die *richtige* Rechnungsnummer erkannt wurde, liess sich erst zwei Schritte
+/// die *richtige* Rechnungsnummer erkannt wurde, ließ sich erst zwei Schritte
 /// später sehen. Im echten Testlauf wurde als Käufer „Währung: EUR“ erkannt –
 /// mit dem Wert davor wäre das sofort aufgefallen.
 ///

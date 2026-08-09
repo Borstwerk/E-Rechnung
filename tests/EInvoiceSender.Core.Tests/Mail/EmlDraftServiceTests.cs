@@ -8,12 +8,12 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests;
 
 /// <summary>
-/// Prueft die Erzeugung des E-Mail-Entwurfs.
+/// Prüft die Erzeugung des E-Mail-Entwurfs.
 ///
 /// Die Kopfzeilen sind hier keine Kosmetik: <c>X-Unsent</c> entscheidet
-/// darueber, ob Outlook die Datei als Entwurf oder als empfangene Nachricht
-/// oeffnet, und eine gesetzte <c>Message-ID</c> verhindert das wiederholte
-/// Oeffnen. Beides wird deshalb ausdruecklich geprueft.
+/// darüber, ob Outlook die Datei als Entwurf oder als empfangene Nachricht
+/// öffnet, und eine gesetzte <c>Message-ID</c> verhindert das wiederholte
+/// Öffnen. Beides wird deshalb ausdrücklich geprüft.
 /// </summary>
 public sealed class EmlDraftServiceTests : IDisposable
 {
@@ -27,7 +27,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task EntwurfEnthaeltEmpfaengerBetreffTextUndAnhang()
+    public async Task EntwurfEnthältEmpfängerBetreffTextUndAnhang()
     {
         EmailDraft draft = BuildDraft();
 
@@ -58,7 +58,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task EntwurfTraegtDenKennsatzXUnsent()
+    public async Task EntwurfTrägtDenKennsatzXUnsent()
     {
         EmailDraftResult result = await _service.CreateDraftAsync(
             BuildDraft(), TestContext.Current.CancellationToken);
@@ -70,7 +70,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task EntwurfEnthaeltKeineMessageId()
+    public async Task EntwurfEnthältKeineMessageId()
     {
         EmailDraftResult result = await _service.CreateDraftAsync(
             BuildDraft(), TestContext.Current.CancellationToken);
@@ -84,7 +84,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     [Fact]
     public async Task NachrichtentextIstReinerTextOhneHtml()
     {
-        // Fuer das neue Outlook ist ein Verlust von Anhaengen bei HTML-Koerpern
+        // Für das neue Outlook ist ein Verlust von Anhängen bei HTML-Körpern
         // berichtet worden. Der Entwurf muss deshalb reiner Text bleiben.
         EmailDraftResult result = await _service.CreateDraftAsync(
             BuildDraft(), TestContext.Current.CancellationToken);
@@ -117,7 +117,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task OhneEmpfaengerWirdKeinEntwurfErzeugtAberEinRueckfallwegGeliefert()
+    public async Task OhneEmpfängerWirdKeinEntwurfErzeugtAberEinRückfallwegGeliefert()
     {
         EmailDraft draft = BuildDraft() with { To = [] };
 
@@ -133,7 +133,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     }
 
     [Fact]
-    public void MailtoVerweisEnthaeltBetreffUndTextAberKeinenAnhang()
+    public void MailtoVerweisEnthältBetreffUndTextAberKeinenAnhang()
     {
         Uri uri = _service.BuildMailtoUri(BuildDraft());
 
@@ -157,13 +157,13 @@ public sealed class EmlDraftServiceTests : IDisposable
 
         Uri uri = _service.BuildMailtoUri(draft);
 
-        // Ein unmaskiertes & wuerde den Verweis zerreissen.
+        // Ein unmaskiertes & würde den Verweis zerreißen.
         Assert.DoesNotContain("Rechnung & Mahnung", uri.OriginalString, StringComparison.Ordinal);
         Assert.Contains("%26", uri.OriginalString, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task MehrereEntwuerfeUeberschreibenSichNicht()
+    public async Task MehrereEntwürfeÜberschreibenSichNicht()
     {
         EmailDraftResult first = await _service.CreateDraftAsync(
             BuildDraft(), TestContext.Current.CancellationToken);
@@ -179,7 +179,7 @@ public sealed class EmlDraftServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task EsBleibtKeineTemporaereDateiZurueck()
+    public async Task EsBleibtKeineTemporäreDateiZurück()
     {
         await _service.CreateDraftAsync(BuildDraft(), TestContext.Current.CancellationToken);
 
@@ -212,7 +212,7 @@ public sealed class EmlDraftServiceTests : IDisposable
         }
         catch (IOException)
         {
-            // Aufraeumen darf einen Testlauf nicht scheitern lassen.
+            // Aufräumen darf einen Testlauf nicht scheitern lassen.
         }
     }
 }

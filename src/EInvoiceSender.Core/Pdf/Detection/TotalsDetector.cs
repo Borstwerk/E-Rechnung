@@ -3,16 +3,16 @@ using System.Text.RegularExpressions;
 namespace EInvoiceSender.Core.Pdf.Detection;
 
 /// <summary>
-/// Erkennt Netto, Umsatzsteuer, Brutto, Zahlbetrag und die Steuersaetze.
+/// Erkennt Netto, Umsatzsteuer, Brutto, Zahlbetrag und die Steuersätze.
 ///
-/// Betraege werden ausschliesslich ueber Schluesselwoerter zugeordnet. Ein
+/// Beträge werden ausschließlich über Schlüsselwörter zugeordnet. Ein
 /// Prozentwert gilt nur dann als Steuersatz, wenn die Zeile einen echten
-/// Steuerbezug hat - sonst wuerde jeder Rabatt zur Umsatzsteuer.
+/// Steuerbezug hat - sonst würde jeder Rabatt zur Umsatzsteuer.
 /// </summary>
 internal static class TotalsDetector
 {
     /// <summary>
-    /// Reihenfolge zaehlt: Die spezifischeren Begriffe stehen oben. "Zahlbetrag"
+    /// Reihenfolge zählt: Die spezifischeren Begriffe stehen oben. "Zahlbetrag"
     /// muss vor "Betrag" greifen, sonst landet er in der falschen Summe.
     /// </summary>
     private static readonly (string[] Keywords, TotalKind Kind)[] Keywords =
@@ -63,7 +63,7 @@ internal static class TotalsDetector
             }
 
             // Die erste Fundstelle gewinnt: Summen stehen in Rechnungen unten,
-            // spaetere Wiederholungen sind meist Uebertraege.
+            // spätere Wiederholungen sind meist Überträge.
             amounts.TryAdd(kind, new DetectedValue<decimal>(
                 amount, DetectionConfidence.High, line.Text,
                 $"Stand in der Zeile mit \"{keyword}\"."));
@@ -96,7 +96,7 @@ internal static class TotalsDetector
 
     /// <summary>
     /// Ein Prozentwert ist nur im Steuerzusammenhang ein Steuersatz. Rabatt,
-    /// Skonto und Nachlass schliessen die Zeile ausdruecklich aus.
+    /// Skonto und Nachlass schließen die Zeile ausdrücklich aus.
     /// </summary>
     private static bool HasTaxContext(string line)
     {

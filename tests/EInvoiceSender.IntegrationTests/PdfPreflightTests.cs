@@ -11,13 +11,13 @@ using Xunit;
 namespace EInvoiceSender.IntegrationTests;
 
 /// <summary>
-/// Prueft die Eingangspruefung (Preflight).
+/// Prüft die Eingangsprüfung (Preflight).
 ///
 /// Zwei Eigenschaften stehen hier im Mittelpunkt:
 /// 1. Das Urteil ist dreistufig und trifft in jedem Fall zu.
 /// 2. Wird eine Datei abgelehnt, nennt die Meldung eine konkrete Einstellung,
-///    die der Anwender in seinem Programm aendern kann. Eine Ablehnung ohne
-///    Handlungsanweisung waere fuer ihn wertlos.
+///    die der Anwender in seinem Programm ändern kann. Eine Ablehnung ohne
+///    Handlungsanweisung wäre für ihn wertlos.
 /// </summary>
 public sealed class PdfPreflightTests : IDisposable
 {
@@ -77,7 +77,7 @@ public sealed class PdfPreflightTests : IDisposable
     }
 
     [Fact]
-    public async Task BeschaedigtePdfIstNichtGeeignet()
+    public async Task BeschädigtePdfIstNichtGeeignet()
     {
         string path = Temp(TestPdfFactory.CreateDamagedPdf());
 
@@ -126,13 +126,13 @@ public sealed class PdfPreflightTests : IDisposable
     }
 
     [Fact]
-    public async Task ZuGrosseDateiWirdAbgelehntUndNenntEinenAusweg()
+    public async Task ZuGroßeDateiWirdAbgelehntUndNenntEinenAusweg()
     {
         var analyzer = new PdfAnalyzer(new CiiInvoiceReader(), NullLogger<PdfAnalyzer>.Instance);
         var strict = new PdfPreflightService(
             analyzer, NullLogger<PdfPreflightService>.Instance, maxFileSizeMegabytes: 1);
 
-        // Eine Datei knapp ueber der Grenze.
+        // Eine Datei knapp über der Grenze.
         byte[] large = new byte[(1024 * 1024) + 1];
         "%PDF-1.4\n"u8.CopyTo(large);
         string path = Temp(large);
@@ -142,13 +142,13 @@ public sealed class PdfPreflightTests : IDisposable
         Assert.Equal(PreflightVerdict.NotSuitable, report.Verdict);
 
         ValidationFinding finding = FindError(report, "APP-PRE-003");
-        Assert.Contains("Bildaufloesung", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Bildauflösung", finding.Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task BereitsHybridePdfIstGeeignetAberMitWarnung()
     {
-        // Eine fertige E-Rechnung erzeugen und erneut pruefen.
+        // Eine fertige E-Rechnung erzeugen und erneut prüfen.
         string sourcePath = Temp(TestPdfFactory.CreateSimplePdf());
 
         InvoiceScenario scenario = InvoiceScenarios.ByKey("01-dienstleistung-19");
@@ -170,7 +170,7 @@ public sealed class PdfPreflightTests : IDisposable
         string hybridPath = Temp(composed.PdfBytes!);
         PdfPreflightReport report = await _preflight.InspectAsync(hybridPath, TestContext.Current.CancellationToken);
 
-        // Sie ist verarbeitbar – aber der Anwender wird ausdruecklich gewarnt.
+        // Sie ist verarbeitbar – aber der Anwender wird ausdrücklich gewarnt.
         Assert.Equal(PreflightVerdict.SuitableWithWarnings, report.Verdict);
         Assert.True(report.CanProceed);
         Assert.True(report.HasExistingInvoice);
@@ -186,7 +186,7 @@ public sealed class PdfPreflightTests : IDisposable
     }
 
     [Fact]
-    public async Task PreflightVeraendertDasOriginalNicht()
+    public async Task PreflightVerändertDasOriginalNicht()
     {
         byte[] original = TestPdfFactory.CreateSimplePdf();
         string path = Temp(original);
@@ -200,7 +200,7 @@ public sealed class PdfPreflightTests : IDisposable
     [Fact]
     public async Task JedeAblehnungNenntEineHandlungUndEinTechnischesDetail()
     {
-        // Alle Ablehnungswege durchlaufen und die Meldungsqualitaet pruefen.
+        // Alle Ablehnungswege durchlaufen und die Meldungsqualität prüfen.
         string[] paths =
         [
             Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFont()),
@@ -219,7 +219,7 @@ public sealed class PdfPreflightTests : IDisposable
             {
                 Assert.StartsWith("APP-PRE-", finding.RuleId, StringComparison.Ordinal);
 
-                // Verstaendlicher deutscher Satz, kein blosser Fehlercode.
+                // Verständlicher deutscher Satz, kein bloßer Fehlercode.
                 Assert.True(
                     finding.Message.Length > 40,
                     $"Meldung zu {finding.RuleId} ist zu knapp: {finding.Message}");
@@ -260,7 +260,7 @@ public sealed class PdfPreflightTests : IDisposable
             }
             catch (IOException)
             {
-                // Aufraeumen darf einen Testlauf nicht scheitern lassen.
+                // Aufräumen darf einen Testlauf nicht scheitern lassen.
             }
         }
     }

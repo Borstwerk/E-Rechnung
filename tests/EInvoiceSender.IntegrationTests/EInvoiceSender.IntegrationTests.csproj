@@ -2,12 +2,12 @@
 
   <!--
     Integrationstests: kompletter Weg von der Eingabe-PDF bis zur validierten
-    ZUGFeRD-Datei und zum E-Mail-Entwurf, einschliesslich der Gegenpruefung
+    ZUGFeRD-Datei und zum E-Mail-Entwurf, einschließlich der Gegenprüfung
     durch die externen Referenzwerkzeuge.
 
     Der Verweis auf EInvoiceSender.Core.Tests dient allein den gemeinsamen
     Testvorgaben (InvoiceScenarios, TestPdfFactory). Beide Testprojekte
-    zusammen ersetzen die frueheren sechs.
+    zusammen ersetzen die früheren sechs.
   -->
 
   <PropertyGroup>

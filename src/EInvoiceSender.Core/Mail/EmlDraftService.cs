@@ -12,21 +12,21 @@ namespace EInvoiceSender.Core.Mail;
 /// Erzeugt einen E-Mail-Entwurf als RFC-5322-konforme <c>.eml</c>-Datei.
 ///
 /// **Diese Klasse versendet nichts.** Sie legt eine Datei ab, die der Benutzer
-/// in seinem Mailprogramm oeffnet, kontrolliert und selbst absendet
+/// in seinem Mailprogramm öffnet, kontrolliert und selbst absendet
 /// (docs/DECISIONS.md, ADR-0005).
 ///
-/// Bewusste Festlegungen und ihre Gruende:
+/// Bewusste Festlegungen und ihre Gründe:
 /// * <c>X-Unsent: 1</c> – veranlasst Outlook und Thunderbird, die Datei als
-///   noch nicht gesendeten Entwurf zu oeffnen statt als empfangene Nachricht.
+///   noch nicht gesendeten Entwurf zu öffnen statt als empfangene Nachricht.
 /// * **Keine <c>Message-ID</c>** – mit gesetzter Kennung verweigert Outlook
-///   berichtetermassen das wiederholte Oeffnen derselben Datei.
-/// * **Reiner Text statt HTML** – fuer das „neue Outlook" ist ein Verlust von
-///   Anhaengen bei HTML-Nachrichten berichtet worden.
+///   berichtetermaßen das wiederholte Öffnen derselben Datei.
+/// * **Reiner Text statt HTML** – für das „neue Outlook" ist ein Verlust von
+///   Anhängen bei HTML-Nachrichten berichtet worden.
 ///
-/// **Nicht behauptet wird die vollstaendige Vertraeglichkeit mit dem neuen
-/// Outlook.** Sie ist aus der Entwicklungsumgebung heraus nicht pruefbar und
+/// **Nicht behauptet wird die vollständige Verträglichkeit mit dem neuen
+/// Outlook.** Sie ist aus der Entwicklungsumgebung heraus nicht prüfbar und
 /// muss auf einem echten Windows-11-System verifiziert werden. Deshalb liefert
-/// jeder Aufruf zusaetzlich einen Rueckfallweg mit.
+/// jeder Aufruf zusätzlich einen Rückfallweg mit.
 /// </summary>
 public sealed partial class EmlDraftService : IEmailDraftService
 {
@@ -37,7 +37,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
     /// Erzeugt den Dienst.
     /// </summary>
     /// <param name="draftDirectory">
-    /// Verzeichnis fuer die Entwurfsdateien. Vorgabe ist ein Unterverzeichnis
+    /// Verzeichnis für die Entwurfsdateien. Vorgabe ist ein Unterverzeichnis
     /// im lokalen Anwendungsdatenordner des Benutzers.
     /// </param>
     /// <param name="logger">Protokollierung.</param>
@@ -48,7 +48,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
         _draftDirectory = draftDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "EInvoiceSender",
-            "Entwuerfe");
+            "Entwürfe");
     }
 
     /// <inheritdoc />
@@ -69,7 +69,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
                 Succeeded: false,
                 DraftFilePath: null,
                 FallbackUri: fallback,
-                Message: "Es ist keine Empfaengeradresse hinterlegt. "
+                Message: "Es ist keine Empfängeradresse hinterlegt. "
                          + "Tragen Sie eine Adresse ein oder verwenden Sie die Rechnung "
                          + "direkt aus dem Ausgabeordner.");
         }
@@ -103,7 +103,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
                 DraftFilePath: path,
                 FallbackUri: fallback,
                 Message: "Der E-Mail-Entwurf wurde erzeugt. Er wird jetzt in Ihrem "
-                         + "Mailprogramm geoeffnet. Bitte pruefen Sie ihn und senden Sie ihn "
+                         + "Mailprogramm geöffnet. Bitte prüfen Sie ihn und senden Sie ihn "
                          + "selbst ab.");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException)
@@ -118,7 +118,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
                 FallbackUri: fallback,
                 Message: "Der E-Mail-Entwurf konnte nicht erzeugt werden. "
                          + "Die fertige Rechnung ist davon nicht betroffen – Sie finden sie "
-                         + "im Ausgabeordner und koennen sie von Hand anhaengen.");
+                         + "im Ausgabeordner und können sie von Hand anhängen.");
         }
     }
 
@@ -128,14 +128,14 @@ public sealed partial class EmlDraftService : IEmailDraftService
         ArgumentNullException.ThrowIfNull(draft);
 
         // Nach RFC 6068 kennt mailto keinen Anhangsparameter. Der Verweis
-        // enthaelt deshalb nur Empfaenger, Betreff und Text; der Anhang muss
-        // vom Benutzer hinzugefuegt werden.
+        // enthält deshalb nur Empfänger, Betreff und Text; der Anhang muss
+        // vom Benutzer hinzugefügt werden.
         var builder = new StringBuilder("mailto:");
 
         // Das At-Zeichen darf NICHT maskiert werden: Es trennt in einer
         // mailto-Adresse den lokalen Teil vom Rechnernamen. Maskiert man es,
-        // laesst sich die URI nicht mehr auswerten – genau daran ist eine
-        // fruehere Fassung gescheitert.
+        // lässt sich die URI nicht mehr auswerten – genau daran ist eine
+        // frühere Fassung gescheitert.
         builder.AppendJoin(',', draft.To.Select(EscapeAddress));
 
         var parameters = new List<string>(2);
@@ -159,9 +159,9 @@ public sealed partial class EmlDraftService : IEmailDraftService
     }
 
     /// <summary>
-    /// Maskiert eine E-Mail-Adresse fuer die Verwendung in einem
+    /// Maskiert eine E-Mail-Adresse für die Verwendung in einem
     /// <c>mailto:</c>-Verweis. Lokaler Teil und Rechnername werden getrennt
-    /// maskiert, das trennende At-Zeichen bleibt unveraendert.
+    /// maskiert, das trennende At-Zeichen bleibt unverändert.
     /// </summary>
     private static string EscapeAddress(string address)
     {
@@ -235,8 +235,8 @@ public sealed partial class EmlDraftService : IEmailDraftService
     }
 
     /// <summary>
-    /// Baut den Dateinamen des Entwurfs. Enthaelt einen Zeitstempel, damit
-    /// mehrere Entwuerfe nebeneinander bestehen koennen.
+    /// Baut den Dateinamen des Entwurfs. Enthält einen Zeitstempel, damit
+    /// mehrere Entwürfe nebeneinander bestehen können.
     /// </summary>
     private static string BuildFileName(EmailDraft draft)
     {
@@ -252,7 +252,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
 
     [LoggerMessage(
         EventId = 7001, Level = LogLevel.Information,
-        Message = "E-Mail-Entwurf erzeugt: {FileName}, {AttachmentCount} Anhang/Anhaenge")]
+        Message = "E-Mail-Entwurf erzeugt: {FileName}, {AttachmentCount} Anhang/Anhänge")]
     private static partial void LogDraftCreated(ILogger logger, string fileName, int attachmentCount);
 
     [LoggerMessage(

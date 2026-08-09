@@ -10,9 +10,9 @@
     <conv:FieldOriginVisibilityConverter x:Key="FieldOriginVisible" />
 
     <!--
-      Bewusst nuechtern gehalten: Der Arbeitsablauf hat Vorrang vor der
-      Gestaltung. Wichtig sind lesbare Schriftgroessen, sichtbarer Fokus und
-      ausreichend grosse Bedienflaechen.
+      Bewusst nüchtern gehalten: Der Arbeitsablauf hat Vorrang vor der
+      Gestaltung. Wichtig sind lesbare Schriftgrößen, sichtbarer Fokus und
+      ausreichend große Bedienflächen.
     -->
     <Style TargetType="TextBlock">
       <Setter Property="VerticalAlignment" Value="Center" />
@@ -36,7 +36,7 @@
       <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="Ueberschrift" TargetType="TextBlock">
+    <Style x:Key="Überschrift" TargetType="TextBlock">
       <Setter Property="FontSize" Value="17" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Margin" Value="0,0,0,10" />
@@ -86,16 +86,16 @@
     <!--
       Darstellung eines Befundes.
 
-      Ohne diese Vorlage zeigt WPF fuer jeden Eintrag das Ergebnis von
+      Ohne diese Vorlage zeigt WPF für jeden Eintrag das Ergebnis von
       ToString(), also den Klassennamen. Genau das war beim ersten Durchlauf
       zu sehen. Die Vorlage steht bewusst hier und nicht am einzelnen
       ItemsControl: Befunde werden an drei Stellen angezeigt (Schritt 1, 2
-      und 4), und eine implizite DataTemplate gilt fuer alle drei zugleich.
+      und 4), und eine implizite DataTemplate gilt für alle drei zugleich.
 
       Barrierefreiheit: Der Schweregrad steht als Wort und als Zeichen da,
       nicht nur als Farbe. AutomationProperties.Name fasst beides mit der
       Meldung zu einem Satz zusammen, damit eine Sprachausgabe den Eintrag
-      am Stueck vorliest statt in Bruchstuecken.
+      am Stück vorliest statt in Bruchstücken.
     -->
     <DataTemplate DataType="{x:Type vm:FindingViewModel}">
       <Border Margin="0,3" Padding="8,6" BorderThickness="1" CornerRadius="3"
@@ -129,7 +129,7 @@
           <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Message}"
                      TextWrapping="Wrap" VerticalAlignment="Top" Margin="0" />
 
-          <!-- Immer belegt: enthaelt mindestens die Regelkennung. -->
+          <!-- Immer belegt: enthält mindestens die Regelkennung. -->
           <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TechnicalDetail}"
                      TextWrapping="Wrap" FontSize="11" Foreground="#5A5A5A"
                      Margin="0,3,0,0" />

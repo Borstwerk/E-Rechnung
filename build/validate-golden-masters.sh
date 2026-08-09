@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
-# Gegenpruefung der erzeugten Golden-Master-Dateien mit dem offiziellen
-# CEN-Schematron und veraPDF, beide ueber die Mustang-CLI.
+# Gegenprüfung der erzeugten Golden-Master-Dateien mit dem offiziellen
+# CEN-Schematron und veraPDF, beide über die Mustang-CLI.
 #
 # Das ist der Nachweis, dass die eigene Regelimplementierung mit der Norm
-# uebereinstimmt (docs/DECISIONS.md, ADR-0002 und ADR-0004). Ohne diesen Schritt
-# waere die Aussage "EN-16931-konform" nur eine Behauptung.
+# übereinstimmt (docs/DECISIONS.md, ADR-0002 und ADR-0004). Ohne diesen Schritt
+# wäre die Aussage "EN-16931-konform" nur eine Behauptung.
 #
 # Erwartete Verzeichnisstruktur (wird von den Tests befuellt):
 #   artifacts/golden-masters/valid/     – muss fehlerfrei validieren
 #   artifacts/golden-masters/invalid/   – muss beanstandet werden
 #
-# Rueckgabewert 0 nur, wenn alle Erwartungen erfuellt sind.
+# Rückgabewert 0 nur, wenn alle Erwartungen erfuellt sind.
 
 set -uo pipefail
 
@@ -21,7 +21,7 @@ GOLDEN_DIR="${ROOT_DIR}/artifacts/golden-masters"
 VERSIONS_FILE="${ROOT_DIR}/tools/versions.env"
 
 if [[ ! -f "${VERSIONS_FILE}" ]]; then
-    echo "FEHLER: tools/versions.env fehlt. Zuerst build/fetch-validators.sh ausfuehren." >&2
+    echo "FEHLER: tools/versions.env fehlt. Zuerst build/fetch-validators.sh ausführen." >&2
     exit 1
 fi
 
@@ -35,7 +35,7 @@ fi
 
 if [[ ! -d "${GOLDEN_DIR}" ]]; then
     echo "FEHLER: ${GOLDEN_DIR} fehlt." >&2
-    echo "Die Golden Master entstehen beim Testlauf. Zuerst ausfuehren:" >&2
+    echo "Die Golden Master entstehen beim Testlauf. Zuerst ausführen:" >&2
     echo "  dotnet test EInvoiceSender.sln -c Release" >&2
     exit 1
 fi
@@ -43,7 +43,7 @@ fi
 failures=0
 checked=0
 
-# Prueft eine Datei und vergleicht das Ergebnis mit der Erwartung.
+# Prüft eine Datei und vergleicht das Ergebnis mit der Erwartung.
 # $1 = Pfad, $2 = "valid" oder "invalid"
 check_file() {
     local file="$1" expectation="$2" output exit_code
@@ -53,10 +53,10 @@ check_file() {
     exit_code=$?
     checked=$((checked + 1))
 
-    # Mustang meldet je Teilpruefung ein eigenes <summary>. Die oberste
-    # Zusammenfassung kann "valid" lauten, obwohl die PDF/A-Pruefung
-    # fehlgeschlagen ist – genau so ist es waehrend der Entwicklung passiert.
-    # Deshalb zaehlt hier jede einzelne Zusammenfassung.
+    # Mustang meldet je Teilprüfung ein eigenes <summary>. Die oberste
+    # Zusammenfassung kann "valid" lauten, obwohl die PDF/A-Prüfung
+    # fehlgeschlagen ist – genau so ist es während der Entwicklung passiert.
+    # Deshalb zählt hier jede einzelne Zusammenfassung.
     local invalid_sections
     invalid_sections="$(printf '%s' "${output}" | grep -c '<summary status="invalid"' || true)"
 
@@ -67,7 +67,7 @@ check_file() {
         if [[ ${exit_code} -eq 0 && ${invalid_sections} -eq 0 ]]; then
             printf '  [ok]   %s\n' "$(basename "${file}")"
         else
-            printf '  [FEHL] %s – erwartet gueltig, %s ungueltige Abschnitte\n' \
+            printf '  [FEHL] %s – erwartet gültig, %s ungültige Abschnitte\n' \
                 "$(basename "${file}")" "${invalid_sections}"
             printf '%s\n' "${output}" \
                 | grep -oE 'errorMessage=[^],]*|criterion="[^"]*"' \
@@ -78,7 +78,7 @@ check_file() {
         if [[ ${exit_code} -ne 0 || ${invalid_sections} -gt 0 ]]; then
             printf '  [ok]   %s – wie erwartet beanstandet\n' "$(basename "${file}")"
         else
-            printf '  [FEHL] %s – erwartet ungueltig, Validator meldet aber Erfolg %s\n' \
+            printf '  [FEHL] %s – erwartet ungültig, Validator meldet aber Erfolg %s\n' \
                 "$(basename "${file}")" "${summary}"
             failures=$((failures + 1))
         fi
@@ -89,17 +89,17 @@ for expectation in valid invalid; do
     dir="${GOLDEN_DIR}/${expectation}"
     [[ -d "${dir}" ]] || continue
 
-    echo "Pruefe ${expectation}:"
+    echo "Prüfe ${expectation}:"
     while IFS= read -r -d '' file; do
         check_file "${file}" "${expectation}"
     done < <(find "${dir}" -type f \( -name '*.xml' -o -name '*.pdf' \) -print0 | sort -z)
 done
 
 echo
-echo "Geprueft: ${checked}, Abweichungen: ${failures}"
+echo "Geprüft: ${checked}, Abweichungen: ${failures}"
 
 if [[ ${checked} -eq 0 ]]; then
-    echo "FEHLER: Keine Golden Master gefunden – die Gegenpruefung waere sonst wertlos." >&2
+    echo "FEHLER: Keine Golden Master gefunden – die Gegenprüfung wäre sonst wertlos." >&2
     exit 1
 fi
 

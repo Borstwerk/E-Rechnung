@@ -9,13 +9,13 @@ namespace EInvoiceSender.Core.Models;
 /// <summary>
 /// Das bearbeitbare Rechnungsformular.
 ///
-/// Waehrend der Eingabe ist jedes Feld eine Zeichenkette: Ein halb getipptes
-/// Datum oder eine unvollstaendige IBAN darf keine Ausnahme ausloesen und das
+/// Während der Eingabe ist jedes Feld eine Zeichenkette: Ein halb getipptes
+/// Datum oder eine unvollständige IBAN darf keine Ausnahme auslösen und das
 /// Formular nicht blockieren. Erst <see cref="TryBuildInvoice"/> wandelt den
-/// Entwurf in das strenge Domaenenmodell um und meldet dabei jeden Wert, der
-/// sich nicht lesen laesst, als verstaendlichen Befund.
+/// Entwurf in das strenge Domänenmodell um und meldet dabei jeden Wert, der
+/// sich nicht lesen lässt, als verständlichen Befund.
 ///
-/// Damit gilt: Ein <see cref="Invoice"/> entsteht nur aus vollstaendig
+/// Damit gilt: Ein <see cref="Invoice"/> entsteht nur aus vollständig
 /// lesbaren Werten. Die Fachlogik muss nie mit Halbfertigem umgehen.
 /// </summary>
 public sealed partial class InvoiceDraft : ObservableObject
@@ -26,13 +26,13 @@ public sealed partial class InvoiceDraft : ObservableObject
     public FieldOrigin OriginOf(string propertyName) => _origins.OriginOf(propertyName);
 
     /// <summary>
-    /// Alle vermerkten Herkuenfte. Die Oberflaeche bindet daran, um die
+    /// Alle vermerkten Herkünfte. Die Oberfläche bindet daran, um die
     /// Kennzeichnung neben den Feldern anzuzeigen.
     /// </summary>
     public IReadOnlyDictionary<string, FieldOrigin> Origins => _origins.Origins;
 
     /// <summary>
-    /// Fuehrt eine Vorbefuellung aus. Aenderungen innerhalb von
+    /// Führt eine Vorbefuellung aus. Änderungen innerhalb von
     /// <paramref name="fill"/> gelten nicht als Benutzereingabe.
     /// </summary>
     public void Prefill(Action<InvoiceDraft> fill)
@@ -50,7 +50,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     }
 
     /// <summary>
-    /// Jede Aenderung durch den Anwender setzt die Herkunft auf "von Hand".
+    /// Jede Änderung durch den Anwender setzt die Herkunft auf "von Hand".
     /// Damit verschwindet die Kennzeichnung genau dann, wenn sie ihren Zweck
     /// erfuellt hat.
     /// </summary>
@@ -110,7 +110,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     [ObservableProperty]
     private string _roundingAmount = "0,00";
 
-    // --- Verkaeufer --------------------------------------------------------
+    // --- Verkäufer --------------------------------------------------------
 
     [ObservableProperty]
     private string _sellerName = string.Empty;
@@ -125,9 +125,9 @@ public sealed partial class InvoiceDraft : ObservableObject
     private string _sellerCity = string.Empty;
 
     /// <summary>
-    /// Das eigene Land. Anders als beim Kaeufer ist eine Vorgabe hier
+    /// Das eigene Land. Anders als beim Käufer ist eine Vorgabe hier
     /// vertretbar: Der Anwender stellt seine eigenen Rechnungen aus und
-    /// ueberschreibt den Wert einmalig ueber die Firmenvorlage.
+    /// überschreibt den Wert einmalig über die Firmenvorlage.
     /// </summary>
     [ObservableProperty]
     private string _sellerCountry = "DE";
@@ -147,7 +147,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     [ObservableProperty]
     private string _sellerContactPhone = string.Empty;
 
-    // --- Kaeufer -----------------------------------------------------------
+    // --- Käufer -----------------------------------------------------------
 
     [ObservableProperty]
     private string _buyerName = string.Empty;
@@ -162,13 +162,13 @@ public sealed partial class InvoiceDraft : ObservableObject
     private string _buyerCity = string.Empty;
 
     /// <summary>
-    /// Das Land des Kaeufers.
+    /// Das Land des Käufers.
     ///
     /// Bewusst **ohne** Vorgabe: Ein unbekanntes Land als "DE" auszugeben
-    /// waere eine Behauptung, die niemand aufgestellt hat. Bei einem
-    /// oesterreichischen oder niederlaendischen Kunden entstuende daraus eine
+    /// wäre eine Behauptung, die niemand aufgestellt hat. Bei einem
+    /// österreichischen oder niederländischen Kunden entstünde daraus eine
     /// falsche Rechnung, ohne dass irgendwo eine Warnung erschiene. Bleibt das
-    /// Feld leer, beanstandet es die Datenpruefung sichtbar.
+    /// Feld leer, beanstandet es die Datenprüfung sichtbar.
     /// </summary>
     [ObservableProperty]
     private string _buyerCountry = string.Empty;
@@ -201,14 +201,14 @@ public sealed partial class InvoiceDraft : ObservableObject
     /// <summary>Die Rechnungspositionen.</summary>
     public ObservableCollection<InvoiceLineDraft> Lines { get; } = [];
 
-    /// <summary>Begruendungen der Steuerbefreiung je Kategorie.</summary>
+    /// <summary>Begründungen der Steuerbefreiung je Kategorie.</summary>
     public ObservableCollection<ExemptionReasonDraft> ExemptionReasons { get; } = [];
 
-    /// <summary>Nachlaesse und Zuschlaege auf Dokumentebene.</summary>
+    /// <summary>Nachlässe und Zuschläge auf Dokumentebene.</summary>
     public ObservableCollection<AllowanceChargeDraft> AllowancesAndCharges { get; } = [];
 
     /// <summary>
-    /// Fuegt eine neue Position mit fortlaufender Nummer hinzu und liefert sie.
+    /// Fügt eine neue Position mit fortlaufender Nummer hinzu und liefert sie.
     /// </summary>
     public InvoiceLineDraft AddLine()
     {
@@ -223,8 +223,8 @@ public sealed partial class InvoiceDraft : ObservableObject
     }
 
     /// <summary>
-    /// Vergibt die Positionsnummern neu, sodass sie wieder luecklos von eins
-    /// aufsteigen. Wird nach dem Loeschen oder Verschieben aufgerufen.
+    /// Vergibt die Positionsnummern neu, sodass sie wieder lücklos von eins
+    /// aufsteigen. Wird nach dem Löschen oder Verschieben aufgerufen.
     /// </summary>
     public void RenumberLines()
     {
@@ -235,7 +235,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     }
 
     /// <summary>
-    /// Versucht, aus dem Entwurf eine vollstaendige Rechnung zu bauen.
+    /// Versucht, aus dem Entwurf eine vollständige Rechnung zu bauen.
     /// </summary>
     /// <param name="invoice">Die gebaute Rechnung, falls alle Werte lesbar waren.</param>
     /// <returns>
@@ -313,7 +313,7 @@ public sealed partial class InvoiceDraft : ObservableObject
 
         report.Error(
             "APP-EDT-002",
-            "Die Waehrung muss aus genau drei Buchstaben bestehen, zum Beispiel EUR.",
+            "Die Währung muss aus genau drei Buchstaben bestehen, zum Beispiel EUR.",
             "Currency");
 
         return CurrencyCode.Euro;
@@ -349,13 +349,13 @@ public sealed partial class InvoiceDraft : ObservableObject
         {
             // Der Leerfall ist seit dem Wegfall der stillen DE-Vorbelegung der
             // Regelfall bei einem neuen Formular und braucht deshalb einen
-            // eigenen, verstaendlichen Satz.
+            // eigenen, verständlichen Satz.
             report.Error(
                 "APP-EDT-004",
                 string.IsNullOrWhiteSpace(BuyerCountry)
-                    ? "Das Land des Rechnungsempfaengers fehlt. Bitte waehlen Sie es aus; "
+                    ? "Das Land des Rechnungsempfängers fehlt. Bitte wählen Sie es aus; "
                       + "es wird nicht angenommen."
-                    : "Das Land des Rechnungsempfaengers muss aus genau zwei Buchstaben bestehen, "
+                    : "Das Land des Rechnungsempfängers muss aus genau zwei Buchstaben bestehen, "
                       + "zum Beispiel DE.",
                 "Buyer.Country");
 
@@ -443,10 +443,10 @@ public sealed partial class InvoiceDraft : ObservableObject
             {
                 report.Error(
                     "APP-EDT-030",
-                    "Die IBAN ist nicht gueltig. Bitte pruefen Sie die Eingabe – "
+                    "Die IBAN ist nicht gültig. Bitte prüfen Sie die Eingabe – "
                     + "vermutlich ist ein Zeichen vertauscht.",
                     "Payment.Iban",
-                    $"Geprueft wurde die Pruefziffer nach ISO 7064: {Iban.Mask(BankIban)}");
+                    $"Geprüft wurde die Prüfziffer nach ISO 7064: {Iban.Mask(BankIban)}");
             }
             else
             {
@@ -487,7 +487,7 @@ public sealed partial class InvoiceDraft : ObservableObject
         {
             report.Error(
                 ruleId,
-                $"{label} ist keine gueltige Zahl.",
+                $"{label} ist keine gültige Zahl.",
                 field,
                 $"Gelesen: '{value}'");
 
@@ -499,7 +499,7 @@ public sealed partial class InvoiceDraft : ObservableObject
 
     /// <summary>
     /// Liest eine Dezimalzahl in deutscher oder invarianter Schreibweise.
-    /// Tausenderpunkte werden nicht unterstuetzt, weil sie sich nicht
+    /// Tausenderpunkte werden nicht unterstützt, weil sie sich nicht
     /// eindeutig von Dezimalpunkten unterscheiden lassen.
     /// </summary>
     public static bool TryParseDecimal(string? value, out decimal result)
@@ -559,7 +559,7 @@ public sealed partial class InvoiceLineDraft : ObservableObject
     private string _vatRate = "19";
 }
 
-/// <summary>Eine bearbeitbare Begruendung der Steuerbefreiung.</summary>
+/// <summary>Eine bearbeitbare Begründung der Steuerbefreiung.</summary>
 public sealed partial class ExemptionReasonDraft : ObservableObject
 {
     [ObservableProperty]

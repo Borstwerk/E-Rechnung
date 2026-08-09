@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging;
 namespace EInvoiceSender.App.Services;
 
 /// <summary>
-/// Oeffnet Dateien, Ordner und Verweise mit den Bordmitteln von Windows.
+/// Öffnet Dateien, Ordner und Verweise mit den Bordmitteln von Windows.
 ///
 /// Der einzige Ort im Programm, an dem <c>UseShellExecute = true</c> steht.
-/// Uebergeben werden ausschliesslich Pfade, die die Anwendung selbst erzeugt
-/// hat, beziehungsweise vom Benutzer ausgewaehlte Dateien – nie eine Zeichenkette
+/// Übergeben werden ausschließlich Pfade, die die Anwendung selbst erzeugt
+/// hat, beziehungsweise vom Benutzer ausgewählte Dateien – nie eine Zeichenkette
 /// aus einer Rechnung oder aus fremdem XML.
 /// </summary>
 public sealed partial class WindowsShellService : IShellService
@@ -55,7 +55,7 @@ public sealed partial class WindowsShellService : IShellService
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        // Nur Schemata, die hier vorkommen duerfen. Damit kann ein praeparierter
+        // Nur Schemata, die hier vorkommen dürfen. Damit kann ein präparierter
         // Wert kein beliebiges Programm starten.
         if (uri.Scheme is not ("mailto" or "http" or "https" or "file"))
         {
@@ -92,6 +92,6 @@ public sealed partial class WindowsShellService : IShellService
     [LoggerMessage(EventId = 9002, Level = LogLevel.Warning, Message = "Schema abgelehnt: {Scheme}")]
     private static partial void LogSchemeRejected(ILogger logger, string scheme);
 
-    [LoggerMessage(EventId = 9003, Level = LogLevel.Warning, Message = "Oeffnen fehlgeschlagen ({Reason}).")]
+    [LoggerMessage(EventId = 9003, Level = LogLevel.Warning, Message = "Öffnen fehlgeschlagen ({Reason}).")]
     private static partial void LogStartFailed(ILogger logger, string reason);
 }

@@ -8,38 +8,38 @@ namespace EInvoiceSender.Core.Pdf;
 /// Ersetzt das XMP-Metadatenpaket einer fertig gespeicherten PDF durch das
 /// eigene, PDF/A- und Factur-X-taugliche Paket.
 ///
-/// Warum das noetig ist: PDFsharp erzeugt beim Speichern **immer** sein eigenes
-/// XMP und ueberschreibt dabei ein zuvor gesetztes <c>/Metadata</c>-Objekt. Es
+/// Warum das nötig ist: PDFsharp erzeugt beim Speichern **immer** sein eigenes
+/// XMP und überschreibt dabei ein zuvor gesetztes <c>/Metadata</c>-Objekt. Es
 /// gibt keinen Schalter, der das abstellt. Ohne diesen Schritt fehlten der
-/// Ausgabedatei die Kennzeichnung <c>pdfaid:part 3</c> und saemtliche
-/// Factur-X-Felder – sie waere damit weder PDF/A noch eine erkennbare
+/// Ausgabedatei die Kennzeichnung <c>pdfaid:part 3</c> und sämtliche
+/// Factur-X-Felder – sie wäre damit weder PDF/A noch eine erkennbare
 /// Hybridrechnung.
 ///
 /// Umgesetzt als **inkrementelle Aktualisierung**: Das vorhandene
 /// Metadatenobjekt wird unter derselben Objektnummer neu definiert und an die
-/// Datei angehaengt, gefolgt von einer eigenen Querverweistabelle mit
-/// <c>/Prev</c>. Das ist ein regulaerer PDF-Mechanismus; Leser verwenden immer
+/// Datei angehängt, gefolgt von einer eigenen Querverweistabelle mit
+/// <c>/Prev</c>. Das ist ein regulärer PDF-Mechanismus; Leser verwenden immer
 /// die zuletzt geschriebene Fassung eines Objekts. Der bereits geschriebene
-/// Teil der Datei bleibt unangetastet, es werden also keine Verweise ungueltig.
+/// Teil der Datei bleibt unangetastet, es werden also keine Verweise ungültig.
 ///
 /// Die Textanalyse ist hier vertretbar, weil die Eingabe nicht von einem
 /// Fremdprogramm stammt, sondern unmittelbar zuvor von PDFsharp erzeugt wurde:
 /// klassische Querverweistabelle, unkomprimiertes XMP, einfacher Trailer.
-/// Fuer fremde Dateien wird dieser Weg nie beschritten. Zusaetzlich prueft der
-/// Aufrufer das Ergebnis, indem er die Datei erneut oeffnet und ausliest.
+/// Für fremde Dateien wird dieser Weg nie beschritten. Zusätzlich prüft der
+/// Aufrufer das Ergebnis, indem er die Datei erneut öffnet und ausliest.
 /// </summary>
 public static partial class PdfMetadataOverwriter
 {
     /// <summary>
-    /// Haengt eine inkrementelle Aktualisierung an, die das Metadatenobjekt
-    /// durch das uebergebene XMP-Paket ersetzt.
+    /// Hängt eine inkrementelle Aktualisierung an, die das Metadatenobjekt
+    /// durch das übergebene XMP-Paket ersetzt.
     /// </summary>
     /// <param name="pdfBytes">Die von PDFsharp gespeicherte Datei.</param>
     /// <param name="xmp">Das einzusetzende XMP-Paket.</param>
-    /// <returns>Die ergaenzte Datei.</returns>
+    /// <returns>Die ergänzte Datei.</returns>
     /// <exception cref="InvalidOperationException">
     /// Wenn die erwartete Struktur nicht gefunden wurde. Der Aufrufer bricht in
-    /// diesem Fall ab, statt eine unvollstaendige Datei auszugeben.
+    /// diesem Fall ab, statt eine unvollständige Datei auszugeben.
     /// </exception>
     public static byte[] ReplaceXmp(byte[] pdfBytes, byte[] xmp)
     {
@@ -47,14 +47,14 @@ public static partial class PdfMetadataOverwriter
         ArgumentNullException.ThrowIfNull(xmp);
 
         // Latin1 bildet jedes Byte auf genau ein Zeichen ab. Nur so bleiben die
-        // Byte-Versaetze der Querverweistabelle beim Textvergleich korrekt.
+        // Byte-Versätze der Querverweistabelle beim Textvergleich korrekt.
         string text = Encoding.Latin1.GetString(pdfBytes);
 
         int previousStartXref = ReadStartXref(text);
         string trailer = ReadTrailerDictionary(text);
         int metadataObjectNumber = FindMetadataObjectNumber(text, trailer);
         int size = ReadTrailerInteger(trailer, "Size")
-                   ?? throw new InvalidOperationException("Der Trailer enthaelt keinen /Size-Eintrag.");
+                   ?? throw new InvalidOperationException("Der Trailer enthält keinen /Size-Eintrag.");
 
         var output = new MemoryStream(pdfBytes.Length + xmp.Length + 512);
         output.Write(pdfBytes);
@@ -76,7 +76,7 @@ public static partial class PdfMetadataOverwriter
         int xrefOffset = (int)output.Position;
 
         // Querverweistabelle mit genau zwei Abschnitten: dem Pflichteintrag
-        // fuer Objekt 0 und dem neu definierten Metadatenobjekt.
+        // für Objekt 0 und dem neu definierten Metadatenobjekt.
         WriteAscii(output, "xref\n0 1\n0000000000 65535 f \n");
         WriteAscii(output, string.Create(CultureInfo.InvariantCulture, $"{metadataObjectNumber} 1\n"));
         WriteAscii(output, string.Create(CultureInfo.InvariantCulture, $"{objectOffset:D10} 00000 n \n"));
@@ -94,7 +94,7 @@ public static partial class PdfMetadataOverwriter
         int index = text.LastIndexOf("startxref", StringComparison.Ordinal);
         if (index < 0)
         {
-            throw new InvalidOperationException("Die Datei enthaelt kein 'startxref'.");
+            throw new InvalidOperationException("Die Datei enthält kein 'startxref'.");
         }
 
         Match match = StartXrefValueRegex().Match(text, index);
@@ -104,25 +104,25 @@ public static partial class PdfMetadataOverwriter
             : throw new InvalidOperationException("Der Wert hinter 'startxref' ist unlesbar.");
     }
 
-    /// <summary>Liest das Trailer-Woerterbuch als Text, einschliesslich Klammern.</summary>
+    /// <summary>Liest das Trailer-Wörterbuch als Text, einschließlich Klammern.</summary>
     private static string ReadTrailerDictionary(string text)
     {
         int index = text.LastIndexOf("trailer", StringComparison.Ordinal);
         if (index < 0)
         {
             throw new InvalidOperationException(
-                "Die Datei enthaelt keinen klassischen Trailer. "
-                + "Querverweisstroeme werden hier nicht unterstuetzt.");
+                "Die Datei enthält keinen klassischen Trailer. "
+                + "Querverweisstroeme werden hier nicht unterstützt.");
         }
 
         int start = text.IndexOf("<<", index, StringComparison.Ordinal);
         if (start < 0)
         {
-            throw new InvalidOperationException("Der Trailer enthaelt kein Woerterbuch.");
+            throw new InvalidOperationException("Der Trailer enthält kein Wörterbuch.");
         }
 
-        // Verschachtelte Woerterbuecher mitzaehlen, damit /ID-Arrays und
-        // eingebettete Strukturen nicht zu einem zu fruehen Ende fuehren.
+        // Verschachtelte Wörterbücher mitzählen, damit /ID-Arrays und
+        // eingebettete Strukturen nicht zu einem zu frühen Ende führen.
         int depth = 0;
         for (int i = start; i < text.Length - 1; i++)
         {
@@ -143,12 +143,12 @@ public static partial class PdfMetadataOverwriter
             }
         }
 
-        throw new InvalidOperationException("Das Trailer-Woerterbuch ist unvollstaendig.");
+        throw new InvalidOperationException("Das Trailer-Wörterbuch ist unvollständig.");
     }
 
     /// <summary>
-    /// Ermittelt die Objektnummer des Metadatenobjekts. Zuerst ueber den
-    /// Katalog, weil das der verbindliche Weg ist; ersatzweise ueber die Suche
+    /// Ermittelt die Objektnummer des Metadatenobjekts. Zuerst über den
+    /// Katalog, weil das der verbindliche Weg ist; ersatzweise über die Suche
     /// nach einem Objekt mit <c>/Type /Metadata</c>.
     /// </summary>
     private static int FindMetadataObjectNumber(string text, string trailer)
@@ -184,7 +184,7 @@ public static partial class PdfMetadataOverwriter
 
     /// <summary>
     /// Baut den neuen Trailer: der bisherige Inhalt ohne ein etwaiges
-    /// <c>/Prev</c>, ergaenzt um den Verweis auf die vorherige Tabelle.
+    /// <c>/Prev</c>, ergänzt um den Verweis auf die vorherige Tabelle.
     /// </summary>
     private static string BuildTrailer(string trailer, int size, int previousStartXref)
     {

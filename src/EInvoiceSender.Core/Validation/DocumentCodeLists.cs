@@ -7,13 +7,13 @@ namespace EInvoiceSender.Core.Validation;
 /// Rechnungsartcodes nach UNTDID 1001 (BT-3), soweit diese Anwendung sie
 /// fachlich beherrscht (siehe <c>docs/STANDARDS.md</c>, Abschnitt 5, und
 /// <c>docs/AGENTS.md</c> zum Anwendungsumfang). Reine Nachschlagetabelle
-/// ohne Geschaeftslogik.
+/// ohne Geschäftslogik.
 /// </summary>
 /// <remarks>
-/// 875/876/877 (Teil- und Schlussrechnungen fuer Bauleistungen) sind mit
+/// 875/876/877 (Teil- und Schlussrechnungen für Bauleistungen) sind mit
 /// mittlerer Sicherheit belegt – die genaue Abgrenzung zwischen den drei
 /// Codes sollte vor produktivem Einsatz gegen die aktuelle UNTDID-1001-Liste
-/// gegengeprueft werden.
+/// gegengeprüft werden.
 /// </remarks>
 public static class InvoiceTypeCodes
 {
@@ -29,7 +29,7 @@ public static class InvoiceTypeCodes
         [877] = "Schlussrechnung (Bauleistung)",
     }.ToFrozenDictionary();
 
-    /// <summary>Prueft, ob <paramref name="code"/> ein bekannter Rechnungsartcode ist.</summary>
+    /// <summary>Prüft, ob <paramref name="code"/> ein bekannter Rechnungsartcode ist.</summary>
     public static bool IsValid(int code) => Names.ContainsKey(code);
 
     /// <summary>Liefert den deutschen Namen der Rechnungsart.</summary>
@@ -39,28 +39,28 @@ public static class InvoiceTypeCodes
 
 /// <summary>
 /// Zahlungsartcodes nach UNTDID 4461 (BT-81), Teilmenge der in dieser
-/// Anwendung unterstuetzten Zahlungsarten. Reine Nachschlagetabelle ohne
-/// Geschaeftslogik.
+/// Anwendung unterstützten Zahlungsarten. Reine Nachschlagetabelle ohne
+/// Geschäftslogik.
 /// </summary>
 public static class PaymentMeansCodes
 {
     private static readonly FrozenDictionary<int, string> Names = new Dictionary<int, string>
     {
-        [1] = "Nicht naeher bestimmt",
+        [1] = "Nicht näher bestimmt",
         [10] = "Barzahlung",
         [20] = "Scheck",
-        [30] = "Ueberweisung",
+        [30] = "Überweisung",
         [42] = "Zahlung auf Bankkonto",
         [48] = "Kartenzahlung",
         [49] = "Lastschrift",
         [57] = "Dauerauftrag",
-        [58] = "SEPA-Ueberweisung",
+        [58] = "SEPA-Überweisung",
         [59] = "SEPA-Lastschrift",
         [68] = "Onlinezahlungsdienst",
         [97] = "Verrechnung",
     }.ToFrozenDictionary();
 
-    /// <summary>Prueft, ob <paramref name="code"/> eine bekannte Zahlungsart ist.</summary>
+    /// <summary>Prüft, ob <paramref name="code"/> eine bekannte Zahlungsart ist.</summary>
     public static bool IsValid(int code) => Names.ContainsKey(code);
 
     /// <summary>Liefert den deutschen Namen der Zahlungsart.</summary>
@@ -69,53 +69,53 @@ public static class PaymentMeansCodes
 }
 
 /// <summary>
-/// Begruendungscodes fuer Steuerbefreiungen (BT-120/BT-121) nach der
+/// Begründungscodes für Steuerbefreiungen (BT-120/BT-121) nach der
 /// CEF-/VATEX-Codeliste, wie sie u. a. in EN 16931 und Peppol BIS Billing
-/// verwendet wird. Reine Nachschlagetabelle ohne Geschaeftslogik.
+/// verwendet wird. Reine Nachschlagetabelle ohne Geschäftslogik.
 /// </summary>
 /// <remarks>
 /// Die Codes selbst sind mit hoher Sicherheit belegt, die deutschen
-/// Kurzbeschreibungen sind jedoch eigene, sinngemaesse Zusammenfassungen der
+/// Kurzbeschreibungen sind jedoch eigene, sinngemäße Zusammenfassungen der
 /// jeweiligen Artikel der Richtlinie 2006/112/EG und <b>kein</b> verbindlicher
 /// Rechtstext. Vor produktivem Einsatz sollte der genaue Wortlaut gegen die
-/// offizielle CEF-VATEX-Liste bzw. die Richtlinie gegengeprueft werden – vgl.
+/// offizielle CEF-VATEX-Liste bzw. die Richtlinie gegengeprüft werden – vgl.
 /// die Vertrauensangaben in <c>docs/STANDARDS.md</c>.
 /// </remarks>
 public static class VatExemptionReasonCodes
 {
     private static readonly FrozenDictionary<string, string> Names = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["VATEX-EU-AE"] = "Steuerschuldnerschaft des Leistungsempfaengers (Reverse Charge)",
-        ["VATEX-EU-O"] = "Nicht steuerbarer Umsatz (ausserhalb des Anwendungsbereichs der Mehrwertsteuer)",
+        ["VATEX-EU-AE"] = "Steuerschuldnerschaft des Leistungsempfängers (Reverse Charge)",
+        ["VATEX-EU-O"] = "Nicht steuerbarer Umsatz (außerhalb des Anwendungsbereichs der Mehrwertsteuer)",
         ["VATEX-EU-IC"] = "Innergemeinschaftliche Lieferung, steuerfrei",
-        ["VATEX-EU-G"] = "Ausfuhrlieferung ausserhalb der EU, steuerfrei",
+        ["VATEX-EU-G"] = "Ausfuhrlieferung außerhalb der EU, steuerfrei",
         ["VATEX-EU-D"] = "Innergemeinschaftlicher Erwerb von Gebrauchtfahrzeugen (Differenzbesteuerung)",
-        ["VATEX-EU-F"] = "Innergemeinschaftlicher Erwerb von Gebrauchtgegenstaenden, Kunstgegenstaenden, Sammlungsstuecken und Antiquitaeten (Differenzbesteuerung)",
-        ["VATEX-EU-I"] = "Erwerb von Kunstgegenstaenden, Sammlungsstuecken und Antiquitaeten (Differenzbesteuerung)",
+        ["VATEX-EU-F"] = "Innergemeinschaftlicher Erwerb von Gebrauchtgegenständen, Kunstgegenständen, Sammlungsstücken und Antiquitäten (Differenzbesteuerung)",
+        ["VATEX-EU-I"] = "Erwerb von Kunstgegenständen, Sammlungsstücken und Antiquitäten (Differenzbesteuerung)",
         ["VATEX-EU-J"] = "Innergemeinschaftliche Lieferung eines neuen Fahrzeugs",
-        ["VATEX-EU-79-C"] = "Steuerbefreiung nach Art. 79 Buchst. c der Richtlinie 2006/112/EG (Preisnachlaesse/durchlaufende Posten)",
-        ["VATEX-EU-132"] = "Steuerbefreiung nach Art. 132 der Richtlinie 2006/112/EG (Taetigkeiten von allgemeinem Interesse)",
+        ["VATEX-EU-79-C"] = "Steuerbefreiung nach Art. 79 Buchst. c der Richtlinie 2006/112/EG (Preisnachlässe/durchlaufende Posten)",
+        ["VATEX-EU-132"] = "Steuerbefreiung nach Art. 132 der Richtlinie 2006/112/EG (Tätigkeiten von allgemeinem Interesse)",
         ["VATEX-EU-143"] = "Steuerbefreiung nach Art. 143 der Richtlinie 2006/112/EG (Einfuhrbefreiungen)",
-        ["VATEX-EU-148"] = "Steuerbefreiung nach Art. 148 der Richtlinie 2006/112/EG (grenzueberschreitender See- und Luftverkehr)",
-        ["VATEX-EU-151"] = "Steuerbefreiung nach Art. 151 der Richtlinie 2006/112/EG (voelkerrechtliche Einrichtungen, diplomatische und konsularische Beziehungen)",
-        ["VATEX-EU-309"] = "Steuerbefreiung fuer Reisebueros nach Art. 309 der Richtlinie 2006/112/EG (Margenbesteuerung)",
+        ["VATEX-EU-148"] = "Steuerbefreiung nach Art. 148 der Richtlinie 2006/112/EG (grenzüberschreitender See- und Luftverkehr)",
+        ["VATEX-EU-151"] = "Steuerbefreiung nach Art. 151 der Richtlinie 2006/112/EG (völkerrechtliche Einrichtungen, diplomatische und konsularische Beziehungen)",
+        ["VATEX-EU-309"] = "Steuerbefreiung für Reisebüros nach Art. 309 der Richtlinie 2006/112/EG (Margenbesteuerung)",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>
-    /// Prueft, ob der Code ein bekannter Basiscode ist **oder** ein Untercode
+    /// Prüft, ob der Code ein bekannter Basiscode ist **oder** ein Untercode
     /// eines bekannten Basiscodes.
     ///
     /// Hintergrund: Die VATEX-Liste kennt zu mehreren Artikeln feiner
-    /// gegliederte Untercodes, etwa <c>VATEX-EU-132-1A</c> fuer
+    /// gegliederte Untercodes, etwa <c>VATEX-EU-132-1A</c> für
     /// Artikel 132 Absatz 1 Buchstabe a. Diese Untercodes hier einzeln
-    /// aufzufuehren, wuerde bedeuten, sie aus dem Gedaechtnis zu erfinden – die
+    /// aufzuführen, würde bedeuten, sie aus dem Gedächtnis zu erfinden – die
     /// offizielle Liste war bei der Erstellung nicht abrufbar. Stattdessen wird
-    /// die Zugehoerigkeit zu einem bekannten Basiscode geprueft.
+    /// die Zugehörigkeit zu einem bekannten Basiscode geprüft.
     ///
-    /// Das ist bewusst grosszuegig: Ein unbekannter Untercode fuehrt ohnehin nur
-    /// zu einer Warnung, und die verbindliche Pruefung uebernimmt das
-    /// CEN-Schematron. Ein falscher Alarm bei einem gueltigen Code waere fuer
-    /// den Anwender dagegen aergerlich und verwirrend.
+    /// Das ist bewusst großzügig: Ein unbekannter Untercode führt ohnehin nur
+    /// zu einer Warnung, und die verbindliche Prüfung übernimmt das
+    /// CEN-Schematron. Ein falscher Alarm bei einem gültigen Code wäre für
+    /// den Anwender dagegen ärgerlich und verwirrend.
     /// </summary>
     public static bool IsValidOrKnownSubcode(string? code)
     {
@@ -145,9 +145,9 @@ public static class VatExemptionReasonCodes
     }
 
     /// <summary>
-    /// Prueft, ob <paramref name="code"/> ein bekannter VATEX-Code ist.
-    /// Anders als bei den uebrigen Codelisten wird hier <b>fallsensitiv</b>
-    /// geprueft, wie in der VATEX-Liste veroeffentlicht – nur umgebende
+    /// Prüft, ob <paramref name="code"/> ein bekannter VATEX-Code ist.
+    /// Anders als bei den übrigen Codelisten wird hier <b>fallsensitiv</b>
+    /// geprüft, wie in der VATEX-Liste veröffentlicht – nur umgebende
     /// Leerzeichen werden entfernt. Liefert <see langword="false"/> bei
     /// <see langword="null"/>, leerem oder reinem Leerraum-Text – wirft nie.
     /// </summary>

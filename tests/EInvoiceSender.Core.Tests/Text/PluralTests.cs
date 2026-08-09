@@ -32,13 +32,13 @@ public sealed class PluralTests
     [Fact]
     public void EsEntstehtNieEineKlammerform()
     {
-        string[] saetze =
+        string[] sätze =
         [
             Plural.Count(1, "Feld", "Felder"),
             Plural.Count(7, "Feld", "Felder"),
             Plural.Count(1, "Angabe", "Angaben"),
         ];
 
-        Assert.DoesNotContain(saetze, s => s.Contains('(', StringComparison.Ordinal));
+        Assert.DoesNotContain(sätze, s => s.Contains('(', StringComparison.Ordinal));
     }
 }

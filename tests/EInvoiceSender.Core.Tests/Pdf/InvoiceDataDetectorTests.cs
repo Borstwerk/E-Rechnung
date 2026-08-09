@@ -8,12 +8,12 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Pdf;
 
 /// <summary>
-/// Prueft die Rechnungserkennung.
+/// Prüft die Rechnungserkennung.
 ///
-/// Der groessere Teil dieser Tests prueft nicht, **was** erkannt wird, sondern
+/// Der größere Teil dieser Tests prüft nicht, **was** erkannt wird, sondern
 /// was **nicht** erkannt werden darf. Das ist Absicht: Ein leeres Feld kostet
-/// den Anwender ein paar Tastenanschlaege, ein falsch gefuelltes Feld, das er
-/// uebersieht, kostet eine fehlerhafte Rechnung.
+/// den Anwender ein paar Tastenanschläge, ein falsch gefuelltes Feld, das er
+/// übersieht, kostet eine fehlerhafte Rechnung.
 /// </summary>
 public sealed class InvoiceDataDetectorTests : IDisposable
 {
@@ -41,13 +41,13 @@ public sealed class InvoiceDataDetectorTests : IDisposable
         Assert.Equal(1190.00m, result.Totals.Gross?.Value);
     }
 
-    // ================================= Faelle 2-4: Steuersaetze und Beträge
+    // ================================= Fälle 2-4: Steuersätze und Beträge
 
     [Theory]
     [InlineData("19", 19)]
     [InlineData("7", 7)]
     [InlineData("0", 0)]
-    public async Task GaengigeSteuersaetzeWerdenErkannt(string text, int expected)
+    public async Task GängigeSteuersätzeWerdenErkannt(string text, int expected)
     {
         InvoiceDetectionResult result = await Detect(
         [
@@ -61,7 +61,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     [Fact]
-    public async Task MehrereSteuersaetzeWerdenAlleErfasst()
+    public async Task MehrereSteuersätzeWerdenAlleErfasst()
     {
         InvoiceDetectionResult result = await Detect(
         [
@@ -91,23 +91,23 @@ public sealed class InvoiceDataDetectorTests : IDisposable
         Assert.Equal(expected, result.InvoiceNumber?.Value);
     }
 
-    // ==================================== Faelle 6-7: Datumsformate
+    // ==================================== Fälle 6-7: Datumsformate
 
     [Theory]
     [InlineData("Rechnungsdatum: 09.08.2026", 2026, 8, 9)]
     [InlineData("Rechnungsdatum: 9.8.2026", 2026, 8, 9)]
     [InlineData("Rechnungsdatum: 09.08.26", 2026, 8, 9)]
     [InlineData("Rechnungsdatum: 2026-08-09", 2026, 8, 9)]
-    public async Task GaengigeDatumsformateWerdenErkannt(string line, int y, int m, int d)
+    public async Task GängigeDatumsformateWerdenErkannt(string line, int y, int m, int d)
     {
         InvoiceDetectionResult result = await Detect(
-            ["Muster IT GmbH", "Musterstrasse 10", "18055 Rostock", line, .. Summen()]);
+            ["Muster IT GmbH", "Musterstraße 10", "18055 Rostock", line, .. Summen()]);
 
         Assert.Equal(new DateOnly(y, m, d), result.IssueDate?.Value);
     }
 
     [Fact]
-    public async Task UnmoeglichesDatumWirdVerworfen()
+    public async Task UnmöglichesDatumWirdVerworfen()
     {
         InvoiceDetectionResult result = await Detect(
             [.. Kopf(), "Rechnungsdatum: 32.13.2026", .. Summen()]);
@@ -132,7 +132,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     // ====================================================== Fall 9: IBAN
 
     [Fact]
-    public async Task GueltigeIbanWirdErkanntUndBestaetigt()
+    public async Task GültigeIbanWirdErkanntUndBestätigt()
     {
         InvoiceDetectionResult result = await Detect(
             [.. Kopf(), .. KopfDaten(), .. Summen(), "IBAN DE89 3704 0044 0532 0130 00"]);
@@ -143,11 +143,11 @@ public sealed class InvoiceDataDetectorTests : IDisposable
 
     /// <summary>
     /// Der wichtigste Negativfall der IBAN-Erkennung: Das Muster passt, die
-    /// Pruefsumme nicht. So etwas darf nie uebernommen werden – eine falsche
+    /// Prüfsumme nicht. So etwas darf nie übernommen werden – eine falsche
     /// Bankverbindung auf einer Rechnung ist teuer.
     /// </summary>
     [Fact]
-    public async Task IbanMitFalscherPruefsummeWirdNichtUebernommen()
+    public async Task IbanMitFalscherPrüfsummeWirdNichtÜbernommen()
     {
         InvoiceDetectionResult result = await Detect(
             [.. Kopf(), .. KopfDaten(), .. Summen(), "IBAN DE00 3704 0044 0532 0130 00"]);
@@ -156,7 +156,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     [Fact]
-    public async Task VonMehrerenIbanAehnlichenWertenGewinntDieGueltige()
+    public async Task VonMehrerenIbanÄhnlichenWertenGewinntDieGültige()
     {
         InvoiceDetectionResult result = await Detect(
         [
@@ -170,10 +170,10 @@ public sealed class InvoiceDataDetectorTests : IDisposable
         Assert.Equal("DE89370400440532013000", result.Iban?.Value);
     }
 
-    // ======================================= Faelle 10/11/17: Parteien
+    // ======================================= Fälle 10/11/17: Parteien
 
     [Fact]
-    public async Task KaeuferWirdUnterRechnungAnErkannt()
+    public async Task KäuferWirdUnterRechnungAnErkannt()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
@@ -183,16 +183,16 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     /// <summary>
-    /// Die gespeicherte Vorlage ist das staerkste Signal fuer den Verkaeufer:
+    /// Die gespeicherte Vorlage ist das stärkste Signal für den Verkäufer:
     /// Man stellt seine eigenen Rechnungen selbst aus.
     /// </summary>
     [Fact]
-    public async Task GespeicherteVorlageErkenntDenVerkaeufer()
+    public async Task GespeicherteVorlageErkenntDenVerkäufer()
     {
         var template = new CompanyTemplate
         {
             SellerName = "Muster IT GmbH",
-            SellerStreet = "Musterstrasse 10",
+            SellerStreet = "Musterstraße 10",
             SellerPostalCode = "18055",
             SellerCity = "Rostock",
             SellerVatId = "DE123456789",
@@ -206,12 +206,12 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     /// <summary>
-    /// Ohne Vorlage und ohne Schluesselwort bleibt der Verkaeufer leer. Eine
-    /// geratene Zuordnung waere schlimmer: Vertauschte Parteien ergeben eine
-    /// formal gueltige, inhaltlich falsche Rechnung.
+    /// Ohne Vorlage und ohne Schlüsselwort bleibt der Verkäufer leer. Eine
+    /// geratene Zuordnung wäre schlimmer: Vertauschte Parteien ergeben eine
+    /// formal gültige, inhaltlich falsche Rechnung.
     /// </summary>
     [Fact]
-    public async Task OhneVorlageWirdKeinVerkaeuferGeraten()
+    public async Task OhneVorlageWirdKeinVerkäuferGeraten()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
@@ -219,7 +219,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     [Fact]
-    public async Task DieEigeneFirmaWirdNichtZumKaeufer()
+    public async Task DieEigeneFirmaWirdNichtZumKäufer()
     {
         var template = new CompanyTemplate { SellerName = "Muster IT GmbH" };
 
@@ -237,10 +237,10 @@ public sealed class InvoiceDataDetectorTests : IDisposable
         Assert.NotEqual("Muster IT GmbH", result.Buyer.Name?.Value);
     }
 
-    // ================================ Faelle 12/13: fehlende Angaben
+    // ================================ Fälle 12/13: fehlende Angaben
 
     [Fact]
-    public async Task RechnungOhneEmailLiefertTrotzdemDieUebrigenDaten()
+    public async Task RechnungOhneEmailLiefertTrotzdemDieÜbrigenDaten()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
@@ -262,7 +262,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     [Fact]
-    public async Task BeschaedigtePdfBlockiertDenAblaufNicht()
+    public async Task BeschädigtePdfBlockiertDenAblaufNicht()
     {
         string path = Temp(TestPdfFactory.CreateDamagedPdf());
 
@@ -272,11 +272,11 @@ public sealed class InvoiceDataDetectorTests : IDisposable
         Assert.False(result.HasUsableText);
     }
 
-    // ================================== Faelle 18/19: Fehlzuordnungen
+    // ================================== Fälle 18/19: Fehlzuordnungen
 
     /// <summary>
     /// Der Klassiker: In einer Zeile stehen Telefon- und Kundennummer. Ohne
-    /// Sperre wuerde eine davon zur Rechnungsnummer.
+    /// Sperre würde eine davon zur Rechnungsnummer.
     /// </summary>
     [Fact]
     public async Task TelefonUndKundennummerWerdenNichtZurRechnungsnummer()
@@ -286,7 +286,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
             "Muster IT GmbH",
             "Telefon 0381 1234567 Rechnung Kundennummer 4711",
             "Seite 1 von 2",
-            "Musterstrasse 10",
+            "Musterstraße 10",
             "18055 Rostock",
             .. Summen(),
         ]);
@@ -295,7 +295,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     [Fact]
-    public async Task EineReineZifferfolgeOhneSchluesselwortWirdIgnoriert()
+    public async Task EineReineZifferfolgeOhneSchlüsselwortWirdIgnoriert()
     {
         InvoiceDetectionResult result = await Detect(
             [.. Kopf(), "0381 1234567", "4711 0815 2342", .. Summen()]);
@@ -304,8 +304,8 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     /// <summary>
-    /// Postleitzahlen sind fuenfstellige Zahlen ohne Nachkommastellen. Sie
-    /// duerfen nie als Betrag durchgehen.
+    /// Postleitzahlen sind fünfstellige Zahlen ohne Nachkommastellen. Sie
+    /// dürfen nie als Betrag durchgehen.
     /// </summary>
     [Fact]
     public async Task PostleitzahlWirdNichtAlsBetragGelesen()
@@ -315,7 +315,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
             .. Kopf(),
             "Rechnung an",
             "Beispielkunde AG",
-            "Kundenstrasse 7",
+            "Kundenstraße 7",
             "20095 Hamburg",
             .. KopfDaten(),
             "Gesamtbetrag 1.190,00 EUR",
@@ -327,7 +327,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     /// <summary>
-    /// Ein Rabatt von 3 % ist kein Steuersatz. Ohne die Kontextpruefung wuerde
+    /// Ein Rabatt von 3 % ist kein Steuersatz. Ohne die Kontextprüfung würde
     /// jeder Prozentwert im Dokument als Umsatzsteuer gelesen.
     /// </summary>
     [Fact]
@@ -365,12 +365,12 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     // ============================================== Fall 16/20: Positionen
 
     /// <summary>
-    /// Die Positionserkennung ist nicht umgesetzt. Dieser Test haelt fest, dass
-    /// die uebrigen Angaben trotzdem vollstaendig gelesen werden – die fehlende
-    /// Positionserkennung darf den Rest nicht mitreissen.
+    /// Die Positionserkennung ist nicht umgesetzt. Dieser Test hält fest, dass
+    /// die übrigen Angaben trotzdem vollständig gelesen werden – die fehlende
+    /// Positionserkennung darf den Rest nicht mitreißen.
     /// </summary>
     [Fact]
-    public async Task OhnePositionserkennungWerdenDieUebrigenAngabenGelesen()
+    public async Task OhnePositionserkennungWerdenDieÜbrigenAngabenGelesen()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
@@ -380,7 +380,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
     }
 
     [Fact]
-    public async Task MehrseitigeRechnungWirdVollstaendigAusgewertet()
+    public async Task MehrseitigeRechnungWirdVollständigAusgewertet()
     {
         var lines = new List<string>(Kopf());
 
@@ -403,7 +403,7 @@ public sealed class InvoiceDataDetectorTests : IDisposable
 
     private static string[] Kopf() =>
     [
-        "Muster IT GmbH", "Musterstrasse 10", "18055 Rostock",
+        "Muster IT GmbH", "Musterstraße 10", "18055 Rostock",
         "Telefon 0381 1234567", "USt-IdNr. DE123456789",
     ];
 

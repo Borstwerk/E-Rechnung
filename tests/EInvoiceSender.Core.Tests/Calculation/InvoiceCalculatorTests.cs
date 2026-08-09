@@ -6,7 +6,7 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Calculation;
 
 /// <summary>
-/// Prueft den Berechnungskern gegen die Rechenregeln aus
+/// Prüft den Berechnungskern gegen die Rechenregeln aus
 /// docs/STANDARDS.md, Abschnitt 3.
 /// </summary>
 public sealed class InvoiceCalculatorTests
@@ -32,7 +32,7 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void ErmaessigterSatzMit7Prozent()
+    public void ErmäßigterSatzMit7Prozent()
     {
         // 3 x 33,33 = 99,99; Steuer = round(99,99 * 0,07) = round(6,9993) = 7,00
         Invoice invoice = TestInvoices.Create(
@@ -46,7 +46,7 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void MehrereSteuersaetzeWerdenGetrenntAufgeschluesselt()
+    public void MehrereSteuersätzeWerdenGetrenntAufgeschlüsselt()
     {
         Invoice invoice = TestInvoices.Create(
         [
@@ -73,7 +73,7 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void SteuerfreiePositionErzeugtEigeneAufschluesselungOhneSteuer()
+    public void SteuerfreiePositionErzeugtEigeneAufschlüsselungOhneSteuer()
     {
         Invoice invoice = TestInvoices.Create(
         [
@@ -111,7 +111,7 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void PositionszuschlagErhoehtDenPositionsbetrag()
+    public void PositionszuschlagErhöhtDenPositionsbetrag()
     {
         Invoice invoice = TestInvoices.Create(
             [TestInvoices.Line(1, quantity: 2m, netUnitPrice: 100m, charge: 15m)]);
@@ -126,7 +126,7 @@ public sealed class InvoiceCalculatorTests
     public void RundungAufHalbemCentGehtVonDerNullWeg()
     {
         // 3 x 0,335 = 1,005 – exakt auf der Grenze.
-        // Das CEN-Schematron rundet kaufmaennisch, also auf 1,01.
+        // Das CEN-Schematron rundet kaufmännisch, also auf 1,01.
         Invoice invoice = TestInvoices.Create(
             [TestInvoices.Line(1, quantity: 3m, netUnitPrice: 0.335m)]);
 
@@ -159,7 +159,7 @@ public sealed class InvoiceCalculatorTests
         Assert.Equal(50.00m, totals.ChargeTotal);
         Assert.Equal(950.00m, totals.TaxBasisTotal);
 
-        // BR-S-08: Steuerbasis der Gruppe = Positionen + Zuschlaege - Nachlaesse
+        // BR-S-08: Steuerbasis der Gruppe = Positionen + Zuschläge - Nachlässe
         VatBreakdownEntry entry = Assert.Single(totals.VatBreakdown);
         Assert.Equal(950.00m, entry.TaxableAmount);
         Assert.Equal(180.50m, entry.TaxAmount);
@@ -199,7 +199,7 @@ public sealed class InvoiceCalculatorTests
     [Fact]
     public void PreisbasismengeTeiltDenEinzelpreis()
     {
-        // 1000 Stueck zu 12,50 je 100 Stueck = 125,00
+        // 1000 Stück zu 12,50 je 100 Stück = 125,00
         Invoice invoice = TestInvoices.Create(
             [TestInvoices.Line(1, quantity: 1000m, netUnitPrice: 12.50m, priceBaseQuantity: 100m)]);
 
@@ -209,9 +209,9 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void PreisbasismengeNullFuehrtNichtZumAbsturz()
+    public void PreisbasismengeNullFührtNichtZumAbsturz()
     {
-        // Fachlich unzulaessig; die Regelpruefung meldet den Fehler.
+        // Fachlich unzulässig; die Regelprüfung meldet den Fehler.
         // Der Rechner darf dabei nicht werfen, sonst bricht die Eingabemaske ab.
         Invoice invoice = TestInvoices.Create(
             [TestInvoices.Line(1, quantity: 2m, netUnitPrice: 50m, priceBaseQuantity: 0m)]);
@@ -222,10 +222,10 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void GleicherSatzInUnterschiedlicherSchreibweiseErgibtEineAufschluesselung()
+    public void GleicherSatzInUnterschiedlicherSchreibweiseErgibtEineAufschlüsselung()
     {
-        // 19 und 19,00 sind wertgleich und muessen in dieselbe Gruppe fallen,
-        // sonst entstehen zwei BG-23-Bloecke und die Datei wird abgelehnt.
+        // 19 und 19,00 sind wertgleich und müssen in dieselbe Gruppe fallen,
+        // sonst entstehen zwei BG-23-Blöcke und die Datei wird abgelehnt.
         Invoice invoice = TestInvoices.Create(
         [
             TestInvoices.Line(1, quantity: 1m, netUnitPrice: 100m, vatRate: 19m),
@@ -240,7 +240,7 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void PositionsbetraegeWerdenInDerReihenfolgeDerPositionenGeliefert()
+    public void PositionsbeträgeWerdenInDerReihenfolgeDerPositionenGeliefert()
     {
         Invoice invoice = TestInvoices.Create(
         [
@@ -255,9 +255,9 @@ public sealed class InvoiceCalculatorTests
     }
 
     [Fact]
-    public void GutschriftRechnetMitPositivenBetraegen()
+    public void GutschriftRechnetMitPositivenBeträgen()
     {
-        // Bei Rechnungsart 381 bleiben die Betraege positiv; die Gutschrift
+        // Bei Rechnungsart 381 bleiben die Beträge positiv; die Gutschrift
         // ergibt sich aus dem Dokumenttyp, nicht aus dem Vorzeichen.
         Invoice invoice = TestInvoices.Create(
             [TestInvoices.Line(1, quantity: 1m, netUnitPrice: 250m)],
@@ -283,9 +283,9 @@ public sealed class InvoiceCalculatorTests
         InvoiceTotals second = InvoiceCalculator.Calculate(invoice);
 
         // Bewusst feldweise verglichen: InvoiceTotals ist ein record mit
-        // Listenmitgliedern, und record-Gleichheit vergleicht Listen ueber die
-        // Referenz. Ein Vergleich der beiden Objekte selbst wuerde also auch
-        // dann fehlschlagen, wenn alle Werte uebereinstimmen.
+        // Listenmitgliedern, und record-Gleichheit vergleicht Listen über die
+        // Referenz. Ein Vergleich der beiden Objekte selbst würde also auch
+        // dann fehlschlagen, wenn alle Werte übereinstimmen.
         Assert.Equal(first.LineTotal, second.LineTotal);
         Assert.Equal(first.TaxBasisTotal, second.TaxBasisTotal);
         Assert.Equal(first.TaxTotal, second.TaxTotal);
@@ -296,12 +296,12 @@ public sealed class InvoiceCalculatorTests
     }
 
     /// <summary>
-    /// Prueft an mehreren Rechnungen, dass die Summenregeln der Norm in sich
-    /// stimmig sind. Damit ist jede kuenftige Aenderung am Rechenweg sofort
-    /// sichtbar, auch wenn sie in keinem der Einzelfaelle auffaellt.
+    /// Prüft an mehreren Rechnungen, dass die Summenregeln der Norm in sich
+    /// stimmig sind. Damit ist jede künftige Änderung am Rechenweg sofort
+    /// sichtbar, auch wenn sie in keinem der Einzelfälle auffällt.
     /// </summary>
     [Theory]
-    [MemberData(nameof(Konsistenzfaelle))]
+    [MemberData(nameof(Konsistenzfälle))]
     public void SummenregelnSindInSichStimmig(Invoice invoice)
     {
         InvoiceTotals totals = InvoiceCalculator.Calculate(invoice);
@@ -325,13 +325,13 @@ public sealed class InvoiceCalculatorTests
             Amounts.Round(totals.GrandTotal - totals.PaidAmount + totals.RoundingAmount),
             totals.DuePayableAmount);
 
-        // BR-CO-17 je Aufschluesselung
+        // BR-CO-17 je Aufschlüsselung
         foreach (VatBreakdownEntry entry in totals.VatBreakdown)
         {
             Assert.Equal(Amounts.Round(entry.TaxableAmount * entry.Rate / 100m), entry.TaxAmount);
         }
 
-        // BR-DEC-*: hoechstens zwei Nachkommastellen in allen Betragsfeldern
+        // BR-DEC-*: höchstens zwei Nachkommastellen in allen Betragsfeldern
         Assert.True(Amounts.HasAtMostDecimals(totals.LineTotal, 2));
         Assert.True(Amounts.HasAtMostDecimals(totals.TaxBasisTotal, 2));
         Assert.True(Amounts.HasAtMostDecimals(totals.TaxTotal, 2));
@@ -339,7 +339,7 @@ public sealed class InvoiceCalculatorTests
         Assert.True(Amounts.HasAtMostDecimals(totals.DuePayableAmount, 2));
     }
 
-    public static TheoryData<Invoice> Konsistenzfaelle()
+    public static TheoryData<Invoice> Konsistenzfälle()
     {
         var data = new TheoryData<Invoice>
         {

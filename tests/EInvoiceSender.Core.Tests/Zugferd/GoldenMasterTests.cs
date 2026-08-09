@@ -9,12 +9,12 @@ namespace EInvoiceSender.Core.Tests;
 /// <summary>
 /// Golden-Master-Tests der XML-Erzeugung.
 ///
-/// Fuer jeden Fall aus <see cref="InvoiceScenarios"/> wird die XML erzeugt und
-/// mit der abgelegten Sollfassung verglichen. Jede Aenderung am Writer wird so
+/// Für jeden Fall aus <see cref="InvoiceScenarios"/> wird die XML erzeugt und
+/// mit der abgelegten Sollfassung verglichen. Jede Änderung am Writer wird so
 /// sichtbar, bevor sie unbemerkt in eine Rechnung gelangt.
 ///
-/// Sollfassungen neu erzeugen (nur nach bewusster Aenderung, und die Ausgabe
-/// muss danach erneut mit dem CEN-Schematron geprueft werden):
+/// Sollfassungen neu erzeugen (nur nach bewusster Änderung, und die Ausgabe
+/// muss danach erneut mit dem CEN-Schematron geprüft werden):
 ///     UPDATE_GOLDEN_MASTERS=1 dotnet test tests/EInvoiceSender.Core.Tests
 /// </summary>
 public sealed class GoldenMasterTests
@@ -47,7 +47,7 @@ public sealed class GoldenMasterTests
 
     [Theory]
     [MemberData(nameof(ScenarioKeys))]
-    public void ErzeugteXmlIstZwischenLaeufenIdentisch(string key)
+    public void ErzeugteXmlIstZwischenLäufenIdentisch(string key)
     {
         InvoiceScenario scenario = InvoiceScenarios.ByKey(key);
 
@@ -55,12 +55,12 @@ public sealed class GoldenMasterTests
     }
 
     /// <summary>
-    /// Schreibt alle Faelle in ein Ausgabeverzeichnis, damit die
-    /// Gegenpruefung mit dem CEN-Schematron sie findet
+    /// Schreibt alle Fälle in ein Ausgabeverzeichnis, damit die
+    /// Gegenprüfung mit dem CEN-Schematron sie findet
     /// (build/validate-golden-masters.sh).
     /// </summary>
     [Fact]
-    public void SchreibtAlleFaelleFuerDieGegenpruefung()
+    public void SchreibtAlleFälleFürDieGegenprüfung()
     {
         string validDirectory = Path.Combine(RepositoryRoot, "artifacts", "golden-masters", "valid");
         Directory.CreateDirectory(validDirectory);
@@ -103,7 +103,7 @@ public sealed class GoldenMasterTests
 
     /// <summary>
     /// Ermittelt das Repository-Wurzelverzeichnis vom Testausgabeverzeichnis aus.
-    /// Sucht aufwaerts nach der Solutiondatei, damit der Pfad unabhaengig von
+    /// Sucht aufwärts nach der Solutiondatei, damit der Pfad unabhängig von
     /// der Build-Konfiguration stimmt.
     /// </summary>
     private static string RepositoryRoot

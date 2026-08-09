@@ -6,10 +6,10 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Pdf;
 
 /// <summary>
-/// Prueft die Textextraktion.
+/// Prüft die Textextraktion.
 ///
-/// Sie ist die Grundlage der gesamten Erkennung: Kommt hier verfaelschter oder
-/// unvollstaendiger Text heraus, ist jede nachfolgende Regel wertlos.
+/// Sie ist die Grundlage der gesamten Erkennung: Kommt hier verfälschter oder
+/// unvollständiger Text heraus, ist jede nachfolgende Regel wertlos.
 /// </summary>
 public sealed class PdfTextExtractorTests : IDisposable
 {
@@ -30,12 +30,12 @@ public sealed class PdfTextExtractorTests : IDisposable
     }
 
     /// <summary>
-    /// Ein paar Zeichen aus einem Wasserzeichen oder Seitenzaehler machen eine
+    /// Ein paar Zeichen aus einem Wasserzeichen oder Seitenzähler machen eine
     /// eingescannte Rechnung nicht auswertbar. Die Untergrenze verhindert, dass
-    /// die Erkennung an solchen Bruchstuecken herumraet.
+    /// die Erkennung an solchen Bruchstücken herumrät.
     /// </summary>
     [Fact]
-    public async Task EinzelneWoerterGeltenNochNichtAlsAuswertbar()
+    public async Task EinzelneWörterGeltenNochNichtAlsAuswertbar()
     {
         string path = Temp(TextPdfBuilder.Create("Seite 1", "Kopie"));
 
@@ -62,13 +62,13 @@ public sealed class PdfTextExtractorTests : IDisposable
     }
 
     [Fact]
-    public async Task WoerterEinerZeileBleibenZusammen()
+    public async Task WörterEinerZeileBleibenZusammen()
     {
         string path = Temp(TextPdfBuilder.Create(FullInvoiceLines()));
 
         PdfTextResult result = await _extractor.ExtractAsync(path, TestContext.Current.CancellationToken);
 
-        // Entscheidend fuer die Erkennung: Schluesselwort und Wert muessen in
+        // Entscheidend für die Erkennung: Schlüsselwort und Wert müssen in
         // derselben Zeile landen, sonst greift keine Kontextregel.
         Assert.Contains(
             result.Lines,
@@ -77,7 +77,7 @@ public sealed class PdfTextExtractorTests : IDisposable
     }
 
     [Fact]
-    public async Task MehrereSeitenWerdenVollstaendigGelesen()
+    public async Task MehrereSeitenWerdenVollständigGelesen()
     {
         var lines = new List<string>();
 
@@ -98,8 +98,8 @@ public sealed class PdfTextExtractorTests : IDisposable
     }
 
     /// <summary>
-    /// Eine eingescannte Rechnung enthaelt keinen Text. Das ist kein Fehler,
-    /// sondern muss als solches gemeldet werden, damit die Oberflaeche zur
+    /// Eine eingescannte Rechnung enthält keinen Text. Das ist kein Fehler,
+    /// sondern muss als solches gemeldet werden, damit die Oberfläche zur
     /// Handerfassung auffordern kann.
     /// </summary>
     [Fact]
@@ -113,11 +113,11 @@ public sealed class PdfTextExtractorTests : IDisposable
     }
 
     /// <summary>
-    /// Die Erkennung ist eine Komfortfunktion. Eine beschaedigte Datei darf
+    /// Die Erkennung ist eine Komfortfunktion. Eine beschädigte Datei darf
     /// keine Ausnahme nach oben durchreichen, sonst bricht der Ablauf ab.
     /// </summary>
     [Fact]
-    public async Task BeschaedigtePdfLiefertLeeresErgebnisStattAusnahme()
+    public async Task BeschädigtePdfLiefertLeeresErgebnisStattAusnahme()
     {
         string path = Temp(TestPdfFactory.CreateDamagedPdf());
 
@@ -140,20 +140,20 @@ public sealed class PdfTextExtractorTests : IDisposable
     internal static string[] FullInvoiceLines() =>
     [
         "Muster IT GmbH",
-        "Musterstrasse 10",
+        "Musterstraße 10",
         "18055 Rostock",
         "Telefon 0381 1234567",
         "USt-IdNr. DE123456789",
         "",
         "Rechnung an",
         "Beispielkunde AG",
-        "Kundenstrasse 7",
+        "Kundenstraße 7",
         "20095 Hamburg",
         "",
         "Rechnungsnummer: RE-2026-0815",
         "Rechnungsdatum: 09.08.2026",
         "Leistungsdatum: 08.08.2026",
-        "Faellig am 23.08.2026",
+        "Fällig am 23.08.2026",
         "",
         "Pos Bezeichnung Menge Einheit Einzelpreis Betrag",
         "1 IT-Beratung 10 Std 100,00 1.000,00",

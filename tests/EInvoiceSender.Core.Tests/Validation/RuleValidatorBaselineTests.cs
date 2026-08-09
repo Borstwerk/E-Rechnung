@@ -11,14 +11,14 @@ namespace EInvoiceSender.Core.Tests.Rules;
 ///
 /// Der wichtigste Test hier ist der erste: **Keiner der Golden Master darf
 /// beanstandet werden.** Alle acht sind vom offiziellen CEN-Schematron als
-/// gueltig bestaetigt. Meldet die eigene Vorabpruefung dort einen Fehler, ist
+/// gültig bestätigt. Meldet die eigene Vorabprüfung dort einen Fehler, ist
 /// die eigene Regel falsch – nicht die Rechnung. Ein zu strenger Validator
-/// waere schlimmer als gar keiner, weil er den Anwender an einer korrekten
+/// wäre schlimmer als gar keiner, weil er den Anwender an einer korrekten
 /// Rechnung hindert.
 /// </summary>
 public sealed class RuleValidatorBaselineTests
 {
-    /// <summary>Feste Zeitquelle, damit Datumspruefungen reproduzierbar sind.</summary>
+    /// <summary>Feste Zeitquelle, damit Datumsprüfungen reproduzierbar sind.</summary>
     private static readonly TimeProvider FixedClock =
         new FixedTimeProvider(new DateTimeOffset(2026, 4, 1, 9, 0, 0, TimeSpan.FromHours(2)));
 
@@ -35,16 +35,16 @@ public sealed class RuleValidatorBaselineTests
 
         Assert.False(
             report.HasErrors,
-            $"Der Golden Master '{key}' ist vom CEN-Schematron als gueltig bestaetigt, "
-            + $"wird von der eigenen Pruefung aber beanstandet: {Describe(report)}");
+            $"Der Golden Master '{key}' ist vom CEN-Schematron als gültig bestätigt, "
+            + $"wird von der eigenen Prüfung aber beanstandet: {Describe(report)}");
     }
 
     [Fact]
-    public void JederBefundTraegtEineStabileKennungUndEinenDeutschenSatz()
+    public void JederBefundTrägtEineStabileKennungUndEinenDeutschenSatz()
     {
         InvoiceScenario scenario = InvoiceScenarios.ByKey("01-dienstleistung-19");
 
-        // Eine Rechnung mit mehreren Maengeln erzeugen, damit genuegend Befunde
+        // Eine Rechnung mit mehreren Mängeln erzeugen, damit genügend Befunde
         // zusammenkommen.
         var broken = scenario.Invoice with
         {
@@ -63,11 +63,11 @@ public sealed class RuleValidatorBaselineTests
             Assert.StartsWith("APP-", finding.RuleId, StringComparison.Ordinal);
             Assert.NotEmpty(finding.Message);
 
-            // Die Meldung muss ein Satz sein, kein Regelkuerzel.
+            // Die Meldung muss ein Satz sein, kein Regelkürzel.
             Assert.EndsWith(".", finding.Message.TrimEnd(), StringComparison.Ordinal);
             Assert.DoesNotContain("BR-", finding.Message, StringComparison.Ordinal);
 
-            // Die technische Zusammenfassung traegt die Kennung und, falls
+            // Die technische Zusammenfassung trägt die Kennung und, falls
             // vorhanden, die Normregel.
             string technical = finding.BuildTechnicalSummary();
             Assert.Contains(finding.RuleId, technical, StringComparison.Ordinal);
@@ -82,8 +82,8 @@ public sealed class RuleValidatorBaselineTests
     [Fact]
     public void KennungenSindInnerhalbEinesBerichtsEindeutigZugeordnet()
     {
-        // Dieselbe Kennung darf nicht fuer zwei fachlich verschiedene Aussagen
-        // stehen. Geprueft ueber alle Golden Master hinweg.
+        // Dieselbe Kennung darf nicht für zwei fachlich verschiedene Aussagen
+        // stehen. Geprüft über alle Golden Master hinweg.
         var meldungenJeKennung = new Dictionary<string, string>(StringComparer.Ordinal);
 
         foreach (InvoiceScenario scenario in InvoiceScenarios.All)
@@ -105,7 +105,7 @@ public sealed class RuleValidatorBaselineTests
     }
 
     [Fact]
-    public void ValidatorVeraendertDieRechnungNicht()
+    public void ValidatorVerändertDieRechnungNicht()
     {
         InvoiceScenario scenario = InvoiceScenarios.ByKey("05-rabatt");
         InvoiceTotals before = InvoiceCalculator.Calculate(scenario.Invoice);
@@ -147,7 +147,7 @@ public sealed class RuleValidatorBaselineTests
     }
 }
 
-/// <summary>Zeitquelle mit festem Wert fuer reproduzierbare Datumspruefungen.</summary>
+/// <summary>Zeitquelle mit festem Wert für reproduzierbare Datumsprüfungen.</summary>
 internal sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => now.ToUniversalTime();

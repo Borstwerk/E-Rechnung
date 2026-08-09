@@ -13,9 +13,9 @@ env:
   CI: true
 
 jobs:
-  # Schneller Durchlauf auf Linux: baut die gesamte Solution einschliesslich
-  # der WPF-Anwendung (EnableWindowsTargeting) und fuehrt alle plattform-
-  # neutralen Tests aus. Faengt den Grossteil der Fehler ab.
+  # Schneller Durchlauf auf Linux: baut die gesamte Solution einschließlich
+  # der WPF-Anwendung (EnableWindowsTargeting) und führt alle plattform-
+  # neutralen Tests aus. Fängt den Großteil der Fehler ab.
   build-and-test:
     name: Build und Tests (Linux)
     runs-on: ubuntu-latest
@@ -27,7 +27,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Java einrichten (fuer die externe Gegenpruefung)
+      - name: Java einrichten (für die externe Gegenprüfung)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -36,14 +36,14 @@ jobs:
       - name: Wiederherstellen
         run: dotnet restore EInvoiceSender.sln
 
-      - name: Formatpruefung
+      - name: Formatprüfung
         run: dotnet format EInvoiceSender.sln --verify-no-changes --no-restore
 
       - name: Bauen
         run: dotnet build EInvoiceSender.sln -c Release --no-restore
 
       # Zuerst beschaffen: die Ende-zu-Ende-Tests bestehen darauf, dass die
-      # externen Validatoren tatsaechlich laufen (REQUIRE_EXTERNAL_VALIDATORS).
+      # externen Validatoren tatsächlich laufen (REQUIRE_EXTERNAL_VALIDATORS).
       - name: Externe Validatoren beschaffen
         run: ./build/fetch-validators.sh
 
@@ -52,10 +52,10 @@ jobs:
           REQUIRE_EXTERNAL_VALIDATORS: "1"
         run: dotnet test EInvoiceSender.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
 
-      - name: Gegenpruefung der Golden Master mit CEN-Schematron und veraPDF
+      - name: Gegenprüfung der Golden Master mit CEN-Schematron und veraPDF
         run: ./build/validate-golden-masters.sh
 
-      - name: Testergebnisse veroeffentlichen
+      - name: Testergebnisse veröffentlichen
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -63,11 +63,11 @@ jobs:
           path: "**/TestResults/*.trx"
           if-no-files-found: ignore
 
-  # Veroeffentlichung und Installer erfordern zwingend Windows:
-  # PublishReadyToRun unterstuetzt kein Cross-OS, und MSI/EXE lassen sich nur
+  # Veröffentlichung und Installer erfordern zwingend Windows:
+  # PublishReadyToRun unterstützt kein Cross-OS, und MSI/EXE lassen sich nur
   # unter Windows erzeugen.
   publish-windows:
-    name: Veroeffentlichung (Windows)
+    name: Veröffentlichung (Windows)
     runs-on: windows-latest
     needs: build-and-test
     steps:
@@ -78,7 +78,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Java einrichten (fuer die Gegenpruefung)
+      - name: Java einrichten (für die Gegenprüfung)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -89,13 +89,13 @@ jobs:
         run: ./build/fetch-validators.sh
 
       # Verpflichtend: Ein UI-Meilenstein gilt erst als verifiziert, wenn ein
-      # Windows-Agent Build und Tests erfolgreich ausgefuehrt hat.
+      # Windows-Agent Build und Tests erfolgreich ausgeführt hat.
       - name: Tests unter Windows
         env:
           REQUIRE_EXTERNAL_VALIDATORS: "1"
         run: dotnet test EInvoiceSender.sln -c Release
 
-      - name: Self-contained win-x64 veroeffentlichen
+      - name: Self-contained win-x64 veröffentlichen
         run: >
           dotnet publish src/EInvoiceSender.App
           -c Release -r win-x64 --self-contained true
@@ -103,7 +103,7 @@ jobs:
           -o artifacts/publish/win-x64
 
       # Der Installer wird nur hier gebaut: WiX erzeugt MSI-Dateien
-      # ausschliesslich unter Windows.
+      # ausschließlich unter Windows.
       - name: Installer bauen
         run: >
           dotnet build installer/EInvoiceSender.Setup
@@ -131,7 +131,7 @@ jobs:
           Compress-Archive -Path artifacts/publish/win-x64/* `
             -DestinationPath artifacts/release/EInvoiceSender-portable-win-x64.zip -Force
 
-      - name: Pruefsummen erzeugen
+      - name: Prüfsummen erzeugen
         shell: pwsh
         run: |
           Get-ChildItem artifacts/release -File | ForEach-Object {

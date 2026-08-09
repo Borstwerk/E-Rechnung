@@ -1,15 +1,15 @@
-<#
+﻿<#
 .SYNOPSIS
-    Fuehrt alle Tests aus.
+    Führt alle Tests aus.
 
 .DESCRIPTION
     Ohne Schalter laufen die Tests, die keine externen Werkzeuge brauchen;
-    die Pruefungen gegen CEN-Schematron und veraPDF werden dann
-    uebersprungen.
+    die Prüfungen gegen CEN-Schematron und veraPDF werden dann
+    übersprungen.
 
-    Mit -RequireExternalValidators scheitern diese Tests, statt uebersprungen
-    zu werden. So laeuft es in der Pipeline: In einer Freigabe darf das
-    Pruefgate nicht stillschweigend entfallen.
+    Mit -RequireExternalValidators scheitern diese Tests, statt übersprungen
+    zu werden. So läuft es in der Pipeline: In einer Freigabe darf das
+    Prüfgate nicht stillschweigend entfallen.
 #>
 [CmdletBinding()]
 param(
@@ -28,7 +28,7 @@ if ($RequireExternalValidators) {
 }
 else {
     Remove-Item Env:\REQUIRE_EXTERNAL_VALIDATORS -ErrorAction SilentlyContinue
-    Write-Host "Fehlende externe Werkzeuge fuehren zum Ueberspringen, nicht zum Fehler." -ForegroundColor Yellow
+    Write-Host "Fehlende externe Werkzeuge führen zum Überspringen, nicht zum Fehler." -ForegroundColor Yellow
 }
 
 dotnet test $solution -c $Configuration

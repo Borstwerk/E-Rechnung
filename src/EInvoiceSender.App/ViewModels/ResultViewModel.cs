@@ -11,7 +11,7 @@ namespace EInvoiceSender.App.ViewModels;
 /// <summary>
 /// Schritt 5: Das Ergebnis zeigen und den E-Mail-Entwurf vorbereiten.
 ///
-/// Versendet wird nichts. Die Anwendung legt einen Entwurf an und oeffnet ihn;
+/// Versendet wird nichts. Die Anwendung legt einen Entwurf an und öffnet ihn;
 /// abschicken bleibt eine bewusste Handlung des Anwenders.
 /// </summary>
 public sealed partial class ResultViewModel(
@@ -56,14 +56,14 @@ public sealed partial class ResultViewModel(
     public string DirectoryPath =>
         Result?.OutputFile is { } f ? Path.GetDirectoryName(f.FullPath) ?? string.Empty : string.Empty;
 
-    /// <summary>Dateigroesse.</summary>
+    /// <summary>Dateigröße.</summary>
     public string FileSizeText => Result?.OutputFile is { } f
         ? string.Create(
             CultureInfo.CurrentCulture,
             $"{(f.SizeInBytes / 1024.0).ToString("N0", CultureInfo.CurrentCulture)} kB")
         : string.Empty;
 
-    /// <summary>Pruefsumme der erzeugten Datei.</summary>
+    /// <summary>Prüfsumme der erzeugten Datei.</summary>
     public string Sha256Text => Result?.OutputFile?.Sha256 ?? string.Empty;
 
     /// <summary>Der verwendete Standard.</summary>
@@ -73,17 +73,17 @@ public sealed partial class ResultViewModel(
     public string ProfileText => Result?.ProfileId ?? string.Empty;
 
     /// <summary>
-    /// Die eingesetzten Pruefwerkzeuge, jeweils mit dem Hinweis, ob sie
-    /// tatsaechlich gelaufen sind. Ein nicht ausgefuehrter Referenzvalidator
+    /// Die eingesetzten Prüfwerkzeuge, jeweils mit dem Hinweis, ob sie
+    /// tatsächlich gelaufen sind. Ein nicht ausgeführter Referenzvalidator
     /// darf nie wie ein bestandener aussehen.
     /// </summary>
     public IReadOnlyList<string> ValidatorLines => Result is null
         ? []
         : [.. Result.Validators.Select(v => v.WasExecuted
-            ? $"{v.Name} {v.Version}: ausgefuehrt"
-            : $"{v.Name}: NICHT AUSGEFUEHRT{(v.Note is null ? string.Empty : $" – {v.Note}")}")];
+            ? $"{v.Name} {v.Version}: ausgeführt"
+            : $"{v.Name}: NICHT AUSGEFÜHRT{(v.Note is null ? string.Empty : $" – {v.Note}")}")];
 
-    /// <summary>Uebernimmt das Ergebnis und schlaegt die E-Mail-Felder vor.</summary>
+    /// <summary>Übernimmt das Ergebnis und schlägt die E-Mail-Felder vor.</summary>
     public void Show(CreateEInvoiceResult result, Invoice invoice)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -108,7 +108,7 @@ public sealed partial class ResultViewModel(
                 "Sehr geehrte Damen und Herren,\n\n"
                 + $"anbei erhalten Sie die Rechnung {invoice.InvoiceNumber} "
                 + "als elektronische Rechnung.\n\n"
-                + "Mit freundlichen Gruessen\n"
+                + "Mit freundlichen Grüßen\n"
                 + invoice.Seller.Name;
         }
 
@@ -117,7 +117,7 @@ public sealed partial class ResultViewModel(
         OnPropertyChanged(nameof(ValidatorLines));
     }
 
-    /// <summary>Legt den E-Mail-Entwurf an und oeffnet ihn.</summary>
+    /// <summary>Legt den E-Mail-Entwurf an und öffnet ihn.</summary>
     [RelayCommand(CanExecute = nameof(HasResult))]
     public async Task CreateEmailDraftAsync(CancellationToken cancellationToken = default)
     {
@@ -149,14 +149,14 @@ public sealed partial class ResultViewModel(
         }
         else
         {
-            // Immer ein Rueckfallweg: mailto oeffnet den Mailclient ohne Anhang,
+            // Immer ein Rückfallweg: mailto öffnet den Mailclient ohne Anhang,
             // die Datei liegt im Ausgabeordner bereit.
             await _shell.OpenUriAsync(_emailDraftService.BuildMailtoUri(draft), cancellationToken)
                 .ConfigureAwait(true);
         }
     }
 
-    /// <summary>Oeffnet den Ausgabeordner im Explorer.</summary>
+    /// <summary>Öffnet den Ausgabeordner im Explorer.</summary>
     [RelayCommand(CanExecute = nameof(HasResult))]
     public async Task OpenOutputFolderAsync(CancellationToken cancellationToken = default)
     {
@@ -166,7 +166,7 @@ public sealed partial class ResultViewModel(
         }
     }
 
-    /// <summary>Setzt den Schritt auf den Anfangszustand zurueck.</summary>
+    /// <summary>Setzt den Schritt auf den Anfangszustand zurück.</summary>
     public void Reset()
     {
         Result = null;

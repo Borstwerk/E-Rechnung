@@ -2,13 +2,13 @@ namespace EInvoiceSender.Core.Tests;
 
 /// <summary>
 /// Findet die Repository-Wurzel, damit Tests auf abgelegte Dateien zugreifen
-/// koennen, ohne einen absoluten Pfad zu kennen.
+/// können, ohne einen absoluten Pfad zu kennen.
 /// </summary>
 public static class TestPaths
 {
     /// <summary>
-    /// Sucht aufwaerts nach der Solutiondatei. Der Pfad stimmt damit
-    /// unabhaengig von Build-Konfiguration und Arbeitsverzeichnis.
+    /// Sucht aufwärts nach der Solutiondatei. Der Pfad stimmt damit
+    /// unabhängig von Build-Konfiguration und Arbeitsverzeichnis.
     /// </summary>
     public static string RepositoryRoot
     {

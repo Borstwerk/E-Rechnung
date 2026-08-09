@@ -5,23 +5,23 @@ namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
 /// Mengeneinheiten nach UN/ECE Recommendation 20 (Codes for Units of
-/// Measure) und Recommendation 21 (Packaging Types), soweit sie fuer
+/// Measure) und Recommendation 21 (Packaging Types), soweit sie für
 /// Rechnungspositionen (BT-130) relevant sind. Reine Nachschlagetabelle
-/// ohne Geschaeftslogik.
+/// ohne Geschäftslogik.
 /// </summary>
 /// <remarks>
-/// Diese Liste ist eine kuratierte Teilmenge, keine vollstaendige Abbildung
-/// von Rec. 20/21 (mehrere hundert Codes). Aufgenommen wurden ausschliesslich
+/// Diese Liste ist eine kuratierte Teilmenge, keine vollständige Abbildung
+/// von Rec. 20/21 (mehrere hundert Codes). Aufgenommen wurden ausschließlich
 /// Codes, deren Bedeutung sicher belegt ist; bei Unklarheit (z. B. der
-/// Packstueckcode fuer Paletten) wurde bewusst auf eine Aufnahme verzichtet,
-/// statt einen moeglicherweise falschen Code zu vermuten.
+/// Packstückcode für Paletten) wurde bewusst auf eine Aufnahme verzichtet,
+/// statt einen möglicherweise falschen Code zu vermuten.
 /// </remarks>
 public static class UnitCodeList
 {
     private static readonly FrozenDictionary<string, string> Names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
-        ["C62"] = "Stueck",
-        ["H87"] = "Stueck (Alternativcode)",
+        ["C62"] = "Stück",
+        ["H87"] = "Stück (Alternativcode)",
         ["HUR"] = "Stunde",
         ["MIN"] = "Minute",
         ["DAY"] = "Tag",
@@ -51,14 +51,14 @@ public static class UnitCodeList
     }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Die fuer Rechnungen wichtigsten Einheiten, in einer fuer eine
-    /// Auswahlliste in der Oberflaeche sinnvollen Reihenfolge (Stueck
+    /// Die für Rechnungen wichtigsten Einheiten, in einer für eine
+    /// Auswahlliste in der Oberfläche sinnvollen Reihenfolge (Stück
     /// zuerst). Jeder enthaltene Code besteht auch <see cref="IsValid"/>.
     /// </summary>
     public static IReadOnlyList<(string Code, string Name)> CommonUnits { get; } =
     [
-        ("C62", "Stueck"),
-        ("H87", "Stueck (Alternativcode)"),
+        ("C62", "Stück"),
+        ("H87", "Stück (Alternativcode)"),
         ("HUR", "Stunde"),
         ("DAY", "Tag"),
         ("WEE", "Woche"),
@@ -82,7 +82,7 @@ public static class UnitCodeList
     ];
 
     /// <summary>
-    /// Prueft, ob <paramref name="code"/> in der kuratierten Teilmenge
+    /// Prüft, ob <paramref name="code"/> in der kuratierten Teilmenge
     /// enthalten ist. Gross-/Kleinschreibung und umgebende Leerzeichen
     /// spielen keine Rolle. Liefert <see langword="false"/> bei
     /// <see langword="null"/>, leerem oder reinem Leerraum-Text – wirft nie.
@@ -99,7 +99,7 @@ public static class UnitCodeList
 
     /// <summary>
     /// Liefert den deutschen Namen der Einheit, sofern sie in der Liste
-    /// gefuehrt wird.
+    /// geführt wird.
     /// </summary>
     public static bool TryGetName(string? code, [MaybeNullWhen(false)] out string germanName)
     {

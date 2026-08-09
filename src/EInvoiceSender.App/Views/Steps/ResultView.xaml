@@ -16,7 +16,7 @@
         <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextWrapping="Wrap" />
         <TextBlock Text="Speicherort" />
         <TextBlock Text="{Binding DirectoryPath}" TextWrapping="Wrap" />
-        <TextBlock Text="Groesse" />
+        <TextBlock Text="Größe" />
         <TextBlock Text="{Binding FileSizeText}" />
         <TextBlock Text="Standard" />
         <TextBlock Text="{Binding StandardText}" TextWrapping="Wrap" />
@@ -25,17 +25,17 @@
         <TextBlock Text="SHA-256" />
         <TextBox Text="{Binding Sha256Text, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas"
                  BorderThickness="0" Background="Transparent" TextWrapping="Wrap"
-                 AutomationProperties.Name="Pruefsumme der erzeugten Datei" />
+                 AutomationProperties.Name="Prüfsumme der erzeugten Datei" />
       </UniformGrid>
 
       <!--
-        Die Pruefwerkzeuge stehen einzeln da, jeweils mit dem Hinweis, ob sie
-        gelaufen sind. Ein nicht ausgefuehrter Referenzvalidator darf nie wie
+        Die Prüfwerkzeuge stehen einzeln da, jeweils mit dem Hinweis, ob sie
+        gelaufen sind. Ein nicht ausgeführter Referenzvalidator darf nie wie
         ein bestandener aussehen.
       -->
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Verwendete Pruefwerkzeuge" />
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Verwendete Prüfwerkzeuge" />
       <ItemsControl ItemsSource="{Binding ValidatorLines}"
-                    AutomationProperties.Name="Verwendete Pruefwerkzeuge">
+                    AutomationProperties.Name="Verwendete Prüfwerkzeuge">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" />
@@ -43,15 +43,15 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Pruefbericht"
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Prüfbericht"
                  Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
-      <ItemsControl ItemsSource="{Binding Findings}" AutomationProperties.Name="Pruefbericht" />
+      <ItemsControl ItemsSource="{Binding Findings}" AutomationProperties.Name="Prüfbericht" />
 
       <TextBlock Style="{StaticResource Abschnitt}" Text="E-Mail vorbereiten" />
       <UniformGrid Columns="2">
-        <TextBlock Text="Empfaenger" />
+        <TextBlock Text="Empfänger" />
         <TextBox Text="{Binding EmailRecipient, UpdateSourceTrigger=PropertyChanged}" TabIndex="80"
-                 AutomationProperties.Name="Empfaenger der E-Mail" />
+                 AutomationProperties.Name="Empfänger der E-Mail" />
         <TextBlock Text="Betreff" />
         <TextBox Text="{Binding EmailSubject, UpdateSourceTrigger=PropertyChanged}" TabIndex="81"
                  AutomationProperties.Name="Betreff der E-Mail" />
@@ -63,8 +63,8 @@
                AutomationProperties.Name="Nachrichtentext der E-Mail" />
 
       <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-        <Button Content="E-Mail-Entwurf _oeffnen" Command="{Binding CreateEmailDraftCommand}" TabIndex="83" />
-        <Button Content="Ausgabe_ordner oeffnen" Command="{Binding OpenOutputFolderCommand}" TabIndex="84" />
+        <Button Content="E-Mail-Entwurf _öffnen" Command="{Binding CreateEmailDraftCommand}" TabIndex="83" />
+        <Button Content="Ausgabe_ordner öffnen" Command="{Binding OpenOutputFolderCommand}" TabIndex="84" />
       </StackPanel>
 
       <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,10,0,0"

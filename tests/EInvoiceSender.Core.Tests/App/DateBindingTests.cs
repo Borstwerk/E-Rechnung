@@ -48,7 +48,7 @@ public sealed class DateBindingTests
     /// in Schritt 2 im Feld stehen.
     /// </summary>
     [Fact]
-    public void ErkannteDatumsangabenStehenAnschliessendImEntwurf()
+    public void ErkannteDatumsangabenStehenAnschließendImEntwurf()
     {
         var draft = new InvoiceDraft();
 
@@ -82,7 +82,7 @@ public sealed class DateBindingTests
     /// eingetragenes Datum kann diesem Standard zufällig entsprechen – bei der
     /// Testrechnung vom 09.08.2026 ist genau das an einem einzigen Tag im Jahr
     /// der Fall. An diesem Tag sähe der Test auch dann grün aus, wenn gar
-    /// nichts übernommen würde. Ein Datum in der Vergangenheit schliesst diesen
+    /// nichts übernommen würde. Ein Datum in der Vergangenheit schließt diesen
     /// Zufall an jedem Tag aus.
     /// </summary>
     private static DateOnly ErkanntesRechnungsdatum => DateOnly.FromDateTime(DateTime.Today).AddDays(-30);

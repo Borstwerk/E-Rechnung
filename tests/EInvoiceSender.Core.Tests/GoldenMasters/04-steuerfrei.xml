@@ -12,7 +12,7 @@
       <udt:DateTimeString format="102">20260315</udt:DateTimeString>
     </ram:IssueDateTime>
     <ram:IncludedNote>
-      <ram:Content>Vielen Dank fuer Ihren Auftrag.</ram:Content>
+      <ram:Content>Vielen Dank für Ihren Auftrag.</ram:Content>
     </ram:IncludedNote>
   </rsm:ExchangedDocument>
   <rsm:SupplyChainTradeTransaction>
@@ -106,8 +106,8 @@
         </ram:DefinedTradeContact>
         <ram:PostalTradeAddress>
           <ram:PostcodeCode>20095</ram:PostcodeCode>
-          <ram:LineOne>Kundenstrasse 7</ram:LineOne>
-          <ram:LineTwo>Gebaeude B</ram:LineTwo>
+          <ram:LineOne>Kundenstraße 7</ram:LineOne>
+          <ram:LineTwo>Gebäude B</ram:LineTwo>
           <ram:CityName>Hamburg</ram:CityName>
           <ram:CountryID>DE</ram:CountryID>
         </ram:PostalTradeAddress>

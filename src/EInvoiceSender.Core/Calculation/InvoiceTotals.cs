@@ -3,7 +3,7 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Calculation;
 
 /// <summary>
-/// Steueraufschluesselung fuer genau eine Kombination aus Steuerkategorie und
+/// Steueraufschlüsselung für genau eine Kombination aus Steuerkategorie und
 /// Steuersatz (BG-23).
 /// </summary>
 /// <param name="Category">Steuerkategorie (BT-118).</param>
@@ -19,11 +19,11 @@ public sealed record VatBreakdownEntry(
 /// <summary>
 /// Das berechnete Summenbild einer Rechnung (BG-22).
 /// Alle Werte sind abgeleitet – kein Feld stammt aus einer Benutzereingabe
-/// ausser <see cref="PaidAmount"/> und <see cref="RoundingAmount"/>.
+/// außer <see cref="PaidAmount"/> und <see cref="RoundingAmount"/>.
 /// </summary>
-/// <param name="LineTotal">Summe der Positionsnettobetraege (BT-106).</param>
-/// <param name="AllowanceTotal">Summe der Nachlaesse auf Dokumentebene (BT-107).</param>
-/// <param name="ChargeTotal">Summe der Zuschlaege auf Dokumentebene (BT-108).</param>
+/// <param name="LineTotal">Summe der Positionsnettobeträge (BT-106).</param>
+/// <param name="AllowanceTotal">Summe der Nachlässe auf Dokumentebene (BT-107).</param>
+/// <param name="ChargeTotal">Summe der Zuschläge auf Dokumentebene (BT-108).</param>
 /// <param name="TaxBasisTotal">Nettosumme, also Steuerbasis gesamt (BT-109).</param>
 /// <param name="TaxTotal">Gesamtbetrag der Umsatzsteuer (BT-110).</param>
 /// <param name="GrandTotal">Bruttosumme (BT-112).</param>
@@ -31,10 +31,10 @@ public sealed record VatBreakdownEntry(
 /// <param name="RoundingAmount">Rundungsbetrag (BT-114).</param>
 /// <param name="DuePayableAmount">Offener Zahlbetrag (BT-115).</param>
 /// <param name="LineNetAmounts">
-/// Positionsnettobetraege (BT-131) in der Reihenfolge der Positionen –
-/// wird sowohl von der Oberflaeche als auch vom XML-Writer benoetigt.
+/// Positionsnettobeträge (BT-131) in der Reihenfolge der Positionen –
+/// wird sowohl von der Oberfläche als auch vom XML-Writer benötigt.
 /// </param>
-/// <param name="VatBreakdown">Steueraufschluesselung je Kategorie und Satz (BG-23).</param>
+/// <param name="VatBreakdown">Steueraufschlüsselung je Kategorie und Satz (BG-23).</param>
 public sealed record InvoiceTotals(
     decimal LineTotal,
     decimal AllowanceTotal,

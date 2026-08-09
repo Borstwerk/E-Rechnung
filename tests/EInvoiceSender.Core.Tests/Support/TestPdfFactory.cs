@@ -4,15 +4,15 @@ using PdfSharp.Pdf;
 namespace EInvoiceSender.Core.Tests.Support;
 
 /// <summary>
-/// Erzeugt Eingangs-PDFs fuer die Tests.
+/// Erzeugt Eingangs-PDFs für die Tests.
 ///
 /// Bewusst ohne Text: Schrifteinbettung braucht eine Schriftdatei, deren
-/// Lizenz und Herkunft sonst mitdokumentiert werden muessten, und der
-/// Build-Agent hat keine zugesicherte Schriftausstattung. Fuer die Pruefung
-/// des PDF/A-3-Wegs ist Text nicht noetig – PDF/A verlangt keinen Text,
+/// Lizenz und Herkunft sonst mitdokumentiert werden müssten, und der
+/// Build-Agent hat keine zugesicherte Schriftausstattung. Für die Prüfung
+/// des PDF/A-3-Wegs ist Text nicht nötig – PDF/A verlangt keinen Text,
 /// sondern nur, dass alles Verwendete eingebettet ist.
 ///
-/// Der Fall "Schrift nicht eingebettet" wird ueber ein von Hand gebautes PDF
+/// Der Fall "Schrift nicht eingebettet" wird über ein von Hand gebautes PDF
 /// mit einer der 14 Standardschriften abgedeckt.
 /// </summary>
 public static class TestPdfFactory
@@ -105,19 +105,19 @@ public static class TestPdfFactory
     }
 
     /// <summary>
-    /// Liefert Bytes, die zwar wie ein PDF beginnen, aber keine gueltige
-    /// Struktur haben. Muss als beschaedigt erkannt werden.
+    /// Liefert Bytes, die zwar wie ein PDF beginnen, aber keine gültige
+    /// Struktur haben. Muss als beschädigt erkannt werden.
     /// </summary>
     public static byte[] CreateDamagedPdf()
         => System.Text.Encoding.ASCII.GetBytes(
             "%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 99 0 R >>\nendobj\n"
             + "hier ist die Datei abgeschnitten");
 
-    /// <summary>Liefert Bytes, die ueberhaupt kein PDF sind.</summary>
+    /// <summary>Liefert Bytes, die überhaupt kein PDF sind.</summary>
     public static byte[] CreateNonPdf()
         => System.Text.Encoding.UTF8.GetBytes("Das ist eine ganz normale Textdatei.");
 
-    /// <summary>Schreibt Inhalte in eine temporaere Datei und liefert den Pfad.</summary>
+    /// <summary>Schreibt Inhalte in eine temporäre Datei und liefert den Pfad.</summary>
     public static string WriteToTempFile(byte[] content, string extension = ".pdf")
     {
         string path = Path.Combine(

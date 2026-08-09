@@ -8,9 +8,9 @@ namespace EInvoiceSender.App.Converters;
 /// <see cref="DateTime"/> im WPF-DatePicker.
 ///
 /// Fachlich ist ein Rechnungsdatum ein Tag ohne Uhrzeit. Dass das
-/// Bedienelement etwas anderes erwartet, ist ein Belang der Oberflaeche und
-/// steht deshalb hier - frueher trug der Entwurf im Fachkern drei
-/// Zusatzeigenschaften nur fuer diesen Zweck.
+/// Bedienelement etwas anderes erwartet, ist ein Belang der Oberfläche und
+/// steht deshalb hier - früher trug der Entwurf im Fachkern drei
+/// Zusatzeigenschaften nur für diesen Zweck.
 /// </summary>
 public sealed class DateOnlyConverter : IValueConverter
 {

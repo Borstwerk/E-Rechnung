@@ -13,7 +13,7 @@
 
     Jedes Feld bildet eine senkrechte Einheit aus Beschriftung, Eingabefeld
     und Herkunftshinweis. Vorher stand der Hinweis in einer eigenen Rasterzeile
-    unter mehreren Feldern nebeneinander – er liess sich dann keinem Feld mehr
+    unter mehreren Feldern nebeneinander – er ließ sich dann keinem Feld mehr
     eindeutig zuordnen.
 
     Die Abstände kommen aus den Rändern der Zellen, nicht aus den

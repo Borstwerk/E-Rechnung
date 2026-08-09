@@ -11,13 +11,13 @@ namespace EInvoiceSender.Core.Reports;
 /// <summary>
 /// Erzeugt den Validierungsbericht in zwei Fassungen.
 ///
-/// * **Maschinenlesbar (JSON)** – fuer Archivierung und spaetere Auswertung.
+/// * **Maschinenlesbar (JSON)** – für Archivierung und spätere Auswertung.
 /// * **Menschenlesbar (Text)** – damit der Anwender ohne Werkzeug nachvollziehen
-///   kann, was geprueft wurde.
+///   kann, was geprüft wurde.
 ///
-/// Beide enthalten Pruefsumme, Zeitpunkt, Standard, Profil und die Versionen
-/// aller beteiligten Pruefwerkzeuge. Wurde ein Werkzeug nicht ausgefuehrt, steht
-/// das ausdruecklich im Bericht – eine fehlende Pruefung darf nicht wie eine
+/// Beide enthalten Prüfsumme, Zeitpunkt, Standard, Profil und die Versionen
+/// aller beteiligten Prüfwerkzeuge. Wurde ein Werkzeug nicht ausgeführt, steht
+/// das ausdrücklich im Bericht – eine fehlende Prüfung darf nicht wie eine
 /// bestandene aussehen.
 /// </summary>
 public static class ValidationReportWriter
@@ -55,26 +55,26 @@ public static class ValidationReportWriter
             {
                 nummer = request.Invoice.InvoiceNumber,
                 datum = request.Invoice.IssueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                waehrung = request.Invoice.Currency.Value,
-                verkaeufer = request.Invoice.Seller.Name,
-                kaeufer = request.Invoice.Buyer.Name,
+                währung = request.Invoice.Currency.Value,
+                verkäufer = request.Invoice.Seller.Name,
+                käufer = request.Invoice.Buyer.Name,
             },
             quelle = new
             {
                 datei = Path.GetFileName(request.SourcePdfPath),
-                hinweis = "Die Originaldatei wurde ausschliesslich gelesen und nicht veraendert.",
+                hinweis = "Die Originaldatei wurde ausschließlich gelesen und nicht verändert.",
             },
             ergebnis = new
             {
                 datei = Path.GetFileName(stored.FullPath),
-                groesseInBytes = stored.SizeInBytes,
+                größeInBytes = stored.SizeInBytes,
                 sha256 = checksum,
             },
-            pruefwerkzeuge = validators.Select(v => new
+            prüfwerkzeuge = validators.Select(v => new
             {
                 name = v.Name,
                 version = v.Version,
-                ausgefuehrt = v.WasExecuted,
+                ausgeführt = v.WasExecuted,
                 hinweis = v.Note,
             }),
             zusammenfassung = new
@@ -116,7 +116,7 @@ public static class ValidationReportWriter
         var german = CultureInfo.GetCultureInfo("de-DE");
         var text = new StringBuilder(2048);
 
-        text.AppendLine("Pruefbericht zur elektronischen Rechnung");
+        text.AppendLine("Prüfbericht zur elektronischen Rechnung");
         text.AppendLine("=======================================");
         text.AppendLine();
         text.Append("Erzeugt am:        ")
@@ -129,27 +129,27 @@ public static class ValidationReportWriter
         text.AppendLine("--------");
         text.Append("Nummer:            ").AppendLine(request.Invoice.InvoiceNumber);
         text.Append("Datum:             ").AppendLine(request.Invoice.IssueDate.ToString("dd.MM.yyyy", german));
-        text.Append("Verkaeufer:        ").AppendLine(request.Invoice.Seller.Name);
-        text.Append("Kaeufer:           ").AppendLine(request.Invoice.Buyer.Name);
+        text.Append("Verkäufer:        ").AppendLine(request.Invoice.Seller.Name);
+        text.Append("Käufer:           ").AppendLine(request.Invoice.Buyer.Name);
         text.AppendLine();
 
         text.AppendLine("Dateien");
         text.AppendLine("-------");
         text.Append("Ausgangsdatei:     ").AppendLine(Path.GetFileName(request.SourcePdfPath));
-        text.AppendLine("                   (unveraendert, nur gelesen)");
+        text.AppendLine("                   (unverändert, nur gelesen)");
         text.Append("Ergebnisdatei:     ").AppendLine(Path.GetFileName(stored.FullPath));
-        text.Append("Groesse:           ")
+        text.Append("Größe:           ")
             .AppendLine(stored.SizeInBytes.ToString("N0", german) + " Bytes");
         text.Append("SHA-256:           ").AppendLine(checksum);
         text.AppendLine();
 
-        text.AppendLine("Verwendete Pruefwerkzeuge");
+        text.AppendLine("Verwendete Prüfwerkzeuge");
         text.AppendLine("-------------------------");
 
         if (validators.Count == 0)
         {
             text.AppendLine("Es war kein externer Validator eingerichtet.");
-            text.AppendLine("Die Datei wurde nur mit den eingebauten Pruefungen kontrolliert.");
+            text.AppendLine("Die Datei wurde nur mit den eingebauten Prüfungen kontrolliert.");
         }
         else
         {
@@ -163,7 +163,7 @@ public static class ValidationReportWriter
                 }
                 else
                 {
-                    text.Append("NICHT AUSGEFUEHRT");
+                    text.Append("NICHT AUSGEFÜHRT");
                     text.AppendLine(
                         string.IsNullOrWhiteSpace(validator.Note) ? string.Empty : " – " + validator.Note);
                 }
@@ -183,8 +183,8 @@ public static class ValidationReportWriter
 
         text.AppendLine();
         text.AppendLine(
-            "Hinweis: Dieser Bericht dokumentiert die technische Pruefung des Formats. "
-            + "Fuer die inhaltliche und steuerliche Richtigkeit der Rechnung ist der "
+            "Hinweis: Dieser Bericht dokumentiert die technische Prüfung des Formats. "
+            + "Für die inhaltliche und steuerliche Richtigkeit der Rechnung ist der "
             + "Rechnungssteller verantwortlich.");
 
         return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(text.ToString());

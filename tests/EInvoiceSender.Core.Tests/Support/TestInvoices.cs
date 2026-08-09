@@ -3,16 +3,16 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Tests.TestData;
 
 /// <summary>
-/// Bausteine fuer Testrechnungen. Alle Angaben sind frei erfunden.
-/// Die verwendeten IBANs stammen aus oeffentlich publizierten Beispielen und
-/// gehoeren zu keinem realen Konto.
+/// Bausteine für Testrechnungen. Alle Angaben sind frei erfunden.
+/// Die verwendeten IBANs stammen aus öffentlich publizierten Beispielen und
+/// gehören zu keinem realen Konto.
 /// </summary>
 public static class TestInvoices
 {
-    /// <summary>Beispiel-IBAN aus der oeffentlichen Dokumentation, kein reales Konto.</summary>
+    /// <summary>Beispiel-IBAN aus der öffentlichen Dokumentation, kein reales Konto.</summary>
     public const string SampleIbanDe = "DE89370400440532013000";
 
-    /// <summary>Ein Verkaeufer mit allen Pflichtangaben.</summary>
+    /// <summary>Ein Verkäufer mit allen Pflichtangaben.</summary>
     public static SellerParty Seller { get; } = new(
         Name: "Musterbetrieb Beispiel GmbH",
         Address: new PostalAddress(
@@ -25,11 +25,11 @@ public static class TestInvoices
         VatId: "DE123456789",
         TaxNumber: "11/222/33333");
 
-    /// <summary>Ein Kaeufer mit allen Pflichtangaben.</summary>
+    /// <summary>Ein Käufer mit allen Pflichtangaben.</summary>
     public static BuyerParty Buyer { get; } = new(
         Name: "Beispielkunde AG",
         Address: new PostalAddress(
-            Street: "Kundenstrasse 7",
+            Street: "Kundenstraße 7",
             AdditionalLine: null,
             PostalCode: "20095",
             City: "Hamburg",
@@ -37,15 +37,15 @@ public static class TestInvoices
         Email: "einkauf@example.invalid",
         VatId: "DE987654321");
 
-    /// <summary>Standardzahlungsangaben mit Ueberweisung.</summary>
+    /// <summary>Standardzahlungsangaben mit Überweisung.</summary>
     public static PaymentDetails Payment { get; } = new(
         MeansCode: PaymentMeansCode.SepaCreditTransfer,
         BankAccount: new BankAccount("Musterbetrieb Beispiel GmbH", Iban.Parse(SampleIbanDe)),
         Terms: "Zahlbar innerhalb von 14 Tagen ohne Abzug.");
 
     /// <summary>
-    /// Baut eine Rechnung mit den uebergebenen Positionen und ansonsten
-    /// vollstaendigen Pflichtangaben.
+    /// Baut eine Rechnung mit den übergebenen Positionen und ansonsten
+    /// vollständigen Pflichtangaben.
     /// </summary>
     public static Invoice Create(
         IReadOnlyList<InvoiceLine> lines,
@@ -72,7 +72,7 @@ public static class TestInvoices
             RoundingAmount = roundingAmount,
         };
 
-    /// <summary>Baut eine einzelne Position mit den ueblichen Vorgaben.</summary>
+    /// <summary>Baut eine einzelne Position mit den üblichen Vorgaben.</summary>
     public static InvoiceLine Line(
         int number,
         decimal quantity,

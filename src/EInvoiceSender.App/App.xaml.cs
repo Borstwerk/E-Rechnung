@@ -23,14 +23,14 @@ namespace EInvoiceSender.App;
 ///
 /// Bewusst ohne Generic Host: Eine Desktopanwendung braucht weder
 /// Hintergrunddienste noch Konfigurationsanbieter. Eine
-/// <see cref="ServiceCollection"/> genuegt und bleibt ueberschaubar.
+/// <see cref="ServiceCollection"/> genügt und bleibt überschaubar.
 /// </summary>
 public partial class App : Application
 {
     private ServiceProvider? _services;
 
     /// <summary>
-    /// Die zusammengesetzten Dienste. Wird ausserhalb dieser Klasse nur von
+    /// Die zusammengesetzten Dienste. Wird außerhalb dieser Klasse nur von
     /// Fenstern verwendet, die WPF selbst erzeugt.
     /// </summary>
     public static IServiceProvider Services =>
@@ -77,18 +77,18 @@ public partial class App : Application
         services.AddSingleton<IEInvoiceService, EInvoiceService>();
 
         // Lokale Datenerkennung: liest nur bereits vorhandenen PDF-Text aus.
-        // Kein OCR, keine externen Dienste, nichts verlaesst das Geraet.
+        // Kein OCR, keine externen Dienste, nichts verlässt das Gerät.
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IInvoiceDataDetector, InvoiceDataDetector>();
 
         // Referenzvalidatoren sind optional: Ohne Java oder ohne die
         // Mustang-JAR startet die Anwendung normal weiter. Der Validator meldet
-        // sich dann als nicht verfuegbar, und der Bericht weist die Pruefung
-        // ausdruecklich als NICHT AUSGEFUEHRT aus.
+        // sich dann als nicht verfügbar, und der Bericht weist die Prüfung
+        // ausdrücklich als NICHT AUSGEFÜHRT aus.
         services.AddSingleton(MustangOptions.Discover());
         services.AddSingleton<IExternalDocumentValidator, MustangValidator>();
 
-        // --- Oberflaeche ----------------------------------------------------
+        // --- Oberfläche ----------------------------------------------------
         services.AddSingleton<IShellService, WindowsShellService>();
         services.AddSingleton<IPdfPreviewService, PdfPreviewService>();
 
@@ -105,7 +105,7 @@ public partial class App : Application
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         MessageBox.Show(
-            "Es ist eine unerwartete Stoerung aufgetreten. Die bisher erzeugten Dateien "
+            "Es ist eine unerwartete Störung aufgetreten. Die bisher erzeugten Dateien "
             + "bleiben erhalten.\n\nTechnische Angabe:\n" + e.Exception.Message,
             "EInvoiceSender",
             MessageBoxButton.OK,

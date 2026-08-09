@@ -13,13 +13,13 @@ namespace EInvoiceSender.IntegrationTests;
 /// <summary>
 /// Ende-zu-Ende-Tests des Gesamtablaufs.
 ///
-/// Abgedeckt sind Erfolg, Warnung, Validierungsfehler, beschaedigte PDF,
-/// nicht eingebettete Schrift, Zeitueberschreitung eines externen Werkzeugs und
+/// Abgedeckt sind Erfolg, Warnung, Validierungsfehler, beschädigte PDF,
+/// nicht eingebettete Schrift, Zeitüberschreitung eines externen Werkzeugs und
 /// Abbruch durch den Benutzer.
 ///
-/// In jedem Fehlerfall wird geprueft, dass **keine Ausgabedatei** entsteht und
-/// das **Original unveraendert** bleibt. Eine halb fertige Datei waere schlimmer
-/// als gar keine, weil der Anwender sie fuer gueltig halten koennte.
+/// In jedem Fehlerfall wird geprüft, dass **keine Ausgabedatei** entsteht und
+/// das **Original unverändert** bleibt. Eine halb fertige Datei wäre schlimmer
+/// als gar keine, weil der Anwender sie für gültig halten könnte.
 /// </summary>
 public sealed class CreateEInvoiceUseCaseTests : IDisposable
 {
@@ -40,7 +40,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task ErfolgreicherDurchlaufErzeugtDateiBerichtUndPruefsumme()
+    public async Task ErfolgreicherDurchlaufErzeugtDateiBerichtUndPrüfsumme()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
         byte[] originalBytes = await File.ReadAllBytesAsync(source, TestContext.Current.CancellationToken);
@@ -55,13 +55,13 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.NotNull(result.OutputFile);
         Assert.True(File.Exists(result.OutputFile.FullPath));
 
-        // Pruefsumme, Zeitpunkt, Standard und Profil sind gesetzt.
+        // Prüfsumme, Zeitpunkt, Standard und Profil sind gesetzt.
         Assert.Equal(64, result.OutputFile.Sha256.Length);
         Assert.Equal(FixedNow, result.CreatedAt);
         Assert.Equal(CiiConstants.ProfileEn16931, result.ProfileId);
         Assert.Contains("EN 16931", result.StandardDescription, StringComparison.Ordinal);
 
-        // Die Pruefsumme muss zur tatsaechlich geschriebenen Datei passen.
+        // Die Prüfsumme muss zur tatsächlich geschriebenen Datei passen.
         byte[] written = await File.ReadAllBytesAsync(
             result.OutputFile.FullPath, TestContext.Current.CancellationToken);
         Assert.Equal(FileStorage.ComputeSha256(written), result.OutputFile.Sha256);
@@ -78,9 +78,9 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         string text = await File.ReadAllTextAsync(
             result.ReportTextFile.FullPath, TestContext.Current.CancellationToken);
         Assert.Contains("SHA-256", text, StringComparison.Ordinal);
-        Assert.Contains("Pruefwerkzeuge", text, StringComparison.Ordinal);
+        Assert.Contains("Prüfwerkzeuge", text, StringComparison.Ordinal);
 
-        // Das Original bleibt unveraendert.
+        // Das Original bleibt unverändert.
         Assert.Equal(
             originalBytes,
             await File.ReadAllBytesAsync(source, TestContext.Current.CancellationToken));
@@ -92,7 +92,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task OhneBestaetigungWirdNichtsErzeugt()
+    public async Task OhneBestätigungWirdNichtsErzeugt()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
@@ -130,7 +130,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task NichtEingebetteteSchriftFuehrtZumAbbruchImPreflight()
+    public async Task NichtEingebetteteSchriftFührtZumAbbruchImPreflight()
     {
         string source = TempPdf(TestPdfFactory.CreatePdfWithNonEmbeddedFont());
 
@@ -147,7 +147,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task BeschaedigtePdfFuehrtZumAbbruch()
+    public async Task BeschädigtePdfFührtZumAbbruch()
     {
         string source = TempPdf(TestPdfFactory.CreateDamagedPdf());
 
@@ -160,7 +160,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task BereitsHybridePdfBrauchtEineAusdrueckicheBestaetigung()
+    public async Task BereitsHybridePdfBrauchtEineAusdrückicheBestätigung()
     {
         // Zuerst eine fertige E-Rechnung erzeugen ...
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
@@ -168,7 +168,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             Request(source), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(first.Succeeded, Describe(first));
 
-        // ... und diese ohne Bestaetigung erneut verarbeiten.
+        // ... und diese ohne Bestätigung erneut verarbeiten.
         CreateEInvoiceResult second = await BuildUseCase().CreateAsync(
             Request(first.OutputFile!.FullPath),
             cancellationToken: TestContext.Current.CancellationToken);
@@ -176,7 +176,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.False(second.Succeeded);
         Assert.Contains(second.Report.Findings, f => f.RuleId == "APP-USE-002");
 
-        // Mit Bestaetigung geht es durch.
+        // Mit Bestätigung geht es durch.
         CreateEInvoiceResult third = await BuildUseCase().CreateAsync(
             Request(first.OutputFile.FullPath) with { ExistingInvoiceReplacementConfirmed = true },
             cancellationToken: TestContext.Current.CancellationToken);
@@ -185,7 +185,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task ZeitueberschreitungDesExternenWerkzeugsVerhindertDieAusgabe()
+    public async Task ZeitüberschreitungDesExternenWerkzeugsVerhindertDieAusgabe()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
@@ -229,7 +229,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         // Die Datei entsteht, aber der Bericht sagt deutlich, dass die
-        // Gegenpruefung nicht stattgefunden hat.
+        // Gegenprüfung nicht stattgefunden hat.
         Assert.True(result.Succeeded, Describe(result));
         Assert.Contains(result.Report.Findings, f => f.RuleId == "APP-USE-030");
 
@@ -238,11 +238,11 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
         string text = await File.ReadAllTextAsync(
             result.ReportTextFile!.FullPath, TestContext.Current.CancellationToken);
-        Assert.Contains("NICHT AUSGEFUEHRT", text, StringComparison.Ordinal);
+        Assert.Contains("NICHT AUSGEFÜHRT", text, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task BenutzerabbruchHinterlaesstKeineDatei()
+    public async Task BenutzerabbruchHinterlässtKeineDatei()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
@@ -264,7 +264,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task VorhandeneDateiWirdNichtStillUeberschrieben()
+    public async Task VorhandeneDateiWirdNichtStillÜberschrieben()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
@@ -282,7 +282,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     }
 
     [Fact]
-    public async Task TemporaereDateienWerdenAuchImFehlerfallEntfernt()
+    public async Task TemporäreDateienWerdenAuchImFehlerfallEntfernt()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
@@ -354,7 +354,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             }
             catch (IOException)
             {
-                // Aufraeumen darf einen Testlauf nicht scheitern lassen.
+                // Aufräumen darf einen Testlauf nicht scheitern lassen.
             }
         }
     }
@@ -366,7 +366,7 @@ internal sealed class StubClock(DateTimeOffset now) : IClock
     public DateTimeOffset Now => now;
 }
 
-/// <summary>Zeitquelle mit festem Wert fuer den Regelvalidator.</summary>
+/// <summary>Zeitquelle mit festem Wert für den Regelvalidator.</summary>
 internal sealed class FixedClock(DateTimeOffset now) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => now.ToUniversalTime();
@@ -383,7 +383,7 @@ internal enum StubBehavior
     /// <summary>Beanstandet die Datei.</summary>
     ReportsError,
 
-    /// <summary>Meldet eine Zeitueberschreitung.</summary>
+    /// <summary>Meldet eine Zeitüberschreitung.</summary>
     TimesOut,
 
     /// <summary>Ist auf diesem System nicht eingerichtet.</summary>
@@ -391,8 +391,8 @@ internal enum StubBehavior
 }
 
 /// <summary>
-/// Ersatzvalidator fuer die Ablauftests. Bildet die vier Ausgaenge nach, die
-/// ein echter externer Validator haben kann, ohne dass Java noetig ist.
+/// Ersatzvalidator für die Ablauftests. Bildet die vier Ausgänge nach, die
+/// ein echter externer Validator haben kann, ohne dass Java nötig ist.
 /// </summary>
 internal sealed class StubValidator(string name, StubBehavior behavior) : IExternalDocumentValidator
 {
@@ -412,7 +412,7 @@ internal sealed class StubValidator(string name, StubBehavior behavior) : IExter
         switch (behavior)
         {
             case StubBehavior.Passes:
-                report.Information("APP-EXT-000", "Die externe Pruefung wurde bestanden.");
+                report.Information("APP-EXT-000", "Die externe Prüfung wurde bestanden.");
                 break;
 
             case StubBehavior.ReportsError:
@@ -425,8 +425,8 @@ internal sealed class StubValidator(string name, StubBehavior behavior) : IExter
             case StubBehavior.TimesOut:
                 report.Error(
                     "APP-EXT-003",
-                    "Die externe Pruefung wurde abgebrochen, weil sie zu lange gedauert hat. "
-                    + "Die Datei gilt damit als ungeprueft.",
+                    "Die externe Prüfung wurde abgebrochen, weil sie zu lange gedauert hat. "
+                    + "Die Datei gilt damit als ungeprüft.",
                     technicalDetail: "Testfall");
                 break;
 
@@ -442,27 +442,27 @@ internal sealed class StubValidator(string name, StubBehavior behavior) : IExter
 /// <summary>
 /// Liefert Fortschrittsmeldungen sofort und im meldenden Thread aus.
 ///
-/// <see cref="Progress{T}"/> ist hier untauglich: Es stellt jede Meldung ueber
-/// den Synchronisierungskontext zu – im Test also ueber den Threadpool. Die
-/// Meldung trifft damit irgendwann ein, moeglicherweise erst nach dem Ende des
+/// <see cref="Progress{T}"/> ist hier untauglich: Es stellt jede Meldung über
+/// den Synchronisierungskontext zu – im Test also über den Threadpool. Die
+/// Meldung trifft damit irgendwann ein, möglicherweise erst nach dem Ende des
 /// Tests. Zwei Folgefehler wurden dadurch beobachtet:
 ///
-/// - Eine Zusicherung prueft die Meldungsliste, bevor sie gefuellt ist. Der
-///   Test schlaegt dann sporadisch fehl, ohne dass sich am Programm etwas
-///   geaendert haette.
-/// - Ein Rueckruf ruft <c>Cancel</c> auf einer <c>CancellationTokenSource</c>
+/// - Eine Zusicherung prüft die Meldungsliste, bevor sie gefuellt ist. Der
+///   Test schlägt dann sporadisch fehl, ohne dass sich am Programm etwas
+///   geändert hätte.
+/// - Ein Rückruf ruft <c>Cancel</c> auf einer <c>CancellationTokenSource</c>
 ///   auf, die das <c>using</c> des Tests bereits entsorgt hat. Das Ergebnis
 ///   ist eine unbeobachtete <c>ObjectDisposedException</c> auf einem
 ///   Threadpool-Thread, die xunit als "Catastrophic failure" meldet und die
-///   den gesamten Testlauf rot faerbt.
+///   den gesamten Testlauf rot färbt.
 ///
-/// Im Test ist die sofortige Zustellung ausserdem das, was gemeint ist:
+/// Im Test ist die sofortige Zustellung außerdem das, was gemeint ist:
 /// "beim ersten Fortschrittsereignis abbrechen" soll genau dann geschehen und
-/// nicht irgendwann spaeter.
+/// nicht irgendwann später.
 ///
-/// In der Oberflaeche bleibt <see cref="Progress{T}"/> richtig – dort ist das
-/// Zustellen ueber den Kontext genau der Zweck, weil die Meldung auf dem
-/// Oberflaechen-Thread ankommen muss.
+/// In der Oberfläche bleibt <see cref="Progress{T}"/> richtig – dort ist das
+/// Zustellen über den Kontext genau der Zweck, weil die Meldung auf dem
+/// Oberflächen-Thread ankommen muss.
 /// </summary>
 internal sealed class ImmediateProgress<T>(Action<T> report) : IProgress<T>
 {

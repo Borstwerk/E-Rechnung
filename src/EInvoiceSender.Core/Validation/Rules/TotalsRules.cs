@@ -12,9 +12,9 @@ internal static class TotalsRules
     public static void Validate(
         Invoice invoice, InvoiceTotals totals, ValidationReportBuilder report)
     {
-        // Die Summen werden hier gegen eine unabhaengige Neuberechnung geprueft.
-        // Das faengt den Fall ab, dass ein veraltetes Summenobjekt zu einer
-        // inzwischen geaenderten Rechnung gehoert.
+        // Die Summen werden hier gegen eine unabhängige Neuberechnung geprüft.
+        // Das fängt den Fall ab, dass ein veraltetes Summenobjekt zu einer
+        // inzwischen geänderten Rechnung gehört.
         InvoiceTotals recomputed = InvoiceCalculator.Calculate(invoice);
 
         CompareTotal(totals.LineTotal, recomputed.LineTotal,
@@ -28,7 +28,7 @@ internal static class TotalsRules
         CompareTotal(totals.DuePayableAmount, recomputed.DuePayableAmount,
             "APP-SUM-005", "Der offene Zahlbetrag", "BR-CO-16", report);
 
-        // BR-DEC-*: Betragsfelder duerfen hoechstens zwei Nachkommastellen haben.
+        // BR-DEC-*: Betragsfelder dürfen höchstens zwei Nachkommastellen haben.
         foreach ((string label, decimal value, string field) in new[]
                  {
                      ("Summe der Positionen", totals.LineTotal, "LineTotal"),
@@ -61,7 +61,7 @@ internal static class TotalsRules
         {
             report.Warning(
                 "APP-SUM-008",
-                "Der bereits gezahlte Betrag ist groesser als die Bruttosumme. "
+                "Der bereits gezahlte Betrag ist größer als die Bruttosumme. "
                 + "Der offene Zahlbetrag wird dadurch negativ.",
                 "PaidAmount",
                 $"Gezahlt {SharedRules.Format(invoice.PaidAmount)}, Brutto {SharedRules.Format(totals.GrandTotal)}");
@@ -71,7 +71,7 @@ internal static class TotalsRules
         {
             report.Warning(
                 "APP-SUM-009",
-                "Der Rundungsbetrag ist ungewoehnlich hoch. Ueblich sind wenige Cent.",
+                "Der Rundungsbetrag ist ungewöhnlich hoch. Üblich sind wenige Cent.",
                 "RoundingAmount",
                 $"Gelesen: {SharedRules.Format(totals.RoundingAmount)}");
         }
@@ -85,7 +85,7 @@ internal static class TotalsRules
             report.Error(
                 "APP-SUM-010",
                 "Der Zahlbetrag ist negativ, die Rechnungsart ist aber eine normale "
-                + "Rechnung. Fuer eine Erstattung waehlen Sie die Rechnungsart "
+                + "Rechnung. Für eine Erstattung wählen Sie die Rechnungsart "
                 + "'Gutschrift' (381).",
                 "DuePayableAmount",
                 $"Zahlbetrag {SharedRules.Format(totals.DuePayableAmount)}");
@@ -103,9 +103,9 @@ internal static class TotalsRules
 
         report.Error(
             ruleId,
-            $"{label} stimmt nicht mit den erfassten Daten ueberein.",
+            $"{label} stimmt nicht mit den erfassten Daten überein.",
             label,
-            $"Erwartet {SharedRules.Format(expected)}, uebergeben {SharedRules.Format(actual)}, "
+            $"Erwartet {SharedRules.Format(expected)}, übergeben {SharedRules.Format(actual)}, "
             + $"Abweichung {SharedRules.Format(actual - expected)}",
             normRule);
     }

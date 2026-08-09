@@ -20,7 +20,7 @@ internal static class PaymentRules
             {
                 report.Warning(
                     "APP-PAY-001",
-                    "Es sind keine Zahlungsangaben hinterlegt. Der Empfaenger erfaehrt "
+                    "Es sind keine Zahlungsangaben hinterlegt. Der Empfänger erfährt "
                     + "damit nicht, wohin er zahlen soll.",
                     "Payment");
             }
@@ -32,7 +32,7 @@ internal static class PaymentRules
         {
             report.Error(
                 "APP-PAY-002",
-                "Die gewaehlte Zahlungsart ist unbekannt.",
+                "Die gewählte Zahlungsart ist unbekannt.",
                 "Payment.MeansCode",
                 $"Code {(int)payment.MeansCode}", "BR-49");
         }
@@ -46,7 +46,7 @@ internal static class PaymentRules
         {
             report.Error(
                 "APP-PAY-003",
-                "Fuer eine Ueberweisung fehlt die Bankverbindung.",
+                "Für eine Überweisung fehlt die Bankverbindung.",
                 "Payment.BankAccount", normRule: "BR-50");
 
             return;
@@ -57,9 +57,9 @@ internal static class PaymentRules
             return;
         }
 
-        // Die IBAN ist bereits beim Einlesen auf ihre Pruefziffer geprueft
-        // worden – der Typ existiert nur in gueltigem Zustand. Hier bleibt zu
-        // pruefen, ob die uebrigen Angaben dazu passen.
+        // Die IBAN ist bereits beim Einlesen auf ihre Prüfziffer geprüft
+        // worden – der Typ existiert nur in gültigem Zustand. Hier bleibt zu
+        // prüfen, ob die übrigen Angaben dazu passen.
         if (string.IsNullOrWhiteSpace(account.AccountHolder))
         {
             report.Warning(
@@ -72,24 +72,24 @@ internal static class PaymentRules
         {
             report.Error(
                 "APP-PAY-005",
-                "Die BIC ist nicht gueltig. Sie besteht aus 8 oder 11 Zeichen.",
+                "Die BIC ist nicht gültig. Sie besteht aus 8 oder 11 Zeichen.",
                 "Payment.BankAccount.Bic",
-                $"Laenge {account.Bic.Length}");
+                $"Länge {account.Bic.Length}");
         }
 
         if (!CountryCodeList.IsValid(account.Iban.CountryPrefix))
         {
             report.Error(
                 "APP-PAY-006",
-                "Das Laenderkennzeichen der IBAN ist unbekannt.",
+                "Das Länderkennzeichen der IBAN ist unbekannt.",
                 "Payment.BankAccount.Iban",
-                $"Praefix {account.Iban.CountryPrefix}");
+                $"Präfix {account.Iban.CountryPrefix}");
         }
     }
 
     // ------------------------------------------------------------------ Helfer
 
-    /// <summary>Prueft die Form einer BIC nach ISO 9362 (8 oder 11 Zeichen).</summary>
+    /// <summary>Prüft die Form einer BIC nach ISO 9362 (8 oder 11 Zeichen).</summary>
     internal static bool LooksLikeBic(string value)
     {
         string trimmed = value.Replace(" ", string.Empty, StringComparison.Ordinal).ToUpperInvariant();

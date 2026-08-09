@@ -1,15 +1,15 @@
 namespace EInvoiceSender.Core.Services;
 
 /// <summary>
-/// Lokal gespeicherte Vorlage fuer wiederkehrende Angaben.
-/// Kennwoerter werden hier bewusst nicht abgebildet – sie werden nicht gespeichert.
+/// Lokal gespeicherte Vorlage für wiederkehrende Angaben.
+/// Kennwörter werden hier bewusst nicht abgebildet – sie werden nicht gespeichert.
 /// </summary>
 public sealed record CompanyTemplate
 {
-    /// <summary>Firmenname des Verkaeufers.</summary>
+    /// <summary>Firmenname des Verkäufers.</summary>
     public string? SellerName { get; init; }
 
-    /// <summary>Strasse und Hausnummer.</summary>
+    /// <summary>Straße und Hausnummer.</summary>
     public string? SellerStreet { get; init; }
 
     /// <summary>Postleitzahl.</summary>
@@ -18,10 +18,10 @@ public sealed record CompanyTemplate
     /// <summary>Ort.</summary>
     public string? SellerCity { get; init; }
 
-    /// <summary>Laenderkennung, Vorgabe DE.</summary>
+    /// <summary>Länderkennung, Vorgabe DE.</summary>
     public string? SellerCountry { get; init; }
 
-    /// <summary>E-Mail-Adresse des Verkaeufers.</summary>
+    /// <summary>E-Mail-Adresse des Verkäufers.</summary>
     public string? SellerEmail { get; init; }
 
     /// <summary>Umsatzsteuer-Identifikationsnummer.</summary>
@@ -33,13 +33,13 @@ public sealed record CompanyTemplate
     /// <summary>Kontoinhaber der Standardbankverbindung.</summary>
     public string? BankAccountHolder { get; init; }
 
-    /// <summary>IBAN der Standardbankverbindung. Wird geschuetzt abgelegt.</summary>
+    /// <summary>IBAN der Standardbankverbindung. Wird geschützt abgelegt.</summary>
     public string? BankIban { get; init; }
 
-    /// <summary>BIC, sofern benoetigt.</summary>
+    /// <summary>BIC, sofern benötigt.</summary>
     public string? BankBic { get; init; }
 
-    /// <summary>Standardwaehrung neuer Rechnungen.</summary>
+    /// <summary>Standardwährung neuer Rechnungen.</summary>
     public string? DefaultCurrency { get; init; }
 
     /// <summary>Standardzahlungsziel in Tagen.</summary>
@@ -59,30 +59,30 @@ public sealed record CompanyTemplate
 }
 
 /// <summary>
-/// Anwendungseinstellungen, die nicht zur Firmenvorlage gehoeren.
+/// Anwendungseinstellungen, die nicht zur Firmenvorlage gehören.
 /// </summary>
 public sealed record ApplicationSettings
 {
-    /// <summary>Groesste zulaessige Eingabedatei in Megabyte.</summary>
+    /// <summary>Größte zulässige Eingabedatei in Megabyte.</summary>
     public int MaxInputFileSizeMegabytes { get; init; } = 20;
 
     /// <summary>
     /// Pfad zu einem externen Validator (Mustang-CLI). Leer bedeutet:
-    /// nur die eigenen Pruefungen laufen, was der Bericht ausweist.
+    /// nur die eigenen Prüfungen laufen, was der Bericht ausweist.
     /// </summary>
     public string? ExternalValidatorPath { get; init; }
 
-    /// <summary>Pfad zur Java-Laufzeit fuer den externen Validator.</summary>
+    /// <summary>Pfad zur Java-Laufzeit für den externen Validator.</summary>
     public string? JavaExecutablePath { get; init; }
 
-    /// <summary>Zeitlimit fuer externe Validatoren in Sekunden.</summary>
+    /// <summary>Zeitlimit für externe Validatoren in Sekunden.</summary>
     public int ExternalValidatorTimeoutSeconds { get; init; } = 120;
 }
 
 /// <summary>
 /// Speichert Vorlagen und Einstellungen lokal.
-/// Sensible Werte werden unter Windows per DPAPI geschuetzt; auf anderen
-/// Plattformen meldet die Umsetzung offen, dass kein Schutz moeglich ist.
+/// Sensible Werte werden unter Windows per DPAPI geschützt; auf anderen
+/// Plattformen meldet die Umsetzung offen, dass kein Schutz möglich ist.
 /// </summary>
 public interface ISettingsStore
 {
@@ -99,8 +99,8 @@ public interface ISettingsStore
     Task SaveSettingsAsync(ApplicationSettings settings, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gibt an, ob sensible Werte auf diesem System tatsaechlich geschuetzt
-    /// abgelegt werden koennen. Ist das nicht der Fall, warnt die Oberflaeche.
+    /// Gibt an, ob sensible Werte auf diesem System tatsächlich geschützt
+    /// abgelegt werden können. Ist das nicht der Fall, warnt die Oberfläche.
     /// </summary>
     bool SupportsProtectedStorage { get; }
 }

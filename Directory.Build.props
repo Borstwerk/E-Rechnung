@@ -1,6 +1,6 @@
 <Project>
 
-  <!-- Zentrale Build-Einstellungen fuer alle Projekte der Solution. -->
+  <!-- Zentrale Build-Einstellungen für alle Projekte der Solution. -->
 
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
@@ -20,7 +20,7 @@
     <DebugType>portable</DebugType>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
-    <!-- Windows-Ziele auch auf Linux/macOS uebersetzbar (CI-Kompilierpruefung) -->
+    <!-- Windows-Ziele auch auf Linux/macOS übersetzbar (CI-Kompilierprüfung) -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
     <!-- Produkt-/Herstellerangaben zentral (auch vom Installer verwendet) -->

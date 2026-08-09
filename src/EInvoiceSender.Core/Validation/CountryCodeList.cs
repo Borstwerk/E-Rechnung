@@ -4,14 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
-/// Laenderkennungen nach ISO 3166-1 alpha-2 (BT-40 / BT-55). Reine
-/// Nachschlagetabelle ohne Geschaeftslogik. Anders als bei den uebrigen
+/// Länderkennungen nach ISO 3166-1 alpha-2 (BT-40 / BT-55). Reine
+/// Nachschlagetabelle ohne Geschäftslogik. Anders als bei den übrigen
 /// Codelisten dieses Namensraums ist diese Liste bewusst
-/// <b>vollstaendig</b>: alle aktuell offiziell zugewiesenen
-/// ISO-3166-1-alpha-2-Codes (rund 249 Stueck), alphabetisch nach Code
-/// sortiert. Zurueckgezogene Codes (z. B. <c>AN</c>, <c>CS</c>, <c>TP</c>,
-/// <c>ZR</c>) und nicht offiziell zugewiesene Codes (z. B. <c>XK</c> fuer
-/// den Kosovo, der nur als Uebergangscode einzelner Organisationen
+/// <b>vollständig</b>: alle aktuell offiziell zugewiesenen
+/// ISO-3166-1-alpha-2-Codes (rund 249 Stück), alphabetisch nach Code
+/// sortiert. Zurückgezogene Codes (z. B. <c>AN</c>, <c>CS</c>, <c>TP</c>,
+/// <c>ZR</c>) und nicht offiziell zugewiesene Codes (z. B. <c>XK</c> für
+/// den Kosovo, der nur als Übergangscode einzelner Organisationen
 /// verwendet wird) sind absichtlich nicht enthalten.
 /// </summary>
 public static class CountryCodeList
@@ -29,7 +29,7 @@ public static class CountryCodeList
         ["AQ"] = "Antarktis",
         ["AR"] = "Argentinien",
         ["AS"] = "Amerikanisch-Samoa",
-        ["AT"] = "Oesterreich",
+        ["AT"] = "Österreich",
         ["AU"] = "Australien",
         ["AW"] = "Aruba",
         ["AX"] = "Aalandinseln",
@@ -76,38 +76,38 @@ public static class CountryCodeList
         ["CZ"] = "Tschechien",
         ["DE"] = "Deutschland",
         ["DJ"] = "Dschibuti",
-        ["DK"] = "Daenemark",
+        ["DK"] = "Dänemark",
         ["DM"] = "Dominica",
         ["DO"] = "Dominikanische Republik",
         ["DZ"] = "Algerien",
         ["EC"] = "Ecuador",
         ["EE"] = "Estland",
-        ["EG"] = "Aegypten",
+        ["EG"] = "Ägypten",
         ["EH"] = "Westsahara",
         ["ER"] = "Eritrea",
         ["ES"] = "Spanien",
-        ["ET"] = "Aethiopien",
+        ["ET"] = "Äthiopien",
         ["FI"] = "Finnland",
         ["FJ"] = "Fidschi",
         ["FK"] = "Falklandinseln",
         ["FM"] = "Mikronesien",
-        ["FO"] = "Faeroeer",
+        ["FO"] = "Färöer",
         ["FR"] = "Frankreich",
         ["GA"] = "Gabun",
-        ["GB"] = "Vereinigtes Koenigreich",
+        ["GB"] = "Vereinigtes Königreich",
         ["GD"] = "Grenada",
         ["GE"] = "Georgien",
-        ["GF"] = "Franzoesisch-Guayana",
+        ["GF"] = "Französisch-Guayana",
         ["GG"] = "Guernsey",
         ["GH"] = "Ghana",
         ["GI"] = "Gibraltar",
-        ["GL"] = "Groenland",
+        ["GL"] = "Grönland",
         ["GM"] = "Gambia",
         ["GN"] = "Guinea",
         ["GP"] = "Guadeloupe",
-        ["GQ"] = "Aequatorialguinea",
+        ["GQ"] = "Äquatorialguinea",
         ["GR"] = "Griechenland",
-        ["GS"] = "Suedgeorgien und die Suedlichen Sandwichinseln",
+        ["GS"] = "Südgeorgien und die Südlichen Sandwichinseln",
         ["GT"] = "Guatemala",
         ["GU"] = "Guam",
         ["GW"] = "Guinea-Bissau",
@@ -139,7 +139,7 @@ public static class CountryCodeList
         ["KM"] = "Komoren",
         ["KN"] = "St. Kitts und Nevis",
         ["KP"] = "Nordkorea",
-        ["KR"] = "Suedkorea",
+        ["KR"] = "Südkorea",
         ["KW"] = "Kuwait",
         ["KY"] = "Kaimaninseln",
         ["KZ"] = "Kasachstan",
@@ -158,7 +158,7 @@ public static class CountryCodeList
         ["MC"] = "Monaco",
         ["MD"] = "Republik Moldau",
         ["ME"] = "Montenegro",
-        ["MF"] = "Saint-Martin (franzoesischer Teil)",
+        ["MF"] = "Saint-Martin (französischer Teil)",
         ["MG"] = "Madagaskar",
         ["MH"] = "Marshallinseln",
         ["MK"] = "Nordmazedonien",
@@ -166,7 +166,7 @@ public static class CountryCodeList
         ["MM"] = "Myanmar",
         ["MN"] = "Mongolei",
         ["MO"] = "Macau",
-        ["MP"] = "Noerdliche Marianen",
+        ["MP"] = "Nördliche Marianen",
         ["MQ"] = "Martinique",
         ["MR"] = "Mauretanien",
         ["MS"] = "Montserrat",
@@ -192,7 +192,7 @@ public static class CountryCodeList
         ["OM"] = "Oman",
         ["PA"] = "Panama",
         ["PE"] = "Peru",
-        ["PF"] = "Franzoesisch-Polynesien",
+        ["PF"] = "Französisch-Polynesien",
         ["PG"] = "Papua-Neuguinea",
         ["PH"] = "Philippinen",
         ["PK"] = "Pakistan",
@@ -200,15 +200,15 @@ public static class CountryCodeList
         ["PM"] = "Saint-Pierre und Miquelon",
         ["PN"] = "Pitcairninseln",
         ["PR"] = "Puerto Rico",
-        ["PS"] = "Staat Palaestina",
+        ["PS"] = "Staat Palästina",
         ["PT"] = "Portugal",
         ["PW"] = "Palau",
         ["PY"] = "Paraguay",
         ["QA"] = "Katar",
         ["RE"] = "Reunion",
-        ["RO"] = "Rumaenien",
+        ["RO"] = "Rumänien",
         ["RS"] = "Serbien",
-        ["RU"] = "Russische Foederation",
+        ["RU"] = "Russische Föderation",
         ["RW"] = "Ruanda",
         ["SA"] = "Saudi-Arabien",
         ["SB"] = "Salomonen",
@@ -225,15 +225,15 @@ public static class CountryCodeList
         ["SN"] = "Senegal",
         ["SO"] = "Somalia",
         ["SR"] = "Suriname",
-        ["SS"] = "Suedsudan",
+        ["SS"] = "Südsudan",
         ["ST"] = "Sao Tome und Principe",
         ["SV"] = "El Salvador",
-        ["SX"] = "Sint Maarten (niederlaendischer Teil)",
+        ["SX"] = "Sint Maarten (niederländischer Teil)",
         ["SY"] = "Syrien",
         ["SZ"] = "Eswatini",
         ["TC"] = "Turks- und Caicosinseln",
         ["TD"] = "Tschad",
-        ["TF"] = "Franzoesische Sued- und Antarktisgebiete",
+        ["TF"] = "Französische Süd- und Antarktisgebiete",
         ["TG"] = "Togo",
         ["TH"] = "Thailand",
         ["TJ"] = "Tadschikistan",
@@ -242,7 +242,7 @@ public static class CountryCodeList
         ["TM"] = "Turkmenistan",
         ["TN"] = "Tunesien",
         ["TO"] = "Tonga",
-        ["TR"] = "Tuerkei",
+        ["TR"] = "Türkei",
         ["TT"] = "Trinidad und Tobago",
         ["TV"] = "Tuvalu",
         ["TW"] = "Taiwan",
@@ -264,21 +264,21 @@ public static class CountryCodeList
         ["WS"] = "Samoa",
         ["YE"] = "Jemen",
         ["YT"] = "Mayotte",
-        ["ZA"] = "Suedafrika",
+        ["ZA"] = "Südafrika",
         ["ZM"] = "Sambia",
         ["ZW"] = "Simbabwe",
     }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Alle Laender als Auswahlliste, nach dem deutschen Namen sortiert.
-    /// Fuer die Auswahlfelder der Oberflaeche.
+    /// Alle Länder als Auswahlliste, nach dem deutschen Namen sortiert.
+    /// Für die Auswahlfelder der Oberfläche.
     /// </summary>
     public static IReadOnlyList<(string Code, string Name)> All { get; } =
         [.. Names.Select(e => (Code: e.Key.ToUpperInvariant(), Name: e.Value))
                  .OrderBy(e => e.Name, StringComparer.CurrentCulture)];
 
     /// <summary>
-    /// Prueft, ob <paramref name="code"/> ein offiziell zugewiesener
+    /// Prüft, ob <paramref name="code"/> ein offiziell zugewiesener
     /// ISO-3166-1-alpha-2-Code ist. Gross-/Kleinschreibung und umgebende
     /// Leerzeichen spielen keine Rolle. Liefert <see langword="false"/> bei
     /// <see langword="null"/>, leerem oder reinem Leerraum-Text – wirft nie.
@@ -294,7 +294,7 @@ public static class CountryCodeList
     }
 
     /// <summary>
-    /// Liefert den deutschen Namen des Landes zu einem gueltigen Code.
+    /// Liefert den deutschen Namen des Landes zu einem gültigen Code.
     /// </summary>
     public static bool TryGetName(string? code, [MaybeNullWhen(false)] out string germanName)
     {

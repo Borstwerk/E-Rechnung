@@ -11,7 +11,7 @@ namespace EInvoiceSender.Core.Models;
 public enum FieldOrigin
 {
     /// <summary>
-    /// Vom Programm gesetzter Ausgangswert, etwa die Waehrung EUR.
+    /// Vom Programm gesetzter Ausgangswert, etwa die Währung EUR.
     ///
     /// Der Anwender hat das Feld nie angefasst. Ein solcher Wert darf von jeder
     /// Quelle ersetzt werden – er ist eine Bequemlichkeit, keine Aussage.
@@ -20,7 +20,7 @@ public enum FieldOrigin
 
     /// <summary>
     /// Aus dem PDF-Text gelesen, Zuordnung aber nicht eindeutig.
-    /// Wird sichtbar zur Pruefung gekennzeichnet.
+    /// Wird sichtbar zur Prüfung gekennzeichnet.
     /// </summary>
     DetectedUncertain = 1,
 
@@ -30,15 +30,15 @@ public enum FieldOrigin
     /// <summary>
     /// Aus der gespeicherten Firmenvorlage.
     ///
-    /// Steht ueber der PDF-Erkennung: Der Anwender hat diese Werte einmal
+    /// Steht über der PDF-Erkennung: Der Anwender hat diese Werte einmal
     /// bewusst hinterlegt. Weicht die PDF davon ab, ist eine Fehlerkennung
     /// wahrscheinlicher als eine Korrektur – und die eigenen Stammdaten
-    /// stillschweigend zu aendern waere ueberraschend.
+    /// stillschweigend zu ändern wäre überraschend.
     /// </summary>
     Template = 3,
 
     /// <summary>
-    /// Vom Anwender eingegeben oder geaendert.
+    /// Vom Anwender eingegeben oder geändert.
     ///
     /// Wird **nie** automatisch ersetzt. Was durch die Hand des Menschen
     /// gegangen ist, bleibt so stehen.
@@ -50,10 +50,10 @@ public enum FieldOrigin
 /// Die eine Stelle, an der entschieden wird, ob ein vorgeschlagener Wert einen
 /// vorhandenen ersetzen darf.
 ///
-/// Frueher stand diese Entscheidung verstreut als Sonderfall an einzelnen
-/// Feldern – mit dem Ergebnis, dass sie fuer die meisten Felder gar nicht
-/// stattfand. Eine Regel an einer Stelle ist nicht nur kuerzer, sie ist auch
-/// pruefbar.
+/// Früher stand diese Entscheidung verstreut als Sonderfall an einzelnen
+/// Feldern – mit dem Ergebnis, dass sie für die meisten Felder gar nicht
+/// stattfand. Eine Regel an einer Stelle ist nicht nur kürzer, sie ist auch
+/// prüfbar.
 /// </summary>
 public static class FieldOriginRules
 {
@@ -63,7 +63,7 @@ public static class FieldOriginRules
     /// </summary>
     public static bool CanReplace(FieldOrigin current, FieldOrigin proposed)
     {
-        // Eine Eingabe des Anwenders wird nie automatisch ueberschrieben -
+        // Eine Eingabe des Anwenders wird nie automatisch überschrieben -
         // auch nicht von einer noch so sicheren Erkennung.
         if (current == FieldOrigin.Manual)
         {

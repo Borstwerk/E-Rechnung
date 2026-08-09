@@ -1,15 +1,15 @@
 namespace EInvoiceSender.Core.Models;
 
 /// <summary>
-/// Waehrungskennung nach ISO 4217 (BT-5). Prueft hier nur die Form;
-/// die Pruefung gegen die tatsaechliche Codeliste erfolgt in
+/// Währungskennung nach ISO 4217 (BT-5). Prüft hier nur die Form;
+/// die Prüfung gegen die tatsächliche Codeliste erfolgt in
 /// <c>EInvoiceSender.Validation</c>, damit die Domain frei von Datentabellen bleibt.
 /// </summary>
 public readonly record struct CurrencyCode
 {
     private CurrencyCode(string value) => Value = value;
 
-    /// <summary>Dreistelliger Grossbuchstabencode, z. B. EUR.</summary>
+    /// <summary>Dreistelliger Großbuchstabencode, z. B. EUR.</summary>
     public string Value { get; }
 
     /// <summary>Euro – Vorgabewert der Anwendung.</summary>
@@ -17,7 +17,7 @@ public readonly record struct CurrencyCode
 
     public override string ToString() => Value;
 
-    /// <summary>Liest eine Waehrungskennung, wenn sie formal korrekt ist.</summary>
+    /// <summary>Liest eine Währungskennung, wenn sie formal korrekt ist.</summary>
     public static bool TryParse(string? input, out CurrencyCode code)
     {
         code = default;
@@ -44,22 +44,22 @@ public readonly record struct CurrencyCode
         return true;
     }
 
-    /// <summary>Liest eine Waehrungskennung oder wirft.</summary>
+    /// <summary>Liest eine Währungskennung oder wirft.</summary>
     public static CurrencyCode Parse(string input)
         => TryParse(input, out var code)
             ? code
-            : throw new FormatException($"'{input}' ist keine gueltige Waehrungskennung.");
+            : throw new FormatException($"'{input}' ist keine gültige Währungskennung.");
 }
 
 /// <summary>
-/// Laenderkennung nach ISO 3166-1 alpha-2 (BT-40 / BT-55). Formpruefung hier,
-/// Pruefung gegen die Codeliste in <c>EInvoiceSender.Validation</c>.
+/// Länderkennung nach ISO 3166-1 alpha-2 (BT-40 / BT-55). Formprüfung hier,
+/// Prüfung gegen die Codeliste in <c>EInvoiceSender.Validation</c>.
 /// </summary>
 public readonly record struct CountryCode
 {
     private CountryCode(string value) => Value = value;
 
-    /// <summary>Zweistelliger Grossbuchstabencode, z. B. DE.</summary>
+    /// <summary>Zweistelliger Großbuchstabencode, z. B. DE.</summary>
     public string Value { get; }
 
     /// <summary>Deutschland – Vorgabewert der Anwendung.</summary>
@@ -67,7 +67,7 @@ public readonly record struct CountryCode
 
     public override string ToString() => Value;
 
-    /// <summary>Liest eine Laenderkennung, wenn sie formal korrekt ist.</summary>
+    /// <summary>Liest eine Länderkennung, wenn sie formal korrekt ist.</summary>
     public static bool TryParse(string? input, out CountryCode code)
     {
         code = default;
@@ -86,28 +86,28 @@ public readonly record struct CountryCode
         return true;
     }
 
-    /// <summary>Liest eine Laenderkennung oder wirft.</summary>
+    /// <summary>Liest eine Länderkennung oder wirft.</summary>
     public static CountryCode Parse(string input)
         => TryParse(input, out var code)
             ? code
-            : throw new FormatException($"'{input}' ist keine gueltige Laenderkennung.");
+            : throw new FormatException($"'{input}' ist keine gültige Länderkennung.");
 }
 
 /// <summary>
 /// Mengeneinheit nach UN/ECE Recommendation 20/21 (BT-130).
-/// Die zulaessigen Werte prueft <c>EInvoiceSender.Validation</c>.
+/// Die zulässigen Werte prüft <c>EInvoiceSender.Validation</c>.
 /// </summary>
 public readonly record struct UnitCode
 {
     private UnitCode(string value) => Value = value;
 
-    /// <summary>Codewert, z. B. C62 (Stueck) oder HUR (Stunde).</summary>
+    /// <summary>Codewert, z. B. C62 (Stück) oder HUR (Stunde).</summary>
     public string Value { get; }
 
-    /// <summary>C62 – Stueck. Vorgabe, wenn nichts anderes gewaehlt wurde.</summary>
+    /// <summary>C62 – Stück. Vorgabe, wenn nichts anderes gewählt wurde.</summary>
     public static UnitCode Piece { get; } = new("C62");
 
-    /// <summary>HUR – Stunde. Haeufigster Fall bei Dienstleistungen.</summary>
+    /// <summary>HUR – Stunde. Häufigster Fall bei Dienstleistungen.</summary>
     public static UnitCode Hour { get; } = new("HUR");
 
     /// <summary>DAY – Tag.</summary>
@@ -146,5 +146,5 @@ public readonly record struct UnitCode
     public static UnitCode Parse(string input)
         => TryParse(input, out var code)
             ? code
-            : throw new FormatException($"'{input}' ist kein gueltiger Einheitencode.");
+            : throw new FormatException($"'{input}' ist kein gültiger Einheitencode.");
 }

@@ -12,10 +12,10 @@ namespace EInvoiceSender.App.ViewModels;
 /// <summary>
 /// Schritt 2: Die strukturierten Rechnungsdaten erfassen.
 ///
-/// Das ViewModel haelt nur das Formular und die Auswahllisten. Gelesen,
-/// gerechnet und geprueft wird im Kern: <see cref="InvoiceDraft"/> wandelt die
+/// Das ViewModel hält nur das Formular und die Auswahllisten. Gelesen,
+/// gerechnet und geprüft wird im Kern: <see cref="InvoiceDraft"/> wandelt die
 /// Eingaben in eine <see cref="Invoice"/>, <see cref="InvoiceCalculator"/>
-/// rechnet, und <see cref="IEInvoiceService.ValidateInvoice"/> prueft gegen
+/// rechnet, und <see cref="IEInvoiceService.ValidateInvoice"/> prüft gegen
 /// EN 16931.
 /// </summary>
 public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : StepViewModel
@@ -29,7 +29,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     private InvoiceTotals? _totals;
 
     /// <summary>
-    /// Was die Vorbefuellung aus der PDF uebernommen hat. Leer, solange nichts
+    /// Was die Vorbefuellung aus der PDF übernommen hat. Leer, solange nichts
     /// erkannt wurde.
     /// </summary>
     [ObservableProperty]
@@ -65,11 +65,11 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     public bool HasPrefillMessage => PrefillMessage.Length > 0;
 
     /// <summary>
-    /// Uebernimmt ein Erkennungsergebnis in das Formular.
+    /// Übernimmt ein Erkennungsergebnis in das Formular.
     ///
-    /// Die Vertrauensstufen entscheiden dabei, was uebernommen wird – siehe
-    /// <see cref="DraftPrefiller"/>. Nichts davon geht ungeprueft weiter: Der
-    /// Weg fuehrt immer ueber die Bestaetigung in Schritt 3.
+    /// Die Vertrauensstufen entscheiden dabei, was übernommen wird – siehe
+    /// <see cref="DraftPrefiller"/>. Nichts davon geht ungeprüft weiter: Der
+    /// Weg führt immer über die Bestätigung in Schritt 3.
     /// </summary>
     public void ApplyDetection(InvoiceDetectionResult detection, CompanyTemplate? ownCompany)
     {
@@ -88,15 +88,15 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     [NotifyCanExecuteChangedFor(nameof(RemoveLineCommand))]
     private InvoiceLineDraft? _selectedLine;
 
-    /// <summary>Auswahlliste der Waehrungen.</summary>
+    /// <summary>Auswahlliste der Währungen.</summary>
     public static IReadOnlyList<CodeChoice> Currencies { get; } =
         [.. CurrencyCodeList.All.Select(e => new CodeChoice(e.Code, e.Name))];
 
-    /// <summary>Auswahlliste der Laender.</summary>
+    /// <summary>Auswahlliste der Länder.</summary>
     public static IReadOnlyList<CodeChoice> Countries { get; } =
         [.. CountryCodeList.All.Select(e => new CodeChoice(e.Code, e.Name))];
 
-    /// <summary>Auswahlliste der gebraeuchlichen Mengeneinheiten.</summary>
+    /// <summary>Auswahlliste der gebräuchlichen Mengeneinheiten.</summary>
     public static IReadOnlyList<CodeChoice> Units { get; } =
         [.. UnitCodeList.CommonUnits.Select(e => new CodeChoice(e.Code, e.Name))];
 
@@ -112,7 +112,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
         new(VatCategory.OutsideScope, "O – nicht steuerbar"),
     ];
 
-    /// <summary>Fuegt eine Position hinzu.</summary>
+    /// <summary>Fügt eine Position hinzu.</summary>
     [RelayCommand]
     public void AddLine()
     {
@@ -120,7 +120,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
         RecalculateTotals();
     }
 
-    /// <summary>Entfernt die gewaehlte Position.</summary>
+    /// <summary>Entfernt die gewählte Position.</summary>
     [RelayCommand(CanExecute = nameof(CanRemoveLine))]
     public void RemoveLine()
     {
@@ -149,7 +149,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     }
 
     /// <summary>
-    /// Prueft die erfassten Daten und zeigt die Befunde an. Liefert die
+    /// Prüft die erfassten Daten und zeigt die Befunde an. Liefert die
     /// gebaute Rechnung, wenn keine Fehler vorliegen, sonst <c>null</c>.
     /// </summary>
     public Invoice? Validate(out string statusMessage)
@@ -177,7 +177,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
         return ruleReport.HasErrors ? null : invoice;
     }
 
-    /// <summary>Uebernimmt eine gespeicherte Firmenvorlage in das Formular.</summary>
+    /// <summary>Übernimmt eine gespeicherte Firmenvorlage in das Formular.</summary>
     public void ApplyTemplate(CompanyTemplate template)
     {
         ArgumentNullException.ThrowIfNull(template);

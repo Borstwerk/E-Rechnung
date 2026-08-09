@@ -5,16 +5,16 @@ using EInvoiceSender.Core.Validation;
 
 namespace EInvoiceSender.App.ViewModels;
 
-/// <summary>Ein Befund, aufbereitet fuer die Anzeige.</summary>
+/// <summary>Ein Befund, aufbereitet für die Anzeige.</summary>
 public sealed class FindingViewModel(ValidationFinding finding)
 {
     /// <summary>Der zugrunde liegende Befund.</summary>
     public ValidationFinding Finding { get; } = finding;
 
-    /// <summary>Verstaendliche Meldung.</summary>
+    /// <summary>Verständliche Meldung.</summary>
     public string Message => Finding.Message;
 
-    /// <summary>Technische Angaben fuer den aufklappbaren Bereich.</summary>
+    /// <summary>Technische Angaben für den aufklappbaren Bereich.</summary>
     public string TechnicalDetail => Finding.BuildTechnicalSummary();
 
     /// <summary>Betroffenes Feld.</summary>
@@ -22,7 +22,7 @@ public sealed class FindingViewModel(ValidationFinding finding)
 
     /// <summary>
     /// Schweregrad als Wort. Fehler werden **nicht nur** durch Farbe
-    /// gekennzeichnet – das waere fuer farbfehlsichtige Anwender unbrauchbar.
+    /// gekennzeichnet – das wäre für farbfehlsichtige Anwender unbrauchbar.
     /// </summary>
     public string SeverityLabel => Finding.Severity switch
     {
@@ -31,7 +31,7 @@ public sealed class FindingViewModel(ValidationFinding finding)
         _ => "Hinweis",
     };
 
-    /// <summary>Zeichen zur zusaetzlichen, farbunabhaengigen Kennzeichnung.</summary>
+    /// <summary>Zeichen zur zusätzlichen, farbunabhängigen Kennzeichnung.</summary>
     public string SeverityGlyph => Finding.Severity switch
     {
         FindingSeverity.Error => "✕",
@@ -39,7 +39,7 @@ public sealed class FindingViewModel(ValidationFinding finding)
         _ => "i",
     };
 
-    /// <summary>Schweregrad fuer Vorlagenauswahl.</summary>
+    /// <summary>Schweregrad für Vorlagenauswahl.</summary>
     public FindingSeverity Severity => Finding.Severity;
 }
 
@@ -66,15 +66,15 @@ public sealed partial class StepProgressViewModel : ObservableObject
     /// <summary>Zustand als Wort, nicht nur als Farbe.</summary>
     public string StateLabel => State switch
     {
-        StepState.Running => "laeuft",
+        StepState.Running => "läuft",
         StepState.Succeeded => "erledigt",
         StepState.SucceededWithWarnings => "erledigt, mit Hinweisen",
         StepState.Failed => "fehlgeschlagen",
-        StepState.Skipped => "uebersprungen",
+        StepState.Skipped => "übersprungen",
         _ => string.Empty,
     };
 
-    /// <summary>Uebernimmt eine neue Meldung zu diesem Schritt.</summary>
+    /// <summary>Übernimmt eine neue Meldung zu diesem Schritt.</summary>
     public void Update(PipelineProgress progress)
     {
         ArgumentNullException.ThrowIfNull(progress);

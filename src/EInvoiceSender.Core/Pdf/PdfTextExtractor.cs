@@ -7,7 +7,7 @@ using UglyToad.PdfPig.Content;
 namespace EInvoiceSender.Core.Pdf;
 
 /// <summary>Eine Textzeile aus der PDF, mit ihrer Herkunft.</summary>
-/// <param name="Text">Der Zeileninhalt, Woerter durch je ein Leerzeichen getrennt.</param>
+/// <param name="Text">Der Zeileninhalt, Wörter durch je ein Leerzeichen getrennt.</param>
 /// <param name="PageNumber">Die Seite, beginnend bei 1.</param>
 /// <param name="Top">
 /// Abstand vom oberen Seitenrand in PDF-Punkten. Wird gebraucht, um Briefkopf
@@ -41,7 +41,7 @@ public sealed record PdfTextSegment(string Text, double Left);
 /// <param name="Lines">Alle Zeilen in Lesereihenfolge.</param>
 /// <param name="PageCount">Anzahl der Seiten.</param>
 /// <param name="HasUsableText">
-/// Enthaelt die Datei genug Text, um eine Auswertung zu rechtfertigen? Bei
+/// Enthält die Datei genug Text, um eine Auswertung zu rechtfertigen? Bei
 /// eingescannten Rechnungen ist das nicht der Fall.
 /// </param>
 public sealed record PdfTextResult(
@@ -61,27 +61,27 @@ public interface IPdfTextExtractor
 {
     /// <summary>
     /// Liest den eingebetteten Text. Es findet **keine** Texterkennung an
-    /// Bildern statt und es verlaesst nichts das Geraet.
+    /// Bildern statt und es verlässt nichts das Gerät.
     /// </summary>
     Task<PdfTextResult> ExtractAsync(string pdfPath, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Liest den eingebetteten Text einer PDF ueber PdfPig.
+/// Liest den eingebetteten Text einer PDF über PdfPig.
 ///
-/// **Ausschliesslich oertlich.** Die Datei wird gelesen, der Text im
+/// **Ausschließlich örtlich.** Die Datei wird gelesen, der Text im
 /// Arbeitsspeicher gehalten und nach der Auswertung verworfen. Er wird nicht
-/// gespeichert, nicht protokolliert und nicht uebertragen.
+/// gespeichert, nicht protokolliert und nicht übertragen.
 ///
 /// **Kein OCR.** Ausgewertet wird nur Text, der bereits in der Datei steht.
 /// Eine eingescannte Rechnung liefert hier nichts – das ist kein Fehler,
 /// sondern die richtige Antwort, und der Anwender wird darauf hingewiesen.
 ///
 /// Warum eine eigene Bibliothek: PdfSharp, das die Anwendung ohnehin
-/// verwendet, kann PDF-Dateien schreiben und veraendern, hat aber **keine**
+/// verwendet, kann PDF-Dateien schreiben und verändern, hat aber **keine**
 /// Textextraktion. Aus den rohen Zeichenanweisungen lesbaren Text zu machen
 /// hiesse, Zeichensatzkodierungen und ToUnicode-Tabellen selbst umzusetzen.
-/// Ein Fehler darin erzeugt still verfaelschten Text – und der landete dann in
+/// Ein Fehler darin erzeugt still verfälschten Text – und der landete dann in
 /// Rechnungsfeldern. Deshalb PdfPig (Apache-2.0), siehe
 /// docs/THIRD-PARTY-NOTICES.md.
 /// </summary>
@@ -90,8 +90,8 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
     private readonly ILogger<PdfTextExtractor> _logger = logger;
 
     /// <summary>
-    /// Woerter, deren Grundlinien weniger als dieser Abstand trennt, gelten als
-    /// dieselbe Zeile. Zwei Punkte fangen die ueblichen kleinen Schwankungen
+    /// Wörter, deren Grundlinien weniger als dieser Abstand trennt, gelten als
+    /// dieselbe Zeile. Zwei Punkte fangen die üblichen kleinen Schwankungen
     /// innerhalb einer Zeile ab, ohne benachbarte Zeilen zu verschmelzen.
     /// </summary>
     private const double LineToleranceInPoints = 2.5;
@@ -99,7 +99,7 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
     /// <summary>
     /// Unterhalb dieser Zeichenzahl gilt eine Datei als nicht auswertbar. Eine
     /// eingescannte Rechnung liefert oft ein paar Zeichen aus Metadaten oder
-    /// einem Wasserzeichen; das ist keine Grundlage fuer eine Erkennung.
+    /// einem Wasserzeichen; das ist keine Grundlage für eine Erkennung.
     /// </summary>
     private const int MinimumUsableCharacters = 120;
 
@@ -124,8 +124,8 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // Die Erkennung ist eine Komfortfunktion. Schlaegt sie fehl, wird
-            // die Rechnung eben von Hand erfasst - der Ablauf laeuft weiter.
+            // Die Erkennung ist eine Komfortfunktion. Schlägt sie fehl, wird
+            // die Rechnung eben von Hand erfasst - der Ablauf läuft weiter.
             // Protokolliert wird nur die Fehlerart, niemals Dateiinhalt.
             string reason = exception.GetType().Name;
             LogExtractionFailed(reason);
@@ -156,11 +156,11 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
     }
 
     /// <summary>
-    /// Fasst die Woerter einer Seite zu Zeilen zusammen.
+    /// Fasst die Wörter einer Seite zu Zeilen zusammen.
     ///
-    /// PdfPig liefert einzelne Woerter mit ihrer Lage. Fuer die Erkennung ist
+    /// PdfPig liefert einzelne Wörter mit ihrer Lage. Für die Erkennung ist
     /// die Zeile die entscheidende Einheit: "Rechnungsnummer: RE-2026-0815"
-    /// ergibt nur zusammenhaengend einen Sinn.
+    /// ergibt nur zusammenhängend einen Sinn.
     /// </summary>
     private static IEnumerable<PdfTextLine> BuildLines(Page page)
     {
@@ -193,7 +193,7 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
     }
 
     /// <summary>
-    /// Zerlegt die Wörter einer Grundlinie dort in Abschnitte, wo eine grosse
+    /// Zerlegt die Wörter einer Grundlinie dort in Abschnitte, wo eine große
     /// Lücke auf einen Spaltenwechsel hindeutet.
     /// </summary>
     private static List<PdfTextSegment> SplitIntoSegments(IReadOnlyList<Word> words)

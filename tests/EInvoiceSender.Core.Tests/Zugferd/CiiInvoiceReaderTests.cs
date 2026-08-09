@@ -9,8 +9,8 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests;
 
 /// <summary>
-/// Prueft das Zurueclesen der erzeugten XML. Das ist der Nachweis, dass das
-/// Ergebnis das enthaelt, was erzeugt werden sollte – und zugleich der Schutz
+/// Prüft das Zurüclesen der erzeugten XML. Das ist der Nachweis, dass das
+/// Ergebnis das enthält, was erzeugt werden sollte – und zugleich der Schutz
 /// vor bosartigen XML-Dateien aus fremden PDFs.
 /// </summary>
 public sealed class CiiInvoiceReaderTests
@@ -20,7 +20,7 @@ public sealed class CiiInvoiceReaderTests
 
     [Theory]
     [MemberData(nameof(ScenarioKeys))]
-    public void GelesenesEchoStimmtMitDenErzeugtenWertenUeberein(string key)
+    public void GelesenesEchoStimmtMitDenErzeugtenWertenÜberein(string key)
     {
         InvoiceScenario scenario = InvoiceScenarios.ByKey(key);
         InvoiceTotals totals = InvoiceCalculator.Calculate(scenario.Invoice);
@@ -56,7 +56,7 @@ public sealed class CiiInvoiceReaderTests
     }
 
     [Fact]
-    public void UnbekannteProfilkennungWirdUnveraendertGemeldet()
+    public void UnbekannteProfilkennungWirdUnverändertGemeldet()
     {
         byte[] xml = Bytes("""
             <?xml version="1.0" encoding="utf-8"?>
@@ -94,12 +94,12 @@ public sealed class CiiInvoiceReaderTests
     }
 
     /// <summary>
-    /// Sicherheitstest: Eine XML mit externer Entitaet darf keine lokale Datei
+    /// Sicherheitstest: Eine XML mit externer Entität darf keine lokale Datei
     /// einlesen. Bei aktivem <c>DtdProcessing = Prohibit</c> scheitert bereits
     /// das Parsen, und der Leser meldet lediglich "keine Rechnung".
     /// </summary>
     [Fact]
-    public void Sicherheitstest_ExterneEntitaetWirdNichtAufgeloest()
+    public void Sicherheitstest_ExterneEntitätWirdNichtAufgelöst()
     {
         byte[] xml = Bytes("""
             <?xml version="1.0" encoding="utf-8"?>
@@ -145,9 +145,9 @@ public sealed class CiiInvoiceReaderTests
     }
 
     [Fact]
-    public void UebergrosseXmlWirdAbgelehnt()
+    public void ÜbergroßeXmlWirdAbgelehnt()
     {
-        // Der Leser darf ein absichtlich riesiges Dokument nicht erst vollstaendig
+        // Der Leser darf ein absichtlich riesiges Dokument nicht erst vollständig
         // in den Parser lassen.
         byte[] xml = new byte[SecureXml.MaxXmlSizeInBytes + 1];
         Array.Fill(xml, (byte)'a');

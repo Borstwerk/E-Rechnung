@@ -6,16 +6,16 @@ using Microsoft.Extensions.Logging;
 namespace EInvoiceSender.Core.Security;
 
 /// <summary>
-/// Fuehrt externe Programme aus.
+/// Führt externe Programme aus.
 ///
 /// Sicherheitsvorgaben (docs/SECURITY.md, S5), die hier eingehalten werden:
-/// * Argumente ausschliesslich ueber <see cref="ProcessStartInfo.ArgumentList"/>.
+/// * Argumente ausschließlich über <see cref="ProcessStartInfo.ArgumentList"/>.
 ///   Es wird nie eine Kommandozeile aus Zeichenketten zusammengesetzt, damit
-///   Dateinamen mit Leerzeichen oder Anfuehrungszeichen nichts ausloesen koennen.
+///   Dateinamen mit Leerzeichen oder Anführungszeichen nichts auslösen können.
 /// * <c>UseShellExecute = false</c> – keine Shell, also keine Shell-Sonderzeichen.
-/// * Jeder Aufruf hat ein Zeitlimit. Laeuft es ab, wird der Prozessbaum beendet.
-/// * stdout und stderr werden vollstaendig und nebenlaeufig gelesen. Wuerde nur
-///   eine der beiden Leitungen gelesen, koennte der Kindprozess blockieren,
+/// * Jeder Aufruf hat ein Zeitlimit. Läuft es ab, wird der Prozessbaum beendet.
+/// * stdout und stderr werden vollständig und nebenläufig gelesen. Würde nur
+///   eine der beiden Leitungen gelesen, könnte der Kindprozess blockieren,
 ///   sobald die andere ihren Puffer fuellt.
 /// * Ein Abbruch durch den Benutzer beendet den Prozess ebenfalls.
 /// </summary>
@@ -40,7 +40,7 @@ public sealed partial class ProcessRunner : IProcessRunner
         if (timeout <= TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(timeout), timeout, "Ein Zeitlimit von null oder weniger ist nicht zulaessig.");
+                nameof(timeout), timeout, "Ein Zeitlimit von null oder weniger ist nicht zulässig.");
         }
 
         var startInfo = new ProcessStartInfo
@@ -96,8 +96,8 @@ public sealed partial class ProcessRunner : IProcessRunner
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        // Das Zeitlimit und der Benutzerabbruch werden zusammengefuehrt, damit
-        // beide Wege denselben Aufraeumpfad nehmen.
+        // Das Zeitlimit und der Benutzerabbruch werden zusammengeführt, damit
+        // beide Wege denselben Aufräumpfad nehmen.
         using var timeoutSource = new CancellationTokenSource(timeout);
         using var combined = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken, timeoutSource.Token);
@@ -164,7 +164,7 @@ public sealed partial class ProcessRunner : IProcessRunner
         }
         catch (NotSupportedException)
         {
-            // Auf dieser Plattform nicht unterstuetzt.
+            // Auf dieser Plattform nicht unterstützt.
         }
         catch (SystemException)
         {
@@ -174,7 +174,7 @@ public sealed partial class ProcessRunner : IProcessRunner
 
     [LoggerMessage(
         EventId = 3001, Level = LogLevel.Information,
-        Message = "Externes Werkzeug {FileName} beendet: Exitcode {ExitCode}, {Milliseconds} ms, Zeitueberschreitung: {TimedOut}")]
+        Message = "Externes Werkzeug {FileName} beendet: Exitcode {ExitCode}, {Milliseconds} ms, Zeitüberschreitung: {TimedOut}")]
     private static partial void LogProcessFinished(
         ILogger logger, string fileName, int exitCode, long milliseconds, bool timedOut);
 }

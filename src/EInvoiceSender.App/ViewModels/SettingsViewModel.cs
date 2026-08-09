@@ -10,12 +10,12 @@ namespace EInvoiceSender.App.ViewModels;
 /// Die dauerhaft gespeicherten Vorgaben: Firmenangaben, Bankverbindung und
 /// Standardtexte.
 ///
-/// Zwei Zusagen gelten hier ausdruecklich:
+/// Zwei Zusagen gelten hier ausdrücklich:
 ///
 /// - **Kein stilles Speichern.** Gespeichert wird nur auf Knopfdruck. Bank- und
 ///   Steuerdaten sollen nicht unbemerkt auf der Platte landen.
-/// - **Die IBAN wird unter Windows per DPAPI geschuetzt.** Steht DPAPI nicht
-///   zur Verfuegung, wird sie **gar nicht** gespeichert, statt im Klartext.
+/// - **Die IBAN wird unter Windows per DPAPI geschützt.** Steht DPAPI nicht
+///   zur Verfügung, wird sie **gar nicht** gespeichert, statt im Klartext.
 ///   Der Hinweistext sagt das dem Anwender.
 /// </summary>
 public sealed partial class SettingsViewModel(ISettingsStore store) : ObservableObject
@@ -43,25 +43,25 @@ public sealed partial class SettingsViewModel(ISettingsStore store) : Observable
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
-    /// <summary>Auswahlliste der Waehrungen.</summary>
+    /// <summary>Auswahlliste der Währungen.</summary>
     public static IReadOnlyList<CodeChoice> Currencies { get; } =
         [.. CurrencyCodeList.All.Select(e => new CodeChoice(e.Code, e.Name))];
 
-    /// <summary>Auswahlliste der Laender.</summary>
+    /// <summary>Auswahlliste der Länder.</summary>
     public static IReadOnlyList<CodeChoice> Countries { get; } =
         [.. CountryCodeList.All.Select(e => new CodeChoice(e.Code, e.Name))];
 
-    /// <summary>Kann die IBAN auf diesem System geschuetzt abgelegt werden?</summary>
+    /// <summary>Kann die IBAN auf diesem System geschützt abgelegt werden?</summary>
     public bool SupportsProtectedStorage => _store.SupportsProtectedStorage;
 
     /// <summary>Hinweis zum Umgang mit der IBAN auf diesem System.</summary>
     public string BankStorageHint => SupportsProtectedStorage
-        ? "Die IBAN wird mit dem Windows-Datenschutz (DPAPI) verschluesselt abgelegt und "
+        ? "Die IBAN wird mit dem Windows-Datenschutz (DPAPI) verschlüsselt abgelegt und "
           + "ist nur unter Ihrem Benutzerkonto lesbar."
-        : "Auf diesem System steht der Windows-Datenschutz (DPAPI) nicht zur Verfuegung. "
+        : "Auf diesem System steht der Windows-Datenschutz (DPAPI) nicht zur Verfügung. "
           + "Die IBAN wird deshalb bewusst NICHT gespeichert – sie muss je Rechnung erfasst werden.";
 
-    /// <summary>Laedt die gespeicherten Vorgaben.</summary>
+    /// <summary>Lädt die gespeicherten Vorgaben.</summary>
     [RelayCommand]
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -100,12 +100,12 @@ public sealed partial class SettingsViewModel(ISettingsStore store) : Observable
         }
     }
 
-    /// <summary>Setzt alle Felder auf den Auslieferungszustand zurueck.</summary>
+    /// <summary>Setzt alle Felder auf den Auslieferungszustand zurück.</summary>
     [RelayCommand]
     public void Reset()
     {
         Apply(new CompanyTemplate());
-        StatusMessage = "Die Felder wurden zurueckgesetzt. Erst 'Speichern' uebernimmt das dauerhaft.";
+        StatusMessage = "Die Felder wurden zurückgesetzt. Erst 'Speichern' übernimmt das dauerhaft.";
     }
 
     private void Apply(CompanyTemplate template)

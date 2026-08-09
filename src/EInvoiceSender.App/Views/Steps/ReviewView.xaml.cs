@@ -6,8 +6,8 @@ using Microsoft.Win32;
 namespace EInvoiceSender.App.Views.Steps;
 
 /// <summary>
-/// Schritt 3. Der Code-behind oeffnet nur den Windows-Ordnerdialog – eine
-/// Aufgabe, die ohne WPF-Bezug nicht loesbar ist.
+/// Schritt 3. Der Code-behind öffnet nur den Windows-Ordnerdialog – eine
+/// Aufgabe, die ohne WPF-Bezug nicht lösbar ist.
 /// </summary>
 public partial class ReviewView : UserControl
 {
@@ -22,7 +22,7 @@ public partial class ReviewView : UserControl
 
         var dialog = new OpenFolderDialog
         {
-            Title = "Ordner fuer die erzeugte E-Rechnung waehlen",
+            Title = "Ordner für die erzeugte E-Rechnung wählen",
             InitialDirectory = viewModel.OutputDirectory,
         };
 

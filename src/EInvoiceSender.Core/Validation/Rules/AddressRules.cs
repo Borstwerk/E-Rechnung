@@ -7,8 +7,8 @@ namespace EInvoiceSender.Core.Validation.Rules;
 /// <summary>
 /// Regeln zur Anschrift.
 ///
-/// Von Verkaeufer und Kaeufer gemeinsam genutzt - die Anforderungen an
-/// eine Anschrift sind fuer beide dieselben.
+/// Von Verkäufer und Käufer gemeinsam genutzt - die Anforderungen an
+/// eine Anschrift sind für beide dieselben.
 /// </summary>
 internal static class AddressRules
 {
@@ -16,7 +16,7 @@ internal static class AddressRules
         PostalAddress address, string field, string owner, string ruleId,
         ValidationReportBuilder report)
     {
-        // EN 16931 verlangt zwingend nur das Land. Ort und Strasse fehlen in der
+        // EN 16931 verlangt zwingend nur das Land. Ort und Straße fehlen in der
         // Praxis aber fast nie mit Absicht, deshalb hier als Warnung.
         if (string.IsNullOrWhiteSpace(address.City))
         {
@@ -30,7 +30,7 @@ internal static class AddressRules
         {
             report.Warning(
                 ruleId,
-                $"Im Anschriftsfeld {owner} fehlt die Strasse.",
+                $"Im Anschriftsfeld {owner} fehlt die Straße.",
                 $"{field}.Street");
         }
     }

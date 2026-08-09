@@ -1,7 +1,7 @@
 # STANDARDS.md – Verwendete Normen, Versionen und exakte Werte
 
 Stand: 2026-08-04. Alle hier festgelegten Werte sind **gepinnt**. Änderungen nur
-bewusst und nachvollziehbar begruendet.
+bewusst und nachvollziehbar begründet.
 
 Jede Angabe trägt eine Vertrauensangabe:
 

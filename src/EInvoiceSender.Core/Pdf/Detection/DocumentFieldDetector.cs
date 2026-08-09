@@ -13,10 +13,10 @@ public sealed record DetectedDocument
 }
 
 /// <summary>
-/// Erkennt Rechnungsnummer, Datumsangaben und Waehrung.
+/// Erkennt Rechnungsnummer, Datumsangaben und Währung.
 ///
-/// Alle Werte werden ausschliesslich ueber Schluesselwoerter zugeordnet. Ein
-/// Muster allein genuegt nie: In einer Rechnung stehen Dutzende Ziffernfolgen,
+/// Alle Werte werden ausschließlich über Schlüsselwörter zugeordnet. Ein
+/// Muster allein genügt nie: In einer Rechnung stehen Dutzende Ziffernfolgen,
 /// von denen genau eine die Rechnungsnummer ist.
 /// </summary>
 internal static class DocumentFieldDetector
@@ -28,11 +28,11 @@ internal static class DocumentFieldDetector
     ];
 
     /// <summary>
-    /// Woerter, die eine Zeile als Fundstelle der Rechnungsnummer ausschliessen.
+    /// Wörter, die eine Zeile als Fundstelle der Rechnungsnummer ausschließen.
     ///
-    /// Ohne diese Sperre wuerde in "Telefon 0381 123456 - Kundennummer 4711"
+    /// Ohne diese Sperre würde in "Telefon 0381 123456 - Kundennummer 4711"
     /// irgendeine Ziffernfolge zur Rechnungsnummer. Solche Verwechslungen sind
-    /// der haeufigste Weg, auf dem eine automatische Erkennung Schaden
+    /// der häufigste Weg, auf dem eine automatische Erkennung Schaden
     /// anrichtet.
     /// </summary>
     private static readonly string[] NumberBlockers =
@@ -49,7 +49,7 @@ internal static class DocumentFieldDetector
         ["leistungsdatum", "lieferdatum", "leistungszeitpunkt", "liefer- und leistungsdatum", "leistung am"];
 
     private static readonly string[] DueDateKeywords =
-        ["faellig am", "fällig am", "zahlbar bis", "faelligkeit", "fälligkeit", "due date", "zahlungsziel"];
+        ["fällig am", "fällig am", "zahlbar bis", "fälligkeit", "fälligkeit", "due date", "zahlungsziel"];
 
     public static DetectedDocument Detect(IReadOnlyList<PdfTextLine> lines) => new()
     {
@@ -122,8 +122,8 @@ internal static class DocumentFieldDetector
                     $"Stand unmittelbar hinter \"{keyword}\".");
             }
 
-            // Manche Vorlagen setzen den Wert in die naechste Zeile. Der
-            // Zusammenhang ist dann schwaecher, deshalb nur mittlere Sicherheit.
+            // Manche Vorlagen setzen den Wert in die nächste Zeile. Der
+            // Zusammenhang ist dann schwächer, deshalb nur mittlere Sicherheit.
             if (index + 1 < lines.Count
                 && DetectionParsers.TryParseFirstDate(lines[index + 1].Text, out DateOnly nextLine))
             {
@@ -145,7 +145,7 @@ internal static class DocumentFieldDetector
             {
                 return new DetectedValue<string>(
                     "EUR", DetectionConfidence.High, line.Text,
-                    "Waehrungszeichen im Dokument gefunden.");
+                    "Währungszeichen im Dokument gefunden.");
             }
         }
 

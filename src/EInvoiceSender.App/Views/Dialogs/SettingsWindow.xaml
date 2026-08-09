@@ -24,9 +24,9 @@
           <TextBlock Text="Name" />
           <TextBox Text="{Binding SellerName, UpdateSourceTrigger=PropertyChanged}" TabIndex="1"
                    AutomationProperties.Name="Firmenname" />
-          <TextBlock Text="Strasse" />
+          <TextBlock Text="Straße" />
           <TextBox Text="{Binding SellerStreet, UpdateSourceTrigger=PropertyChanged}" TabIndex="2"
-                   AutomationProperties.Name="Strasse" />
+                   AutomationProperties.Name="Straße" />
           <TextBlock Text="PLZ" />
           <TextBox Text="{Binding SellerPostalCode, UpdateSourceTrigger=PropertyChanged}" TabIndex="3"
                    AutomationProperties.Name="Postleitzahl" />
@@ -65,10 +65,10 @@
 
         <TextBlock Style="{StaticResource Abschnitt}" Text="Vorgaben neuer Rechnungen" />
         <UniformGrid Columns="2">
-          <TextBlock Text="Waehrung" />
+          <TextBlock Text="Währung" />
           <ComboBox ItemsSource="{Binding Currencies}" DisplayMemberPath="Display"
                     SelectedValuePath="Code" SelectedValue="{Binding DefaultCurrency}" TabIndex="12"
-                    AutomationProperties.Name="Standardwaehrung" />
+                    AutomationProperties.Name="Standardwährung" />
           <TextBlock Text="Zahlungsziel (Tage)" />
           <TextBox Text="{Binding DefaultPaymentTermDays, UpdateSourceTrigger=PropertyChanged}" TabIndex="13"
                    AutomationProperties.Name="Standardzahlungsziel in Tagen" />
@@ -96,9 +96,9 @@
                AutomationProperties.LiveSetting="Polite" />
 
     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-      <Button Content="_Zuruecksetzen" Command="{Binding ResetCommand}" TabIndex="20" />
+      <Button Content="_Zurücksetzen" Command="{Binding ResetCommand}" TabIndex="20" />
       <Button Content="_Speichern" Command="{Binding SaveCommand}" TabIndex="21" IsDefault="True" />
-      <Button Content="Schliessen" Click="OnCloseClicked" TabIndex="22" IsCancel="True" />
+      <Button Content="Schließen" Click="OnCloseClicked" TabIndex="22" IsCancel="True" />
     </StackPanel>
   </Grid>
 </Window>

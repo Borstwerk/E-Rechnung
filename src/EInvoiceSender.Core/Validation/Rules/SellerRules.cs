@@ -25,7 +25,7 @@ internal static class SellerRules
         {
             report.Error(
                 "APP-SEL-003",
-                $"'{seller.Address.Country.Value}' ist kein bekanntes Laenderkennzeichen.",
+                $"'{seller.Address.Country.Value}' ist kein bekanntes Länderkennzeichen.",
                 "Seller.Address.Country", normRule: "BR-09");
         }
 
@@ -43,8 +43,8 @@ internal static class SellerRules
         {
             report.Warning(
                 "APP-SEL-005",
-                "Die Umsatzsteuer-Identifikationsnummer hat ein ungewoehnliches Format. "
-                + "Sie beginnt normalerweise mit dem Laenderkennzeichen, zum Beispiel DE123456789.",
+                "Die Umsatzsteuer-Identifikationsnummer hat ein ungewöhnliches Format. "
+                + "Sie beginnt normalerweise mit dem Länderkennzeichen, zum Beispiel DE123456789.",
                 "Seller.VatId",
                 $"Gelesen: {seller.VatId}");
         }
@@ -53,10 +53,10 @@ internal static class SellerRules
         {
             report.Error(
                 "APP-SEL-006",
-                "Die E-Mail-Adresse des Rechnungsstellers ist nicht gueltig.",
+                "Die E-Mail-Adresse des Rechnungsstellers ist nicht gültig.",
                 "Seller.Email");
         }
     }
 
-    // ------------------------------------------------------------------ Kaeufer
+    // ------------------------------------------------------------------ Käufer
 }

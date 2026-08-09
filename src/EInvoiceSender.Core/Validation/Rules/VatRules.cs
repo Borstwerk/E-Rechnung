@@ -5,7 +5,7 @@ using EInvoiceSender.Core.Models;
 namespace EInvoiceSender.Core.Validation.Rules;
 
 /// <summary>
-/// Regeln zur Umsatzsteueraufschluesselung.
+/// Regeln zur Umsatzsteueraufschlüsselung.
 /// </summary>
 internal static class VatRules
 {
@@ -16,7 +16,7 @@ internal static class VatRules
         {
             report.Error(
                 "APP-VAT-010",
-                "Die Rechnung enthaelt keine Steueraufschluesselung.",
+                "Die Rechnung enthält keine Steueraufschlüsselung.",
                 "VatBreakdown", normRule: "BR-CO-18");
 
             return;
@@ -33,7 +33,7 @@ internal static class VatRules
             {
                 report.Error(
                     "APP-VAT-011",
-                    $"Der Steuerbetrag fuer {label} passt nicht zur Steuerbasis.",
+                    $"Der Steuerbetrag für {label} passt nicht zur Steuerbasis.",
                     "VatBreakdown",
                     $"Erwartet {SharedRules.Format(expected)}, berechnet {SharedRules.Format(entry.TaxAmount)}",
                     "BR-CO-17");
@@ -51,8 +51,8 @@ internal static class VatRules
             {
                 report.Error(
                     "APP-VAT-012",
-                    $"Fuer die Steuerkategorie '{entry.Category.ToCode()}' fehlt die "
-                    + "Begruendung der Steuerbefreiung. Ohne sie ist die Rechnung "
+                    $"Für die Steuerkategorie '{entry.Category.ToCode()}' fehlt die "
+                    + "Begründung der Steuerbefreiung. Ohne sie ist die Rechnung "
                     + "nicht normgerecht.",
                     "ExemptionReasons",
                     $"Betroffen: {label}", "BR-E-10");
@@ -62,8 +62,8 @@ internal static class VatRules
             {
                 report.Warning(
                     "APP-VAT-013",
-                    "Der angegebene Code fuer die Steuerbefreiung ist nicht bekannt. "
-                    + "Der Begruendungstext wird trotzdem uebernommen.",
+                    "Der angegebene Code für die Steuerbefreiung ist nicht bekannt. "
+                    + "Der Begründungstext wird trotzdem übernommen.",
                     "ExemptionReasons",
                     $"Code: {reason.ReasonCode}");
             }

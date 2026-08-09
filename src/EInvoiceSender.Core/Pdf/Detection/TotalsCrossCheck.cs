@@ -4,12 +4,12 @@ using EInvoiceSender.Core.Calculation;
 namespace EInvoiceSender.Core.Pdf.Detection;
 
 /// <summary>Das Ergebnis des Abgleichs zwischen PDF-Summen und berechneten Summen.</summary>
-/// <param name="WasPerformed">Konnte ueberhaupt verglichen werden?</param>
-/// <param name="Matches">Stimmen die Betraege ueberein?</param>
-/// <param name="Message">Ein Satz fuer den Anwender.</param>
+/// <param name="WasPerformed">Konnte überhaupt verglichen werden?</param>
+/// <param name="Matches">Stimmen die Beträge überein?</param>
+/// <param name="Message">Ein Satz für den Anwender.</param>
 public sealed record TotalsComparison(bool WasPerformed, bool Matches, string Message)
 {
-    /// <summary>Es lag kein erkannter Betrag vor, mit dem sich vergleichen liesse.</summary>
+    /// <summary>Es lag kein erkannter Betrag vor, mit dem sich vergleichen ließe.</summary>
     public static TotalsComparison NotPossible { get; } = new(
         false, false,
         "In der PDF wurde kein Gesamtbetrag gefunden, mit dem sich die erfassten Daten "
@@ -21,15 +21,15 @@ public sealed record TotalsComparison(bool WasPerformed, bool Matches, string Me
 /// Positionen berechneten.
 ///
 /// **Der PDF-Betrag ist dabei keine rechtliche Wahrheit.** Er ist ein zweites,
-/// unabhaengiges Signal. Stimmen beide ueberein, ist das ein starker Hinweis,
-/// dass die Positionen vollstaendig erfasst wurden. Weichen sie ab, sagt das
+/// unabhängiges Signal. Stimmen beide überein, ist das ein starker Hinweis,
+/// dass die Positionen vollständig erfasst wurden. Weichen sie ab, sagt das
 /// noch nicht, welcher Wert falsch ist – nur, dass jemand hinsehen sollte.
 ///
 /// Deshalb blockiert eine Abweichung nichts. Sie erzeugt einen Hinweis.
 /// </summary>
 public static class TotalsCrossCheck
 {
-    /// <summary>Zwei Cent Spielraum fuer Rundungsunterschiede der Vorlage.</summary>
+    /// <summary>Zwei Cent Spielraum für Rundungsunterschiede der Vorlage.</summary>
     private const decimal Tolerance = 0.02m;
 
     /// <summary>Vergleicht die erkannten mit den berechneten Summen.</summary>
@@ -55,14 +55,14 @@ public static class TotalsCrossCheck
         {
             return new TotalsComparison(
                 true, true,
-                $"Der Gesamtbetrag stimmt mit der PDF ueberein ({Money(ourAmount)}).");
+                $"Der Gesamtbetrag stimmt mit der PDF überein ({Money(ourAmount)}).");
         }
 
         return new TotalsComparison(
             true, false,
             "Der aus der PDF gelesene Gesamtbetrag unterscheidet sich vom berechneten. "
             + $"PDF: {Money(pdfAmount)}, erfasste Daten: {Money(ourAmount)}. "
-            + "Bitte pruefen Sie die Rechnungspositionen.");
+            + "Bitte prüfen Sie die Rechnungspositionen.");
     }
 
     private static string Money(decimal value)

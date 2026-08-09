@@ -4,26 +4,26 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.Values;
 
 /// <summary>
-/// Tests fuer <see cref="Iban"/>: Pruefzifferberechnung (ISO 7064 Mod 97-10),
+/// Tests für <see cref="Iban"/>: Prüfzifferberechnung (ISO 7064 Mod 97-10),
 /// Normalisierung, Maskierung und Anzeigeformat.
 /// </summary>
 public sealed class IbanTests
 {
     // Offiziell publizierte Beispiel-IBANs (u. a. aus der IBAN-Registry-Dokumentation).
     // Keine echten Bankdaten.
-    public static TheoryData<string, string> GueltigeIbans => new()
+    public static TheoryData<string, string> GültigeIbans => new()
     {
         { "DE89370400440532013000", "DE" }, // Deutschland
-        { "GB82WEST12345698765432", "GB" }, // Vereinigtes Koenigreich – Buchstaben im Kontoteil
+        { "GB82WEST12345698765432", "GB" }, // Vereinigtes Königreich – Buchstaben im Kontoteil
         { "FR1420041010050500013M02606", "FR" }, // Frankreich – Buchstabe im Kontoteil
-        { "AT611904300234573201", "AT" }, // Oesterreich
+        { "AT611904300234573201", "AT" }, // Österreich
         { "CH9300762011623852957", "CH" }, // Schweiz
         { "NL91ABNA0417164300", "NL" }, // Niederlande
     };
 
     [Theory]
-    [MemberData(nameof(GueltigeIbans))]
-    public void TryParse_AkzeptiertGueltigeIbansAusMehrerenLaendern(string wert, string erwartetesLand)
+    [MemberData(nameof(GültigeIbans))]
+    public void TryParse_AkzeptiertGültigeIbansAusMehrerenLändern(string wert, string erwartetesLand)
     {
         bool erfolg = Iban.TryParse(wert, out Iban iban);
 
@@ -71,19 +71,19 @@ public sealed class IbanTests
     }
 
     [Fact]
-    public void TryParse_PruefzifferBerechnungBeruecksichtigtBuchstabenImKontoteil_GbBeispiel()
+    public void TryParse_PrüfzifferBerechnungBerücksichtigtBuchstabenImKontoteil_GbBeispiel()
     {
-        // GB82WEST... enthaelt mit "WEST" Buchstaben im Kontoteil, die als 10..35
-        // in die Mod-97-Rechnung eingehen muessen, damit die Pruefziffer stimmt.
+        // GB82WEST... enthält mit "WEST" Buchstaben im Kontoteil, die als 10..35
+        // in die Mod-97-Rechnung eingehen müssen, damit die Prüfziffer stimmt.
         bool erfolg = Iban.TryParse("GB82WEST12345698765432", out Iban iban);
 
         Assert.True(erfolg);
     }
 
     [Fact]
-    public void TryParse_PruefzifferBerechnungBeruecksichtigtBuchstabenImKontoteil_FrBeispiel()
+    public void TryParse_PrüfzifferBerechnungBerücksichtigtBuchstabenImKontoteil_FrBeispiel()
     {
-        // FR...M02606 enthaelt den Buchstaben 'M' im Kontoteil.
+        // FR...M02606 enthält den Buchstaben 'M' im Kontoteil.
         bool erfolg = Iban.TryParse("FR1420041010050500013M02606", out Iban iban);
 
         Assert.True(erfolg);
@@ -117,7 +117,7 @@ public sealed class IbanTests
     [Fact]
     public void TryParse_LehntZuKurzeIbanAb()
     {
-        // Kuerzer als 15 Zeichen (Mindestlaenge, siehe Norwegen).
+        // Kürzer als 15 Zeichen (Mindestlänge, siehe Norwegen).
         bool erfolg = Iban.TryParse("DE8937040044", out Iban iban);
 
         Assert.False(erfolg);
@@ -126,16 +126,16 @@ public sealed class IbanTests
     [Fact]
     public void TryParse_LehntZuLangeIbanAb()
     {
-        // Laenger als 34 Zeichen (Hoechstlaenge nach ISO 13616).
+        // Länger als 34 Zeichen (Höchstlänge nach ISO 13616).
         bool erfolg = Iban.TryParse("DE893704004405320130001234567890123", out Iban iban);
 
         Assert.False(erfolg);
     }
 
     [Fact]
-    public void TryParse_LehntFalschePruefzifferAb()
+    public void TryParse_LehntFalschePrüfzifferAb()
     {
-        // Letzte Ziffer einer gueltigen IBAN veraendert (0 -> 1).
+        // Letzte Ziffer einer gültigen IBAN verändert (0 -> 1).
         bool erfolg = Iban.TryParse("DE89370400440532013001", out Iban iban);
 
         Assert.False(erfolg);
@@ -152,23 +152,23 @@ public sealed class IbanTests
     [Fact]
     public void TryParse_LehntLandNichtZweiBuchstabenAb()
     {
-        // Ziffer an Stelle des Laendercodes.
+        // Ziffer an Stelle des Ländercodes.
         bool erfolg = Iban.TryParse("D189370400440532013000", out Iban iban);
 
         Assert.False(erfolg);
     }
 
     [Fact]
-    public void TryParse_LehntPruefzifferstellenOhneZiffernAb()
+    public void TryParse_LehntPrüfzifferstellenOhneZiffernAb()
     {
-        // Buchstaben statt Ziffern an den Pruefzifferstellen (Position 3-4).
+        // Buchstaben statt Ziffern an den Prüfzifferstellen (Position 3-4).
         bool erfolg = Iban.TryParse("DEAB370400440532013000", out Iban iban);
 
         Assert.False(erfolg);
     }
 
     [Fact]
-    public void Parse_LiefertIbanBeiGueltigerEingabe()
+    public void Parse_LiefertIbanBeiGültigerEingabe()
     {
         Iban iban = Iban.Parse("DE89370400440532013000");
 
@@ -176,21 +176,21 @@ public sealed class IbanTests
     }
 
     [Fact]
-    public void Parse_WirftFormatExceptionBeiUngueltigerEingabe()
+    public void Parse_WirftFormatExceptionBeiUngültigerEingabe()
     {
         Assert.Throws<FormatException>(() => Iban.Parse("keine-iban"));
     }
 
     [Fact]
-    public void Parse_ExceptionMessageEnthaeltNichtDieVollstaendigeIban()
+    public void Parse_ExceptionMessageEnthältNichtDieVollständigeIban()
     {
         // Sicherheitsanforderung: die Fehlermeldung darf die IBAN nicht im Klartext
         // enthalten, damit sie in Logs/Meldungen nicht landet.
-        const string ungueltigeIban = "DE89370400440532013001";
+        const string ungültigeIban = "DE89370400440532013001";
 
-        FormatException exception = Assert.Throws<FormatException>(() => Iban.Parse(ungueltigeIban));
+        FormatException exception = Assert.Throws<FormatException>(() => Iban.Parse(ungültigeIban));
 
-        Assert.DoesNotContain(ungueltigeIban, exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(ungültigeIban, exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public sealed class IbanTests
     [Fact]
     public void Mask_LiefertNurSterneBeiKurzemWert()
     {
-        // Laenge <= 6 nach Normalisierung: keine Zeichen bleiben sichtbar.
+        // Länge <= 6 nach Normalisierung: keine Zeichen bleiben sichtbar.
         string? maskiert = Iban.Mask("DE8937");
 
         Assert.Equal("******", maskiert);
@@ -238,7 +238,7 @@ public sealed class IbanTests
     }
 
     [Fact]
-    public void ToDisplayString_LetzteGruppeDarfKuerzerSein()
+    public void ToDisplayString_LetzteGruppeDarfKürzerSein()
     {
         Assert.True(Iban.TryParse("NL91ABNA0417164300", out Iban iban));
 

@@ -4,28 +4,28 @@ using System.Globalization;
 namespace EInvoiceSender.Core.Models;
 
 /// <summary>
-/// Internationale Bankkontonummer mit geprueften Pruefziffern nach
+/// Internationale Bankkontonummer mit geprüften Prüfziffern nach
 /// ISO 13616 in Verbindung mit ISO 7064 (Mod 97-10).
-/// Der Typ existiert nur in gueltigem Zustand.
+/// Der Typ existiert nur in gültigem Zustand.
 /// </summary>
 public readonly record struct Iban
 {
-    /// <summary>Kuerzeste bekannte IBAN (Norwegen).</summary>
+    /// <summary>Kürzeste bekannte IBAN (Norwegen).</summary>
     private const int MinLength = 15;
 
-    /// <summary>Laengste zulaessige IBAN nach ISO 13616.</summary>
+    /// <summary>Längste zulässige IBAN nach ISO 13616.</summary>
     private const int MaxLength = 34;
 
     private Iban(string normalized) => Value = normalized;
 
-    /// <summary>Normalisierte Darstellung: Grossbuchstaben, ohne Leerzeichen.</summary>
+    /// <summary>Normalisierte Darstellung: Großbuchstaben, ohne Leerzeichen.</summary>
     public string Value { get; }
 
-    /// <summary>Laenderkennung der IBAN (die ersten beiden Zeichen).</summary>
+    /// <summary>Länderkennung der IBAN (die ersten beiden Zeichen).</summary>
     public string CountryPrefix => Value[..2];
 
     /// <summary>
-    /// Darstellung in Vierergruppen, wie sie auf Rechnungen ueblich ist.
+    /// Darstellung in Vierergruppen, wie sie auf Rechnungen üblich ist.
     /// </summary>
     public string ToDisplayString()
     {
@@ -59,7 +59,7 @@ public readonly record struct Iban
             return false;
         }
 
-        // Aufbau: zwei Buchstaben Land, zwei Ziffern Pruefsumme, dann alphanumerisch.
+        // Aufbau: zwei Buchstaben Land, zwei Ziffern Prüfsumme, dann alphanumerisch.
         if (!char.IsAsciiLetterUpper(normalized[0]) || !char.IsAsciiLetterUpper(normalized[1])
             || !char.IsAsciiDigit(normalized[2]) || !char.IsAsciiDigit(normalized[3]))
         {
@@ -85,14 +85,14 @@ public readonly record struct Iban
 
     /// <summary>
     /// Liest eine IBAN oder wirft. Nur verwenden, wenn die Eingabe bereits
-    /// geprueft ist – im Erfassungsweg immer <see cref="TryParse"/> benutzen.
+    /// geprüft ist – im Erfassungsweg immer <see cref="TryParse"/> benutzen.
     /// </summary>
     public static Iban Parse(string input)
         => TryParse(input, out var iban)
             ? iban
-            : throw new FormatException($"'{Mask(input)}' ist keine gueltige IBAN.");
+            : throw new FormatException($"'{Mask(input)}' ist keine gültige IBAN.");
 
-    /// <summary>Entfernt Leerzeichen und Bindestriche, stellt auf Grossbuchstaben.</summary>
+    /// <summary>Entfernt Leerzeichen und Bindestriche, stellt auf Großbuchstaben.</summary>
     public static string Normalize(string input)
     {
         Span<char> buffer = input.Length <= 64 ? stackalloc char[input.Length] : new char[input.Length];
@@ -112,8 +112,8 @@ public readonly record struct Iban
 
     /// <summary>
     /// ISO 7064 Mod 97-10. Die ersten vier Zeichen wandern ans Ende, Buchstaben
-    /// werden durch 10..35 ersetzt, danach wird stueckweise modulo 97 gerechnet,
-    /// damit keine Zahl ueberlaeuft. Gueltig ist genau der Rest 1.
+    /// werden durch 10..35 ersetzt, danach wird stückweise modulo 97 gerechnet,
+    /// damit keine Zahl überläuft. Gültig ist genau der Rest 1.
     /// </summary>
     private static int ComputeMod97(string normalized)
     {
@@ -139,7 +139,7 @@ public readonly record struct Iban
     }
 
     /// <summary>
-    /// Maskiert eine IBAN fuer Protokolle und Fehlermeldungen: nur die ersten
+    /// Maskiert eine IBAN für Protokolle und Fehlermeldungen: nur die ersten
     /// vier und die letzten zwei Zeichen bleiben sichtbar.
     /// </summary>
     [return: NotNullIfNotNull(nameof(value))]
@@ -161,6 +161,6 @@ public readonly record struct Iban
             $"{normalized[..4]}{new string('*', normalized.Length - 6)}{normalized[^2..]}");
     }
 
-    /// <summary>Maskierte Darstellung dieser IBAN fuer Protokolle.</summary>
+    /// <summary>Maskierte Darstellung dieser IBAN für Protokolle.</summary>
     public string ToMaskedString() => Mask(Value);
 }

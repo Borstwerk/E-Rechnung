@@ -15,7 +15,7 @@ internal static class InvoiceLineRules
         {
             report.Error(
                 "APP-LIN-001",
-                "Die Rechnung enthaelt keine Positionen. Mindestens eine ist erforderlich.",
+                "Die Rechnung enthält keine Positionen. Mindestens eine ist erforderlich.",
                 "Lines", normRule: "BR-16");
 
             return;
@@ -60,14 +60,14 @@ internal static class InvoiceLineRules
                     "APP-LIN-005",
                     $"Die Mengeneinheit '{line.Unit.Value}' in {label} ist unbekannt.",
                     $"{field}.Unit",
-                    "Zulaessig sind die Codes nach UN/ECE-Empfehlung 20 und 21.", "BR-23");
+                    "Zulässig sind die Codes nach UN/ECE-Empfehlung 20 und 21.", "BR-23");
             }
 
             if (line.NetUnitPrice < 0m)
             {
                 report.Error(
                     "APP-LIN-006",
-                    $"Der Einzelpreis in {label} ist negativ. Verwenden Sie fuer "
+                    $"Der Einzelpreis in {label} ist negativ. Verwenden Sie für "
                     + "Gutschriften die Rechnungsart 381 statt negativer Preise.",
                     $"{field}.NetUnitPrice", normRule: "BR-27");
             }
@@ -76,7 +76,7 @@ internal static class InvoiceLineRules
             {
                 report.Error(
                     "APP-LIN-007",
-                    $"Die Preisbasismenge in {label} muss groesser als null sein.",
+                    $"Die Preisbasismenge in {label} muss größer als null sein.",
                     $"{field}.PriceBaseQuantity",
                     $"Gelesen: {SharedRules.Format(line.PriceBaseQuantity)}", "BR-DEC-24");
             }
@@ -85,7 +85,7 @@ internal static class InvoiceLineRules
             {
                 report.Error(
                     "APP-LIN-008",
-                    $"Rabatt und Zuschlag in {label} muessen als positive Betraege "
+                    $"Rabatt und Zuschlag in {label} müssen als positive Beträge "
                     + "angegeben werden.",
                     $"{field}.AllowanceAmount", normRule: "BR-31");
             }
@@ -96,7 +96,7 @@ internal static class InvoiceLineRules
             {
                 report.Error(
                     "APP-LIN-009",
-                    $"Der Rabatt in {label} ist groesser als der Positionsbetrag.",
+                    $"Der Rabatt in {label} ist größer als der Positionsbetrag.",
                     $"{field}.AllowanceAmount",
                     $"Positionsbetrag {SharedRules.Format(lineNet)}");
             }
@@ -128,7 +128,7 @@ internal static class InvoiceLineRules
         {
             report.Error(
                 "APP-VAT-002",
-                $"Der Steuersatz in {label} ist groesser als 100 Prozent.",
+                $"Der Steuersatz in {label} ist größer als 100 Prozent.",
                 field,
                 $"Gelesen: {SharedRules.Format(rate)}");
 
@@ -140,7 +140,7 @@ internal static class InvoiceLineRules
             report.Error(
                 "APP-VAT-003",
                 $"{label} ist als regelbesteuert gekennzeichnet, hat aber den Steuersatz null. "
-                + "Waehlen Sie entweder einen Steuersatz groesser null oder eine andere "
+                + "Wählen Sie entweder einen Steuersatz größer null oder eine andere "
                 + "Steuerkategorie.",
                 field, normRule: "BR-S-05");
         }
@@ -150,7 +150,7 @@ internal static class InvoiceLineRules
             report.Error(
                 "APP-VAT-004",
                 $"{label} ist als nullsatzbesteuert gekennzeichnet, hat aber einen "
-                + "Steuersatz groesser null.",
+                + "Steuersatz größer null.",
                 field, normRule: "BR-Z-05");
         }
 
@@ -161,7 +161,7 @@ internal static class InvoiceLineRules
         {
             report.Error(
                 "APP-VAT-005",
-                $"{label} ist steuerbefreit, hat aber einen Steuersatz groesser null.",
+                $"{label} ist steuerbefreit, hat aber einen Steuersatz größer null.",
                 field,
                 $"Kategorie {category.ToCode()}, Satz {SharedRules.Format(rate)}", "BR-E-05");
         }

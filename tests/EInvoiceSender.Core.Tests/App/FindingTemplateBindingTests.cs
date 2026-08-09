@@ -5,7 +5,7 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests.App;
 
 /// <summary>
-/// Prueft die Anzeigevorlage fuer Befunde gegen das ViewModel, das sie anzeigt.
+/// Prüft die Anzeigevorlage für Befunde gegen das ViewModel, das sie anzeigt.
 ///
 /// **Warum dieser Test existiert:** Zwei Fehler dieser Art sind im laufenden
 /// Programm aufgetreten, und beide meldet WPF nicht:
@@ -14,7 +14,7 @@ namespace EInvoiceSender.Core.Tests.App;
 ///    den Klassennamen. Genau das stand in der Befundliste im Fenster.
 /// 2. Ist ein Bindungspfad falsch geschrieben, bleibt das Feld leer. WPF
 ///    schreibt eine Meldung ins Ausgabefenster des Debuggers und macht sonst
-///    weiter. Ohne angehaengten Debugger bemerkt das niemand.
+///    weiter. Ohne angehängten Debugger bemerkt das niemand.
 ///
 /// Der Test liest XAML und ViewModel als Text und braucht deshalb weder WPF
 /// noch einen Windows-Rechner.
@@ -29,16 +29,16 @@ public sealed class FindingTemplateBindingTests
         @"\{Binding\s+(?:Path\s*=\s*)?(?<pfad>[A-Za-z_][A-Za-z0-9_]*)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    /// <summary>Erfasst die oeffentlichen Eigenschaften des ViewModels im Quelltext.</summary>
+    /// <summary>Erfasst die öffentlichen Eigenschaften des ViewModels im Quelltext.</summary>
     private static readonly Regex PropertyPattern = new(
         @"public\s+[\w<>?\.\[\]]+\s+(?<name>\w+)\s*(?:=>|\{\s*get)",
         RegexOptions.Compiled);
 
     [Fact]
-    public void FuerBefundeGibtEsEineAnzeigevorlage()
+    public void FürBefundeGibtEsEineAnzeigevorlage()
         => Assert.True(
             FindingTemplate() is not null,
-            "In App.xaml fehlt eine DataTemplate fuer FindingViewModel. Ohne sie zeigt WPF in "
+            "In App.xaml fehlt eine DataTemplate für FindingViewModel. Ohne sie zeigt WPF in "
             + "jeder Befundliste den Klassennamen statt der Meldung.");
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class FindingTemplateBindingTests
 
         // Zwei Schreibweisen kommen vor: die Kurzform {Binding Pfad} in einem
         // Attribut und das ausgeschriebene <Binding Path="Pfad" /> in einem
-        // MultiBinding. Beide muessen geprueft werden.
+        // MultiBinding. Beide müssen geprüft werden.
         string[] gebunden = [.. BindingPattern
             .Matches(vorlage)
             .Select(m => m.Groups["pfad"].Value)
@@ -64,7 +64,7 @@ public sealed class FindingTemplateBindingTests
                 .Select(p => p!))
             .Distinct(StringComparer.Ordinal)];
 
-        Assert.True(gebunden.Length > 0, "Die Vorlage bindet ueberhaupt nichts – das kann nicht stimmen.");
+        Assert.True(gebunden.Length > 0, "Die Vorlage bindet überhaupt nichts – das kann nicht stimmen.");
 
         string[] unbekannt = [.. gebunden.Where(p => !eigenschaften.Contains(p, StringComparer.Ordinal))];
 
@@ -78,7 +78,7 @@ public sealed class FindingTemplateBindingTests
 
     /// <summary>
     /// Der Schweregrad muss als Wort **und** als Zeichen erscheinen. Farbe
-    /// allein genuegt nicht – fuer farbfehlsichtige Anwender waere die Liste
+    /// allein genügt nicht – für farbfehlsichtige Anwender wäre die Liste
     /// sonst nicht lesbar.
     /// </summary>
     [Fact]
@@ -92,7 +92,7 @@ public sealed class FindingTemplateBindingTests
 
     private static string Template()
         => (FindingTemplate() ?? throw new InvalidOperationException(
-            "In App.xaml fehlt die DataTemplate fuer FindingViewModel.")).ToString();
+            "In App.xaml fehlt die DataTemplate für FindingViewModel.")).ToString();
 
     private static XElement? FindingTemplate()
         => XDocument

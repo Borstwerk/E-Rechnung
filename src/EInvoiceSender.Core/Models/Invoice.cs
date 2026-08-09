@@ -9,13 +9,13 @@ namespace EInvoiceSender.Core.Models;
 /// </summary>
 /// <param name="Number">Positionsnummer (BT-126). Muss innerhalb der Rechnung eindeutig sein.</param>
 /// <param name="Name">Kurzbezeichnung der Leistung (BT-153).</param>
-/// <param name="Description">Ausfuehrliche Beschreibung (BT-154), optional.</param>
+/// <param name="Description">Ausführliche Beschreibung (BT-154), optional.</param>
 /// <param name="Quantity">Menge (BT-129). Bei Gutschriften ebenfalls positiv anzugeben.</param>
 /// <param name="Unit">Mengeneinheit (BT-130).</param>
 /// <param name="NetUnitPrice">Netto-Einzelpreis (BT-146).</param>
 /// <param name="PriceBaseQuantity">
 /// Preisbasismenge (BT-149). Gibt an, auf welche Menge sich der Einzelpreis
-/// bezieht; Vorgabe 1. Ein Wert von 0 ist unzulaessig und wird geprueft.
+/// bezieht; Vorgabe 1. Ein Wert von 0 ist unzulässig und wird geprüft.
 /// </param>
 /// <param name="AllowanceAmount">Positionsrabatt (BT-136).</param>
 /// <param name="AllowanceReason">Grund des Positionsrabatts (BT-139).</param>
@@ -61,7 +61,7 @@ public sealed record DocumentAllowanceCharge(
 
 /// <summary>Zahlungsangaben (BG-16).</summary>
 /// <param name="MeansCode">Zahlungsart (BT-81).</param>
-/// <param name="BankAccount">Bankverbindung des Verkaeufers (BG-17), bei Ueberweisung erforderlich.</param>
+/// <param name="BankAccount">Bankverbindung des Verkäufers (BG-17), bei Überweisung erforderlich.</param>
 /// <param name="Terms">Zahlungsbedingungen im Klartext (BT-20).</param>
 /// <param name="Reference">Verwendungszweck beziehungsweise Zahlungsreferenz (BT-83).</param>
 public sealed record PaymentDetails(
@@ -72,18 +72,18 @@ public sealed record PaymentDetails(
 
 /// <summary>
 /// Angabe zur Steuerbefreiung je Kategorie. EN 16931 verlangt bei allen
-/// Kategorien ausser 'S' und 'Z' eine Begruendung (BT-120).
+/// Kategorien außer 'S' und 'Z' eine Begründung (BT-120).
 /// </summary>
 /// <param name="Category">Betroffene Steuerkategorie.</param>
-/// <param name="Reason">Begruendung im Klartext (BT-120).</param>
-/// <param name="ReasonCode">Codierte Begruendung (BT-121), optional.</param>
+/// <param name="Reason">Begründung im Klartext (BT-120).</param>
+/// <param name="ReasonCode">Codierte Begründung (BT-121), optional.</param>
 public sealed record VatExemptionReason(
     VatCategory Category,
     string Reason,
     string? ReasonCode = null);
 
 /// <summary>
-/// Die vollstaendige, bereits typgepruefte Rechnung. Aggregatwurzel der Domain.
+/// Die vollständige, bereits typgeprüfte Rechnung. Aggregatwurzel der Domain.
 ///
 /// Dieses Objekt entsteht erst, wenn alle Einzelwerte erfolgreich gelesen werden
 /// konnten. Fehleingaben werden vorher im Entwurfsmodell der Application-Schicht
@@ -100,28 +100,28 @@ public sealed record Invoice
     /// <summary>Rechnungsart (BT-3).</summary>
     public InvoiceTypeCode TypeCode { get; init; } = InvoiceTypeCode.CommercialInvoice;
 
-    /// <summary>Waehrung (BT-5).</summary>
+    /// <summary>Währung (BT-5).</summary>
     public CurrencyCode Currency { get; init; } = CurrencyCode.Euro;
 
-    /// <summary>Verkaeufer (BG-4).</summary>
+    /// <summary>Verkäufer (BG-4).</summary>
     public required SellerParty Seller { get; init; }
 
-    /// <summary>Kaeufer (BG-7).</summary>
+    /// <summary>Käufer (BG-7).</summary>
     public required BuyerParty Buyer { get; init; }
 
     /// <summary>Rechnungspositionen (BG-25). Mindestens eine ist erforderlich.</summary>
     public required IReadOnlyList<InvoiceLine> Lines { get; init; }
 
-    /// <summary>Nachlaesse und Zuschlaege auf Dokumentebene (BG-20 / BG-21).</summary>
+    /// <summary>Nachlässe und Zuschläge auf Dokumentebene (BG-20 / BG-21).</summary>
     public IReadOnlyList<DocumentAllowanceCharge> AllowancesAndCharges { get; init; } = [];
 
-    /// <summary>Begruendungen der Steuerbefreiung je Kategorie (BT-120).</summary>
+    /// <summary>Begründungen der Steuerbefreiung je Kategorie (BT-120).</summary>
     public IReadOnlyList<VatExemptionReason> ExemptionReasons { get; init; } = [];
 
     /// <summary>Zahlungsangaben (BG-16).</summary>
     public PaymentDetails? Payment { get; init; }
 
-    /// <summary>Faelligkeitsdatum (BT-9).</summary>
+    /// <summary>Fälligkeitsdatum (BT-9).</summary>
     public DateOnly? DueDate { get; init; }
 
     /// <summary>Leistungsdatum (BT-72), falls kein Zeitraum angegeben ist.</summary>
@@ -133,7 +133,7 @@ public sealed record Invoice
     /// <summary>Ende des Abrechnungszeitraums (BT-74).</summary>
     public DateOnly? BillingPeriodEnd { get; init; }
 
-    /// <summary>Bestellreferenz des Kaeufers (BT-13).</summary>
+    /// <summary>Bestellreferenz des Käufers (BT-13).</summary>
     public string? OrderReference { get; init; }
 
     /// <summary>Kundenreferenz beziehungsweise Leitweg-ID (BT-10).</summary>

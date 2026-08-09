@@ -1,11 +1,11 @@
-<#
+﻿<#
 .SYNOPSIS
-    Veroeffentlicht die Anwendung als eigenstaendiges Paket fuer win-x64.
+    Veröffentlicht die Anwendung als eigenständiges Paket für win-x64.
 
 .DESCRIPTION
-    Das Ergebnis enthaelt die .NET-Laufzeit und laeuft ohne vorherige
-    Installation eines Frameworks. Es ist die Grundlage fuer den Installer
-    und fuer die tragbare ZIP-Fassung.
+    Das Ergebnis enthält die .NET-Laufzeit und läuft ohne vorherige
+    Installation eines Frameworks. Es ist die Grundlage für den Installer
+    und für die tragbare ZIP-Fassung.
 #>
 [CmdletBinding()]
 param(
@@ -19,16 +19,16 @@ if (Test-Path $OutputDirectory) {
     Remove-Item $OutputDirectory -Recurse -Force
 }
 
-Write-Host "Anwendung wird veroeffentlicht nach $OutputDirectory ..." -ForegroundColor Cyan
+Write-Host "Anwendung wird veröffentlicht nach $OutputDirectory ..." -ForegroundColor Cyan
 dotnet publish $project `
     -c Release `
     -r win-x64 `
     --self-contained true `
     -p:PublishReadyToRun=true `
     -o $OutputDirectory
-if ($LASTEXITCODE -ne 0) { throw "Das Veroeffentlichen ist fehlgeschlagen." }
+if ($LASTEXITCODE -ne 0) { throw "Das Veröffentlichen ist fehlgeschlagen." }
 
 $exe = Join-Path $OutputDirectory 'EInvoiceSender.exe'
-if (-not (Test-Path $exe)) { throw "EInvoiceSender.exe fehlt im Veroeffentlichungsordner." }
+if (-not (Test-Path $exe)) { throw "EInvoiceSender.exe fehlt im Veröffentlichungsordner." }
 
-Write-Host "Veroeffentlichung erfolgreich: $exe" -ForegroundColor Green
+Write-Host "Veröffentlichung erfolgreich: $exe" -ForegroundColor Green

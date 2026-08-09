@@ -1,12 +1,12 @@
 # Aufbau
 
 Die Projektmappe besteht aus vier Projekten plus dem Installer. Mehr braucht
-eine Desktopanwendung dieser Groesse nicht.
+eine Desktopanwendung dieser Größe nicht.
 
 ```
 EInvoiceSender.sln
 ├── src/EInvoiceSender.Core   – der fachliche Kern     (net10.0, kein WPF)
-├── src/EInvoiceSender.App    – die Oberflaeche        (net10.0-windows, WPF, x64)
+├── src/EInvoiceSender.App    – die Oberfläche        (net10.0-windows, WPF, x64)
 ├── tests/EInvoiceSender.Core.Tests
 ├── tests/EInvoiceSender.IntegrationTests
 └── installer/EInvoiceSender.Setup                     (WiX, nur unter Windows baubar)
@@ -14,28 +14,28 @@ EInvoiceSender.sln
 
 ## EInvoiceSender.Core
 
-Alles Fachliche. Kennt kein WPF und laesst sich deshalb vollstaendig
-automatisiert pruefen – auch auf einem Build-Agenten ohne Bildschirm.
+Alles Fachliche. Kennt kein WPF und lässt sich deshalb vollständig
+automatisiert prüfen – auch auf einem Build-Agenten ohne Bildschirm.
 
 | Ordner | Inhalt |
 |---|---|
-| `Models` | Rechnung, Parteien, Betraege, Werttypen (IBAN, Waehrung, Land, Einheit), das Eingabeformular `InvoiceDraft` |
-| `Calculation` | Summen- und Steuerberechnung nach EN 16931, ausschliesslich `decimal` |
-| `Validation` | Befunde und Pruefberichte |
+| `Models` | Rechnung, Parteien, Beträge, Werttypen (IBAN, Währung, Land, Einheit), das Eingabeformular `InvoiceDraft` |
+| `Calculation` | Summen- und Steuerberechnung nach EN 16931, ausschließlich `decimal` |
+| `Validation` | Befunde und Prüfberichte |
 | `Validation/Rules` | die EN-16931-Regeln, nach Dokument, Parteien, Positionen, Umsatzsteuer, Summen und Zahlung gruppiert |
-| `Zugferd` | CII-XML erzeugen und zurueclesen |
-| `Pdf` | PDF-Analyse, Eingangspruefung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
-| `Pdf/Detection` | oertliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefuellung und Summenabgleich |
+| `Zugferd` | CII-XML erzeugen und zurüclesen |
+| `Pdf` | PDF-Analyse, Eingangsprüfung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
+| `Pdf/Detection` | örtliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefuellung und Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
-| `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporaere Arbeitsverzeichnisse |
-| `Security` | sichere XML-Verarbeitung, Prozessausfuehrung mit Zeitlimit |
-| `Settings` | Firmenvorlage als JSON, IBAN unter Windows per DPAPI geschuetzt |
-| `Mail` | `.eml`-Entwurf und `mailto:`-Rueckfallweg |
+| `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporäre Arbeitsverzeichnisse |
+| `Security` | sichere XML-Verarbeitung, Prozessausführung mit Zeitlimit |
+| `Settings` | Firmenvorlage als JSON, IBAN unter Windows per DPAPI geschützt |
+| `Mail` | `.eml`-Entwurf und `mailto:`-Rückfallweg |
 | `Services` | der zentrale Dienst und die Anbindung der externen Validatoren |
 
 ### Der zentrale Dienst
 
-Die Oberflaeche kennt genau eine Schnittstelle:
+Die Oberfläche kennt genau eine Schnittstelle:
 
 ```csharp
 public interface IEInvoiceService
@@ -48,53 +48,53 @@ public interface IEInvoiceService
 }
 ```
 
-Die Umsetzung `EInvoiceService` fuehrt dahinter die spezialisierten Klassen
+Die Umsetzung `EInvoiceService` führt dahinter die spezialisierten Klassen
 zusammen – `CiiInvoiceWriter`, `CiiInvoiceReader`, `En16931RuleValidator`,
 `PdfPreflightService`, `PdfAInvoiceComposer`, `MustangValidator`,
 `ValidationReportWriter`, `FileStorage`. Diese Klassen bleiben getrennt
 lesbar, liegen aber in **einer** Assembly.
 
-`CreateAsync` selbst enthaelt keinen Detailalgorithmus mehr, sondern liest
-sich als Ablauf: bestaetigt, geeignet, gueltig, erzeugen, gegenpruefen,
-aufbauen, auslesen, extern pruefen, speichern. Der Zustand eines Laufs steht
-in einem `CreationContext`; er traegt auch die Fortschrittsmeldungen.
+`CreateAsync` selbst enthält keinen Detailalgorithmus mehr, sondern liest
+sich als Ablauf: bestätigt, geeignet, gültig, erzeugen, gegenprüfen,
+aufbauen, auslesen, extern prüfen, speichern. Der Zustand eines Laufs steht
+in einem `CreationContext`; er trägt auch die Fortschrittsmeldungen.
 
 ## EInvoiceSender.App
 
-Nur Oberflaeche: Fenster, Ansichten, ViewModels, Windows-Dialoge,
+Nur Oberfläche: Fenster, Ansichten, ViewModels, Windows-Dialoge,
 Drag-and-drop, PDF-Vorschau, Shell-Aufrufe und das Zusammensetzen der
-Abhaengigkeiten. Keine Steuer-, PDF/A-, XML- oder Rechnungslogik.
+Abhängigkeiten. Keine Steuer-, PDF/A-, XML- oder Rechnungslogik.
 
 ```
 App.xaml(.cs)              Composition Root: eine ServiceCollection, kein Generic Host
-Views/MainWindow           Rahmen, Schrittanzeige, Statuszeile, Navigation, Stoerungsanzeige
-Views/Steps/               die fuenf Schritte als eigene UserControls
+Views/MainWindow           Rahmen, Schrittanzeige, Statuszeile, Navigation, Störungsanzeige
+Views/Steps/               die fünf Schritte als eigene UserControls
 Views/Dialogs/             Einstellungen
 ViewModels/                je Schritt ein ViewModel plus MainViewModel
 Services/                  PDF-Vorschau, Windows-Shell, Systemuhr
 ```
 
-Zwei Regeln gelten in der Oberflaeche ausnahmslos und werden von Tests bewacht:
+Zwei Regeln gelten in der Oberfläche ausnahmslos und werden von Tests bewacht:
 
-- **`ConfigureAwait(true)` an jedem `await`.** Sonst laeuft die Fortsetzung auf
-  einem Threadpool-Thread und WPF bricht beim naechsten Zugriff auf ein
+- **`ConfigureAwait(true)` an jedem `await`.** Sonst läuft die Fortsetzung auf
+  einem Threadpool-Thread und WPF bricht beim nächsten Zugriff auf ein
   gebundenes Bedienelement ab.
-- **Jede Eigenschaft, die eine Freigabepruefung liest, benachrichtigt ihren
-  Befehl** (`[NotifyCanExecuteChangedFor]`). Sonst bleibt die Schaltflaeche im
-  zuletzt bewerteten Zustand haengen.
+- **Jede Eigenschaft, die eine Freigabeprüfung liest, benachrichtigt ihren
+  Befehl** (`[NotifyCanExecuteChangedFor]`). Sonst bleibt die Schaltfläche im
+  zuletzt bewerteten Zustand hängen.
 
 Beide Regeln stammen aus Fehlern, die im laufenden Programm aufgetreten sind.
 
 ## Die Datenerkennung
 
-Nach der Eingangspruefung liest die Anwendung den bereits vorhandenen Text der
+Nach der Eingangsprüfung liest die Anwendung den bereits vorhandenen Text der
 PDF und versucht, das Formular vorauszufuellen.
 
 ```
 PDF  →  PdfTextExtractor  →  InvoiceDataDetector  →  InvoiceDetectionResult
                                                           ↓  DraftPrefiller
                                                      InvoiceDraft
-                                                          ↓  Bestaetigung
+                                                          ↓  Bestätigung
                                                        Invoice
 ```
 
@@ -103,13 +103,13 @@ getrennten Detektoren – `DocumentFieldDetector`, `PartyDetector`,
 `PaymentDetector`, `TotalsDetector` – und die kleinen Umwandlungen in
 `DetectionParsers`.
 
-Drei Eigenschaften machen das ungefaehrlich:
+Drei Eigenschaften machen das ungefährlich:
 
-1. **`InvoiceDetectionResult` ist kein Rechnungsmodell** und laesst sich auch
+1. **`InvoiceDetectionResult` ist kein Rechnungsmodell** und lässt sich auch
    nicht in eines verwandeln. Es fuellt nur das Formular vor. Damit ist durch
-   die Bauart ausgeschlossen, dass ein gelesener Wert ungeprueft in der
+   die Bauart ausgeschlossen, dass ein gelesener Wert ungeprüft in der
    E-Rechnung landet.
-2. **Jeder Wert traegt eine Vertrauensstufe** und die Zeile, aus der er stammt.
+2. **Jeder Wert trägt eine Vertrauensstufe** und die Zeile, aus der er stammt.
    Nur `High` und `Medium` fuellen ein Feld; `Low` wird angezeigt, aber nie
    eingetragen.
 3. **Jedes vorausgefuellte Feld ist gekennzeichnet** (`FieldOrigin`). Sobald
@@ -124,28 +124,28 @@ und danach verworfen.
 ## Der Ablauf
 
 ```
-1. PDF auswaehlen      →  AnalyzePdfAsync   →  geeignet? Gruende nennen
+1. PDF auswählen      →  AnalyzePdfAsync   →  geeignet? Gründe nennen
                        →  DetectAsync       →  Formular vorausfuellen
 2. Daten erfassen      →  InvoiceDraft      →  ValidateInvoice
-3. Vergleichen         →  Pflichtbestaetigung des Anwenders
+3. Vergleichen         →  Pflichtbestätigung des Anwenders
 4. Erzeugen            →  CreateAsync       →  neun Schritte mit Fortschritt
-5. Ergebnis            →  Datei, Bericht, Pruefsumme, E-Mail-Entwurf
+5. Ergebnis            →  Datei, Bericht, Prüfsumme, E-Mail-Entwurf
 ```
 
-Der Kern fuehrt in Schritt 4 neun Arbeitsschritte aus: Eingangspruefung,
-Datenpruefung, XML erzeugen, XML pruefen, PDF/A-3 aufbauen, Ergebnis erneut
-oeffnen und zurueclesen, extern gegenpruefen, Bericht schreiben, Datei
+Der Kern führt in Schritt 4 neun Arbeitsschritte aus: Eingangsprüfung,
+Datenprüfung, XML erzeugen, XML prüfen, PDF/A-3 aufbauen, Ergebnis erneut
+öffnen und zurüclesen, extern gegenprüfen, Bericht schreiben, Datei
 speichern.
 
 Drei Eigenschaften sind dabei bindend:
 
-- **Ohne die Bestaetigung des Anwenders entsteht nichts.** Die Sperre sitzt im
-  Kern, nicht in der Oberflaeche.
+- **Ohne die Bestätigung des Anwenders entsteht nichts.** Die Sperre sitzt im
+  Kern, nicht in der Oberfläche.
 - **Keine halb fertige Ausgabedatei.** Gespeichert wird erst, wenn alle
-  verpflichtenden Pruefungen bestanden sind.
-- **Das Original bleibt unveraendert.** Es wird ausschliesslich gelesen.
+  verpflichtenden Prüfungen bestanden sind.
+- **Das Original bleibt unverändert.** Es wird ausschließlich gelesen.
 
-## Abhaengigkeiten
+## Abhängigkeiten
 
 `App` verweist auf `Core`. `Core` verweist auf nichts aus der Projektmappe.
-Damit gibt es keine Kreise, und der Kern bleibt ohne Oberflaeche pruefbar.
+Damit gibt es keine Kreise, und der Kern bleibt ohne Oberfläche prüfbar.

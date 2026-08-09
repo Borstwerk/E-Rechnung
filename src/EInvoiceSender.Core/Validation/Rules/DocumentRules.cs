@@ -6,11 +6,11 @@ namespace EInvoiceSender.Core.Validation.Rules;
 
 /// <summary>
 /// Regeln zum Rechnungsdokument selbst: Nummer, Datum, Zeitraum, Art,
-/// Waehrung und Verweise.
+/// Währung und Verweise.
 /// </summary>
 internal static class DocumentRules
 {
-    /// <summary>Frueheste plausible Rechnungsdatumsangabe.</summary>
+    /// <summary>Früheste plausible Rechnungsdatumsangabe.</summary>
     private static readonly DateOnly EarliestPlausibleDate = new(2000, 1, 1);
 
     public static void Validate(
@@ -23,17 +23,17 @@ internal static class DocumentRules
         {
             report.Error(
                 "APP-DOC-001",
-                "Die Rechnungsnummer fehlt. Ohne sie ist die Rechnung nicht gueltig.",
+                "Die Rechnungsnummer fehlt. Ohne sie ist die Rechnung nicht gültig.",
                 "InvoiceNumber", normRule: "BR-02");
         }
         else if (invoice.InvoiceNumber.Length > 60)
         {
             report.Warning(
                 "APP-DOC-002",
-                "Die Rechnungsnummer ist ungewoehnlich lang. Manche Empfangssysteme "
-                + "kuerzen sie auf wenige Zeichen.",
+                "Die Rechnungsnummer ist ungewöhnlich lang. Manche Empfangssysteme "
+                + "kürzen sie auf wenige Zeichen.",
                 "InvoiceNumber",
-                $"Laenge {invoice.InvoiceNumber.Length}");
+                $"Länge {invoice.InvoiceNumber.Length}");
         }
 
         DateOnly today = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
@@ -43,7 +43,7 @@ internal static class DocumentRules
             report.Error(
                 "APP-DOC-003",
                 "Das Rechnungsdatum liegt unplausibel weit in der Vergangenheit. "
-                + "Bitte pruefen Sie die Eingabe.",
+                + "Bitte prüfen Sie die Eingabe.",
                 "IssueDate",
                 $"Gelesen: {SharedRules.Format(invoice.IssueDate)}", "BR-03");
         }
@@ -63,10 +63,10 @@ internal static class DocumentRules
                 "APP-DOC-005",
                 "Das Zahlungsziel liegt vor dem Rechnungsdatum.",
                 "DueDate",
-                $"Faellig {SharedRules.Format(dueDate)}, Rechnung vom {SharedRules.Format(invoice.IssueDate)}");
+                $"Fällig {SharedRules.Format(dueDate)}, Rechnung vom {SharedRules.Format(invoice.IssueDate)}");
         }
 
-        // BR-CO-25: Bei einem offenen Betrag braucht der Empfaenger die
+        // BR-CO-25: Bei einem offenen Betrag braucht der Empfänger die
         // Information, bis wann er zahlen soll.
         bool hasDueDate = invoice.DueDate is not null;
         bool hasTerms = !string.IsNullOrWhiteSpace(invoice.Payment?.Terms);
@@ -76,7 +76,7 @@ internal static class DocumentRules
             report.Error(
                 "APP-DOC-006",
                 "Es fehlt eine Angabe, bis wann gezahlt werden soll. Geben Sie ein "
-                + "Faelligkeitsdatum oder einen Zahlungsbedingungstext an.",
+                + "Fälligkeitsdatum oder einen Zahlungsbedingungstext an.",
                 "DueDate", normRule: "BR-CO-25");
         }
 
@@ -84,7 +84,7 @@ internal static class DocumentRules
         {
             report.Error(
                 "APP-DOC-007",
-                "Die gewaehlte Rechnungsart wird von dieser Anwendung nicht unterstuetzt.",
+                "Die gewählte Rechnungsart wird von dieser Anwendung nicht unterstützt.",
                 "TypeCode",
                 $"Code {(int)invoice.TypeCode}", "BR-CO-03");
         }
@@ -93,8 +93,8 @@ internal static class DocumentRules
         {
             report.Error(
                 "APP-DOC-008",
-                $"'{invoice.Currency.Value}' ist keine bekannte Waehrung. Bitte verwenden "
-                + "Sie eine Waehrungskennung nach ISO 4217, zum Beispiel EUR.",
+                $"'{invoice.Currency.Value}' ist keine bekannte Währung. Bitte verwenden "
+                + "Sie eine Währungskennung nach ISO 4217, zum Beispiel EUR.",
                 "Currency", normRule: "BR-05");
         }
 
@@ -108,14 +108,14 @@ internal static class DocumentRules
             report.Warning(
                 "APP-DOC-010",
                 "Leistungsdatum und Rechnungsdatum liegen mehr als ein Jahr auseinander. "
-                + "Bitte pruefen Sie die Eingabe.",
+                + "Bitte prüfen Sie die Eingabe.",
                 "DeliveryDate",
                 $"Leistung {SharedRules.Format(delivery)}, Rechnung {SharedRules.Format(invoice.IssueDate)}");
         }
     }
 
     /// <summary>
-    /// Prueft einen Zeitraum. Wird auch je Position gebraucht: Die
+    /// Prüft einen Zeitraum. Wird auch je Position gebraucht: Die
     /// Anforderungen an einen Leistungszeitraum sind auf beiden Ebenen
     /// dieselben.
     /// </summary>
@@ -133,5 +133,5 @@ internal static class DocumentRules
         }
     }
 
-    // -------------------------------------------------------------- Verkaeufer
+    // -------------------------------------------------------------- Verkäufer
 }

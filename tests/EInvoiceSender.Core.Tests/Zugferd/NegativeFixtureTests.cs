@@ -7,25 +7,25 @@ using Xunit;
 namespace EInvoiceSender.Core.Tests;
 
 /// <summary>
-/// Erzeugt absichtlich fehlerhafte XML-Dateien fuer die Gegenpruefung.
+/// Erzeugt absichtlich fehlerhafte XML-Dateien für die Gegenprüfung.
 ///
-/// Zweck: Eine Gegenpruefung, die nur gueltige Dateien kennt, beweist nichts –
-/// sie koennte auch dann gruen sein, wenn der Validator gar nichts prueft.
-/// Diese Faelle muessen vom CEN-Schematron beanstandet werden.
+/// Zweck: Eine Gegenprüfung, die nur gültige Dateien kennt, beweist nichts –
+/// sie könnte auch dann grün sein, wenn der Validator gar nichts prüft.
+/// Diese Fälle müssen vom CEN-Schematron beanstandet werden.
 /// </summary>
 public sealed class NegativeFixtureTests
 {
     private static readonly CiiInvoiceWriter Writer = new();
 
     [Fact]
-    public void SchreibtFehlerhafteFaelleFuerDieGegenpruefung()
+    public void SchreibtFehlerhafteFälleFürDieGegenprüfung()
     {
         string invalidDirectory = Path.Combine(RepositoryRoot, "artifacts", "golden-masters", "invalid");
         Directory.CreateDirectory(invalidDirectory);
 
         string valid = GenerateValidXml("01-dienstleistung-19");
 
-        // Fall 11 der Spezifikation: absichtlich ungueltige XML.
+        // Fall 11 der Spezifikation: absichtlich ungültige XML.
         // Die Nettosumme (BT-109) passt nicht mehr zur Summe der Positionen –
         // das muss BR-CO-13 beanstanden.
         string brokenTotals = valid.Replace(
@@ -60,7 +60,7 @@ public sealed class NegativeFixtureTests
         return Encoding.UTF8.GetString(Writer.Write(scenario.Invoice, totals)).ReplaceLineEndings("\n");
     }
 
-    /// <summary>Entfernt die erste Zeile, die das gesuchte Element mit dem Wert enthaelt.</summary>
+    /// <summary>Entfernt die erste Zeile, die das gesuchte Element mit dem Wert enthält.</summary>
     private static string RemoveElement(string xml, string elementName, string value)
     {
         string needle = $"<{elementName}>{value}</{elementName}>";

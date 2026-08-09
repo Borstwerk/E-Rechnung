@@ -6,27 +6,27 @@ using EInvoiceSender.Core.Validation.Rules;
 namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
-/// Lokale Vorabpruefung der Rechnungsdaten mit verstaendlichen deutschen
+/// Lokale Vorabprüfung der Rechnungsdaten mit verständlichen deutschen
 /// Meldungen.
 ///
-/// **Abgrenzung – das ist wichtig:** Dieser Validator ist ausdruecklich
-/// **kein Ersatz** fuer Mustang, das CEN-Schematron oder veraPDF. Er dient
-/// allein der fruehen Benutzerfuehrung: Er soll dem Anwender **vor** der
+/// **Abgrenzung – das ist wichtig:** Dieser Validator ist ausdrücklich
+/// **kein Ersatz** für Mustang, das CEN-Schematron oder veraPDF. Er dient
+/// allein der frühen Benutzerführung: Er soll dem Anwender **vor** der
 /// Erzeugung sagen, was in seiner Eingabe fehlt oder nicht zusammenpasst, und
-/// zwar in Saetzen, die er versteht. Die verbindliche Freigabe erteilen
-/// ausschliesslich die externen Werkzeuge (docs/DECISIONS.md, ADR-0004).
+/// zwar in Sätzen, die er versteht. Die verbindliche Freigabe erteilen
+/// ausschließlich die externen Werkzeuge (docs/DECISIONS.md, ADR-0004).
 ///
 /// Daraus folgt eine bewusste Asymmetrie:
 /// * Was dieser Validator beanstandet, wird nicht erzeugt.
-/// * Was er durchlaesst, ist damit **nicht** als normkonform bestaetigt.
+/// * Was er durchlässt, ist damit **nicht** als normkonform bestätigt.
 ///
-/// Jeder Befund traegt eine stabile interne Kennung (<c>APP-...</c>) und, soweit
-/// vorhanden, die zugehoerige EN-16931-Regel. Die Kennungen sind unveraenderlich,
+/// Jeder Befund trägt eine stabile interne Kennung (<c>APP-...</c>) und, soweit
+/// vorhanden, die zugehörige EN-16931-Regel. Die Kennungen sind unveränderlich,
 /// sobald sie vergeben wurden.
 ///
 /// Der Validator korrigiert nichts. Er meldet nur.
 ///
-/// Diese Klasse fuehrt lediglich die fachlichen Regelgruppen zusammen; die
+/// Diese Klasse führt lediglich die fachlichen Regelgruppen zusammen; die
 /// Regeln selbst stehen unter <c>Validation/Rules</c>.
 /// </summary>
 public sealed class En16931RuleValidator : IBusinessRuleValidator
@@ -35,7 +35,7 @@ public sealed class En16931RuleValidator : IBusinessRuleValidator
 
     /// <summary>
     /// Erzeugt den Validator. Die Zeitquelle ist einspeisbar, damit
-    /// Datumspruefungen in Tests reproduzierbar sind.
+    /// Datumsprüfungen in Tests reproduzierbar sind.
     /// </summary>
     public En16931RuleValidator(TimeProvider? timeProvider = null)
         => _timeProvider = timeProvider ?? TimeProvider.System;

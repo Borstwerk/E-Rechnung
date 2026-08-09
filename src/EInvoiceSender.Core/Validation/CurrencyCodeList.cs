@@ -4,21 +4,21 @@ using System.Diagnostics.CodeAnalysis;
 namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
-/// Waehrungskennungen nach ISO 4217 (BT-5). Reine Nachschlagetabelle ohne
-/// Geschaeftslogik – die Pruefung, ob eine Regel daraus eine Warnung oder
-/// einen Fehler macht, gehoert in die Validierungsregeln, nicht hierher.
+/// Währungskennungen nach ISO 4217 (BT-5). Reine Nachschlagetabelle ohne
+/// Geschäftslogik – die Prüfung, ob eine Regel daraus eine Warnung oder
+/// einen Fehler macht, gehört in die Validierungsregeln, nicht hierher.
 /// </summary>
 /// <remarks>
 /// Diese Liste ist eine <b>kuratierte Teilmenge</b> von ISO 4217: der
-/// Euro-Raum, die uebrigen EU-/EWR-Waehrungen sowie die im internationalen
-/// Zahlungsverkehr gaengigsten Waehrungen. Sie erhebt keinen Anspruch auf
-/// Vollstaendigkeit gegenueber der vollen ISO-4217-Liste (rund 180 aktive
-/// Waehrungen). Ein Code, der hier nicht enthalten ist, ist deshalb
-/// <b>nicht automatisch ungueltig</b> – aufrufender Code sollte einen
+/// Euro-Raum, die übrigen EU-/EWR-Währungen sowie die im internationalen
+/// Zahlungsverkehr gängigsten Währungen. Sie erhebt keinen Anspruch auf
+/// Vollständigkeit gegenüber der vollen ISO-4217-Liste (rund 180 aktive
+/// Währungen). Ein Code, der hier nicht enthalten ist, ist deshalb
+/// <b>nicht automatisch ungültig</b> – aufrufender Code sollte einen
 /// unbekannten Code als Warnung behandeln, nicht als harten Fehler.
-/// HRK (Kroatische Kuna) ist seit der Euro-Einfuehrung Kroatiens 2023 in
-/// ISO 4217 zurueckgezogen; sie ist hier trotzdem als historischer Wert
-/// gefuehrt, da Altbelege damit referenziert sein koennen.
+/// HRK (Kroatische Kuna) ist seit der Euro-Einführung Kroatiens 2023 in
+/// ISO 4217 zurückgezogen; sie ist hier trotzdem als historischer Wert
+/// geführt, da Altbelege damit referenziert sein können.
 /// </remarks>
 public static class CurrencyCodeList
 {
@@ -35,15 +35,15 @@ public static class CurrencyCodeList
         ["NZD"] = "Neuseeland-Dollar",
         ["SEK"] = "Schwedische Krone",
         ["NOK"] = "Norwegische Krone",
-        ["DKK"] = "Daenische Krone",
-        ["ISK"] = "Islaendische Krone",
+        ["DKK"] = "Dänische Krone",
+        ["ISK"] = "Isländische Krone",
         ["PLN"] = "Polnischer Zloty",
         ["CZK"] = "Tschechische Krone",
         ["HUF"] = "Ungarischer Forint",
-        ["RON"] = "Rumaenischer Leu",
+        ["RON"] = "Rumänischer Leu",
         ["BGN"] = "Bulgarischer Lew",
-        ["HRK"] = "Kroatische Kuna (zurueckgezogen seit 2023)",
-        ["TRY"] = "Tuerkische Lira",
+        ["HRK"] = "Kroatische Kuna (zurückgezogen seit 2023)",
+        ["TRY"] = "Türkische Lira",
         ["RUB"] = "Russischer Rubel",
         ["UAH"] = "Ukrainische Hrywnja",
         ["RSD"] = "Serbischer Dinar",
@@ -55,14 +55,14 @@ public static class CurrencyCodeList
         ["ILS"] = "Israelischer Schekel",
         ["AED"] = "VAE-Dirham",
         ["SAR"] = "Saudi-Riyal",
-        ["ZAR"] = "Suedafrikanischer Rand",
+        ["ZAR"] = "Südafrikanischer Rand",
         ["BRL"] = "Brasilianischer Real",
         ["MXN"] = "Mexikanischer Peso",
         ["INR"] = "Indische Rupie",
         ["SGD"] = "Singapur-Dollar",
         ["HKD"] = "Hongkong-Dollar",
-        ["KRW"] = "Suedkoreanischer Won",
-        ["THB"] = "Thailaendischer Baht",
+        ["KRW"] = "Südkoreanischer Won",
+        ["THB"] = "Thailändischer Baht",
         ["MYR"] = "Malaysischer Ringgit",
         ["IDR"] = "Indonesische Rupiah",
         ["PHP"] = "Philippinischer Peso",
@@ -71,15 +71,15 @@ public static class CurrencyCodeList
     }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Alle Waehrungen als Auswahlliste, nach dem Code sortiert.
-    /// Fuer die Auswahlfelder der Oberflaeche.
+    /// Alle Währungen als Auswahlliste, nach dem Code sortiert.
+    /// Für die Auswahlfelder der Oberfläche.
     /// </summary>
     public static IReadOnlyList<(string Code, string Name)> All { get; } =
         [.. Names.Select(e => (Code: e.Key.ToUpperInvariant(), Name: e.Value))
                  .OrderBy(e => e.Code, StringComparer.Ordinal)];
 
     /// <summary>
-    /// Prueft, ob <paramref name="code"/> in der kuratierten Teilmenge
+    /// Prüft, ob <paramref name="code"/> in der kuratierten Teilmenge
     /// enthalten ist. Gross-/Kleinschreibung und umgebende Leerzeichen
     /// spielen keine Rolle. Liefert <see langword="false"/> bei
     /// <see langword="null"/>, leerem oder reinem Leerraum-Text – wirft nie.
@@ -95,8 +95,8 @@ public static class CurrencyCodeList
     }
 
     /// <summary>
-    /// Liefert den deutschen Namen der Waehrung, sofern sie in der Liste
-    /// gefuehrt wird.
+    /// Liefert den deutschen Namen der Währung, sofern sie in der Liste
+    /// geführt wird.
     /// </summary>
     public static bool TryGetName(string? code, [MaybeNullWhen(false)] out string name)
     {
