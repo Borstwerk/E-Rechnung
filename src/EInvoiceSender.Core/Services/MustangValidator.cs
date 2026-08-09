@@ -12,6 +12,14 @@ namespace EInvoiceSender.Core.Services;
 
 /// <summary>
 /// Einstellungen des externen Validators.
+///
+/// Der Pfad zur JAR wird immer ausdrücklich übergeben. Früher gab es hier ein
+/// <c>Discover()</c>, das von der Anwendung aufwärts durch die Verzeichnisse
+/// nach <c>tools/mustang/*.jar</c> suchte. Das war für den Entwicklerrechner
+/// gedacht, lief aber auch in der installierten Anwendung – die dabei im
+/// schlechtesten Fall eine fremde JAR irgendwo oberhalb ihres
+/// Installationsordners aufgriff. Wer den Validator einsetzt, weiss, wo sein
+/// Werkzeug liegt.
 /// </summary>
 /// <param name="JavaExecutable">Pfad oder Name der Java-Laufzeit.</param>
 /// <param name="JarPath">Pfad zur Mustang-CLI-JAR.</param>
@@ -21,43 +29,6 @@ public sealed record MustangOptions(string JavaExecutable, string JarPath, TimeS
     /// <summary>Vorgabewerte: Java aus dem Suchpfad, zwei Minuten Zeitlimit.</summary>
     public static MustangOptions ForJar(string jarPath)
         => new("java", jarPath, TimeSpan.FromMinutes(2));
-
-    /// <summary>
-    /// Sucht die Mustang-JAR unter <c>tools/mustang/</c> – erst neben der
-    /// Anwendung, dann aufwärts im Projektbaum.
-    ///
-    /// Findet sie nichts, wird trotzdem ein Wert geliefert. Der Validator
-    /// meldet sich dann als "nicht verfügbar", und der Bericht weist die
-    /// Prüfung als NICHT AUSGEFÜHRT aus. Ein fehlendes Werkzeug darf den
-    /// Start der Anwendung nicht verhindern, aber auch nie wie ein bestandener
-    /// Test aussehen.
-    /// </summary>
-    public static MustangOptions Discover()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directory is not null)
-        {
-            string candidate = Path.Combine(directory.FullName, "tools", "mustang");
-
-            if (Directory.Exists(candidate))
-            {
-                string? jar = Directory
-                    .EnumerateFiles(candidate, "*.jar", SearchOption.TopDirectoryOnly)
-                    .OrderBy(f => f, StringComparer.Ordinal)
-                    .LastOrDefault();
-
-                if (jar is not null)
-                {
-                    return ForJar(jar);
-                }
-            }
-
-            directory = directory.Parent;
-        }
-
-        return ForJar(Path.Combine(AppContext.BaseDirectory, "tools", "mustang", "mustang-cli.jar"));
-    }
 }
 
 /// <summary>
@@ -102,9 +73,78 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
     /// <inheritdoc />
     public string Name => "Mustangproject CLI (CEN-Schematron und veraPDF)";
 
-    /// <inheritdoc />
-    public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(File.Exists(_options.JarPath));
+    /// <summary>
+    /// Ergebnis der Java-Prüfung, einmal ermittelt und dann gemerkt.
+    ///
+    /// Die Prüfung startet einen Prozess; bei jedem Aufruf erneut wäre sie
+    /// unnötig teuer. Ob eine Java-Laufzeit vorhanden ist, ändert sich während
+    /// eines Programmlaufs praktisch nicht. Zwei gleichzeitige Aufrufe würden
+    /// die Prüfung höchstens doppelt ausführen und zum selben Ergebnis kommen.
+    /// </summary>
+    private bool? _javaIsUsable;
+
+    /// <summary>
+    /// Ist das Werkzeug wirklich einsatzbereit?
+    ///
+    /// Geprüft wird **beides**: die JAR-Datei und eine startbare Java-Laufzeit.
+    /// Vorher genügte die JAR allein. Auf einem Rechner mit JAR, aber ohne Java
+    /// galt das Werkzeug damit als verfügbar; der Startversuch scheiterte
+    /// anschließend und meldete die Datei als ungeprüft – mitten in der
+    /// Erzeugung einer Rechnung.
+    /// </summary>
+    public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(_options.JarPath))
+        {
+            return false;
+        }
+
+        _javaIsUsable ??= await JavaCanStartAsync(cancellationToken).ConfigureAwait(false);
+
+        return _javaIsUsable.Value;
+    }
+
+    /// <summary>
+    /// Lässt sich eine Java-Laufzeit starten? Ermittelt über
+    /// <c>java -version</c>: ein kurzer Aufruf ohne Nebenwirkung.
+    /// </summary>
+    private async Task<bool> JavaCanStartAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            ProcessResult result = await _processRunner
+                .RunAsync(
+                    _options.JavaExecutable,
+                    ["-version"],
+                    JavaProbeTimeout,
+                    workingDirectory: null,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            bool usable = result is { TimedOut: false, ExitCode: 0 };
+
+            if (!usable)
+            {
+                LogJavaMissing(_options.JavaExecutable);
+            }
+
+            return usable;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // Fehlt java ganz, wirft der Start eine Ausnahme. Das ist hier kein
+            // Fehler, sondern die Antwort auf die gestellte Frage.
+            LogJavaMissing(_options.JavaExecutable);
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Für die Frage „gibt es Java?“ genügen wenige Sekunden. Das Zeitlimit
+    /// der eigentlichen Prüfung wäre hier unangemessen lang.
+    /// </summary>
+    private static readonly TimeSpan JavaProbeTimeout = TimeSpan.FromSeconds(20);
 
     /// <inheritdoc />
     public async Task<string?> GetVersionAsync(CancellationToken cancellationToken = default)
@@ -367,6 +407,12 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
 
     [LoggerMessage(
         EventId = 4001, Level = LogLevel.Information,
-        Message = "Externe Prüfung bestanden, {SummaryCount} Teilzusammenfassung(en) gültig.")]
+        Message = "Externe Prüfung bestanden, gültige Teilzusammenfassungen: {SummaryCount}.")]
     private static partial void LogValidationPassed(ILogger logger, int summaryCount);
+
+    [LoggerMessage(
+        EventId = 4002, Level = LogLevel.Information,
+        Message = "Keine startbare Java-Laufzeit unter '{JavaExecutable}' gefunden. Die "
+                  + "zusätzliche Prüfung entfällt; die Anwendung arbeitet normal weiter.")]
+    private partial void LogJavaMissing(string javaExecutable);
 }

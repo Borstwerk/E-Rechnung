@@ -32,9 +32,15 @@ Was er durchlässt, gilt damit **nicht** als normgerecht bestätigt. Die
 Freigabe erteilen ausschließlich die externen Referenzvalidatoren
 (CEN-Schematron und veraPDF über die Mustangproject-CLI).
 
-Ohne diese Werkzeuge prüft die Anwendung PDF/A nur strukturell. Der Bericht
-weist das aus und schreibt **NICHT AUSGEFÜHRT** in die Textfassung. Ein
-fehlender Validator wird nie als bestandene Prüfung dargestellt.
+**Diese Werkzeuge laufen in Entwicklung und Release, nicht auf Ihrem
+Rechner.** Sie brauchen eine Java-Laufzeit, und die soll niemand
+nachinstallieren müssen, um eine Rechnung zu schreiben. Geprüft wird damit die
+Anwendung – nicht jede einzelne Rechnung, die Sie damit erzeugen.
+
+Die installierte Anwendung prüft PDF/A deshalb nur strukturell. Der Bericht zu
+jeder erzeugten Datei sagt das: Er nennt die ausgeführten Prüfungen und
+schreibt, wenn kein Referenzvalidator eingerichtet war. Eine nicht
+stattgefundene Prüfung wird nie als bestandene dargestellt.
 
 ## E-Mail
 

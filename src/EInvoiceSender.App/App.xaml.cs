@@ -81,12 +81,22 @@ public partial class App : Application
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IInvoiceDataDetector, InvoiceDataDetector>();
 
-        // Referenzvalidatoren sind optional: Ohne Java oder ohne die
-        // Mustang-JAR startet die Anwendung normal weiter. Der Validator meldet
-        // sich dann als nicht verfügbar, und der Bericht weist die Prüfung
-        // ausdrücklich als NICHT AUSGEFÜHRT aus.
-        services.AddSingleton(MustangOptions.Discover());
-        services.AddSingleton<IExternalDocumentValidator, MustangValidator>();
+        // **Hier wird bewusst kein externer Validator eingetragen.**
+        //
+        // Mustangproject, das CEN-Schematron und veraPDF sind Werkzeuge der
+        // Entwicklung und der Freigabe: Sie belegen, dass diese Anwendung
+        // normgerechte Dateien erzeugt, und laufen in der Pipeline
+        // (build/Validate-Reference.ps1, docs/TESTING.md). Sie brauchen eine
+        // Java-Laufzeit.
+        //
+        // Auf dem Rechner des Anwenders hat das nichts zu suchen. Das
+        // Installationspaket bringt kein Java mit, und niemand soll eines
+        // nachinstallieren müssen, um eine Rechnung zu schreiben. Ohne Eintrag
+        // sucht die Anwendung erst gar nicht danach.
+        //
+        // Der Bericht bleibt dabei ehrlich: Ist kein Validator eingerichtet,
+        // schreibt er "Es war kein externer Validator eingerichtet." Er
+        // behauptet nie, eine externe Prüfung habe stattgefunden.
 
         // --- Oberfläche ----------------------------------------------------
         services.AddSingleton<IShellService, WindowsShellService>();

@@ -47,14 +47,36 @@ PDF-Dateien, E-Mail-Adressen oder Bankverbindungen an fremde Rechner
 
 ## Voraussetzungen
 
+### Zum Benutzen der Anwendung
+
 - Windows 10 oder 11, 64 Bit
-- .NET SDK 10 (nur zum Entwickeln; die ausgelieferte Fassung bringt die
-  Laufzeit mit)
+
+Mehr nicht. Die ausgelieferte Fassung bringt die .NET-Laufzeit mit. **Eine
+Java-Laufzeit wird nicht benötigt**, und das Installationspaket installiert
+auch keine.
+
+### Zum Entwickeln
+
+- .NET SDK 10
 - Visual Studio 2026 (oder 2022 ab 17.14) mit der Arbeitslast
   **.NET-Desktopentwicklung**
-- **Optional:** eine Java-Laufzeit (17 oder neuer) für die externen
-  Referenzvalidatoren. Ohne sie läuft die Anwendung normal weiter und weist
-  das Ergebnis ausdrücklich als **nur intern geprüft** aus.
+
+## Referenzprüfung in Entwicklung und Release
+
+Für die zusätzliche Referenzprüfung während Entwicklung und Release wird
+Java 17 oder neuer benötigt. **Die installierte Anwendung benötigt kein Java.**
+
+Geprüft wird damit gegen Mustangproject, das offizielle CEN-Schematron und
+veraPDF – das ist der Nachweis, dass diese Anwendung normgerechte Dateien
+erzeugt. Diese Werkzeuge gehören in die Werkstatt, nicht auf den Rechner des
+Anwenders: Sie werden mit `build/fetch-validators.sh` beschafft, laufen in der
+Pipeline und über `build/Validate-Reference.ps1`, und sie sind kein Bestandteil
+des Installationspakets.
+
+Der Bericht zu einer erzeugten Rechnung sagt jeweils, was geprüft wurde. Ohne
+eingerichteten Referenzvalidator steht dort ausdrücklich, dass keiner
+eingerichtet war – die Anwendung behauptet nie, eine externe Prüfung habe
+stattgefunden. Näheres in `docs/TESTING.md`.
 
 ## In Visual Studio starten
 

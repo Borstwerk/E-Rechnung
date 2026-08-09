@@ -50,9 +50,16 @@ public interface IEInvoiceService
 
 Die Umsetzung `EInvoiceService` führt dahinter die spezialisierten Klassen
 zusammen – `CiiInvoiceWriter`, `CiiInvoiceReader`, `En16931RuleValidator`,
-`PdfPreflightService`, `PdfAInvoiceComposer`, `MustangValidator`,
-`ValidationReportWriter`, `FileStorage`. Diese Klassen bleiben getrennt
-lesbar, liegen aber in **einer** Assembly.
+`PdfPreflightService`, `PdfAInvoiceComposer`, `ValidationReportWriter`,
+`FileStorage`. Diese Klassen bleiben getrennt lesbar, liegen aber in **einer**
+Assembly.
+
+`MustangValidator` gehört ebenfalls in diese Assembly, wird von der
+ausgelieferten Anwendung aber **nicht eingetragen**: Er ruft die
+Mustangproject-CLI auf und braucht dafür eine Java-Laufzeit. Verwendet wird er
+in den Tests und in der Pipeline. `EInvoiceService` nimmt die Validatoren als
+Aufzählung entgegen; ist sie leer, entfällt der Schritt, und der Bericht sagt
+das.
 
 `CreateAsync` selbst enthält keinen Detailalgorithmus mehr, sondern liest
 sich als Ablauf: bestätigt, geeignet, gültig, erzeugen, gegenprüfen,
@@ -135,7 +142,8 @@ und danach verworfen.
 Der Kern führt in Schritt 4 neun Arbeitsschritte aus: Eingangsprüfung,
 Datenprüfung, XML erzeugen, XML prüfen, PDF/A-3 aufbauen, Ergebnis erneut
 öffnen und zurücklesen, extern gegenprüfen, Bericht schreiben, Datei
-speichern.
+speichern. Der siebte Schritt läuft nur, wenn ein Referenzvalidator
+eingerichtet ist – in der ausgelieferten Anwendung ist das nie der Fall.
 
 Drei Eigenschaften sind dabei bindend:
 

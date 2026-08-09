@@ -219,6 +219,34 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.Equal(PipelineStep.ExternalValidation, failed.Step);
     }
 
+    /// <summary>
+    /// Die ausgelieferte Anwendung richtet gar keinen externen Validator ein –
+    /// sie soll ohne Java-Laufzeit arbeiten. Dieser Test fährt genau diese
+    /// Zusammenstellung: kein Validator, vollständiger Ablauf.
+    ///
+    /// Er ist das automatisierte Gegenstück zur Abnahme auf einem sauberen
+    /// Windows ohne Java: PDF laden, Rechnung erzeugen, speichern.
+    /// </summary>
+    [Fact]
+    public async Task OhneJedenExternenValidatorEntstehtEineVollständigeDatei()
+    {
+        string source = TempPdf(TestPdfFactory.CreateSimplePdf());
+
+        CreateEInvoiceResult result = await BuildUseCase()
+            .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.Succeeded, Describe(result));
+        Assert.NotNull(result.OutputFile);
+        Assert.True(File.Exists(result.OutputFile!.FullPath));
+        Assert.Empty(result.Validators);
+
+        // Der Bericht behauptet nicht, es habe eine externe Prüfung gegeben.
+        string text = await File.ReadAllTextAsync(
+            result.ReportTextFile!.FullPath, TestContext.Current.CancellationToken);
+
+        Assert.Contains("kein externer Validator", text, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public async Task FehlenderExternerValidatorWirdImBerichtAusgewiesen()
     {

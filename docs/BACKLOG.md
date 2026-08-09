@@ -48,6 +48,24 @@ hierher, sondern in die Commit-Historie.
 - **Einstellungen ändern und schließen:** Die neuen Vorgaben müssen ohne
   Neustart im nächsten Vorgang stehen, ein bereits ausgefülltes Formular
   dagegen unberührt bleiben.
-- **Installer:** MSI bauen, installieren, aktualisieren, deinstallieren.
+- **Installer-Abnahme auf einem sauberen Windows 11 x64** – ohne .NET SDK,
+  ohne Java, ohne Mustang, ohne veraPDF. Der vollständige Ablauf muss laufen,
+  ohne dass irgendeine Laufzeit nachinstalliert werden muss:
+
+  1. MSI installieren
+  2. Anwendung starten
+  3. PDF laden
+  4. Rechnung erfassen
+  5. ZUGFeRD-PDF erzeugen
+  6. speichern
+  7. E-Mail-Entwurf erzeugen
+  8. deinstallieren
+
+  Automatisiert vorbereitet ist das, soweit es ohne Windows geht: Die
+  ausgelieferte Zusammenstellung trägt keinen externen Validator ein
+  (`ProductionWithoutJavaTests`), und der vollständige Ablauf ohne jeden
+  Validator ist als Ende-zu-Ende-Test abgedeckt
+  (`OhneJedenExternenValidatorEntstehtEineVollständigeDatei`).
+- **Installer:** MSI bauen, aktualisieren, deinstallieren.
 - **`.eml` im klassischen und im neuen Outlook** praktisch öffnen.
 - **DPAPI-Schutz der IBAN** in den Einstellungen.
