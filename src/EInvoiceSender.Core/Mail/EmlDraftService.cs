@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Text;
-using EInvoiceSender.Core.Storage;
 using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Storage;
 using Microsoft.Extensions.Logging;
-using MimeKit.Text;
 using MimeKit;
+using MimeKit.Text;
 
 namespace EInvoiceSender.Core.Mail;
 

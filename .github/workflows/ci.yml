@@ -97,7 +97,7 @@ jobs:
 
       - name: Self-contained win-x64 veroeffentlichen
         run: >
-          dotnet publish src/EInvoiceSender.Desktop
+          dotnet publish src/EInvoiceSender.App
           -c Release -r win-x64 --self-contained true
           -p:PublishReadyToRun=true
           -o artifacts/publish/win-x64

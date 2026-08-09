@@ -27,6 +27,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     private InvoiceTotals? _totals;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RemoveLineCommand))]
     private InvoiceLineDraft? _selectedLine;
 
     /// <summary>Auswahlliste der Waehrungen.</summary>
@@ -77,9 +78,6 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     }
 
     private bool CanRemoveLine() => SelectedLine is not null;
-
-    partial void OnSelectedLineChanged(InvoiceLineDraft? value)
-        => RemoveLineCommand.NotifyCanExecuteChanged();
 
     /// <summary>Berechnet die Summen aus dem aktuellen Formularstand neu.</summary>
     [RelayCommand]

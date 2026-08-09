@@ -1,100 +1,107 @@
-# ARCHITECTURE.md
+# Aufbau
 
-## 1. Überblick
-
-Klassische Schichtenarchitektur mit Ports und Adaptern. Die Fachlogik steht in
-der Mitte und kennt weder PDF noch XML noch das Dateisystem.
+Die Projektmappe besteht aus vier Projekten plus dem Installer. Mehr braucht
+eine Desktopanwendung dieser Groesse nicht.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  EInvoiceSender.Desktop  (WPF, MVVM, net10.0-windows)        │
-│  Views · ViewModels · Konverter · DI-Verdrahtung             │
-└───────────────────────────┬──────────────────────────────────┘
-                            │ nutzt Anwendungsfälle
-┌───────────────────────────▼──────────────────────────────────┐
-│  EInvoiceSender.Application  (net10.0)                       │
-│  Anwendungsfälle · PORTS (Interfaces) · Berichtsmodelle      │
-└───────────────────────────┬──────────────────────────────────┘
-                            │ nutzt
-┌───────────────────────────▼──────────────────────────────────┐
-│  EInvoiceSender.Domain  (net10.0, ohne Fremdpakete)          │
-│  Rechnungsmodell · Summen-/Steuerberechnung · Werttypen      │
-└──────────────────────────────────────────────────────────────┘
-
-Adapter implementieren die Ports (Abhängigkeit zeigt nach innen):
-
-  Formats        → IInvoiceXmlWriter, IInvoiceXmlReader
-  Validation     → IBusinessRuleValidator, IExternalDocumentValidator
-  Infrastructure → IPdfAnalyzer, IPdfAInvoiceComposer, IFileStorage,
-                   ISettingsStore, IProcessRunner, IClock
-  Mail           → IEmailDraftService
-  Desktop        → IUserInteraction, IShellService, IPdfPreviewRenderer
+EInvoiceSender.sln
+├── src/EInvoiceSender.Core   – der fachliche Kern     (net10.0, kein WPF)
+├── src/EInvoiceSender.App    – die Oberflaeche        (net10.0-windows, WPF, x64)
+├── tests/EInvoiceSender.Core.Tests
+├── tests/EInvoiceSender.IntegrationTests
+└── installer/EInvoiceSender.Setup                     (WiX, nur unter Windows baubar)
 ```
 
-## 2. Projekte und Verantwortung
+## EInvoiceSender.Core
 
-| Projekt | Ziel-Framework | Darf abhängen von | Verantwortung |
-|---|---|---|---|
-| `Domain` | net10.0 | – | Rechnungsmodell, Beträge, Steuer, Rundung, Werttypen (IBAN, Land, Währung). Keine I/O. |
-| `Application` | net10.0 | Domain | Anwendungsfall (`CreateEInvoiceUseCase`), Ports, Berichtsmodelle, Fortschrittsmeldungen |
-| `Formats` | net10.0 | Domain, Application | CII-XML nach EN 16931 erzeugen und lesen, sichere XML-Verarbeitung |
-| `Validation` | net10.0 | Domain, Application | EN-16931-Geschäftsregeln, Codelisten, deutsche Fehlertexte, Adapter für externe Validatoren |
-| `Infrastructure` | net10.0 | Domain, Application | PDF-Analyse, PDF/A-3-Erzeugung, ICC-Profil, Dateiablage, Einstellungen, Prozessausführung |
-| `Mail` | net10.0 | Domain, Application | `.eml`-Entwurf, `mailto:`-Fallback |
-| `Desktop` | net10.0-windows | alle | WPF-Oberfläche, DI-Verdrahtung, Windows-Dienste (Shell, Dialoge, Vorschau) |
+Alles Fachliche. Kennt kein WPF und laesst sich deshalb vollstaendig
+automatisiert pruefen – auch auf einem Build-Agenten ohne Bildschirm.
 
-Keine dieser Kanten darf umgekehrt werden. `Domain` referenziert nichts.
+| Ordner | Inhalt |
+|---|---|
+| `Models` | Rechnung, Parteien, Betraege, Werttypen (IBAN, Waehrung, Land, Einheit), das Eingabeformular `InvoiceDraft` |
+| `Calculation` | Summen- und Steuerberechnung nach EN 16931, ausschliesslich `decimal` |
+| `Validation` | Regelwerk EN 16931, Codelisten, Befunde und Pruefberichte |
+| `Zugferd` | CII-XML erzeugen und zurueclesen |
+| `Pdf` | PDF-Analyse, Eingangspruefung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
+| `Reports` | Validierungsbericht als JSON und als Text |
+| `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporaere Arbeitsverzeichnisse |
+| `Security` | sichere XML-Verarbeitung, Prozessausfuehrung mit Zeitlimit |
+| `Settings` | Firmenvorlage als JSON, IBAN unter Windows per DPAPI geschuetzt |
+| `Mail` | `.eml`-Entwurf und `mailto:`-Rueckfallweg |
+| `Services` | der zentrale Dienst und die Anbindung der externen Validatoren |
 
-## 3. Der Hauptablauf
+### Der zentrale Dienst
 
-`CreateEInvoiceUseCase` orchestriert und meldet jeden Schritt einzeln an die
-Oberfläche (`IProgress<PipelineStep>`):
+Die Oberflaeche kennt genau eine Schnittstelle:
 
-1. **PDF prüfen** – `IPdfAnalyzer`: Signatur, Verschlüsselung, Seitenzahl,
-   Schrifteinbettung, vorhandene Anhänge, bereits eingebettete Rechnungs-XML.
-2. **Fachdaten prüfen** – `IBusinessRuleValidator` auf dem Domänenmodell.
-   Bricht bei Fehlern ab, bevor irgendetwas erzeugt wird.
-3. **XML erzeugen** – `IInvoiceXmlWriter` → `factur-x.xml` im Speicher.
-4. **XML gegenprüfen** – Wohlgeformtheit, Struktur, Regeln erneut auf dem
-   erzeugten XML (nicht nur auf dem Modell).
-5. **PDF/A-3 erzeugen** – `IPdfAInvoiceComposer`: OutputIntent, XMP, Anhang,
-   `/AF`. Bricht ab, wenn das Eingangs-PDF nicht aufwertbar ist.
-6. **Ergebnis gegenprüfen** – erzeugte Datei erneut öffnen, XML extrahieren,
-   erneut validieren, PDF/A-Struktur prüfen.
-7. **Externe Validatoren** – sofern konfiguriert (`IExternalDocumentValidator`).
-8. **Speichern** – `IFileStorage`, atomar, mit SHA-256 und Bericht.
+```csharp
+public interface IEInvoiceService
+{
+    Task<PdfPreflightReport> AnalyzePdfAsync(string pdfPath, CancellationToken ct = default);
+    ValidationReport ValidateInvoice(Invoice invoice);
+    Task<CreateEInvoiceResult> CreateAsync(CreateEInvoiceRequest request,
+                                           IProgress<PipelineProgress>? progress = null,
+                                           CancellationToken ct = default);
+}
+```
 
-Schlägt ein Schritt fehl, wird **keine** Ausgabedatei zurückgelassen und das
-Original bleibt unverändert.
+Die Umsetzung `EInvoiceService` fuehrt dahinter die spezialisierten Klassen
+zusammen – `CiiInvoiceWriter`, `CiiInvoiceReader`, `En16931RuleValidator`,
+`PdfPreflightService`, `PdfAInvoiceComposer`, `MustangValidator`,
+`ValidationReportWriter`, `FileStorage`. Diese Klassen bleiben getrennt
+lesbar, liegen aber in **einer** Assembly.
 
-## 4. Verbotene Konstruktionen
+## EInvoiceSender.App
 
-- Geschäftslogik in Code-behind oder ViewModel (Regel A4).
-- `Process.Start` außerhalb von `IProcessRunner` (Regel A5).
-- Dateisystemzugriff in `Domain` (Regel A1).
-- `double`/`float` für Geld (Regel A7).
-- Statischer veränderlicher Zustand (Regel A6).
-- Direkte Abhängigkeit der Anwendung von einem konkreten Kommandozeilenwerkzeug –
-  externe Validatoren liegen immer hinter `IExternalDocumentValidator`.
+Nur Oberflaeche: Fenster, Ansichten, ViewModels, Windows-Dialoge,
+Drag-and-drop, PDF-Vorschau, Shell-Aufrufe und das Zusammensetzen der
+Abhaengigkeiten. Keine Steuer-, PDF/A-, XML- oder Rechnungslogik.
 
-## 5. Fehler- und Meldungsfluss
+```
+App.xaml(.cs)              Composition Root: eine ServiceCollection, kein Generic Host
+Views/MainWindow           Rahmen, Schrittanzeige, Statuszeile, Navigation, Stoerungsanzeige
+Views/Steps/               die fuenf Schritte als eigene UserControls
+Views/Dialogs/             Einstellungen
+ViewModels/                je Schritt ein ViewModel plus MainViewModel
+Services/                  PDF-Vorschau, Windows-Shell, Systemuhr
+```
 
-Fachliche Befunde sind `ValidationFinding` mit:
+Zwei Regeln gelten in der Oberflaeche ausnahmslos und werden von Tests bewacht:
 
-- `Severity` (Fehler / Warnung / Hinweis),
-- `RuleId` (z. B. `BR-CO-13`) – technisch, im Detailbereich sichtbar,
-- `Message` – deutscher, für Anwender verständlicher Satz,
-- `FieldPath` – Feldbezug für die Oberfläche,
-- `TechnicalDetail` – optional, aufklappbar.
+- **`ConfigureAwait(true)` an jedem `await`.** Sonst laeuft die Fortsetzung auf
+  einem Threadpool-Thread und WPF bricht beim naechsten Zugriff auf ein
+  gebundenes Bedienelement ab.
+- **Jede Eigenschaft, die eine Freigabepruefung liest, benachrichtigt ihren
+  Befehl** (`[NotifyCanExecuteChangedFor]`). Sonst bleibt die Schaltflaeche im
+  zuletzt bewerteten Zustand haengen.
 
-Ausnahmen werden nie roh angezeigt. `Application` übersetzt sie an der Grenze in
-`ValidationFinding` bzw. `OperationFailure`.
+Beide Regeln stammen aus Fehlern, die im laufenden Programm aufgetreten sind.
 
-## 6. Nebenläufigkeit
+## Der Ablauf
 
-- Die gesamte Pipeline läuft asynchron außerhalb des UI-Threads.
-- PDF-Rendering (PDFtoImage) ist nicht threadsicher und läuft serialisiert hinter
-  `PdfPreviewRenderer`.
-- Jeder Port mit I/O nimmt ein `CancellationToken`; der Benutzer kann abbrechen.
-- Temporäre Dateien liegen in einem Arbeitsverzeichnis pro Vorgang und werden im
-  `finally` gelöscht.
+```
+1. PDF auswaehlen      →  AnalyzePdfAsync   →  geeignet? Gruende nennen
+2. Daten erfassen      →  InvoiceDraft      →  ValidateInvoice
+3. Vergleichen         →  Pflichtbestaetigung des Anwenders
+4. Erzeugen            →  CreateAsync       →  neun Schritte mit Fortschritt
+5. Ergebnis            →  Datei, Bericht, Pruefsumme, E-Mail-Entwurf
+```
+
+Der Kern fuehrt in Schritt 4 neun Arbeitsschritte aus: Eingangspruefung,
+Datenpruefung, XML erzeugen, XML pruefen, PDF/A-3 aufbauen, Ergebnis erneut
+oeffnen und zurueclesen, extern gegenpruefen, Bericht schreiben, Datei
+speichern.
+
+Drei Eigenschaften sind dabei bindend:
+
+- **Ohne die Bestaetigung des Anwenders entsteht nichts.** Die Sperre sitzt im
+  Kern, nicht in der Oberflaeche.
+- **Keine halb fertige Ausgabedatei.** Gespeichert wird erst, wenn alle
+  verpflichtenden Pruefungen bestanden sind.
+- **Das Original bleibt unveraendert.** Es wird ausschliesslich gelesen.
+
+## Abhaengigkeiten
+
+`App` verweist auf `Core`. `Core` verweist auf nichts aus der Projektmappe.
+Damit gibt es keine Kreise, und der Kern bleibt ohne Oberflaeche pruefbar.
