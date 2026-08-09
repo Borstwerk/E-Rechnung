@@ -69,14 +69,18 @@ Quelle der Wahrheit.
 - **Unsichere Werte fuellen nichts aus.** Jeder gelesene Wert traegt eine
   Vertrauensstufe. Was nicht mindestens mittlere Sicherheit hat, wird
   angezeigt, aber nicht eingetragen.
-- **Positionen werden zurueckhaltend behandelt.** Rechnungstabellen sind
-  uneinheitlich aufgebaut. Solange die Struktur nicht sicher erkannt wird,
-  bleibt die Positionsliste leer – eine falsche Position wuerde den
-  Rechnungsbetrag veraendern.
+- **Rechnungspositionen werden gar nicht erkannt.** Sie muessen von Hand
+  erfasst werden. Rechnungstabellen sind zwischen Vorlagen zu uneinheitlich,
+  um sie mit zeilenbasierten Regeln zuverlaessig zu treffen, und eine falsche
+  Position wuerde den Rechnungsbetrag veraendern.
 - **Verkaeufer und Kaeufer** werden nur zugeordnet, wenn es ein belastbares
   Signal gibt: die gespeicherte eigene Firmenvorlage oder ein Schluesselwort
   wie "Rechnung an". Ohne beides bleiben die Felder leer. Vertauschte Parteien
   waeren schlimmer als leere Felder.
+- **Das Land des Kaeufers wird nicht erkannt** und auch nicht angenommen. Es
+  bleibt leer, bis Sie es auswaehlen – ein stilles "DE" wuerde bei einem
+  auslaendischen Kunden eine formal gueltige, inhaltlich falsche Rechnung
+  ergeben.
 - **Der aus der PDF gelesene Gesamtbetrag** dient dem Abgleich mit den
   erfassten Positionen. Er ist ein zweites, unabhaengiges Signal – keine
   rechtliche Wahrheit. Eine Abweichung blockiert nichts, sie weist hin.

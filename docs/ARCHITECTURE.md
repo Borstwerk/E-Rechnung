@@ -21,10 +21,11 @@ automatisiert pruefen – auch auf einem Build-Agenten ohne Bildschirm.
 |---|---|
 | `Models` | Rechnung, Parteien, Betraege, Werttypen (IBAN, Waehrung, Land, Einheit), das Eingabeformular `InvoiceDraft` |
 | `Calculation` | Summen- und Steuerberechnung nach EN 16931, ausschliesslich `decimal` |
-| `Validation` | Regelwerk EN 16931, Codelisten, Befunde und Pruefberichte |
+| `Validation` | Befunde und Pruefberichte |
+| `Validation/Rules` | die EN-16931-Regeln, nach Dokument, Parteien, Positionen, Umsatzsteuer, Summen und Zahlung gruppiert |
 | `Zugferd` | CII-XML erzeugen und zurueclesen |
 | `Pdf` | PDF-Analyse, Eingangspruefung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
-| `Pdf/Detection` | oertliche Datenerkennung: Textextraktion, Erkennungsregeln, Vertrauensstufen, Vorbefuellung, Summenabgleich |
+| `Pdf/Detection` | oertliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefuellung und Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
 | `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporaere Arbeitsverzeichnisse |
 | `Security` | sichere XML-Verarbeitung, Prozessausfuehrung mit Zeitlimit |
@@ -52,6 +53,11 @@ zusammen – `CiiInvoiceWriter`, `CiiInvoiceReader`, `En16931RuleValidator`,
 `PdfPreflightService`, `PdfAInvoiceComposer`, `MustangValidator`,
 `ValidationReportWriter`, `FileStorage`. Diese Klassen bleiben getrennt
 lesbar, liegen aber in **einer** Assembly.
+
+`CreateAsync` selbst enthaelt keinen Detailalgorithmus mehr, sondern liest
+sich als Ablauf: bestaetigt, geeignet, gueltig, erzeugen, gegenpruefen,
+aufbauen, auslesen, extern pruefen, speichern. Der Zustand eines Laufs steht
+in einem `CreationContext`; er traegt auch die Fortschrittsmeldungen.
 
 ## EInvoiceSender.App
 
@@ -92,6 +98,11 @@ PDF  →  PdfTextExtractor  →  InvoiceDataDetector  →  InvoiceDetectionResul
                                                        Invoice
 ```
 
+`InvoiceDataDetector` koordiniert nur. Die Regeln liegen in vier fachlich
+getrennten Detektoren – `DocumentFieldDetector`, `PartyDetector`,
+`PaymentDetector`, `TotalsDetector` – und die kleinen Umwandlungen in
+`DetectionParsers`.
+
 Drei Eigenschaften machen das ungefaehrlich:
 
 1. **`InvoiceDetectionResult` ist kein Rechnungsmodell** und laesst sich auch
@@ -104,6 +115,8 @@ Drei Eigenschaften machen das ungefaehrlich:
 3. **Jedes vorausgefuellte Feld ist gekennzeichnet** (`FieldOrigin`). Sobald
    der Anwender es anfasst, gilt es als von Hand erfasst und die Kennzeichnung
    verschwindet.
+
+**Rechnungspositionen werden noch nicht erkannt** – siehe `docs/BACKLOG.md`.
 
 Kein OCR, keine externen Dienste. Der Text wird im Arbeitsspeicher ausgewertet
 und danach verworfen.

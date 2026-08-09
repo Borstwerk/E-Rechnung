@@ -1,7 +1,7 @@
 # STANDARDS.md – Verwendete Normen, Versionen und exakte Werte
 
 Stand: 2026-08-04. Alle hier festgelegten Werte sind **gepinnt**. Änderungen nur
-durch den Hauptagenten und nur mit Eintrag in `docs/DECISIONS.md`.
+bewusst und nachvollziehbar begruendet.
 
 Jede Angabe trägt eine Vertrauensangabe:
 

@@ -2,7 +2,7 @@
 
 Diese Datei wird mit der Anwendung ausgeliefert. Sie listet alle
 Fremdbibliotheken auf, die im ausgelieferten Programm enthalten sind, mit ihrer
-Lizenz. Die vollständige Bewertung steht in `docs/DEPENDENCIES.md`.
+Lizenz. Die vollständige Bewertung steht in `docs/THIRD-PARTY-NOTICES.md`.
 
 | Komponente | Version | Lizenz | Herausgeber |
 |---|---|---|---|

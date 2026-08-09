@@ -1,10 +1,12 @@
 <Project>
 
   <!--
-    Central Package Management.
-    Jede hier gepinnte Abhaengigkeit ist in docs/DEPENDENCIES.md bewertet
-    (Lizenz, Projektstatus, Einschraenkungen, Auswahlgrund).
-    Neue Abhaengigkeiten nur nach Bewertung durch den Hauptagenten, siehe AGENTS.md.
+    Central Package Management: Jede Fassung steht hier, die Projekte
+    verweisen ohne Version.
+
+    Neue Abhaengigkeiten nur aufnehmen, wenn die vorhandenen Mittel nicht
+    ausreichen. Lizenz, Zweck und Einschraenkungen gehoeren dann nach
+    docs/THIRD-PARTY-NOTICES.md.
   -->
 
   <PropertyGroup>

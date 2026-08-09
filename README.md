@@ -11,10 +11,23 @@ von selbst. Sie nimmt die Rechnung, die Sie ohnehin schon haben, und macht
 daraus eine elektronische Rechnung.
 
 Nach der Auswahl der PDF versucht die Anwendung, das Formular aus dem bereits
-vorhandenen PDF-Text **vorauszufuellen**. Jeder Vorschlag ist gekennzeichnet
-und laesst sich ueberschreiben; unsichere Werte werden gar nicht erst
-eingetragen. Es findet keine Texterkennung an Bildern statt, und die
-Bestaetigung durch Sie bleibt in jedem Fall erforderlich.
+vorhandenen PDF-Text **vorauszufuellen**. Gelesen werden derzeit:
+
+- Rechnungsnummer
+- Rechnungs-, Leistungs- und Faelligkeitsdatum
+- Waehrung
+- Kaeuferangaben aus dem Adressblock, Verkaeuferangaben ueber die gespeicherte
+  Firmenvorlage
+- IBAN und BIC
+- Netto, Umsatzsteuer, Brutto, Zahlbetrag und die Steuersaetze
+
+**Rechnungspositionen werden noch nicht aus Tabellen uebernommen** und muessen
+von Hand erfasst werden.
+
+Jeder Vorschlag ist gekennzeichnet und laesst sich ueberschreiben; unsichere
+Werte werden gar nicht erst eingetragen. Es findet keine Texterkennung an
+Bildern statt, und die Bestaetigung durch Sie bleibt in jedem Fall
+erforderlich.
 
 Alles laeuft oertlich auf Ihrem Rechner. Es werden keine Rechnungsdaten,
 PDF-Dateien, E-Mail-Adressen oder Bankverbindungen an fremde Rechner
@@ -37,7 +50,8 @@ uebertragen.
 - Windows 10 oder 11, 64 Bit
 - .NET SDK 10 (nur zum Entwickeln; die ausgelieferte Fassung bringt die
   Laufzeit mit)
-- Visual Studio 2022 oder neuer mit der Arbeitslast **.NET-Desktopentwicklung**
+- Visual Studio 2026 (oder 2022 ab 17.14) mit der Arbeitslast
+  **.NET-Desktopentwicklung**
 - **Optional:** eine Java-Laufzeit (17 oder neuer) fuer die externen
   Referenzvalidatoren. Ohne sie laeuft die Anwendung normal weiter und weist
   das Ergebnis ausdruecklich als **nur intern geprueft** aus.
@@ -100,6 +114,7 @@ Ausfuehrlich: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md)
 | [`docs/E-INVOICE-STANDARD.md`](docs/E-INVOICE-STANDARD.md) | Norm, Profil und verwendete Fassungen |
 | [`docs/TESTING.md`](docs/TESTING.md) | Testebenen und Referenzvalidatoren |
 | [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md) | Bekannte Grenzen |
+| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Offene Punkte |
 | [`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) | Fremdkomponenten und Lizenzen |
 
 `docs/legacy/` enthaelt die ausfuehrlichen Unterlagen aus der Entstehungszeit.
