@@ -62,6 +62,26 @@
         </StackPanel>
       </Border>
 
+      <!--
+        Geänderte Verkäuferdaten aus den Einstellungen. Mitten im Vorgang wird
+        nichts ausgetauscht, ohne zu fragen: Im Formular können längst eigene
+        Angaben stehen.
+      -->
+      <Border Background="#FDF6E3" BorderBrush="#B7860B" BorderThickness="1" CornerRadius="3"
+              Padding="10,8" Margin="0,0,0,8"
+              Visibility="{Binding HasTemplateQuestion, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel>
+          <TextBlock TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"
+                     Text="Die Verkäuferdaten wurden geändert. Möchten Sie die neuen Angaben für diese Rechnung übernehmen? Rechnungsnummer, Käufer und Positionen bleiben in jedem Fall unverändert." />
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <Button Content="Für diese Rechnung _übernehmen"
+                    Command="{Binding ApplyChangedTemplateCommand}" TabIndex="5" MinWidth="220" />
+            <Button Content="Erst bei neuer _Rechnung verwenden"
+                    Command="{Binding KeepCurrentTemplateCommand}" TabIndex="6" MinWidth="240" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <!-- Dokument: drei gleich breite Spalten, je Feld eine Einheit. -->
       <TextBlock Style="{StaticResource Abschnitt}" Text="Dokument" Margin="0,0,0,4" />
       <Grid>
@@ -427,7 +447,8 @@
 
       <!-- Positionen -->
       <TextBlock Style="{StaticResource Abschnitt}" Text="Positionen" />
-      <DataGrid ItemsSource="{Binding Draft.Lines}" SelectedItem="{Binding SelectedLine}"
+      <DataGrid x:Name="Positionen"
+                ItemsSource="{Binding Draft.Lines}" SelectedItem="{Binding SelectedLine}"
                 AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
                 MinHeight="150" MaxHeight="260" TabIndex="50"
                 AutomationProperties.Name="Rechnungspositionen">
@@ -460,9 +481,17 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Top">
-          <Button Content="Position _hinzufügen" Command="{Binding AddLineCommand}" TabIndex="51" />
-          <Button Content="Position _entfernen" Command="{Binding RemoveLineCommand}" TabIndex="52" />
-          <Button Content="Summen _neu berechnen" Command="{Binding RecalculateTotalsCommand}" TabIndex="53" />
+          <!--
+            Click schließt eine offene Zellenbearbeitung ab, bevor der Befehl
+            läuft. WPF löst Click vor dem Command aus – siehe
+            InvoiceDataView.xaml.cs.
+          -->
+          <Button Content="Position _hinzufügen" Command="{Binding AddLineCommand}" TabIndex="51"
+                  Click="OnLineActionClicked" />
+          <Button Content="Position _entfernen" Command="{Binding RemoveLineCommand}" TabIndex="52"
+                  Click="OnLineActionClicked" />
+          <Button Content="Summen _neu berechnen" Command="{Binding RecalculateTotalsCommand}" TabIndex="53"
+                  Click="OnLineActionClicked" />
         </StackPanel>
 
         <Grid Grid.Column="1" AutomationProperties.LiveSetting="Polite"

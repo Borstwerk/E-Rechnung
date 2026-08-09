@@ -48,21 +48,47 @@ public static class InvoiceCalculator
     {
         ArgumentNullException.ThrowIfNull(invoice);
 
+        return Calculate(
+            invoice.Lines, invoice.AllowancesAndCharges, invoice.PaidAmount, invoice.RoundingAmount);
+    }
+
+    /// <summary>
+    /// Dasselbe Summenbild aus den Bestandteilen, die dafür gebraucht werden.
+    ///
+    /// **Warum es diese Überladung gibt:** Die Summen hängen nur an den
+    /// Positionen, den Nachlässen und Zuschlägen und den beiden Beträgen unten.
+    /// Wer sie ausrechnen will, braucht keine vollständige Rechnung – keinen
+    /// Verkäufer, keinen Käufer, keine Rechnungsnummer.
+    ///
+    /// Genau daran scheiterte die Anzeige im Formular: Sie ging über
+    /// <c>TryBuildInvoice</c> und blieb leer, solange irgendeine andere Angabe
+    /// fehlte. Der Anwender sah nach dem Eintragen von drei Positionen keine
+    /// Summe und konnte sich nicht erklären, warum.
+    /// </summary>
+    public static InvoiceTotals Calculate(
+        IReadOnlyList<InvoiceLine> lines,
+        IReadOnlyList<DocumentAllowanceCharge> allowancesAndCharges,
+        decimal paidAmount,
+        decimal roundingAmount)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        ArgumentNullException.ThrowIfNull(allowancesAndCharges);
+
         // 1) Positionsnettobeträge (BT-131) und Summe (BT-106).
-        decimal[] lineNetAmounts = [.. invoice.Lines.Select(CalculateLineNetAmount)];
+        decimal[] lineNetAmounts = [.. lines.Select(CalculateLineNetAmount)];
         decimal lineTotal = Amounts.Round(lineNetAmounts.Sum());
 
         // 2) Nachlässe (BT-107) und Zuschläge (BT-108) auf Dokumentebene.
         decimal allowanceTotal = Amounts.Round(
-            invoice.AllowancesAndCharges.Where(a => !a.IsCharge).Sum(a => a.Amount));
+            allowancesAndCharges.Where(a => !a.IsCharge).Sum(a => a.Amount));
         decimal chargeTotal = Amounts.Round(
-            invoice.AllowancesAndCharges.Where(a => a.IsCharge).Sum(a => a.Amount));
+            allowancesAndCharges.Where(a => a.IsCharge).Sum(a => a.Amount));
 
         // 3) Nettosumme (BT-109) nach BR-CO-13.
         decimal taxBasisTotal = Amounts.Round(lineTotal - allowanceTotal + chargeTotal);
 
         // 4) Steueraufschlüsselung (BG-23) nach BR-S-08 und BR-CO-17.
-        var breakdown = BuildVatBreakdown(invoice, lineNetAmounts);
+        var breakdown = BuildVatBreakdown(lines, allowancesAndCharges, lineNetAmounts);
 
         // 5) Gesamtsteuer (BT-110) nach BR-CO-14.
         decimal taxTotal = Amounts.Round(breakdown.Sum(b => b.TaxAmount));
@@ -71,8 +97,8 @@ public static class InvoiceCalculator
         decimal grandTotal = Amounts.Round(taxBasisTotal + taxTotal);
 
         // 7) Offener Zahlbetrag (BT-115) nach BR-CO-16.
-        decimal paid = Amounts.Round(invoice.PaidAmount);
-        decimal rounding = Amounts.Round(invoice.RoundingAmount);
+        decimal paid = Amounts.Round(paidAmount);
+        decimal rounding = Amounts.Round(roundingAmount);
         decimal duePayable = Amounts.Round(grandTotal - paid + rounding);
 
         return new InvoiceTotals(
@@ -102,19 +128,20 @@ public static class InvoiceCalculator
     /// erzeugte XML zwischen zwei Läufen byte-identisch bleibt.
     /// </summary>
     private static List<VatBreakdownEntry> BuildVatBreakdown(
-        Invoice invoice,
+        IReadOnlyList<InvoiceLine> lines,
+        IReadOnlyList<DocumentAllowanceCharge> allowancesAndCharges,
         decimal[] lineNetAmounts)
     {
         var groups = new Dictionary<(VatCategory Category, decimal Rate), decimal>();
 
-        for (int i = 0; i < invoice.Lines.Count; i++)
+        for (int i = 0; i < lines.Count; i++)
         {
-            InvoiceLine line = invoice.Lines[i];
+            InvoiceLine line = lines[i];
             var key = (line.VatCategory, NormalizeRate(line.VatRate));
             groups[key] = groups.GetValueOrDefault(key) + lineNetAmounts[i];
         }
 
-        foreach (DocumentAllowanceCharge item in invoice.AllowancesAndCharges)
+        foreach (DocumentAllowanceCharge item in allowancesAndCharges)
         {
             var key = (item.VatCategory, NormalizeRate(item.VatRate));
             decimal signedAmount = item.IsCharge ? item.Amount : -item.Amount;

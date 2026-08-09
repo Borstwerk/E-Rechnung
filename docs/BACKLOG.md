@@ -47,7 +47,20 @@ hierher, sondern in die Commit-Historie.
   an der Verdrahtung im Quelltext –, aber nicht am laufenden Fenster.
 - **Einstellungen ändern und schließen:** Die neuen Vorgaben müssen ohne
   Neustart im nächsten Vorgang stehen, ein bereits ausgefülltes Formular
-  dagegen unberührt bleiben.
+  dagegen unberührt bleiben. Ist Schritt 2 schon offen, erscheint stattdessen
+  die Rückfrage über dem Formular; „Für diese Rechnung übernehmen“ aktualisiert
+  ausschließlich die Verkäufer- und Bankangaben.
+- **Summen während der Eingabe** (die Positionstabelle lässt sich ohne
+  laufendes Fenster nicht bedienen):
+
+  1. Drei Positionen eintragen – 4 × 85,00, 2 × 95,00, 1 × 70,00, je 19 %.
+  2. Nach dem Verlassen der letzten Zelle müssen die Summen von selbst auf
+     600,00 / 114,00 / 714,00 / 714,00 stehen.
+  3. Den Steuersatz der letzten Position ändern und **ohne** die Zelle zu
+     verlassen auf „Summen neu berechnen“ klicken: Die Summen müssen sofort
+     zum neuen Satz passen.
+  4. Dasselbe mit Menge und Einzelpreis als zuletzt bearbeiteter Zelle.
+  5. „Weiter“ darf an einer bereits angezeigten Summe nichts mehr ändern.
 - **Installer-Abnahme auf einem sauberen Windows 11 x64** – ohne .NET SDK,
   ohne Java, ohne Mustang, ohne veraPDF. Der vollständige Ablauf muss laufen,
   ohne dass irgendeine Laufzeit nachinstalliert werden muss:

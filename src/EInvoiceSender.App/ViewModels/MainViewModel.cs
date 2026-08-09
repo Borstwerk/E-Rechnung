@@ -34,6 +34,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     private bool _formWasOpened;
 
+    /// <summary>
+    /// Die zuletzt eingelesene Firmenvorlage. Woran sonst sollte sich
+    /// erkennen lassen, ob der Anwender in den Einstellungen wirklich etwas
+    /// geändert hat?
+    /// </summary>
+    private CompanyTemplate? _appliedTemplate;
+
     public MainViewModel(
         PdfSelectionViewModel pdfSelection,
         InvoiceDataViewModel invoiceData,
@@ -133,19 +140,33 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public async Task LoadTemplateAsync(CancellationToken cancellationToken = default)
     {
+        if (await TryLoadTemplateAsync(cancellationToken).ConfigureAwait(true) is not { } template)
+        {
+            return;
+        }
+
+        InvoiceData.ApplyTemplate(template);
+        Result.EmailSubject = template.DefaultEmailSubject ?? Result.EmailSubject;
+        Result.EmailBody = template.DefaultEmailBody ?? Result.EmailBody;
+
+        if (!string.IsNullOrWhiteSpace(template.LastOutputDirectory))
+        {
+            Review.OutputDirectory = template.LastOutputDirectory;
+        }
+    }
+
+    /// <summary>
+    /// Liest die gespeicherte Vorlage. Liefert <c>null</c>, wenn sie sich nicht
+    /// lesen lässt – dann steht die Begründung in der Störungsanzeige.
+    /// </summary>
+    private async Task<CompanyTemplate?> TryLoadTemplateAsync(CancellationToken cancellationToken)
+    {
         try
         {
-            CompanyTemplate template = await _settingsStore.LoadTemplateAsync(cancellationToken)
+            _appliedTemplate = await _settingsStore.LoadTemplateAsync(cancellationToken)
                 .ConfigureAwait(true);
 
-            InvoiceData.ApplyTemplate(template);
-            Result.EmailSubject = template.DefaultEmailSubject ?? Result.EmailSubject;
-            Result.EmailBody = template.DefaultEmailBody ?? Result.EmailBody;
-
-            if (!string.IsNullOrWhiteSpace(template.LastOutputDirectory))
-            {
-                Review.OutputDirectory = template.LastOutputDirectory;
-            }
+            return _appliedTemplate;
         }
         catch (IOException exception)
         {
@@ -153,6 +174,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ErrorMessage = "Die gespeicherte Firmenvorlage konnte nicht gelesen werden. "
                            + "Die Felder bleiben leer; über Einstellungen können Sie sie neu "
                            + $"erfassen. Technisch: {exception.Message}";
+
+            return null;
         }
     }
 
@@ -165,22 +188,44 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// die Anwendung neu gestartet werden müssen, damit die neuen Vorgaben
     /// ankommen.
     ///
-    /// **Die Grenze:** War Schritt 2 schon offen, geschieht nichts. Dort
-    /// könnten von Hand erfasste Rechnungsdaten stehen, und die überschreibt
-    /// eine Einstellungsänderung nicht. Für sie gilt dann die Vorlage ab der
-    /// nächsten Rechnung – siehe <see cref="StartOverAsync"/>.
+    /// **Die Grenze:** War Schritt 2 schon offen, wird nichts ungefragt
+    /// ausgetauscht – dort können längst eigene Rechnungsdaten stehen.
+    /// Stattdessen legt das Formular die Frage vor, ob die neuen
+    /// Verkäuferdaten schon für diese Rechnung gelten sollen. Wer verneint,
+    /// bekommt sie ab der nächsten – siehe <see cref="StartOverAsync"/>.
     /// </summary>
     public async Task ApplyChangedTemplateAsync(CancellationToken cancellationToken = default)
     {
-        if (_formWasOpened)
+        if (!_formWasOpened)
         {
+            InvoiceData.Reset();
+
+            await LoadTemplateAsync(cancellationToken).ConfigureAwait(true);
+
             return;
         }
 
-        InvoiceData.Reset();
+        CompanyTemplate? template = await TryLoadTemplateAsync(cancellationToken).ConfigureAwait(true);
 
-        await LoadTemplateAsync(cancellationToken).ConfigureAwait(true);
+        if (template is not null && SellerDataChanged(template))
+        {
+            InvoiceData.AskAboutChangedTemplate(template);
+        }
     }
+
+    /// <summary>
+    /// Unterscheidet sich die gespeicherte Vorlage in dem, was auf der Rechnung
+    /// steht?
+    ///
+    /// Das zuletzt verwendete Ausgabeverzeichnis bleibt dabei außen vor: Es
+    /// wird nach jeder erzeugten Rechnung mitgeschrieben und hat mit den
+    /// Verkäuferdaten nichts zu tun. Ohne diese Ausnahme käme die Rückfrage,
+    /// obwohl niemand etwas geändert hat.
+    /// </summary>
+    private bool SellerDataChanged(CompanyTemplate template)
+        => _appliedTemplate is null
+           || template with { LastOutputDirectory = null }
+              != _appliedTemplate with { LastOutputDirectory = null };
 
     /// <summary>Geht einen Schritt zurück.</summary>
     [RelayCommand(CanExecute = nameof(CanGoBack))]

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Validation;
 
@@ -315,6 +316,34 @@ public sealed partial class InvoiceDraft : ObservableObject
     }
 
     /// <summary>
+    /// Rechnet die Summen aus den Positionen aus – ohne die übrigen Angaben.
+    ///
+    /// **Warum getrennt von <see cref="TryBuildInvoice"/>:** Die Summen hängen
+    /// nur an den Positionen. Die Anzeige lief bisher trotzdem über den Bau
+    /// einer vollständigen Rechnung und blieb deshalb leer, solange
+    /// Rechnungsnummer, Käufer oder Land fehlten. Der Anwender trug drei
+    /// Positionen ein, drückte „Summen neu berechnen“ und sah – nichts.
+    ///
+    /// Geliefert wird <c>null</c>, sobald eine Positionsangabe fehlt oder
+    /// unlesbar ist. Dann gibt es keine belastbare Summe, und eine falsche
+    /// wäre schlimmer als keine. Gemeldet wird hier nichts: Das Rechnen sagt
+    /// nur, ob es geht; das Beanstanden bleibt Sache der Prüfung.
+    /// </summary>
+    public InvoiceTotals? TryCalculateTotals()
+    {
+        var report = new ValidationReportBuilder();
+
+        List<InvoiceLine> lines = BuildLines(report);
+        decimal paid = ParseAmount(PaidAmount, "APP-EDT-010", "Bereits gezahlter Betrag", "PaidAmount", report);
+        decimal rounding = ParseAmount(
+            RoundingAmount, "APP-EDT-011", "Rundungsbetrag", "RoundingAmount", report);
+
+        return report.Build().HasErrors
+            ? null
+            : InvoiceCalculator.Calculate(lines, BuildAllowancesAndCharges(), paid, rounding);
+    }
+
+    /// <summary>
     /// Versucht, aus dem Entwurf eine vollständige Rechnung zu bauen.
     /// </summary>
     /// <param name="invoice">Die gebaute Rechnung, falls alle Werte lesbar waren.</param>
@@ -470,18 +499,22 @@ public sealed partial class InvoiceDraft : ObservableObject
                 continue;
             }
 
-            decimal quantity = ParseAmount(
+            // Menge, Einzelpreis und Steuersatz sind Pflichtangaben: Ein leeres
+            // Feld wird gemeldet und nicht stillschweigend als null gelesen.
+            decimal quantity = ParseRequiredAmount(
                 draft.Quantity, "APP-EDT-021", $"Die Menge in {label}", $"{field}.Quantity",
                 report, decimals: 4);
-            decimal price = ParseAmount(
+            decimal price = ParseRequiredAmount(
                 draft.NetUnitPrice, "APP-EDT-022", $"Der Einzelpreis in {label}",
                 $"{field}.NetUnitPrice", report, decimals: 4);
+            decimal vatRate = ParseRequiredAmount(
+                draft.VatRate, "APP-EDT-024", $"Der Steuersatz in {label}",
+                $"{field}.VatRate", report, decimals: 4);
+
+            // Ein Rabatt ist freiwillig; kein Eintrag bedeutet kein Rabatt.
             decimal allowance = ParseAmount(
                 draft.AllowanceAmount, "APP-EDT-023", $"Der Rabatt in {label}",
                 $"{field}.AllowanceAmount", report);
-            decimal vatRate = ParseAmount(
-                draft.VatRate, "APP-EDT-024", $"Der Steuersatz in {label}",
-                $"{field}.VatRate", report, decimals: 4);
             decimal baseQuantity = ParseAmount(
                 draft.PriceBaseQuantity, "APP-EDT-025", $"Die Preisbasismenge in {label}",
                 $"{field}.PriceBaseQuantity", report, decimals: 4);
@@ -544,6 +577,33 @@ public sealed partial class InvoiceDraft : ObservableObject
             MeansCode: PaymentMeansCode,
             BankAccount: account,
             Terms: Blank(PaymentTerms));
+    }
+
+    /// <summary>
+    /// Liest eine Pflichtangabe. Ein leeres Feld ist hier keine Null, sondern
+    /// eine fehlende Angabe – und wird als solche gemeldet.
+    ///
+    /// Der Unterschied zählt: Bei Menge, Einzelpreis und Steuersatz ist die
+    /// Null ein zulässiger Wert. Würde ein leeres Feld stillschweigend als null
+    /// gelesen, entstünde aus einer vergessenen Eingabe eine Position über
+    /// null Euro, ohne dass irgendwo etwas aufliefe.
+    /// </summary>
+    private static decimal ParseRequiredAmount(
+        string value,
+        string ruleId,
+        string label,
+        string field,
+        ValidationReportBuilder report,
+        int decimals = 2)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            report.Error(ruleId, $"{label} fehlt.", field);
+
+            return 0m;
+        }
+
+        return ParseAmount(value, ruleId, label, field, report, decimals);
     }
 
     /// <summary>
@@ -614,20 +674,39 @@ public sealed partial class InvoiceLineDraft : ObservableObject
     [ObservableProperty]
     private string _description = string.Empty;
 
+    /// <summary>
+    /// Menge, Einzelpreis und Steuersatz beginnen **leer**.
+    ///
+    /// Vorher standen dort "1", "0,00" und "19". Eine Null ist aber ein
+    /// fachlich zulässiger Wert – ein Rabatt von 0,00 und ein Steuersatz von 0
+    /// kommen vor. Ein vorausgefülltes 0,00 lässt sich deshalb nicht von einer
+    /// bewussten Null unterscheiden: Vergisst der Anwender das Feld, entsteht
+    /// eine Position über null Euro, und niemand meldet etwas.
+    ///
+    /// Leer ist eindeutig. Die Felder sind Zeichenketten, also braucht es dafür
+    /// keinen zusätzlichen Nullwert-Typ – der leere Text ist bereits die
+    /// Antwort „nichts eingetragen“. Was leer bleibt, meldet
+    /// <see cref="InvoiceDraft.TryBuildInvoice"/> als fehlende Angabe.
+    /// </summary>
     [ObservableProperty]
-    private string _quantity = "1";
+    private string _quantity = string.Empty;
 
     [ObservableProperty]
     private string _unit = "C62";
 
     [ObservableProperty]
-    private string _netUnitPrice = "0,00";
+    private string _netUnitPrice = string.Empty;
 
+    /// <summary>
+    /// Die Preisbasismenge steht nicht im Formular und ist nach EN 16931 mit 1
+    /// belegt, wenn nichts anderes angegeben ist. Ein ableitbarer technischer
+    /// Wert – der darf vorgegeben sein.
+    /// </summary>
     [ObservableProperty]
     private string _priceBaseQuantity = "1";
 
     [ObservableProperty]
-    private string _allowanceAmount = "0,00";
+    private string _allowanceAmount = string.Empty;
 
     [ObservableProperty]
     private string _allowanceReason = string.Empty;
@@ -636,7 +715,7 @@ public sealed partial class InvoiceLineDraft : ObservableObject
     private VatCategory _vatCategory = VatCategory.StandardRate;
 
     [ObservableProperty]
-    private string _vatRate = "19";
+    private string _vatRate = string.Empty;
 }
 
 /// <summary>Eine bearbeitbare Begründung der Steuerbefreiung.</summary>
