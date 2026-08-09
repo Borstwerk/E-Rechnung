@@ -1,13 +1,10 @@
-using EInvoiceSender.Application.Abstractions;
-using EInvoiceSender.Application.UseCases;
-using EInvoiceSender.Domain.Model;
-using EInvoiceSender.Domain.Validation;
-using EInvoiceSender.Domain.Values;
-using EInvoiceSender.Formats.Cii;
-using EInvoiceSender.Infrastructure.PdfA;
-using EInvoiceSender.Infrastructure.Storage;
-using EInvoiceSender.TestSupport;
-using EInvoiceSender.Validation.Rules;
+using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf;
+using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Storage;
+using EInvoiceSender.Core.Tests.Support;
+using EInvoiceSender.Core.Validation;
+using EInvoiceSender.Core.Zugferd;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -51,7 +48,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         var progressMessages = new List<PipelineProgress>();
         var progress = new ImmediateProgress<PipelineProgress>(progressMessages.Add);
 
-        CreateEInvoiceResult result = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
             Request(source), progress, TestContext.Current.CancellationToken);
 
         Assert.True(result.Succeeded, Describe(result));
@@ -99,7 +96,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
-        CreateEInvoiceResult result = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
             Request(source) with { ContentMatchConfirmed = false },
             cancellationToken: TestContext.Current.CancellationToken);
 
@@ -119,7 +116,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
         Invoice invalid = BaseInvoice() with { InvoiceNumber = "  " };
 
-        CreateEInvoiceResult result = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
             Request(source) with { Invoice = invalid },
             cancellationToken: TestContext.Current.CancellationToken);
 
@@ -137,7 +134,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     {
         string source = TempPdf(TestPdfFactory.CreatePdfWithNonEmbeddedFont());
 
-        CreateEInvoiceResult result = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
             Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(result.Succeeded);
@@ -154,7 +151,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     {
         string source = TempPdf(TestPdfFactory.CreateDamagedPdf());
 
-        CreateEInvoiceResult result = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
             Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(result.Succeeded);
@@ -167,12 +164,12 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     {
         // Zuerst eine fertige E-Rechnung erzeugen ...
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
-        CreateEInvoiceResult first = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult first = await BuildUseCase().CreateAsync(
             Request(source), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(first.Succeeded, Describe(first));
 
         // ... und diese ohne Bestaetigung erneut verarbeiten.
-        CreateEInvoiceResult second = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult second = await BuildUseCase().CreateAsync(
             Request(first.OutputFile!.FullPath),
             cancellationToken: TestContext.Current.CancellationToken);
 
@@ -180,7 +177,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.Contains(second.Report.Findings, f => f.RuleId == "APP-USE-002");
 
         // Mit Bestaetigung geht es durch.
-        CreateEInvoiceResult third = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult third = await BuildUseCase().CreateAsync(
             Request(first.OutputFile.FullPath) with { ExistingInvoiceReplacementConfirmed = true },
             cancellationToken: TestContext.Current.CancellationToken);
 
@@ -194,7 +191,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
         CreateEInvoiceResult result = await BuildUseCase(
                 new StubValidator("Testvalidator", StubBehavior.TimesOut))
-            .ExecuteAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
+            .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(result.Succeeded);
         Assert.Null(result.OutputFile);
@@ -212,7 +209,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
         CreateEInvoiceResult result = await BuildUseCase(
                 new StubValidator("Testvalidator", StubBehavior.ReportsError))
-            .ExecuteAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
+            .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(result.Succeeded);
         Assert.Null(result.OutputFile);
@@ -229,7 +226,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
         CreateEInvoiceResult result = await BuildUseCase(
                 new StubValidator("Testvalidator", StubBehavior.NotAvailable))
-            .ExecuteAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
+            .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         // Die Datei entsteht, aber der Bericht sagt deutlich, dass die
         // Gegenpruefung nicht stattgefunden hat.
@@ -255,7 +252,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         var progress = new ImmediateProgress<PipelineProgress>(_ => cts.Cancel());
 
         CreateEInvoiceResult result = await BuildUseCase()
-            .ExecuteAsync(Request(source), progress, cts.Token);
+            .CreateAsync(Request(source), progress, cts.Token);
 
         Assert.False(result.Succeeded);
         Assert.True(result.Canceled);
@@ -271,11 +268,11 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
 
-        CreateEInvoiceResult first = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult first = await BuildUseCase().CreateAsync(
             Request(source), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(first.Succeeded, Describe(first));
 
-        CreateEInvoiceResult second = await BuildUseCase().ExecuteAsync(
+        CreateEInvoiceResult second = await BuildUseCase().CreateAsync(
             Request(source), cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(second.Succeeded, Describe(second));
 
@@ -292,7 +289,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         string[] before = Directory.GetDirectories(Path.GetTempPath(), "EInvoiceSender-*");
 
         await BuildUseCase(new StubValidator("Testvalidator", StubBehavior.ReportsError))
-            .ExecuteAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
+            .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
         string[] after = Directory.GetDirectories(Path.GetTempPath(), "EInvoiceSender-*");
 
@@ -301,7 +298,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
     // ------------------------------------------------------------------ Aufbau
 
-    private CreateEInvoiceUseCase BuildUseCase(params IExternalDocumentValidator[] validators)
+    private EInvoiceService BuildUseCase(params IExternalDocumentValidator[] validators)
         => new(
             new PdfPreflightService(_analyzer, NullLogger<PdfPreflightService>.Instance),
             new En16931RuleValidator(new FixedClock(FixedNow)),
@@ -313,7 +310,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             new TemporaryWorkspaceFactory(),
             new StubClock(FixedNow),
             validators,
-            NullLogger<CreateEInvoiceUseCase>.Instance);
+            NullLogger<EInvoiceService>.Instance);
 
     private CreateEInvoiceRequest Request(string sourcePath)
         => new(

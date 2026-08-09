@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Der fachliche Kern: Rechnungsmodelle, Berechnung, Regelpruefung,
+    CII-XML, PDF/A-3, Berichte, Einstellungen und E-Mail-Entwurf.
+
+    Bewusst plattformneutral (net10.0, kein WPF): Der Kern laesst sich damit
+    vollstaendig automatisiert pruefen, auch auf einem Build-Agenten ohne
+    Bildschirm. Windows-spezifisches steht in EInvoiceSender.App.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="MimeKit" />
+    <PackageReference Include="PdfSharp" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+
+</Project>

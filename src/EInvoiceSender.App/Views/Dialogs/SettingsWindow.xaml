@@ -1,0 +1,104 @@
+<Window x:Class="EInvoiceSender.App.Views.Dialogs.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
+        Title="Einstellungen und Firmenvorlage"
+        Height="700" Width="760" MinHeight="480" MinWidth="620"
+        WindowStartupLocation="CenterOwner">
+
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Ihre Firmenangaben" />
+        <UniformGrid Columns="2">
+          <TextBlock Text="Name" />
+          <TextBox Text="{Binding SellerName, UpdateSourceTrigger=PropertyChanged}" TabIndex="1"
+                   AutomationProperties.Name="Firmenname" />
+          <TextBlock Text="Strasse" />
+          <TextBox Text="{Binding SellerStreet, UpdateSourceTrigger=PropertyChanged}" TabIndex="2"
+                   AutomationProperties.Name="Strasse" />
+          <TextBlock Text="PLZ" />
+          <TextBox Text="{Binding SellerPostalCode, UpdateSourceTrigger=PropertyChanged}" TabIndex="3"
+                   AutomationProperties.Name="Postleitzahl" />
+          <TextBlock Text="Ort" />
+          <TextBox Text="{Binding SellerCity, UpdateSourceTrigger=PropertyChanged}" TabIndex="4"
+                   AutomationProperties.Name="Ort" />
+          <TextBlock Text="Land" />
+          <ComboBox ItemsSource="{Binding Countries}" DisplayMemberPath="Display"
+                    SelectedValuePath="Code" SelectedValue="{Binding SellerCountry}" TabIndex="5"
+                    AutomationProperties.Name="Land" />
+          <TextBlock Text="E-Mail" />
+          <TextBox Text="{Binding SellerEmail, UpdateSourceTrigger=PropertyChanged}" TabIndex="6"
+                   AutomationProperties.Name="E-Mail-Adresse" />
+          <TextBlock Text="USt-IdNr." />
+          <TextBox Text="{Binding SellerVatId, UpdateSourceTrigger=PropertyChanged}" TabIndex="7"
+                   AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer" />
+          <TextBlock Text="Steuernummer" />
+          <TextBox Text="{Binding SellerTaxNumber, UpdateSourceTrigger=PropertyChanged}" TabIndex="8"
+                   AutomationProperties.Name="Steuernummer" />
+        </UniformGrid>
+
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Bankverbindung" />
+        <TextBlock Text="{Binding BankStorageHint}" TextWrapping="Wrap" Foreground="#555"
+                   Margin="0,0,0,6" />
+        <UniformGrid Columns="2">
+          <TextBlock Text="Kontoinhaber" />
+          <TextBox Text="{Binding BankAccountHolder, UpdateSourceTrigger=PropertyChanged}" TabIndex="9"
+                   AutomationProperties.Name="Kontoinhaber" />
+          <TextBlock Text="IBAN" />
+          <TextBox Text="{Binding BankIban, UpdateSourceTrigger=PropertyChanged}" TabIndex="10"
+                   AutomationProperties.Name="IBAN" />
+          <TextBlock Text="BIC" />
+          <TextBox Text="{Binding BankBic, UpdateSourceTrigger=PropertyChanged}" TabIndex="11"
+                   AutomationProperties.Name="BIC" />
+        </UniformGrid>
+
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Vorgaben neuer Rechnungen" />
+        <UniformGrid Columns="2">
+          <TextBlock Text="Waehrung" />
+          <ComboBox ItemsSource="{Binding Currencies}" DisplayMemberPath="Display"
+                    SelectedValuePath="Code" SelectedValue="{Binding DefaultCurrency}" TabIndex="12"
+                    AutomationProperties.Name="Standardwaehrung" />
+          <TextBlock Text="Zahlungsziel (Tage)" />
+          <TextBox Text="{Binding DefaultPaymentTermDays, UpdateSourceTrigger=PropertyChanged}" TabIndex="13"
+                   AutomationProperties.Name="Standardzahlungsziel in Tagen" />
+          <TextBlock Text="Zahlungsbedingungen" />
+          <TextBox Text="{Binding DefaultPaymentTerms, UpdateSourceTrigger=PropertyChanged}" TabIndex="14"
+                   AutomationProperties.Name="Standardtext der Zahlungsbedingungen" />
+          <TextBlock Text="Ausgabeverzeichnis" />
+          <TextBox Text="{Binding LastOutputDirectory, UpdateSourceTrigger=PropertyChanged}" TabIndex="15"
+                   AutomationProperties.Name="Ausgabeverzeichnis" />
+        </UniformGrid>
+
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Vorgaben des E-Mail-Entwurfs" />
+        <TextBlock Text="Betreff" />
+        <TextBox Text="{Binding DefaultEmailSubject, UpdateSourceTrigger=PropertyChanged}" TabIndex="16"
+                 AutomationProperties.Name="Standardbetreff" />
+        <TextBlock Text="Nachricht" Margin="0,8,0,0" />
+        <TextBox Text="{Binding DefaultEmailBody, UpdateSourceTrigger=PropertyChanged}" TabIndex="17"
+                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90"
+                 VerticalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="Standardnachricht" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,12,0,8"
+               AutomationProperties.LiveSetting="Polite" />
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button Content="_Zuruecksetzen" Command="{Binding ResetCommand}" TabIndex="20" />
+      <Button Content="_Speichern" Command="{Binding SaveCommand}" TabIndex="21" IsDefault="True" />
+      <Button Content="Schliessen" Click="OnCloseClicked" TabIndex="22" IsCancel="True" />
+    </StackPanel>
+  </Grid>
+</Window>

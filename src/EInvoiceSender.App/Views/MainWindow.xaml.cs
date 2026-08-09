@@ -1,0 +1,132 @@
+using System.Windows;
+using System.Windows.Controls;
+using EInvoiceSender.App.ViewModels;
+using EInvoiceSender.App.Views.Dialogs;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace EInvoiceSender.App.Views;
+
+/// <summary>
+/// Das Hauptfenster.
+///
+/// Der Code hier beschraenkt sich auf echte WPF-Aufgaben: Drag-and-drop,
+/// Dateidialog, Unterfenster und das Ein- und Ausblenden des aktuellen
+/// Schrittes. Alles Weitere steht im <see cref="MainViewModel"/>.
+/// </summary>
+public partial class MainWindow : Window
+{
+    private readonly MainViewModel _viewModel;
+
+    public MainWindow(MainViewModel viewModel)
+    {
+        _viewModel = viewModel;
+
+        InitializeComponent();
+
+        DataContext = viewModel;
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(MainViewModel.CurrentStep))
+            {
+                ShowCurrentStep();
+            }
+        };
+
+        Loaded += OnLoadedAsync;
+        ShowCurrentStep();
+    }
+
+    /// <summary>
+    /// Beim Anzeigen die gespeicherte Firmenvorlage laden.
+    ///
+    /// <c>async void</c> ist hier unvermeidbar – WPF-Ereignisse haben keine
+    /// andere Signatur. Deshalb faengt die Methode ihre Fehler selbst ab.
+    /// </summary>
+    private async void OnLoadedAsync(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _viewModel.LoadTemplateAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            _viewModel.ErrorMessage =
+                "Die gespeicherten Vorgaben konnten nicht geladen werden. Sie koennen "
+                + $"trotzdem weiterarbeiten. Technische Angabe: {exception.Message}";
+        }
+    }
+
+    private void ShowCurrentStep()
+    {
+        UserControl[] views = [ViewSchritt1, ViewSchritt2, ViewSchritt3, ViewSchritt4, ViewSchritt5];
+
+        for (int i = 0; i < views.Length; i++)
+        {
+            views[i].Visibility = (int)_viewModel.CurrentStep == i + 1
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+    }
+
+    private void OnDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = IsSinglePdf(e, out _) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Eine hereingezogene PDF pruefen. <c>async void</c> ist auch hier durch
+    /// das WPF-Ereignis vorgegeben.
+    /// </summary>
+    private async void OnFileDropped(object sender, DragEventArgs e)
+    {
+        if (!IsSinglePdf(e, out string? path) || path is null)
+        {
+            return;
+        }
+
+        await InspectAsync(path).ConfigureAwait(true);
+    }
+
+    private async Task InspectAsync(string path)
+    {
+        try
+        {
+            await _viewModel.PdfSelection.InspectAsync(path).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            _viewModel.ErrorMessage =
+                $"Die Datei konnte nicht geprueft werden. Technische Angabe: {exception.Message}";
+        }
+    }
+
+    private static bool IsSinglePdf(DragEventArgs e, out string? path)
+    {
+        path = null;
+
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] { Length: 1 } files)
+        {
+            return false;
+        }
+
+        if (!files[0].EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        path = files[0];
+
+        return true;
+    }
+
+    private void OnSettingsClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SettingsWindow(App.Services.GetRequiredService<SettingsViewModel>())
+        {
+            Owner = this,
+        };
+
+        dialog.ShowDialog();
+    }
+}

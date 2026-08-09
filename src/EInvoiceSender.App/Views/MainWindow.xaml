@@ -1,0 +1,68 @@
+<Window x:Class="EInvoiceSender.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+        xmlns:steps="clr-namespace:EInvoiceSender.App.Views.Steps"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="EInvoiceSender – E-Rechnung erstellen"
+        Height="860" Width="1200"
+        MinHeight="640" MinWidth="940"
+        WindowStartupLocation="CenterScreen"
+        AllowDrop="True"
+        Drop="OnFileDropped"
+        DragOver="OnDragOver">
+
+  <!--
+    Das Hauptfenster traegt nur den Rahmen: Kopfzeile, Platz fuer den aktuellen
+    Schritt, Statuszeile und Navigation. Die Schritte selbst sind eigene
+    UserControls unter Views/Steps.
+  -->
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- Kopfzeile -->
+    <TextBlock Grid.Row="0" Text="{Binding StepTitle}" Style="{StaticResource Ueberschrift}"
+               AutomationProperties.LiveSetting="Polite" />
+
+    <!-- Globale Stoerungsanzeige -->
+    <Border Grid.Row="1" Background="#FDECEC" BorderBrush="#C0392B" BorderThickness="1"
+            CornerRadius="3" Padding="10,8" Margin="0,0,0,10"
+            Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+      <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                 AutomationProperties.LiveSetting="Assertive" />
+    </Border>
+
+    <!-- Der aktuelle Schritt -->
+    <Grid Grid.Row="2">
+      <steps:PdfSelectionView x:Name="ViewSchritt1" DataContext="{Binding PdfSelection}" />
+      <steps:InvoiceDataView x:Name="ViewSchritt2" DataContext="{Binding InvoiceData}" />
+      <steps:ReviewView x:Name="ViewSchritt3" DataContext="{Binding Review}" />
+      <steps:GenerationView x:Name="ViewSchritt4" DataContext="{Binding Generation}" />
+      <steps:ResultView x:Name="ViewSchritt5" DataContext="{Binding Result}" />
+    </Grid>
+
+    <!-- Statuszeile -->
+    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" TextWrapping="Wrap"
+               Margin="0,12,0,8" AutomationProperties.LiveSetting="Polite" />
+
+    <!-- Navigation -->
+    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button Content="_Einstellungen ..." Click="OnSettingsClicked" TabIndex="90"
+              AutomationProperties.HelpText="Oeffnet die Firmenvorlage und die Standardwerte." />
+      <Button Content="Neue _Rechnung" Command="{Binding StartOverCommand}" TabIndex="91"
+              AutomationProperties.HelpText="Verwirft den aktuellen Stand und beginnt von vorn." />
+      <Separator Width="16" Visibility="Hidden" />
+      <Button Content="_Zurueck" Command="{Binding GoBackCommand}" TabIndex="92" />
+      <Button Content="_Weiter" Command="{Binding GoForwardCommand}" TabIndex="93" IsDefault="True" />
+    </StackPanel>
+  </Grid>
+</Window>

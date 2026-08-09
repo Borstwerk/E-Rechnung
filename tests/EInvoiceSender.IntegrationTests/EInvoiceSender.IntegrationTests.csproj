@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Integrationstests: kompletter Weg von der Eingabe-PDF bis zur
-    validierten ZUGFeRD-Datei und zum E-Mail-Entwurf.
-    Laeuft plattformuebergreifend; Windows-spezifische Teile werden uebersprungen.
+    Integrationstests: kompletter Weg von der Eingabe-PDF bis zur validierten
+    ZUGFeRD-Datei und zum E-Mail-Entwurf, einschliesslich der Gegenpruefung
+    durch die externen Referenzwerkzeuge.
+
+    Der Verweis auf EInvoiceSender.Core.Tests dient allein den gemeinsamen
+    Testvorgaben (InvoiceScenarios, TestPdfFactory). Beide Testprojekte
+    zusammen ersetzen die frueheren sechs.
   -->
 
   <PropertyGroup>
@@ -13,16 +17,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EInvoiceSender.Domain\EInvoiceSender.Domain.csproj" />
-    <ProjectReference Include="..\..\src\EInvoiceSender.Application\EInvoiceSender.Application.csproj" />
-    <ProjectReference Include="..\..\src\EInvoiceSender.Formats\EInvoiceSender.Formats.csproj" />
-    <ProjectReference Include="..\..\src\EInvoiceSender.Validation\EInvoiceSender.Validation.csproj" />
-    <ProjectReference Include="..\..\src\EInvoiceSender.Infrastructure\EInvoiceSender.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\EInvoiceSender.Mail\EInvoiceSender.Mail.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\EInvoiceSender.TestSupport\EInvoiceSender.TestSupport.csproj" />
+    <ProjectReference Include="..\..\src\EInvoiceSender.Core\EInvoiceSender.Core.csproj" />
+    <ProjectReference Include="..\EInvoiceSender.Core.Tests\EInvoiceSender.Core.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

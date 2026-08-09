@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unit-Tests des Kerns: Werttypen, Berechnung, Regelpruefung, Codelisten,
+    CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen.
+
+    Enthaelt ausserdem die quelltextbasierten Pruefungen der Oberflaeche
+    (Ordner App). Diese lesen die Dateien von EInvoiceSender.App als Text und
+    brauchen deshalb kein WPF und keinen Windows-Rechner.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EInvoiceSender.Core.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EInvoiceSender.Core\EInvoiceSender.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

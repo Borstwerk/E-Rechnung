@@ -1,6 +1,5 @@
-using EInvoiceSender.Application.Abstractions;
-using EInvoiceSender.Infrastructure.Process;
-using EInvoiceSender.Validation.External;
+using EInvoiceSender.Core.Security;
+using EInvoiceSender.Core.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -91,7 +90,7 @@ public sealed class ExternalValidatorFixture
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
 
         while (directory is not null
-               && !File.Exists(Path.Combine(directory.FullName, "EInvoiceSender.slnx")))
+               && !File.Exists(Path.Combine(directory.FullName, "EInvoiceSender.sln")))
         {
             directory = directory.Parent;
         }

@@ -36,7 +36,7 @@ fi
 if [[ ! -d "${GOLDEN_DIR}" ]]; then
     echo "FEHLER: ${GOLDEN_DIR} fehlt." >&2
     echo "Die Golden Master entstehen beim Testlauf. Zuerst ausfuehren:" >&2
-    echo "  dotnet test EInvoiceSender.slnx -c Release" >&2
+    echo "  dotnet test EInvoiceSender.sln -c Release" >&2
     exit 1
 fi
 

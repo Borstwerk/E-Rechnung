@@ -1,0 +1,212 @@
+<UserControl x:Class="EInvoiceSender.App.Views.Steps.InvoiceDataView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:InvoiceDataViewModel}"
+             d:DesignHeight="620" d:DesignWidth="960">
+
+  <UserControl.Resources>
+    <Style x:Key="Feld" TargetType="TextBox">
+      <Setter Property="Margin" Value="0,3,12,3" />
+    </Style>
+  </UserControl.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+
+      <!-- Dokument -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Dokument" />
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Rechnungsnummer" />
+        <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource Feld}" TabIndex="10"
+                 Text="{Binding Draft.InvoiceNumber, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="Rechnungsnummer" />
+
+        <TextBlock Grid.Row="0" Grid.Column="2" Text="Rechnungsdatum" />
+        <DatePicker Grid.Row="0" Grid.Column="3" Margin="0,3,12,3" TabIndex="11"
+                    SelectedDate="{Binding Draft.IssueDateAsDateTime}"
+                    AutomationProperties.Name="Rechnungsdatum" />
+
+        <TextBlock Grid.Row="0" Grid.Column="4" Text="Faellig am" />
+        <DatePicker Grid.Row="0" Grid.Column="5" Margin="0,3,0,3" TabIndex="12"
+                    SelectedDate="{Binding Draft.DueDateAsDateTime}"
+                    AutomationProperties.Name="Faelligkeitsdatum" />
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Waehrung" />
+        <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,3,12,3" TabIndex="13"
+                  ItemsSource="{Binding Currencies}" DisplayMemberPath="Display"
+                  SelectedValuePath="Code" SelectedValue="{Binding Draft.Currency}"
+                  IsEditable="False" AutomationProperties.Name="Waehrung" />
+
+        <TextBlock Grid.Row="1" Grid.Column="2" Text="Leistungsdatum" />
+        <DatePicker Grid.Row="1" Grid.Column="3" Margin="0,3,12,3" TabIndex="14"
+                    SelectedDate="{Binding Draft.DeliveryDateAsDateTime}"
+                    AutomationProperties.Name="Leistungsdatum" />
+
+        <TextBlock Grid.Row="1" Grid.Column="4" Text="Zahlungsbedingungen" />
+        <TextBox Grid.Row="1" Grid.Column="5" Style="{StaticResource Feld}" TabIndex="15"
+                 Text="{Binding Draft.PaymentTerms, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="Zahlungsbedingungen" />
+      </Grid>
+
+      <!-- Verkaeufer und Kaeufer nebeneinander -->
+      <Grid Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Margin="0,0,16,0">
+          <TextBlock Style="{StaticResource Abschnitt}" Text="Verkaeufer (Sie)" />
+          <UniformGrid Columns="2">
+            <TextBlock Text="Name" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="20"
+                     Text="{Binding Draft.SellerName, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Name des Rechnungsstellers" />
+            <TextBlock Text="Strasse" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="21"
+                     Text="{Binding Draft.SellerStreet, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Strasse des Rechnungsstellers" />
+            <TextBlock Text="PLZ" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="22"
+                     Text="{Binding Draft.SellerPostalCode, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Postleitzahl des Rechnungsstellers" />
+            <TextBlock Text="Ort" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="23"
+                     Text="{Binding Draft.SellerCity, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Ort des Rechnungsstellers" />
+            <TextBlock Text="Land" />
+            <ComboBox Margin="0,3,12,3" TabIndex="24" ItemsSource="{Binding Countries}"
+                      DisplayMemberPath="Display" SelectedValuePath="Code"
+                      SelectedValue="{Binding Draft.SellerCountry}"
+                      AutomationProperties.Name="Land des Rechnungsstellers" />
+            <TextBlock Text="USt-IdNr." />
+            <TextBox Style="{StaticResource Feld}" TabIndex="25"
+                     Text="{Binding Draft.SellerVatId, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer" />
+            <TextBlock Text="E-Mail" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="26"
+                     Text="{Binding Draft.SellerEmail, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="E-Mail des Rechnungsstellers" />
+          </UniformGrid>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1">
+          <TextBlock Style="{StaticResource Abschnitt}" Text="Kaeufer (Empfaenger)" />
+          <UniformGrid Columns="2">
+            <TextBlock Text="Name" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="30"
+                     Text="{Binding Draft.BuyerName, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Name des Rechnungsempfaengers" />
+            <TextBlock Text="Strasse" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="31"
+                     Text="{Binding Draft.BuyerStreet, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Strasse des Rechnungsempfaengers" />
+            <TextBlock Text="PLZ" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="32"
+                     Text="{Binding Draft.BuyerPostalCode, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Postleitzahl des Rechnungsempfaengers" />
+            <TextBlock Text="Ort" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="33"
+                     Text="{Binding Draft.BuyerCity, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Ort des Rechnungsempfaengers" />
+            <TextBlock Text="Land" />
+            <ComboBox Margin="0,3,12,3" TabIndex="34" ItemsSource="{Binding Countries}"
+                      DisplayMemberPath="Display" SelectedValuePath="Code"
+                      SelectedValue="{Binding Draft.BuyerCountry}"
+                      AutomationProperties.Name="Land des Rechnungsempfaengers" />
+            <TextBlock Text="USt-IdNr." />
+            <TextBox Style="{StaticResource Feld}" TabIndex="35"
+                     Text="{Binding Draft.BuyerVatId, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Umsatzsteuer-Identifikationsnummer des Empfaengers" />
+            <TextBlock Text="E-Mail" />
+            <TextBox Style="{StaticResource Feld}" TabIndex="36"
+                     Text="{Binding Draft.BuyerEmail, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="E-Mail des Rechnungsempfaengers" />
+          </UniformGrid>
+        </StackPanel>
+      </Grid>
+
+      <!-- Bankverbindung -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Bankverbindung" />
+      <UniformGrid Columns="6">
+        <TextBlock Text="Kontoinhaber" />
+        <TextBox Style="{StaticResource Feld}" TabIndex="40"
+                 Text="{Binding Draft.BankAccountHolder, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="Kontoinhaber" />
+        <TextBlock Text="IBAN" />
+        <TextBox Style="{StaticResource Feld}" TabIndex="41"
+                 Text="{Binding Draft.BankIban, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="IBAN" />
+        <TextBlock Text="BIC (freiwillig)" />
+        <TextBox Style="{StaticResource Feld}" TabIndex="42"
+                 Text="{Binding Draft.BankBic, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="BIC" />
+      </UniformGrid>
+
+      <!-- Positionen -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Positionen" />
+      <DataGrid ItemsSource="{Binding Draft.Lines}" SelectedItem="{Binding SelectedLine}"
+                AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
+                MinHeight="150" MaxHeight="260" TabIndex="50"
+                AutomationProperties.Name="Rechnungspositionen">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Nr." Binding="{Binding Number}" IsReadOnly="True" Width="46" />
+          <DataGridTextColumn Header="Bezeichnung" Binding="{Binding Name}" Width="*" />
+          <DataGridTextColumn Header="Menge" Binding="{Binding Quantity}" Width="80" />
+          <DataGridComboBoxColumn Header="Einheit" Width="130"
+                                  SelectedValueBinding="{Binding Unit}"
+                                  DisplayMemberPath="Display" SelectedValuePath="Code"
+                                  ItemsSource="{x:Static vm:InvoiceDataViewModel.Units}" />
+          <DataGridTextColumn Header="Einzelpreis" Binding="{Binding NetUnitPrice}" Width="110" />
+          <DataGridTextColumn Header="Steuersatz %" Binding="{Binding VatRate}" Width="100" />
+          <DataGridComboBoxColumn Header="Steuerkategorie" Width="200"
+                                  SelectedValueBinding="{Binding VatCategory}"
+                                  DisplayMemberPath="Display" SelectedValuePath="Category"
+                                  ItemsSource="{x:Static vm:InvoiceDataViewModel.VatCategories}" />
+        </DataGrid.Columns>
+      </DataGrid>
+
+      <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+        <Button Content="Position _hinzufuegen" Command="{Binding AddLineCommand}" TabIndex="51" />
+        <Button Content="Position _entfernen" Command="{Binding RemoveLineCommand}" TabIndex="52" />
+        <Button Content="Summen _neu berechnen" Command="{Binding RecalculateTotalsCommand}" TabIndex="53" />
+      </StackPanel>
+
+      <!-- Summen -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Berechnete Summen" />
+      <UniformGrid Columns="4" AutomationProperties.LiveSetting="Polite">
+        <TextBlock Text="Netto" />
+        <TextBlock Text="{Binding Totals.TaxBasisTotal, StringFormat=N2}" FontWeight="SemiBold" />
+        <TextBlock Text="Steuer" />
+        <TextBlock Text="{Binding Totals.TaxTotal, StringFormat=N2}" FontWeight="SemiBold" />
+        <TextBlock Text="Brutto" />
+        <TextBlock Text="{Binding Totals.GrandTotal, StringFormat=N2}" FontWeight="SemiBold" />
+        <TextBlock Text="Zahlbetrag" />
+        <TextBlock Text="{Binding Totals.DuePayableAmount, StringFormat=N2}" FontWeight="SemiBold" />
+      </UniformGrid>
+
+      <!-- Befunde -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Pruefergebnis"
+                 Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
+      <ItemsControl ItemsSource="{Binding Findings}"
+                    AutomationProperties.Name="Befunde der Datenpruefung" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

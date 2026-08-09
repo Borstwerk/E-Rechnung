@@ -3,7 +3,7 @@
   <!--
     Windows-Installer (MSI).
 
-    Bewusst NICHT Teil von EInvoiceSender.slnx: WiX erzeugt MSI-Dateien nur
+    Bewusst NICHT Teil von EInvoiceSender.sln: WiX erzeugt MSI-Dateien nur
     unter Windows. Auf einem Linux-Agenten wuerde die Solution sonst nicht mehr
     bauen. Der Installer wird ausschliesslich im Windows-Job der CI gebaut.
 

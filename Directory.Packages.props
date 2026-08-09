@@ -14,16 +14,9 @@
 
   <ItemGroup Label="Anwendung">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
-  </ItemGroup>
-
-  <ItemGroup Label="Protokollierung">
-    <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
-    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="PDF">
@@ -43,7 +36,6 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10" />
   </ItemGroup>
 
 </Project>

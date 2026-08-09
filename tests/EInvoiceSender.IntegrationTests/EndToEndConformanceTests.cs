@@ -1,11 +1,11 @@
 using System.Text;
-using EInvoiceSender.Application.Abstractions;
-using EInvoiceSender.Domain.Calculation;
-using EInvoiceSender.Domain.Validation;
-using EInvoiceSender.Domain.Values;
-using EInvoiceSender.Formats.Cii;
-using EInvoiceSender.Infrastructure.PdfA;
-using EInvoiceSender.TestSupport;
+using EInvoiceSender.Core.Calculation;
+using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf;
+using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Tests.Support;
+using EInvoiceSender.Core.Validation;
+using EInvoiceSender.Core.Zugferd;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

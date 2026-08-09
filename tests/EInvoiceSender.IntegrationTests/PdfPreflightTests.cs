@@ -1,9 +1,10 @@
-using EInvoiceSender.Application.Abstractions;
-using EInvoiceSender.Domain.Validation;
-using EInvoiceSender.Domain.Values;
-using EInvoiceSender.Formats.Cii;
-using EInvoiceSender.Infrastructure.PdfA;
-using EInvoiceSender.TestSupport;
+using EInvoiceSender.Core.Calculation;
+using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf;
+using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Tests.Support;
+using EInvoiceSender.Core.Validation;
+using EInvoiceSender.Core.Zugferd;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -151,7 +152,7 @@ public sealed class PdfPreflightTests : IDisposable
         string sourcePath = Temp(TestPdfFactory.CreateSimplePdf());
 
         InvoiceScenario scenario = InvoiceScenarios.ByKey("01-dienstleistung-19");
-        var totals = Domain.Calculation.InvoiceCalculator.Calculate(scenario.Invoice);
+        var totals = InvoiceCalculator.Calculate(scenario.Invoice);
 
         CompositionResult composed = await _composer.ComposeAsync(
             new PdfACompositionRequest(

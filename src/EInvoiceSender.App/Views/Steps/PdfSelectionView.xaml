@@ -1,0 +1,56 @@
+<UserControl x:Class="EInvoiceSender.App.Views.Steps.PdfSelectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:PdfSelectionViewModel}"
+             d:DesignHeight="520" d:DesignWidth="900">
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="420" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Grid.Column="0" TextWrapping="Wrap"
+               Text="Ziehen Sie Ihre fertige PDF-Rechnung in dieses Fenster oder waehlen Sie sie aus. Die Datei wird nur gelesen und niemals veraendert." />
+
+    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,12,0,0">
+      <Button Content="PDF-Rechnung _auswaehlen ..." Click="OnSelectClicked" TabIndex="1"
+              AutomationProperties.HelpText="Oeffnet einen Dateidialog zur Auswahl der PDF-Rechnung." />
+      <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" Margin="12,0,0,0" />
+    </StackPanel>
+
+    <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding SummaryText}" TextWrapping="Wrap"
+               Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite" />
+
+    <!-- Befunde der Eingangspruefung -->
+    <ScrollViewer Grid.Row="3" Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,12,12,0">
+      <StackPanel>
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Ergebnis der Pruefung"
+                   Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
+        <ItemsControl ItemsSource="{Binding Findings}"
+                      AutomationProperties.Name="Befunde der Eingangspruefung" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- Vorschau -->
+    <Border Grid.Row="0" Grid.RowSpan="4" Grid.Column="1" BorderBrush="#C8C8C8" BorderThickness="1"
+            Background="#FAFAFA">
+      <Grid>
+        <TextBlock Text="Keine Vorschau verfuegbar." HorizontalAlignment="Center"
+                   VerticalAlignment="Center" Foreground="#777" />
+        <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="6"
+               AutomationProperties.Name="Vorschau der ersten Seite" />
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

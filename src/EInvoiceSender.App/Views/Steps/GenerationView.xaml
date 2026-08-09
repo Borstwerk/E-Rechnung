@@ -1,0 +1,51 @@
+<UserControl x:Class="EInvoiceSender.App.Views.Steps.GenerationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:GenerationViewModel}"
+             d:DesignHeight="520" d:DesignWidth="960">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" TextWrapping="Wrap"
+               Text="Die E-Rechnung wird erzeugt und anschliessend geprueft. Der Vorgang laesst sich jederzeit abbrechen; es entsteht dann keine Datei." />
+
+    <ProgressBar Grid.Row="1" Height="6" Margin="0,12,0,0" IsIndeterminate="True"
+                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}"
+                 AutomationProperties.Name="Die Erzeugung laeuft" />
+
+    <ItemsControl Grid.Row="2" ItemsSource="{Binding Progress}" Margin="0,12,0,0"
+                  AutomationProperties.Name="Fortschritt der Erzeugung"
+                  AutomationProperties.LiveSetting="Polite">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <StackPanel Orientation="Horizontal" Margin="0,3">
+            <TextBlock Text="{Binding StateLabel}" Width="180" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <StackPanel Grid.Row="3">
+      <Button Content="_Abbrechen" Command="{Binding CancelCommand}" HorizontalAlignment="Left"
+              Margin="0,12,0,0" TabIndex="70" />
+
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Meldungen"
+                 Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
+      <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="260">
+        <ItemsControl ItemsSource="{Binding Findings}"
+                      AutomationProperties.Name="Meldungen der Erzeugung" />
+      </ScrollViewer>
+    </StackPanel>
+  </Grid>
+</UserControl>

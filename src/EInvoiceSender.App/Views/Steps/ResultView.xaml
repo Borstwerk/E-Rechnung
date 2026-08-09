@@ -1,0 +1,74 @@
+<UserControl x:Class="EInvoiceSender.App.Views.Steps.ResultView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ResultViewModel}"
+             d:DesignHeight="560" d:DesignWidth="960">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Erzeugte Datei" />
+      <UniformGrid Columns="2">
+        <TextBlock Text="Dateiname" />
+        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+        <TextBlock Text="Speicherort" />
+        <TextBlock Text="{Binding DirectoryPath}" TextWrapping="Wrap" />
+        <TextBlock Text="Groesse" />
+        <TextBlock Text="{Binding FileSizeText}" />
+        <TextBlock Text="Standard" />
+        <TextBlock Text="{Binding StandardText}" TextWrapping="Wrap" />
+        <TextBlock Text="Profil" />
+        <TextBlock Text="{Binding ProfileText}" TextWrapping="Wrap" />
+        <TextBlock Text="SHA-256" />
+        <TextBox Text="{Binding Sha256Text, Mode=OneWay}" IsReadOnly="True" FontFamily="Consolas"
+                 BorderThickness="0" Background="Transparent" TextWrapping="Wrap"
+                 AutomationProperties.Name="Pruefsumme der erzeugten Datei" />
+      </UniformGrid>
+
+      <!--
+        Die Pruefwerkzeuge stehen einzeln da, jeweils mit dem Hinweis, ob sie
+        gelaufen sind. Ein nicht ausgefuehrter Referenzvalidator darf nie wie
+        ein bestandener aussehen.
+      -->
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Verwendete Pruefwerkzeuge" />
+      <ItemsControl ItemsSource="{Binding ValidatorLines}"
+                    AutomationProperties.Name="Verwendete Pruefwerkzeuge">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Pruefbericht"
+                 Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
+      <ItemsControl ItemsSource="{Binding Findings}" AutomationProperties.Name="Pruefbericht" />
+
+      <TextBlock Style="{StaticResource Abschnitt}" Text="E-Mail vorbereiten" />
+      <UniformGrid Columns="2">
+        <TextBlock Text="Empfaenger" />
+        <TextBox Text="{Binding EmailRecipient, UpdateSourceTrigger=PropertyChanged}" TabIndex="80"
+                 AutomationProperties.Name="Empfaenger der E-Mail" />
+        <TextBlock Text="Betreff" />
+        <TextBox Text="{Binding EmailSubject, UpdateSourceTrigger=PropertyChanged}" TabIndex="81"
+                 AutomationProperties.Name="Betreff der E-Mail" />
+      </UniformGrid>
+      <TextBlock Text="Nachricht" Margin="0,8,0,0" />
+      <TextBox Text="{Binding EmailBody, UpdateSourceTrigger=PropertyChanged}" TabIndex="82"
+               AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110"
+               VerticalScrollBarVisibility="Auto"
+               AutomationProperties.Name="Nachrichtentext der E-Mail" />
+
+      <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+        <Button Content="E-Mail-Entwurf _oeffnen" Command="{Binding CreateEmailDraftCommand}" TabIndex="83" />
+        <Button Content="Ausgabe_ordner oeffnen" Command="{Binding OpenOutputFolderCommand}" TabIndex="84" />
+      </StackPanel>
+
+      <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Margin="0,10,0,0"
+                 AutomationProperties.LiveSetting="Polite" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

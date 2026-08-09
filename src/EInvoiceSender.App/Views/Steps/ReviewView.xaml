@@ -1,0 +1,72 @@
+<UserControl x:Class="EInvoiceSender.App.Views.Steps.ReviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ReviewViewModel}"
+             d:DesignHeight="520" d:DesignWidth="960">
+
+  <!--
+    Der wichtigste Schritt: Links steht, was der Empfaenger sieht, rechts das,
+    was maschinell gelesen wird. Nur ein Mensch kann beurteilen, ob beides
+    dasselbe aussagt.
+  -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" BorderBrush="#C8C8C8" BorderThickness="1" Margin="0,0,12,0"
+            Background="#FAFAFA">
+      <Grid>
+        <TextBlock Text="Keine Vorschau verfuegbar." HorizontalAlignment="Center"
+                   VerticalAlignment="Center" Foreground="#777" />
+        <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="6"
+               AutomationProperties.Name="Vorschau der PDF-Rechnung" />
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+      <StackPanel>
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Erfasste Kerndaten" />
+        <UniformGrid Columns="2">
+          <TextBlock Text="Verkaeufer" />
+          <TextBlock Text="{Binding SellerText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBlock Text="Kaeufer" />
+          <TextBlock Text="{Binding BuyerText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBlock Text="Rechnungsnummer" />
+          <TextBlock Text="{Binding InvoiceNumberText}" FontWeight="SemiBold" />
+          <TextBlock Text="Rechnungsdatum" />
+          <TextBlock Text="{Binding IssueDateText}" FontWeight="SemiBold" />
+          <TextBlock Text="Netto" />
+          <TextBlock Text="{Binding NetText}" FontWeight="SemiBold" />
+          <TextBlock Text="Steuer" />
+          <TextBlock Text="{Binding TaxText}" FontWeight="SemiBold" />
+          <TextBlock Text="Brutto" />
+          <TextBlock Text="{Binding GrossText}" FontWeight="SemiBold" />
+          <TextBlock Text="Zahlbetrag" />
+          <TextBlock Text="{Binding PayableText}" FontWeight="SemiBold" />
+        </UniformGrid>
+
+        <CheckBox IsChecked="{Binding ContentMatchConfirmed}" Margin="0,24,0,0" TabIndex="60"
+                  AutomationProperties.Name="Bestaetigung der Uebereinstimmung">
+          <TextBlock TextWrapping="Wrap"
+                     Text="Ich habe geprueft, dass die strukturierten Rechnungsdaten mit der sichtbaren PDF-Rechnung uebereinstimmen." />
+        </CheckBox>
+
+        <CheckBox IsChecked="{Binding ExistingInvoiceReplacementConfirmed}" TabIndex="61"
+                  Visibility="{Binding ShowsReplacementQuestion, Converter={StaticResource BoolToVisibility}}"
+                  AutomationProperties.Name="Bestaetigung zum Ersetzen vorhandener Rechnungsdaten">
+          <TextBlock TextWrapping="Wrap" Foreground="#8A5A00"
+                     Text="Diese PDF enthaelt bereits strukturierte Rechnungsdaten. Ich moechte sie durch die hier erfassten ersetzen." />
+        </CheckBox>
+
+        <ItemsControl ItemsSource="{Binding Findings}" Margin="0,12,0,0"
+                      AutomationProperties.Name="Hinweise zur Kontrollansicht" />
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>
