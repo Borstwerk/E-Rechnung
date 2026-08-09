@@ -36,20 +36,18 @@ hierher, sondern in die Commit-Historie.
   FieldPath-Angaben der Befunde - und Namen in Objektinitialisierern. Der
   Umbau braucht einen werkzeuggestützten Rename, keine Textersetzung.
 
-## Vor der nächsten Freigabe
-
-- **Sollfassungen erneut gegen das CEN-Schematron prüfen.** Mit der Umstellung
-  auf echte Umlaute hat sich der deutsche Text in den Testdaten geändert
-  (Musterstraße, März, Gebäude) und damit auch die abgelegten Sollfassungen.
-  Der Aufbau der XML ist unverändert, die externe Gegenprüfung ist damit aber
-  nicht mehr die zuletzt bestätigte:
-  `build/validate-golden-masters.sh`.
-
 ## Nur auf einem Windows-Rechner prüfbar
 
 - **Durchlauf durch alle fünf Schritte** mit einer echten PDF: Dateidialog,
   Drag-and-drop, PDF-Vorschau, Erkennungsübersicht, Feldkennzeichnung,
   Summenabgleich.
+- **„Neue Rechnung“ im laufenden Programm:** Nach einem vollständigen
+  Durchlauf muss das Formular leer sein, die eigene Firma aber wieder
+  dastehen. Der Ablauf ist automatisiert geprüft – am Entwurf zur Laufzeit,
+  an der Verdrahtung im Quelltext –, aber nicht am laufenden Fenster.
+- **Einstellungen ändern und schließen:** Die neuen Vorgaben müssen ohne
+  Neustart im nächsten Vorgang stehen, ein bereits ausgefülltes Formular
+  dagegen unberührt bleiben.
 - **Installer:** MSI bauen, installieren, aktualisieren, deinstallieren.
 - **`.eml` im klassischen und im neuen Outlook** praktisch öffnen.
 - **DPAPI-Schutz der IBAN** in den Einstellungen.
