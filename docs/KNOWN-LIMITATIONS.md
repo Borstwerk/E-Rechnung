@@ -57,7 +57,7 @@ Klartext auf der Platte zu landen.
 ## Grenzen der Datenerkennung
 
 Nach der Auswahl einer PDF versucht die Anwendung, das Formular aus dem bereits
-vorhandenen PDF-Text vorauszufuellen. Das ist eine **Schreibhilfe**, keine
+vorhandenen PDF-Text vorauszufüllen. Das ist eine **Schreibhilfe**, keine
 Quelle der Wahrheit.
 
 - **Kein OCR.** Ausgewertet wird nur Text, der schon in der Datei steht. Eine
@@ -66,7 +66,7 @@ Quelle der Wahrheit.
 - **Kein Wert geht ungeprüft weiter.** Der Weg lautet immer: PDF →
   Erkennungsergebnis → Formular → Ihre Bestätigung → E-Rechnung. Das ist
   durch die Bauart sichergestellt, nicht durch eine Zusage.
-- **Unsichere Werte fuellen nichts aus.** Jeder gelesene Wert trägt eine
+- **Unsichere Werte füllen nichts aus.** Jeder gelesene Wert trägt eine
   Vertrauensstufe. Was nicht mindestens mittlere Sicherheit hat, wird
   angezeigt, aber nicht eingetragen.
 - **Rechnungspositionen werden gar nicht erkannt.** Sie müssen von Hand

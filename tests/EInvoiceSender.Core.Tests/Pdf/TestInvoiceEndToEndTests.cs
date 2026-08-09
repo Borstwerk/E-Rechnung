@@ -14,10 +14,10 @@ namespace EInvoiceSender.Core.Tests.Pdf;
 /// geprüft, und trotzdem standen im manuellen Testlauf Felder leer, deren Wert
 /// die Erkennung sauber gelesen hatte. Der Fehler lag zwischen den Schritten.
 /// Diese Tests prüfen deshalb nicht einen Schritt, sondern den Übergang: Was
-/// in der PDF steht, muss anschliessend im Formularfeld stehen – und dort als
+/// in der PDF steht, muss anschließend im Formularfeld stehen – und dort als
 /// erkannt gekennzeichnet sein.
 ///
-/// Die Positionen bleiben ausdrücklich aussen vor: Sie werden nicht aus der
+/// Die Positionen bleiben ausdrücklich außen vor: Sie werden nicht aus der
 /// PDF übernommen, und der letzte Test hält genau das fest.
 /// </summary>
 public sealed class TestInvoiceEndToEndTests : IDisposable
@@ -29,7 +29,7 @@ public sealed class TestInvoiceEndToEndTests : IDisposable
         NullLogger<InvoiceDataDetector>.Instance);
 
     [Fact]
-    public async Task DieKopfdatenStehenAnschliessendImEntwurf()
+    public async Task DieKopfdatenStehenAnschließendImEntwurf()
     {
         InvoiceDraft draft = await PrefilledDraft();
 
@@ -41,7 +41,7 @@ public sealed class TestInvoiceEndToEndTests : IDisposable
     }
 
     [Fact]
-    public async Task DerEmpfängerStehtAnschliessendImEntwurf()
+    public async Task DerEmpfängerStehtAnschließendImEntwurf()
     {
         InvoiceDraft draft = await PrefilledDraft();
 
@@ -51,7 +51,7 @@ public sealed class TestInvoiceEndToEndTests : IDisposable
     }
 
     [Fact]
-    public async Task DieBankverbindungStehtAnschliessendImEntwurf()
+    public async Task DieBankverbindungStehtAnschließendImEntwurf()
     {
         InvoiceDraft draft = await PrefilledDraft();
 

@@ -32,7 +32,7 @@ public sealed partial class PdfSelectionViewModel(
 
     /// <summary>
     /// Das Ergebnis der Datenerkennung. Wird von Schritt 2 ausgelesen, um das
-    /// Formular vorzubefuellen.
+    /// Formular vorzubefüllen.
     /// </summary>
     public InvoiceDetectionResult? Detection { get; private set; }
 

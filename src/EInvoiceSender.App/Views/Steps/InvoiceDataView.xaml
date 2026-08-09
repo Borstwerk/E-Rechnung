@@ -38,8 +38,8 @@
       <Setter Property="Margin" Value="0,0,16,10" />
     </Style>
 
-    <!-- Dieselbe Einheit ganz rechts – ohne Abstand zum Rand. -->
-    <Style x:Key="RasterzelleAussen" TargetType="StackPanel">
+    <!-- Dieselbe Einheit in der rechten Spalte – ohne Abstand zum Rand. -->
+    <Style x:Key="RasterzelleRechts" TargetType="StackPanel">
       <Setter Property="Margin" Value="0,0,0,10" />
     </Style>
   </UserControl.Resources>
@@ -95,7 +95,7 @@
                      Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=IssueDate}" />
         </StackPanel>
 
-        <StackPanel Grid.Row="0" Grid.Column="2" Style="{StaticResource RasterzelleAussen}">
+        <StackPanel Grid.Row="0" Grid.Column="2" Style="{StaticResource RasterzelleRechts}">
           <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Fällig am" />
           <DatePicker Style="{StaticResource Datumsfeld}" TabIndex="12"
                       SelectedDate="{Binding Draft.DueDate, Converter={StaticResource DateOnly}}"
@@ -126,7 +126,7 @@
                      Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=DeliveryDate}" />
         </StackPanel>
 
-        <StackPanel Grid.Row="1" Grid.Column="2" Style="{StaticResource RasterzelleAussen}">
+        <StackPanel Grid.Row="1" Grid.Column="2" Style="{StaticResource RasterzelleRechts}">
           <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Zahlungsbedingungen" />
           <TextBox Style="{StaticResource Feld}" TabIndex="15"
                    Text="{Binding Draft.PaymentTerms, UpdateSourceTrigger=PropertyChanged}"

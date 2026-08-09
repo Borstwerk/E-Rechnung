@@ -18,7 +18,7 @@ public sealed record InvoiceScenario(
     bool ExpectedToBeValid);
 
 /// <summary>
-/// Der verbindliche Katalog der Testrechnungen aus docs/SPECIFICATION.md.
+/// Der verbindliche Katalog der Testrechnungen – siehe docs/TESTING.md.
 /// Alle Angaben sind frei erfunden; die IBAN stammt aus einem öffentlich
 /// publizierten Beispiel und gehört zu keinem realen Konto.
 ///

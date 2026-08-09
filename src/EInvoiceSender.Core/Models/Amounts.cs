@@ -52,7 +52,7 @@ public static class Amounts
     /// <summary>
     /// Schreibt einen Prozentsatz für die XML. Steuersätze dürfen
     /// Nachkommastellen haben (z. B. 8,25), sollen aber nicht unnötig
-    /// aufgefuellt werden.
+    /// aufgefüllt werden.
     /// </summary>
     public static string RateToXmlString(decimal value)
         => decimal.Round(value, 4, MidpointRounding.AwayFromZero)

@@ -14,7 +14,7 @@ namespace EInvoiceSender.Core.Validation;
 /// allein der frühen Benutzerführung: Er soll dem Anwender **vor** der
 /// Erzeugung sagen, was in seiner Eingabe fehlt oder nicht zusammenpasst, und
 /// zwar in Sätzen, die er versteht. Die verbindliche Freigabe erteilen
-/// ausschließlich die externen Werkzeuge (docs/DECISIONS.md, ADR-0004).
+/// ausschließlich die externen Werkzeuge (docs/TESTING.md).
 ///
 /// Daraus folgt eine bewusste Asymmetrie:
 /// * Was dieser Validator beanstandet, wird nicht erzeugt.

@@ -3,7 +3,7 @@ namespace EInvoiceSender.Core.Zugferd;
 /// <summary>
 /// Feste Zeichenketten des Formats UN/CEFACT Cross Industry Invoice.
 ///
-/// Diese Werte sind in docs/STANDARDS.md belegt und dort mit Quelle und
+/// Diese Werte sind in docs/E-INVOICE-STANDARD.md belegt und dort mit Quelle und
 /// Vertrauensangabe dokumentiert. Sie dürfen nirgends im Code dupliziert
 /// werden – bei einer Formatumstellung ist diese Datei die einzige Stelle,
 /// die sich ändert.
@@ -40,7 +40,7 @@ public static class CiiConstants
     /// <summary>
     /// Profilkennung des Profils EN 16931 (COMFORT).
     /// Belegt aus zwei unabhängigen Referenzimplementierungen, siehe
-    /// docs/STANDARDS.md, Abschnitt 2.1.
+    /// docs/E-INVOICE-STANDARD.md, Abschnitt 2.1.
     /// </summary>
     public const string ProfileEn16931 = "urn:cen.eu:en16931:2017";
 

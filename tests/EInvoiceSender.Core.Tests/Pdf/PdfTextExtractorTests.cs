@@ -83,7 +83,7 @@ public sealed class PdfTextExtractorTests : IDisposable
 
         for (int i = 1; i <= 120; i++)
         {
-            lines.Add($"Zeile {i} mit etwas Text zur Fuellung der Seite");
+            lines.Add($"Zeile {i} mit etwas Text zur Füllung der Seite");
         }
 
         lines.Add("Gesamtbetrag 4.999,00 EUR");

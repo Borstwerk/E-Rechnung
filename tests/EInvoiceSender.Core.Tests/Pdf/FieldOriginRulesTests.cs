@@ -151,10 +151,10 @@ public sealed class DraftOverwriteRulesTests
         Assert.Equal("Muster IT GmbH", draft.SellerName);
     }
 
-    /// <summary>Unsichere Werte fuellen kein Feld – unabhängig davon, welches.</summary>
+    /// <summary>Unsichere Werte füllen kein Feld – unabhängig davon, welches.</summary>
     [Theory]
     [MemberData(nameof(ProtectedFields))]
-    public void UnsichereWerteFuellenNieEinFeld(string field)
+    public void UnsichereWerteFüllenNieEinFeld(string field)
     {
         var draft = new InvoiceDraft();
         string before = TextOf(draft, field);

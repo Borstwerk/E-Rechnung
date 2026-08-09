@@ -13,7 +13,7 @@ namespace EInvoiceSender.Core.Mail;
 ///
 /// **Diese Klasse versendet nichts.** Sie legt eine Datei ab, die der Benutzer
 /// in seinem Mailprogramm öffnet, kontrolliert und selbst absendet
-/// (docs/DECISIONS.md, ADR-0005).
+/// (docs/KNOWN-LIMITATIONS.md, Abschnitt "E-Mail").
 ///
 /// Bewusste Festlegungen und ihre Gründe:
 /// * <c>X-Unsent: 1</c> – veranlasst Outlook und Thunderbird, die Datei als

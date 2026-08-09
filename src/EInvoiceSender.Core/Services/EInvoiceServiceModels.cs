@@ -78,7 +78,7 @@ public sealed record PipelineProgress(
 /// Bestätigung des Benutzers, dass die strukturierten Daten mit der sichtbaren
 /// PDF übereinstimmen. **Ohne diese Bestätigung wird nichts erzeugt** – die
 /// Sperre sitzt im Anwendungsfall, nicht nur in der Oberfläche
-/// (docs/SPECIFICATION.md, Abschnitt 7).
+/// (docs/ARCHITECTURE.md, Abschnitt "Der Ablauf").
 /// </param>
 /// <param name="OutputDirectory">Zielverzeichnis für die Ergebnisdateien.</param>
 /// <param name="OutputFileName">

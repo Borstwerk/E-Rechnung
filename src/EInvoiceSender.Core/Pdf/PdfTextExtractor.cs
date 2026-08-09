@@ -11,7 +11,7 @@ namespace EInvoiceSender.Core.Pdf;
 /// <param name="PageNumber">Die Seite, beginnend bei 1.</param>
 /// <param name="Top">
 /// Abstand vom oberen Seitenrand in PDF-Punkten. Wird gebraucht, um Briefkopf
-/// und Fussbereich von der Dokumentmitte zu unterscheiden.
+/// und Fußbereich von der Dokumentmitte zu unterscheiden.
 /// </param>
 public sealed record PdfTextLine(
     string Text,
@@ -80,7 +80,7 @@ public interface IPdfTextExtractor
 /// Warum eine eigene Bibliothek: PdfSharp, das die Anwendung ohnehin
 /// verwendet, kann PDF-Dateien schreiben und verändern, hat aber **keine**
 /// Textextraktion. Aus den rohen Zeichenanweisungen lesbaren Text zu machen
-/// hiesse, Zeichensatzkodierungen und ToUnicode-Tabellen selbst umzusetzen.
+/// hieße, Zeichensatzkodierungen und ToUnicode-Tabellen selbst umzusetzen.
 /// Ein Fehler darin erzeugt still verfälschten Text – und der landete dann in
 /// Rechnungsfeldern. Deshalb PdfPig (Apache-2.0), siehe
 /// docs/THIRD-PARTY-NOTICES.md.

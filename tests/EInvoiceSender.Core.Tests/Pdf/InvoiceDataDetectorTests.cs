@@ -12,7 +12,7 @@ namespace EInvoiceSender.Core.Tests.Pdf;
 ///
 /// Der größere Teil dieser Tests prüft nicht, **was** erkannt wird, sondern
 /// was **nicht** erkannt werden darf. Das ist Absicht: Ein leeres Feld kostet
-/// den Anwender ein paar Tastenanschläge, ein falsch gefuelltes Feld, das er
+/// den Anwender ein paar Tastenanschläge, ein falsch gefülltes Feld, das er
 /// übersieht, kostet eine fehlerhafte Rechnung.
 /// </summary>
 public sealed class InvoiceDataDetectorTests : IDisposable

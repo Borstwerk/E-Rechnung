@@ -7,7 +7,7 @@ namespace EInvoiceSender.Core.Tests.Calculation;
 
 /// <summary>
 /// Prüft den Berechnungskern gegen die Rechenregeln aus
-/// docs/STANDARDS.md, Abschnitt 3.
+/// docs/E-INVOICE-STANDARD.md, Abschnitt 3.
 /// </summary>
 public sealed class InvoiceCalculatorTests
 {

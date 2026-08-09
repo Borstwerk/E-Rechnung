@@ -10,7 +10,7 @@ namespace EInvoiceSender.Core.Storage;
 /// Die Bereinigung ist bewusst streng: Sie entfernt nicht nur die unter Windows
 /// verbotenen Zeichen, sondern auch Pfadtrenner, Steuerzeichen und führende
 /// Punkte. Damit kann eine manipulierte Rechnungsnummer keinen Pfadwechsel
-/// auslösen (Path Traversal) – siehe docs/SECURITY.md.
+/// auslösen (Path Traversal).
 /// </summary>
 public static class SafeFileName
 {

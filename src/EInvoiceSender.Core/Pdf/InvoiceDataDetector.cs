@@ -21,7 +21,7 @@ public interface IInvoiceDataDetector
 /// <summary>
 /// Erkennt Rechnungsangaben im bereits vorhandenen PDF-Text.
 ///
-/// **Was diese Klasse ist:** eine Schreibhilfe. Sie fuellt das Formular vor,
+/// **Was diese Klasse ist:** eine Schreibhilfe. Sie füllt das Formular vor,
 /// damit der Anwender nicht abtippen muss, was ohnehin schon dasteht.
 ///
 /// **Was sie nicht ist:** eine Quelle der Wahrheit. Kein gelesener Wert geht
@@ -33,7 +33,7 @@ public interface IInvoiceDataDetector
 /// Umwandlungen in <c>DetectionParsers</c>.
 ///
 /// **Die Leitregel bei allen Zweifelsfällen lautet: lieber nichts vorschlagen
-/// als etwas Falsches.** Ein leeres Feld kostet Tippen. Ein falsch gefuelltes
+/// als etwas Falsches.** Ein leeres Feld kostet Tippen. Ein falsch gefülltes
 /// Feld, das jemand übersieht, kostet eine fehlerhafte Rechnung.
 /// </summary>
 public sealed partial class InvoiceDataDetector(

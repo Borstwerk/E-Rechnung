@@ -12,8 +12,8 @@ namespace EInvoiceSender.Core.Services;
 /// Der vollständige Ablauf von der vorhandenen PDF bis zur gespeicherten
 /// E-Rechnung.
 ///
-/// Die Reihenfolge ist verbindlich und in docs/SPECIFICATION.md, Abschnitt 8
-/// festgelegt. Wichtige Eigenschaften:
+/// Die Reihenfolge ist verbindlich; sie steht in docs/ARCHITECTURE.md,
+/// Abschnitt "Der Ablauf". Wichtige Eigenschaften:
 ///
 /// * **Nichts wird erzeugt ohne die Bestätigung des Benutzers**, dass die
 ///   strukturierten Daten mit der sichtbaren PDF übereinstimmen. Die Sperre

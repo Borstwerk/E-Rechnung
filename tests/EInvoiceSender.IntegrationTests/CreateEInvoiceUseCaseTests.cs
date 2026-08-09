@@ -447,7 +447,7 @@ internal sealed class StubValidator(string name, StubBehavior behavior) : IExter
 /// Meldung trifft damit irgendwann ein, möglicherweise erst nach dem Ende des
 /// Tests. Zwei Folgefehler wurden dadurch beobachtet:
 ///
-/// - Eine Zusicherung prüft die Meldungsliste, bevor sie gefuellt ist. Der
+/// - Eine Zusicherung prüft die Meldungsliste, bevor sie gefüllt ist. Der
 ///   Test schlägt dann sporadisch fehl, ohne dass sich am Programm etwas
 ///   geändert hätte.
 /// - Ein Rückruf ruft <c>Cancel</c> auf einer <c>CancellationTokenSource</c>

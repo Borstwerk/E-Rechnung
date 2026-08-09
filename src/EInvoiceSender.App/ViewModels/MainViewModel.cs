@@ -25,6 +25,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private Invoice? _confirmedInvoice;
     private bool _hasPrefilled;
 
+    /// <summary>
+    /// Hat der Anwender das Eingabeformular schon gesehen?
+    ///
+    /// Entscheidet, ob eine geänderte Firmenvorlage sofort greifen darf. Ab
+    /// dem Augenblick, in dem Schritt 2 offen war, könnten dort eigene
+    /// Eingaben stehen – die überschreibt nichts mehr ungefragt.
+    /// </summary>
+    private bool _formWasOpened;
+
     public MainViewModel(
         PdfSelectionViewModel pdfSelection,
         InvoiceDataViewModel invoiceData,
@@ -111,7 +120,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _ => "E-Rechnung erstellen",
     };
 
-    /// <summary>Lädt die gespeicherte Firmenvorlage beim Start.</summary>
+    /// <summary>
+    /// Lädt die gespeicherte Firmenvorlage und trägt sie in das Formular ein.
+    ///
+    /// Läuft beim Start und beim Beginn jeder weiteren Rechnung – jedes Mal
+    /// frisch von der Festplatte. Nur so wirkt eine Änderung in den
+    /// Einstellungen auf den nächsten Vorgang, ohne dass die Anwendung neu
+    /// gestartet werden muss.
+    ///
+    /// Bewusst **nicht** mitten in einem laufenden Vorgang: Dort würde sie
+    /// eingetippte Rechnungsdaten überschreiben.
+    /// </summary>
     public async Task LoadTemplateAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -137,6 +156,32 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>
+    /// Übernimmt eine in den Einstellungen geänderte Firmenvorlage, sofern der
+    /// Anwender noch keinen Vorgang begonnen hat.
+    ///
+    /// **Der Fall aus der Bedienung:** Anwendung läuft, Einstellungen öffnen,
+    /// Firmenvorlage ändern, speichern, schließen. Ohne diesen Aufruf hätte
+    /// die Anwendung neu gestartet werden müssen, damit die neuen Vorgaben
+    /// ankommen.
+    ///
+    /// **Die Grenze:** War Schritt 2 schon offen, geschieht nichts. Dort
+    /// könnten von Hand erfasste Rechnungsdaten stehen, und die überschreibt
+    /// eine Einstellungsänderung nicht. Für sie gilt dann die Vorlage ab der
+    /// nächsten Rechnung – siehe <see cref="StartOverAsync"/>.
+    /// </summary>
+    public async Task ApplyChangedTemplateAsync(CancellationToken cancellationToken = default)
+    {
+        if (_formWasOpened)
+        {
+            return;
+        }
+
+        InvoiceData.Reset();
+
+        await LoadTemplateAsync(cancellationToken).ConfigureAwait(true);
+    }
+
     /// <summary>Geht einen Schritt zurück.</summary>
     [RelayCommand(CanExecute = nameof(CanGoBack))]
     public void GoBack()
@@ -160,6 +205,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             case WizardStep.SelectPdf when PdfSelection.IsSuitable:
                 await PrefillFromDetectionAsync(cancellationToken).ConfigureAwait(true);
                 CurrentStep = WizardStep.EnterData;
+                _formWasOpened = true;
                 break;
 
             case WizardStep.EnterData:
@@ -198,7 +244,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        // Wie viele Felder vorausgefuellt wurden, steht im Hinweis oben im
+        // Wie viele Felder vorausgefüllt wurden, steht im Hinweis oben im
         // Formular. Die Statuszeile meldet den Stand des Arbeitsablaufs; sie
         // wiederholt denselben Satz nicht ein zweites Mal.
 
@@ -212,7 +258,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (IOException)
         {
-            // Ohne Vorlage wird eben weniger vorausgefuellt.
+            // Ohne Vorlage wird eben weniger vorausgefüllt.
         }
 
         InvoiceData.ApplyDetection(detection, template);
@@ -306,20 +352,36 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>Beginnt eine neue Rechnung.</summary>
+    /// <summary>
+    /// Beginnt eine neue Rechnung.
+    ///
+    /// **Alle fünf Schritte** werden zurückgesetzt – auch das Eingabeformular.
+    /// Genau das fehlte: Rechnungsnummer, Käufer, Datumsangaben, Positionen
+    /// und Summen der vorigen Rechnung standen danach noch im Formular, weil
+    /// nur die übrigen vier Schritte zurückgesetzt wurden.
+    ///
+    /// Anschließend werden die dauerhaften Vorgaben des Anwenders wieder
+    /// eingetragen: eigene Firma, Bankverbindung, Standardwährung,
+    /// Zahlungsbedingungen, Ausgabeordner und E-Mail-Vorgaben. Sie kommen
+    /// frisch aus der gespeicherten Vorlage, nicht aus dem alten Formular.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanStartOver))]
-    public void StartOver()
+    public async Task StartOverAsync(CancellationToken cancellationToken = default)
     {
         PdfSelection.Reset();
+        InvoiceData.Reset();
         Review.Reset();
         Generation.Reset();
         Result.Reset();
         _confirmedInvoice = null;
         _hasPrefilled = false;
+        _formWasOpened = false;
 
         CurrentStep = WizardStep.SelectPdf;
         ErrorMessage = string.Empty;
         StatusMessage = "Wählen Sie die nächste PDF-Rechnung aus.";
+
+        await LoadTemplateAsync(cancellationToken).ConfigureAwait(true);
     }
 
     private bool CanStartOver() => !IsBusy;

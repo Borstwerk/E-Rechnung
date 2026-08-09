@@ -16,7 +16,7 @@ namespace EInvoiceSender.Core.Tests.Pdf;
 public sealed class DraftPrefillerTests
 {
     [Fact]
-    public void SichereWerteFuellenDasFormularUndWerdenGekennzeichnet()
+    public void SichereWerteFüllenDasFormularUndWerdenGekennzeichnet()
     {
         var draft = new InvoiceDraft();
 
@@ -79,7 +79,7 @@ public sealed class DraftPrefillerTests
 
     /// <summary>
     /// Sobald der Anwender ein Feld anfasst, gilt es als von Hand erfasst und
-    /// die Kennzeichnung verschwindet. Genau dann hat sie ihren Zweck erfuellt.
+    /// die Kennzeichnung verschwindet. Genau dann hat sie ihren Zweck erfüllt.
     /// </summary>
     [Fact]
     public void NachManuellerÄnderungGiltEinFeldNichtMehrAlsErkannt()

@@ -11,7 +11,7 @@ public sealed class FieldOriginTracker
 {
     private readonly Dictionary<string, FieldOrigin> _origins = [];
 
-    /// <summary>Läuft gerade eine Vorbefuellung?</summary>
+    /// <summary>Läuft gerade eine Vorbefüllung?</summary>
     public bool IsPrefilling { get; private set; }
 
     /// <summary>
@@ -56,7 +56,16 @@ public sealed class FieldOriginTracker
     }
 
     /// <summary>
-    /// Führt eine Vorbefuellung aus. Änderungen innerhalb von
+    /// Vergisst alle Herkünfte.
+    ///
+    /// Gebraucht beim Beginn einer neuen Rechnung: Ein Feld, das nie jemand
+    /// angefasst hat, trägt wieder einen Programmstandard. Bliebe die alte
+    /// Kennzeichnung stehen, stünde am leeren Formular „aus PDF erkannt“.
+    /// </summary>
+    public void Clear() => _origins.Clear();
+
+    /// <summary>
+    /// Führt eine Vorbefüllung aus. Änderungen innerhalb von
     /// <paramref name="fill"/> gelten nicht als Benutzereingabe.
     /// </summary>
     public void DuringPrefill(Action fill)

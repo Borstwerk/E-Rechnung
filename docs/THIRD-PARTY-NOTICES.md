@@ -30,7 +30,7 @@ Beide Bibliotheken lesen PDF-Dateien, aber nicht dasselbe. PdfSharp schreibt
 und verändert Dateien – dafür wird es hier verwendet – und besitzt **keine**
 Textextraktion. Nachgeprüft an der Assembly: Es gibt einen Parser für
 Zeichenanweisungen, aber keine Schnittstelle, die daraus lesbaren Text macht.
-Das selbst zu bauen hiesse, Zeichensatzkodierungen und ToUnicode-Tabellen
+Das selbst zu bauen hieße, Zeichensatzkodierungen und ToUnicode-Tabellen
 umzusetzen; ein Fehler darin erzeugt still verfälschten Text, der dann in
 Rechnungsfelder wandert.
 

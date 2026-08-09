@@ -9,7 +9,7 @@ namespace EInvoiceSender.Core.Storage;
 /// <summary>
 /// Schreibt Ergebnisdateien in das Ausgabeverzeichnis.
 ///
-/// Sicherheitsvorgaben (docs/SECURITY.md, S3 und S4):
+/// Sicherheitsvorgaben:
 /// * **Atomar.** Geschrieben wird zuerst in eine temporäre Datei im
 ///   Zielverzeichnis, danach wird verschoben. Bricht der Vorgang ab, bleibt
 ///   entweder die alte Datei oder gar keine zurück – niemals eine halb
@@ -202,7 +202,7 @@ public sealed partial class FileStorage : IFileStorage
 ///
 /// Alle temporären Dateien eines Erzeugungslaufs liegen darunter und werden
 /// beim Verwerfen gelöscht – auch bei einem Fehler oder einem Abbruch durch
-/// den Benutzer (docs/SECURITY.md, S8).
+/// den Benutzer.
 /// </summary>
 public sealed class TemporaryWorkspace : ITemporaryWorkspace
 {

@@ -3,7 +3,7 @@
 # Beschafft die externen Prüfwerkzeuge für die Gegenprüfung.
 #
 # Die Anwendung selbst braucht diese Werkzeuge nicht, um zu laufen – sie führt
-# ihre eigenen Prüfungen immer durch (siehe docs/DECISIONS.md, ADR-0004).
+# ihre eigenen Prüfungen immer durch (siehe docs/TESTING.md).
 # In der CI ist die Gegenprüfung dagegen verpflichtend, weil nur sie belegt,
 # dass die eigene Regelimplementierung mit der Norm übereinstimmt.
 #

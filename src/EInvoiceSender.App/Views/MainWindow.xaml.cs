@@ -120,7 +120,12 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private void OnSettingsClicked(object sender, RoutedEventArgs e)
+    /// <summary>
+    /// Öffnet die Einstellungen und übernimmt danach die geänderten Vorgaben.
+    ///
+    /// <c>async void</c> ist durch das WPF-Ereignis vorgegeben.
+    /// </summary>
+    private async void OnSettingsClicked(object sender, RoutedEventArgs e)
     {
         var dialog = new SettingsWindow(App.Services.GetRequiredService<SettingsViewModel>())
         {
@@ -128,5 +133,18 @@ public partial class MainWindow : Window
         };
 
         dialog.ShowDialog();
+
+        try
+        {
+            // Ob überhaupt etwas gespeichert wurde, entscheidet das ViewModel
+            // anhand des Vorgangsstands – nicht dieses Fenster.
+            await _viewModel.ApplyChangedTemplateAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            _viewModel.ErrorMessage =
+                "Die geänderten Vorgaben konnten nicht übernommen werden. Sie gelten ab dem "
+                + $"nächsten Start. Technische Angabe: {exception.Message}";
+        }
     }
 }

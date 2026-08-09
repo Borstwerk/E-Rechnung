@@ -76,7 +76,7 @@ Code gefunden.
 
 Die Tests der PDF-Datenerkennung prüfen überwiegend, was **nicht** erkannt
 werden darf. Das ist Absicht: Ein leeres Feld kostet ein paar Tastenanschläge,
-ein falsch gefuelltes Feld, das jemand übersieht, kostet eine fehlerhafte
+ein falsch gefülltes Feld, das jemand übersieht, kostet eine fehlerhafte
 Rechnung.
 
 Ausdrücklich abgedeckte Fehlzuordnungen:
@@ -89,7 +89,7 @@ Ausdrücklich abgedeckte Fehlzuordnungen:
 - ein unmögliches Datum wie 32.13.2026 wird verworfen,
 - die eigene Firma wird nicht zum Käufer,
 - ohne belastbares Signal wird kein Verkäufer geraten,
-- unsichere Werte und Positionen fuellen das Formular nicht aus,
+- unsichere Werte und Positionen füllen das Formular nicht aus,
 - eine PDF ohne Text bleibt von Hand erfassbar.
 
 Die Testvorgaben entstehen mit `TextPdfBuilder`, der PDF-Dateien mit echtem,

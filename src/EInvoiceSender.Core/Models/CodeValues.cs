@@ -2,7 +2,7 @@ namespace EInvoiceSender.Core.Models;
 
 /// <summary>
 /// Rechnungsart nach UNTDID 1001 (BT-3). Bewusst auf die Fälle beschränkt,
-/// die diese Anwendung fachlich beherrscht – siehe docs/STANDARDS.md, Abschnitt 5.
+/// die diese Anwendung fachlich beherrscht – siehe docs/E-INVOICE-STANDARD.md, Abschnitt 5.
 /// </summary>
 public enum InvoiceTypeCode
 {

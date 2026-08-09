@@ -29,7 +29,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     private InvoiceTotals? _totals;
 
     /// <summary>
-    /// Was die Vorbefuellung aus der PDF übernommen hat. Leer, solange nichts
+    /// Was die Vorbefüllung aus der PDF übernommen hat. Leer, solange nichts
     /// erkannt wurde.
     /// </summary>
     [ObservableProperty]
@@ -61,7 +61,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
         }
     }
 
-    /// <summary>Gibt es einen Hinweis zur Vorbefuellung?</summary>
+    /// <summary>Gibt es einen Hinweis zur Vorbefüllung?</summary>
     public bool HasPrefillMessage => PrefillMessage.Length > 0;
 
     /// <summary>
@@ -175,6 +175,23 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
             : "Die Angaben sind vollständig und in sich stimmig.";
 
         return ruleReport.HasErrors ? null : invoice;
+    }
+
+    /// <summary>
+    /// Setzt den Schritt auf den Anfangszustand zurück.
+    ///
+    /// Aufgerufen beim Beginn einer neuen Rechnung. Danach steht hier nichts
+    /// mehr aus dem vorigen Vorgang: kein Formularinhalt, keine Positionen,
+    /// keine Summen, keine Befunde, keine ausgewählte Zeile und kein Hinweis
+    /// auf eine Vorbefüllung.
+    /// </summary>
+    public void Reset()
+    {
+        Draft.Reset();
+        Prefill = null;
+        SelectedLine = null;
+        Totals = null;
+        ClearFindings();
     }
 
     /// <summary>Übernimmt eine gespeicherte Firmenvorlage in das Formular.</summary>

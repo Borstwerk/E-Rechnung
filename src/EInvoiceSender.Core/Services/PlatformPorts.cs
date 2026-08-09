@@ -114,7 +114,7 @@ public interface IShellService
 ///
 /// Alle Zwischendateien liegen darunter. Beim Verwerfen wird das gesamte
 /// Verzeichnis gelöscht – auch bei einem Fehler oder einem Abbruch durch den
-/// Benutzer (docs/SECURITY.md, S8).
+/// Benutzer.
 /// </summary>
 public interface ITemporaryWorkspace : IDisposable
 {

@@ -6,7 +6,7 @@ namespace EInvoiceSender.Core.Security;
 /// Sichere Einstellungen für die XML-Verarbeitung.
 ///
 /// Eingehende XML-Dateien stammen aus fremden PDFs und sind grundsätzlich
-/// nicht vertrauenswürdig (docs/SECURITY.md, S1 und S2). Deshalb gilt für
+/// nicht vertrauenswürdig. Deshalb gilt für
 /// jedes Lesen ohne Ausnahme:
 ///
 /// * <c>DtdProcessing = Prohibit</c> – verhindert XXE und Entity-Expansion

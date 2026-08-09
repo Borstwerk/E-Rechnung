@@ -23,9 +23,9 @@ automatisiert prüfen – auch auf einem Build-Agenten ohne Bildschirm.
 | `Calculation` | Summen- und Steuerberechnung nach EN 16931, ausschließlich `decimal` |
 | `Validation` | Befunde und Prüfberichte |
 | `Validation/Rules` | die EN-16931-Regeln, nach Dokument, Parteien, Positionen, Umsatzsteuer, Summen und Zahlung gruppiert |
-| `Zugferd` | CII-XML erzeugen und zurüclesen |
+| `Zugferd` | CII-XML erzeugen und zurücklesen |
 | `Pdf` | PDF-Analyse, Eingangsprüfung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
-| `Pdf/Detection` | örtliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefuellung und Summenabgleich |
+| `Pdf/Detection` | örtliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefüllung und Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
 | `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporäre Arbeitsverzeichnisse |
 | `Security` | sichere XML-Verarbeitung, Prozessausführung mit Zeitlimit |
@@ -88,7 +88,7 @@ Beide Regeln stammen aus Fehlern, die im laufenden Programm aufgetreten sind.
 ## Die Datenerkennung
 
 Nach der Eingangsprüfung liest die Anwendung den bereits vorhandenen Text der
-PDF und versucht, das Formular vorauszufuellen.
+PDF und versucht, das Formular vorauszufüllen.
 
 ```
 PDF  →  PdfTextExtractor  →  InvoiceDataDetector  →  InvoiceDetectionResult
@@ -106,13 +106,13 @@ getrennten Detektoren – `DocumentFieldDetector`, `PartyDetector`,
 Drei Eigenschaften machen das ungefährlich:
 
 1. **`InvoiceDetectionResult` ist kein Rechnungsmodell** und lässt sich auch
-   nicht in eines verwandeln. Es fuellt nur das Formular vor. Damit ist durch
+   nicht in eines verwandeln. Es füllt nur das Formular vor. Damit ist durch
    die Bauart ausgeschlossen, dass ein gelesener Wert ungeprüft in der
    E-Rechnung landet.
 2. **Jeder Wert trägt eine Vertrauensstufe** und die Zeile, aus der er stammt.
-   Nur `High` und `Medium` fuellen ein Feld; `Low` wird angezeigt, aber nie
+   Nur `High` und `Medium` füllen ein Feld; `Low` wird angezeigt, aber nie
    eingetragen.
-3. **Jedes vorausgefuellte Feld ist gekennzeichnet** (`FieldOrigin`). Sobald
+3. **Jedes vorausgefüllte Feld ist gekennzeichnet** (`FieldOrigin`). Sobald
    der Anwender es anfasst, gilt es als von Hand erfasst und die Kennzeichnung
    verschwindet.
 
@@ -125,7 +125,7 @@ und danach verworfen.
 
 ```
 1. PDF auswählen      →  AnalyzePdfAsync   →  geeignet? Gründe nennen
-                       →  DetectAsync       →  Formular vorausfuellen
+                       →  DetectAsync       →  Formular vorausfüllen
 2. Daten erfassen      →  InvoiceDraft      →  ValidateInvoice
 3. Vergleichen         →  Pflichtbestätigung des Anwenders
 4. Erzeugen            →  CreateAsync       →  neun Schritte mit Fortschritt
@@ -134,7 +134,7 @@ und danach verworfen.
 
 Der Kern führt in Schritt 4 neun Arbeitsschritte aus: Eingangsprüfung,
 Datenprüfung, XML erzeugen, XML prüfen, PDF/A-3 aufbauen, Ergebnis erneut
-öffnen und zurüclesen, extern gegenprüfen, Bericht schreiben, Datei
+öffnen und zurücklesen, extern gegenprüfen, Bericht schreiben, Datei
 speichern.
 
 Drei Eigenschaften sind dabei bindend:

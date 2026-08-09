@@ -1,4 +1,5 @@
 using System.Text;
+using EInvoiceSender.Core.Tests.Support;
 using Xunit;
 
 namespace EInvoiceSender.Core.Tests.Text;
@@ -30,25 +31,38 @@ public sealed class GermanSpellingTests
     [
         "fuer", "ueber", "pruef", "waehr", "kaeufer", "empfaenger", "muess",
         "koenn", "moegl", "vollstaend", "zurueck", "gemaess", "naechst",
-        "aender", "strasse", "groesse", "laesst", "enthaelt", "gueltig",
+        "aender", "strasse", "groess", "laesst", "enthaelt", "gueltig",
         "oeffn", "zusaetz", "beschaedig", "bestaetig", "tatsaechlich",
-        "unabhaeng", "oberflaech", "ausschliess", "faellig", "waehl",
+        "unabhaeng", "oberflaech", "schliess", "faellig", "waehl",
         "erklaer", "schluessel", "zulaess", "verstaend", "geprueft",
+
+        // Nachgetragen: Diese Stämme standen noch im Quelltext, als die Liste
+        // oben schon grün war. Der erste – „fuell“ – blieb übrig, weil die
+        // Umstellung ein ue vor ll pauschal stehen liess, um „manuell“ und
+        // „aktuell“ nicht zu zerstören. Die Sperre gehört an die
+        // Fremdwortstämme, nicht an die Buchstabenfolge.
+        "fuell", "fuss", "hiess", "aussen", "draussen", "bloss", "massgeb",
+        "fuehr", "fuegt", "duerf", "waere", "wuerde", "traegt", "haelt",
+        "faengt", "zaehl", "geraet", "gebaeude", "betraeg", "spaeter",
+        "haeufig", "gaengig", "aehnlich", "erhaelt", "laeuft", "ausloes",
+        "aufloes", "hoech", "noetig", "uebernahme", "uebernimmt",
+        "veroeffent", "verknuepf",
     ];
+
+    /// <summary>
+    /// Werte von <c>Id</c>-Attributen. Im Installationspaket heissen zwei
+    /// Bestandteile <c>StartmenuVerknuepfung</c> und
+    /// <c>DesktopVerknuepfung</c>. Das sind Kennungen: Sie stehen in der
+    /// MSI-Datenbank, werden innerhalb der Datei gegenseitig referenziert und
+    /// bekommen deshalb keine Umlaute. Angezeigt werden <c>Title</c>,
+    /// <c>Description</c> und <c>Name</c> – die werden geprüft.
+    /// </summary>
+    private static readonly System.Text.RegularExpressions.Regex IdAttribute =
+        new("\\bId=\"[^\"]*\"", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private static readonly string[] Extensions =
     [
         ".cs", ".xaml", ".md", ".ps1", ".sh", ".wxs", ".csproj", ".props", ".yml",
-    ];
-
-    /// <summary>
-    /// Ausgeschlossen: Baustände, Fremdwerkzeuge und der abgelegte alte Stand.
-    /// <c>docs/legacy</c> beschreibt eine Fassung, die es nicht mehr gibt; sie
-    /// nachträglich umzuschreiben verfälschte nur die Aufzeichnung.
-    /// </summary>
-    private static readonly string[] ExcludedFolders =
-    [
-        "bin", "obj", ".git", "legacy", "artifacts", "tools", "packages",
     ];
 
     [Fact]
@@ -57,7 +71,7 @@ public sealed class GermanSpellingTests
         string[] funde =
         [
             .. from path in ActiveFiles()
-               let text = File.ReadAllText(path)
+               let text = IdAttribute.Replace(File.ReadAllText(path), string.Empty)
                from marker in Transliterations
                where text.Contains(marker, StringComparison.OrdinalIgnoreCase)
                select $"{Relative(path)}: {marker}",
@@ -114,18 +128,10 @@ public sealed class GermanSpellingTests
         => bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
 
     private static IEnumerable<string> ActiveFiles()
-        => Directory
-            .EnumerateFiles(TestPaths.RepositoryRoot, "*", SearchOption.AllDirectories)
-            .Where(p => Extensions.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase))
-            .Where(p => !IsExcluded(p))
+        => ProjectFiles
+            .With(Extensions)
             // Diese Datei führt die Umschreibungen als Suchmuster auf.
             .Where(p => !p.EndsWith(nameof(GermanSpellingTests) + ".cs", StringComparison.Ordinal));
 
-    private static bool IsExcluded(string path)
-        => Relative(path)
-            .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-            .Any(part => ExcludedFolders.Contains(part, StringComparer.OrdinalIgnoreCase));
-
-    private static string Relative(string path)
-        => Path.GetRelativePath(TestPaths.RepositoryRoot, path);
+    private static string Relative(string path) => ProjectFiles.Relative(path);
 }

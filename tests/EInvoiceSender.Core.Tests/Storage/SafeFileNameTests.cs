@@ -5,7 +5,7 @@ namespace EInvoiceSender.Core.Tests.Files;
 
 /// <summary>
 /// Tests für <see cref="SafeFileName"/>. Ein Teil der Fälle sind
-/// Sicherheitstests gegen Path Traversal (siehe docs/SECURITY.md, S3).
+/// Sicherheitstests gegen Path Traversal.
 /// </summary>
 public sealed class SafeFileNameTests
 {

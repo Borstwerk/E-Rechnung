@@ -22,7 +22,7 @@ Lizenz. Die vollständige Bewertung steht in `docs/THIRD-PARTY-NOTICES.md`.
 ## Selbst erzeugte Bestandteile
 
 Das im Ausgabedokument eingebettete **sRGB-ICC-Farbprofil** wird von dieser
-Anwendung programmatisch erzeugt (siehe `docs/STANDARDS.md`, Abschnitt 7). Es
+Anwendung programmatisch erzeugt (siehe `docs/E-INVOICE-STANDARD.md`, Abschnitt 7). Es
 stammt aus keiner fremden Quelle und unterliegt keiner Fremdlizenz.
 
 ## Nicht mitgelieferte, optionale Werkzeuge

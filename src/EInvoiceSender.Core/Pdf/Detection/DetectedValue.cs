@@ -18,7 +18,7 @@ public sealed record DetectedValue<T>(
     string? Reason = null)
 {
     /// <summary>
-    /// Darf dieser Wert das Formular vorausfuellen? Unsichere Werte werden
+    /// Darf dieser Wert das Formular vorausfüllen? Unsichere Werte werden
     /// angezeigt, aber nie stillschweigend eingetragen.
     /// </summary>
     public bool IsUsable => Confidence >= DetectionConfidence.Medium;

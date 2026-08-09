@@ -34,7 +34,7 @@ public sealed record DetectedTotals
 /// Alles, was aus einer PDF gelesen werden konnte.
 ///
 /// Dieses Ergebnis ist **kein** Rechnungsmodell und lässt sich auch nicht in
-/// eines verwandeln. Es fuellt ausschließlich das Eingabeformular vor. Der
+/// eines verwandeln. Es füllt ausschließlich das Eingabeformular vor. Der
 /// Weg lautet immer:
 ///
 /// <c>PDF → InvoiceDetectionResult → InvoiceDraft → Prüfung durch den

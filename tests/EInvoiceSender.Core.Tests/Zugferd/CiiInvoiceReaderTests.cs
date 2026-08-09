@@ -125,7 +125,7 @@ public sealed class CiiInvoiceReaderTests
     /// <summary>
     /// Sicherheitstest gegen Entity-Expansion („Billion Laughs"). Auch dieser
     /// Angriff scheitert an der abgeschalteten DTD-Verarbeitung, statt den
-    /// Arbeitsspeicher zu fuellen.
+    /// Arbeitsspeicher zu füllen.
     /// </summary>
     [Fact]
     public void Sicherheitstest_EntityExpansionWirdVerhindert()

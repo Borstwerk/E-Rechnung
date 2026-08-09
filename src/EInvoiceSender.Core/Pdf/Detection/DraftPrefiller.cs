@@ -4,7 +4,7 @@ using EInvoiceSender.Core.Services;
 
 namespace EInvoiceSender.Core.Pdf.Detection;
 
-/// <summary>Was die Vorbefuellung getan hat – Grundlage der Anzeige.</summary>
+/// <summary>Was die Vorbefüllung getan hat – Grundlage der Anzeige.</summary>
 /// <param name="FilledFields">Anzahl übernommener Felder.</param>
 /// <param name="UncertainFields">Bezeichnungen der Felder, die zu prüfen sind.</param>
 /// <param name="SkippedLowConfidence">Werte, die zu unsicher zur Übernahme waren.</param>
@@ -26,7 +26,7 @@ public sealed record PrefillSummary(
 /// * Ein vom Anwender bearbeitetes Feld wird nie überschrieben.
 /// * Ein Programmstandard darf von jeder Quelle ersetzt werden.
 /// * Ein Wert aus der Firmenvorlage weicht nicht der PDF-Erkennung.
-/// * Ein unsicher gelesener Wert fuellt gar nichts.
+/// * Ein unsicher gelesener Wert füllt gar nichts.
 /// </summary>
 public static class DraftPrefiller
 {
@@ -174,7 +174,7 @@ public static class DraftPrefiller
         }.Any(t => !string.IsNullOrWhiteSpace(t)
                    && string.Equals(t, value, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Sammelt, was die Vorbefuellung getan und was sie gelassen hat.</summary>
+    /// <summary>Sammelt, was die Vorbefüllung getan und was sie gelassen hat.</summary>
     private sealed class PrefillLog
     {
         private readonly List<string> _uncertain = [];

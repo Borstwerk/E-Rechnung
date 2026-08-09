@@ -1,4 +1,4 @@
-# STANDARDS.md – Verwendete Normen, Versionen und exakte Werte
+# Verwendete Normen, Versionen und exakte Werte
 
 Stand: 2026-08-04. Alle hier festgelegten Werte sind **gepinnt**. Änderungen nur
 bewusst und nachvollziehbar begründet.
@@ -222,14 +222,14 @@ hinterlegt. Sie werden **nicht** zur Laufzeit aus dem Netz geladen.
 Diese Werkzeuge sind **nicht** Teil des Kernprozesses. Die Anwendung führt ihre
 eigenen Prüfungen immer durch; externe Validatoren laufen zusätzlich, wenn sie
 konfiguriert sind, und werden im Bericht namentlich mit Version ausgewiesen.
-Details und die Grenzen dieser Konstruktion: `docs/DECISIONS.md`, ADR-0004.
+Details und die Grenzen dieser Konstruktion: `docs/TESTING.md`.
 
 ---
 
 ## 7. Erzeugung des sRGB-ICC-Profils
 
 Das für den PDF/A-OutputIntent nötige Farbprofil wird programmatisch erzeugt
-(`SRgbIccProfile`, siehe ADR-0006). Es wird keine fremde `.icc`-Datei
+(`SRgbIccProfile`, siehe Abschnitt 7). Es wird keine fremde `.icc`-Datei
 mitgeliefert.
 
 ### 7.1 Technische Begründung

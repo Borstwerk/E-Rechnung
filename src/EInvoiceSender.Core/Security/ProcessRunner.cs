@@ -8,7 +8,7 @@ namespace EInvoiceSender.Core.Security;
 /// <summary>
 /// Führt externe Programme aus.
 ///
-/// Sicherheitsvorgaben (docs/SECURITY.md, S5), die hier eingehalten werden:
+/// Sicherheitsvorgaben, die hier eingehalten werden:
 /// * Argumente ausschließlich über <see cref="ProcessStartInfo.ArgumentList"/>.
 ///   Es wird nie eine Kommandozeile aus Zeichenketten zusammengesetzt, damit
 ///   Dateinamen mit Leerzeichen oder Anführungszeichen nichts auslösen können.
@@ -16,7 +16,7 @@ namespace EInvoiceSender.Core.Security;
 /// * Jeder Aufruf hat ein Zeitlimit. Läuft es ab, wird der Prozessbaum beendet.
 /// * stdout und stderr werden vollständig und nebenläufig gelesen. Würde nur
 ///   eine der beiden Leitungen gelesen, könnte der Kindprozess blockieren,
-///   sobald die andere ihren Puffer fuellt.
+///   sobald die andere ihren Puffer füllt.
 /// * Ein Abbruch durch den Benutzer beendet den Prozess ebenfalls.
 /// </summary>
 public sealed partial class ProcessRunner : IProcessRunner

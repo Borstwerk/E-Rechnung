@@ -4,14 +4,14 @@
 # CEN-Schematron und veraPDF, beide über die Mustang-CLI.
 #
 # Das ist der Nachweis, dass die eigene Regelimplementierung mit der Norm
-# übereinstimmt (docs/DECISIONS.md, ADR-0002 und ADR-0004). Ohne diesen Schritt
+# übereinstimmt (docs/TESTING.md). Ohne diesen Schritt
 # wäre die Aussage "EN-16931-konform" nur eine Behauptung.
 #
-# Erwartete Verzeichnisstruktur (wird von den Tests befuellt):
+# Erwartete Verzeichnisstruktur (wird von den Tests befüllt):
 #   artifacts/golden-masters/valid/     – muss fehlerfrei validieren
 #   artifacts/golden-masters/invalid/   – muss beanstandet werden
 #
-# Rückgabewert 0 nur, wenn alle Erwartungen erfuellt sind.
+# Rückgabewert 0 nur, wenn alle Erwartungen erfüllt sind.
 
 set -uo pipefail
 

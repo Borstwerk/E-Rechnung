@@ -5,7 +5,7 @@ namespace EInvoiceSender.Core.Validation;
 /// <summary>
 /// Ein einzelner Prüfbefund. Trägt immer beides: die technische Regel-ID für
 /// den Detailbereich und einen deutschen Satz, den ein normaler Anwender
-/// versteht. Siehe docs/SPECIFICATION.md, Abschnitt 6.
+/// versteht.
 /// </summary>
 /// <param name="Severity">Schweregrad. Nur <c>Error</c> verhindert die Erzeugung.</param>
 /// <param name="RuleId">
@@ -30,7 +30,7 @@ namespace EInvoiceSender.Core.Validation;
 ///
 /// Wichtig: Eine bestandene eigene Prüfung ersetzt **nicht** die Prüfung
 /// durch das offizielle Schematron. Die Freigabe erteilen ausschließlich die
-/// externen Validatoren (docs/DECISIONS.md, ADR-0004).
+/// externen Validatoren (docs/TESTING.md).
 /// </param>
 public sealed record ValidationFinding(
     FindingSeverity Severity,

@@ -32,7 +32,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     public IReadOnlyDictionary<string, FieldOrigin> Origins => _origins.Origins;
 
     /// <summary>
-    /// Führt eine Vorbefuellung aus. Änderungen innerhalb von
+    /// Führt eine Vorbefüllung aus. Änderungen innerhalb von
     /// <paramref name="fill"/> gelten nicht als Benutzereingabe.
     /// </summary>
     public void Prefill(Action<InvoiceDraft> fill)
@@ -52,7 +52,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     /// <summary>
     /// Jede Änderung durch den Anwender setzt die Herkunft auf "von Hand".
     /// Damit verschwindet die Kennzeichnung genau dann, wenn sie ihren Zweck
-    /// erfuellt hat.
+    /// erfüllt hat.
     /// </summary>
     protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -220,6 +220,86 @@ public sealed partial class InvoiceDraft : ObservableObject
         Lines.Add(line);
 
         return line;
+    }
+
+    /// <summary>
+    /// Setzt das Formular auf den Anfangszustand zurück – wie ein frisch
+    /// erzeugter Entwurf.
+    ///
+    /// **Warum es diese Methode gibt:** „Neue Rechnung“ setzte bisher alle
+    /// Schritte zurück, nur dieses Formular nicht. Rechnungsnummer, Käufer,
+    /// Datumsangaben und Positionen der vorigen Rechnung standen danach noch
+    /// da. Wer das übersah, verschickte die zweite Rechnung mit der Nummer der
+    /// ersten.
+    ///
+    /// Zurückgesetzt wird **alles**, auch die Angaben zur eigenen Firma. Die
+    /// dauerhaften Vorgaben des Anwenders trägt anschließend wieder die
+    /// gespeicherte Firmenvorlage ein – frisch von der Festplatte, damit eine
+    /// zwischenzeitliche Änderung in den Einstellungen auch greift.
+    ///
+    /// Die Zuweisungen laufen als Vorbefüllung, sonst würde jede einzelne als
+    /// Eingabe des Anwenders vermerkt. Danach ist das Herkunftsverzeichnis
+    /// leer: Ein Feld, das niemand angefasst hat, trägt einen Programmstandard.
+    /// </summary>
+    public void Reset()
+    {
+        Prefill(d => d.RestoreDefaults());
+
+        _origins.Clear();
+        OnPropertyChanged(nameof(Origins));
+    }
+
+    /// <summary>
+    /// Die Anfangswerte, in derselben Reihenfolge wie die Felder oben.
+    ///
+    /// Bewacht von <c>InvoiceDraftResetTests</c>: Der Test vergleicht einen
+    /// zurückgesetzten Entwurf Feld für Feld mit einem frisch erzeugten. Ein
+    /// hier vergessenes Feld fällt damit sofort auf.
+    /// </summary>
+    private void RestoreDefaults()
+    {
+        InvoiceNumber = string.Empty;
+        IssueDate = DateOnly.FromDateTime(DateTime.Today);
+        DueDate = null;
+        DeliveryDate = null;
+        BillingPeriodStart = null;
+        BillingPeriodEnd = null;
+        TypeCode = InvoiceTypeCode.CommercialInvoice;
+        Currency = "EUR";
+        OrderReference = string.Empty;
+        BuyerReference = string.Empty;
+        Note = string.Empty;
+        PaidAmount = "0,00";
+        RoundingAmount = "0,00";
+
+        SellerName = string.Empty;
+        SellerStreet = string.Empty;
+        SellerPostalCode = string.Empty;
+        SellerCity = string.Empty;
+        SellerCountry = "DE";
+        SellerEmail = string.Empty;
+        SellerVatId = string.Empty;
+        SellerTaxNumber = string.Empty;
+        SellerContactName = string.Empty;
+        SellerContactPhone = string.Empty;
+
+        BuyerName = string.Empty;
+        BuyerStreet = string.Empty;
+        BuyerPostalCode = string.Empty;
+        BuyerCity = string.Empty;
+        BuyerCountry = string.Empty;
+        BuyerEmail = string.Empty;
+        BuyerVatId = string.Empty;
+
+        PaymentMeansCode = PaymentMeansCode.SepaCreditTransfer;
+        BankAccountHolder = string.Empty;
+        BankIban = string.Empty;
+        BankBic = string.Empty;
+        PaymentTerms = string.Empty;
+
+        Lines.Clear();
+        ExemptionReasons.Clear();
+        AllowancesAndCharges.Clear();
     }
 
     /// <summary>

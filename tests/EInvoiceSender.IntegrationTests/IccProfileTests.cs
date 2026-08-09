@@ -14,7 +14,8 @@ namespace EInvoiceSender.IntegrationTests;
 /// Fall fällt die PDF/A-Prüfung durch. Deshalb ist der Aufbau hier fest
 /// verankert und die Prüfsumme gepinnt.
 ///
-/// Die vollständige Beschreibung steht in docs/STANDARDS.md, Abschnitt 7.
+/// Die vollständige Beschreibung steht in docs/E-INVOICE-STANDARD.md,
+/// Abschnitt 7.
 /// </summary>
 public sealed class IccProfileTests
 {
@@ -24,7 +25,7 @@ public sealed class IccProfileTests
     /// Dieser Wert darf nur bewusst geändert werden. Schlägt der Test fehl,
     /// hat sich die Profilerzeugung geändert; dann müssen die
     /// Ende-zu-Ende-Tests mit veraPDF erneut laufen und der Wert samt
-    /// docs/STANDARDS.md nachgezogen werden.
+    /// docs/E-INVOICE-STANDARD.md nachgezogen werden.
     /// </summary>
     private const string ExpectedSha256 =
         "4eddebbfa044ee963d28f6ac89d52db3f6cdee7106adb30d9424a6e60783b8e8";

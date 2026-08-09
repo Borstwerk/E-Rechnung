@@ -11,7 +11,7 @@ von selbst. Sie nimmt die Rechnung, die Sie ohnehin schon haben, und macht
 daraus eine elektronische Rechnung.
 
 Nach der Auswahl der PDF versucht die Anwendung, das Formular aus dem bereits
-vorhandenen PDF-Text **vorauszufuellen**. Gelesen werden derzeit:
+vorhandenen PDF-Text **vorauszufüllen**. Gelesen werden derzeit:
 
 - Rechnungsnummer
 - Rechnungs-, Leistungs- und Fälligkeitsdatum

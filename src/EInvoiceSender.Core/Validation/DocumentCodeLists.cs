@@ -5,8 +5,8 @@ namespace EInvoiceSender.Core.Validation;
 
 /// <summary>
 /// Rechnungsartcodes nach UNTDID 1001 (BT-3), soweit diese Anwendung sie
-/// fachlich beherrscht (siehe <c>docs/STANDARDS.md</c>, Abschnitt 5, und
-/// <c>docs/AGENTS.md</c> zum Anwendungsumfang). Reine Nachschlagetabelle
+/// fachlich beherrscht (siehe <c>docs/E-INVOICE-STANDARD.md</c>, Abschnitt 5, und
+/// <c>README.md</c> zum Anwendungsumfang). Reine Nachschlagetabelle
 /// ohne Geschäftslogik.
 /// </summary>
 /// <remarks>
@@ -79,7 +79,7 @@ public static class PaymentMeansCodes
 /// jeweiligen Artikel der Richtlinie 2006/112/EG und <b>kein</b> verbindlicher
 /// Rechtstext. Vor produktivem Einsatz sollte der genaue Wortlaut gegen die
 /// offizielle CEF-VATEX-Liste bzw. die Richtlinie gegengeprüft werden – vgl.
-/// die Vertrauensangaben in <c>docs/STANDARDS.md</c>.
+/// die Vertrauensangaben in <c>docs/E-INVOICE-STANDARD.md</c>.
 /// </remarks>
 public static class VatExemptionReasonCodes
 {

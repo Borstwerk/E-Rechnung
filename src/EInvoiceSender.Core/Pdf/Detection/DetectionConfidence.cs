@@ -4,7 +4,7 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// Wie sicher ist ein aus der PDF gelesener Wert?
 ///
 /// Die Stufe entscheidet darüber, was mit dem Wert geschieht: Nur
-/// <see cref="High"/> und <see cref="Medium"/> fuellen das Formular vor,
+/// <see cref="High"/> und <see cref="Medium"/> füllen das Formular vor,
 /// und beide werden dort sichtbar gekennzeichnet. <see cref="Low"/> wird
 /// angezeigt, aber nie übernommen.
 /// </summary>

@@ -2,9 +2,9 @@
 <!--
   Die zu installierenden Dateien.
 
-  Der Inhalt wird beim Bauen aus dem Veroeffentlichungsverzeichnis eingelesen
+  Der Inhalt wird beim Bauen aus dem Veröffentlichungsverzeichnis eingelesen
   (HarvestDirectory). So ist ausgeschlossen, dass eine neu hinzugekommene
-  Laufzeitdatei vergessen wird – ein haeufiger Fehler bei von Hand gepflegten
+  Laufzeitdatei vergessen wird – ein häufiger Fehler bei von Hand gepflegten
   Dateilisten.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">

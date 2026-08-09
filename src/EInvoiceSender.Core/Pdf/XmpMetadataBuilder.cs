@@ -17,7 +17,7 @@ namespace EInvoiceSender.Core.Pdf;
 ///    nicht konform.
 /// 3. Die eigentlichen <c>fx</c>-Felder mit Profil und Dateiname.
 ///
-/// Die exakten Zeichenketten sind in docs/STANDARDS.md, Abschnitt 2.4 belegt.
+/// Die exakten Zeichenketten sind in docs/E-INVOICE-STANDARD.md, Abschnitt 2.4 belegt.
 /// </summary>
 public static class XmpMetadataBuilder
 {
@@ -121,7 +121,7 @@ public static class XmpMetadataBuilder
         builder.Append("  </rdf:RDF>\n");
         builder.Append("</x:xmpmeta>\n");
 
-        // Auffuellbereich, damit ein späteres Werkzeug das Paket an Ort und
+        // Auffüllbereich, damit ein späteres Werkzeug das Paket an Ort und
         // Stelle ändern kann, ohne die Datei umzubauen.
         for (int i = 0; i < 20; i++)
         {

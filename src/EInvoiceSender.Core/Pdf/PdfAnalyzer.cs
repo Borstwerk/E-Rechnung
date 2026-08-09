@@ -344,7 +344,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
             }
         }
 
-        // Weg 2: das Feld /AF am Katalog. Manche Erzeuger fuellen nur dieses.
+        // Weg 2: das Feld /AF am Katalog. Manche Erzeuger füllen nur dieses.
         PdfArray? associatedFiles = catalog.Elements.GetArray("/AF");
 
         if (associatedFiles is not null)
