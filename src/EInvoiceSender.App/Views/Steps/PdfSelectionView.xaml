@@ -21,29 +21,29 @@
     </Grid.RowDefinitions>
 
     <TextBlock Grid.Row="0" Grid.Column="0" TextWrapping="Wrap"
-               Text="Ziehen Sie Ihre fertige PDF-Rechnung in dieses Fenster oder waehlen Sie sie aus. Die Datei wird nur gelesen und niemals veraendert." />
+               Text="Ziehen Sie Ihre fertige PDF-Rechnung in dieses Fenster oder wählen Sie sie aus. Die Datei wird nur gelesen und niemals verändert." />
 
     <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,12,0,0">
-      <Button Content="PDF-Rechnung _auswaehlen ..." Click="OnSelectClicked" TabIndex="1"
-              AutomationProperties.HelpText="Oeffnet einen Dateidialog zur Auswahl der PDF-Rechnung." />
+      <Button Content="PDF-Rechnung _auswählen ..." Click="OnSelectClicked" TabIndex="1"
+              AutomationProperties.HelpText="Öffnet einen Dateidialog zur Auswahl der PDF-Rechnung." />
       <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" Margin="12,0,0,0" />
     </StackPanel>
 
     <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding SummaryText}" TextWrapping="Wrap"
                Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite" />
 
-    <!-- Befunde der Eingangspruefung -->
+    <!-- Befunde der Eingangsprüfung -->
     <ScrollViewer Grid.Row="3" Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,12,12,0">
       <StackPanel>
-        <TextBlock Style="{StaticResource Abschnitt}" Text="Ergebnis der Pruefung"
+        <TextBlock Style="{StaticResource Abschnitt}" Text="Ergebnis der Prüfung"
                    Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
         <ItemsControl ItemsSource="{Binding Findings}"
-                      AutomationProperties.Name="Befunde der Eingangspruefung" />
+                      AutomationProperties.Name="Befunde der Eingangsprüfung" />
 
         <!--
-          Was aus dem PDF-Text gelesen werden konnte. Zeichen und Wort stehen
-          nebeneinander, damit die Uebersicht auch ohne Farbwahrnehmung
-          vollstaendig lesbar bleibt.
+          Was aus dem PDF-Text gelesen werden konnte, mit den gelesenen Werten.
+          Zeichen und Wort stehen nebeneinander, damit die Übersicht auch ohne
+          Farbwahrnehmung vollständig lesbar bleibt.
         -->
         <TextBlock Style="{StaticResource Abschnitt}" Text="PDF analysiert"
                    Visibility="{Binding HasDetectionNotes, Converter={StaticResource BoolToVisibility}}" />
@@ -52,8 +52,18 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <StackPanel Orientation="Horizontal" Margin="0,2">
+                <!--
+                  Für die Sprachausgabe steht die Art als Wort davor. Ein
+                  vorgelesenes „Fragezeichen“ sagt niemandem etwas.
+                -->
+                <AutomationProperties.Name>
+                  <MultiBinding StringFormat="{}{0}: {1}">
+                    <Binding Path="KindLabel" />
+                    <Binding Path="Text" />
+                  </MultiBinding>
+                </AutomationProperties.Name>
                 <TextBlock Text="{Binding Glyph}" FontWeight="Bold" MinWidth="16"
-                           TextAlignment="Center" Margin="0,0,6,0" />
+                           TextAlignment="Center" Margin="0,0,6,0" VerticalAlignment="Top" />
                 <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
               </StackPanel>
             </DataTemplate>
@@ -66,7 +76,7 @@
     <Border Grid.Row="0" Grid.RowSpan="4" Grid.Column="1" BorderBrush="#C8C8C8" BorderThickness="1"
             Background="#FAFAFA">
       <Grid>
-        <TextBlock Text="Keine Vorschau verfuegbar." HorizontalAlignment="Center"
+        <TextBlock Text="Keine Vorschau verfügbar." HorizontalAlignment="Center"
                    VerticalAlignment="Center" Foreground="#777" />
         <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="6"
                AutomationProperties.Name="Vorschau der ersten Seite" />

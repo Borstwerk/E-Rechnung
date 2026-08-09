@@ -54,14 +54,14 @@ public static class DraftPrefiller
     {
         Set(d, log, own, "Rechnungsnummer", nameof(d.InvoiceNumber),
             detection.InvoiceNumber, v => d.InvoiceNumber = v);
-        Set(d, log, own, "Waehrung", nameof(d.Currency),
+        Set(d, log, own, "Währung", nameof(d.Currency),
             detection.Currency, v => d.Currency = v);
 
         SetDate(d, log, "Rechnungsdatum", nameof(d.IssueDate),
             detection.IssueDate, v => d.IssueDate = v);
         SetDate(d, log, "Leistungsdatum", nameof(d.DeliveryDate),
             detection.DeliveryDate, v => d.DeliveryDate = v);
-        SetDate(d, log, "Faelligkeitsdatum", nameof(d.DueDate),
+        SetDate(d, log, "Fälligkeitsdatum", nameof(d.DueDate),
             detection.DueDate, v => d.DueDate = v);
     }
 
@@ -69,23 +69,23 @@ public static class DraftPrefiller
         InvoiceDraft d, InvoiceDetectionResult detection, CompanyTemplate? own, PrefillLog log)
     {
         DetectedParty seller = detection.Seller;
-        Set(d, log, own, "Verkaeufer", nameof(d.SellerName), seller.Name, v => d.SellerName = v);
-        Set(d, log, own, "Strasse (Verkaeufer)", nameof(d.SellerStreet), seller.Street, v => d.SellerStreet = v);
-        Set(d, log, own, "PLZ (Verkaeufer)", nameof(d.SellerPostalCode), seller.PostalCode, v => d.SellerPostalCode = v);
-        Set(d, log, own, "Ort (Verkaeufer)", nameof(d.SellerCity), seller.City, v => d.SellerCity = v);
-        Set(d, log, own, "Land (Verkaeufer)", nameof(d.SellerCountry), seller.Country, v => d.SellerCountry = v);
-        Set(d, log, own, "USt-IdNr. (Verkaeufer)", nameof(d.SellerVatId), seller.VatId, v => d.SellerVatId = v);
+        Set(d, log, own, "Verkäufer", nameof(d.SellerName), seller.Name, v => d.SellerName = v);
+        Set(d, log, own, "Straße (Verkäufer)", nameof(d.SellerStreet), seller.Street, v => d.SellerStreet = v);
+        Set(d, log, own, "PLZ (Verkäufer)", nameof(d.SellerPostalCode), seller.PostalCode, v => d.SellerPostalCode = v);
+        Set(d, log, own, "Ort (Verkäufer)", nameof(d.SellerCity), seller.City, v => d.SellerCity = v);
+        Set(d, log, own, "Land (Verkäufer)", nameof(d.SellerCountry), seller.Country, v => d.SellerCountry = v);
+        Set(d, log, own, "USt-IdNr. (Verkäufer)", nameof(d.SellerVatId), seller.VatId, v => d.SellerVatId = v);
         Set(d, log, own, "Steuernummer", nameof(d.SellerTaxNumber), seller.TaxNumber, v => d.SellerTaxNumber = v);
-        Set(d, log, own, "E-Mail (Verkaeufer)", nameof(d.SellerEmail), seller.Email, v => d.SellerEmail = v);
+        Set(d, log, own, "E-Mail (Verkäufer)", nameof(d.SellerEmail), seller.Email, v => d.SellerEmail = v);
 
         DetectedParty buyer = detection.Buyer;
-        Set(d, log, own, "Kaeufer", nameof(d.BuyerName), buyer.Name, v => d.BuyerName = v);
-        Set(d, log, own, "Strasse (Kaeufer)", nameof(d.BuyerStreet), buyer.Street, v => d.BuyerStreet = v);
-        Set(d, log, own, "PLZ (Kaeufer)", nameof(d.BuyerPostalCode), buyer.PostalCode, v => d.BuyerPostalCode = v);
-        Set(d, log, own, "Ort (Kaeufer)", nameof(d.BuyerCity), buyer.City, v => d.BuyerCity = v);
-        Set(d, log, own, "Land (Kaeufer)", nameof(d.BuyerCountry), buyer.Country, v => d.BuyerCountry = v);
-        Set(d, log, own, "USt-IdNr. (Kaeufer)", nameof(d.BuyerVatId), buyer.VatId, v => d.BuyerVatId = v);
-        Set(d, log, own, "E-Mail (Kaeufer)", nameof(d.BuyerEmail), buyer.Email, v => d.BuyerEmail = v);
+        Set(d, log, own, "Käufer", nameof(d.BuyerName), buyer.Name, v => d.BuyerName = v);
+        Set(d, log, own, "Straße (Käufer)", nameof(d.BuyerStreet), buyer.Street, v => d.BuyerStreet = v);
+        Set(d, log, own, "PLZ (Käufer)", nameof(d.BuyerPostalCode), buyer.PostalCode, v => d.BuyerPostalCode = v);
+        Set(d, log, own, "Ort (Käufer)", nameof(d.BuyerCity), buyer.City, v => d.BuyerCity = v);
+        Set(d, log, own, "Land (Käufer)", nameof(d.BuyerCountry), buyer.Country, v => d.BuyerCountry = v);
+        Set(d, log, own, "USt-IdNr. (Käufer)", nameof(d.BuyerVatId), buyer.VatId, v => d.BuyerVatId = v);
+        Set(d, log, own, "E-Mail (Käufer)", nameof(d.BuyerEmail), buyer.Email, v => d.BuyerEmail = v);
     }
 
     private static void ApplyPaymentFields(

@@ -198,6 +198,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
+        // Wie viele Felder vorausgefuellt wurden, steht im Hinweis oben im
+        // Formular. Die Statuszeile meldet den Stand des Arbeitsablaufs; sie
+        // wiederholt denselben Satz nicht ein zweites Mal.
+
         _hasPrefilled = true;
 
         CompanyTemplate? template = null;
@@ -212,13 +216,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         InvoiceData.ApplyDetection(detection, template);
-
-        if (InvoiceData.Prefill is { FilledFields: > 0 } summary)
-        {
-            StatusMessage =
-                $"{summary.FilledFields} Feld(er) wurden aus der PDF vorausgefuellt. "
-                + "Bitte pruefen und ergaenzen Sie die Angaben.";
-        }
     }
 
     private void EnterReviewIfDataIsValid()

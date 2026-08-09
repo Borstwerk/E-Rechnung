@@ -8,6 +8,7 @@ using EInvoiceSender.App.Services;
 using EInvoiceSender.Core.Pdf;
 using EInvoiceSender.Core.Pdf.Detection;
 using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Text;
 
 namespace EInvoiceSender.App.ViewModels;
 
@@ -66,19 +67,28 @@ public sealed partial class PdfSelectionViewModel(
     /// <summary>Taugt die Datei als Grundlage?</summary>
     public bool IsSuitable => Report?.CanProceed == true;
 
-    /// <summary>Kurzfassung des Pruefergebnisses fuer die Anzeige.</summary>
+    /// <summary>
+    /// Kurzfassung des Prüfergebnisses für die Anzeige.
+    ///
+    /// Nach einer bestandenen Prüfung nennt der Satz auch den nächsten
+    /// Handgriff. Vorher stand dort nur ein Befund; dass die Datei damit fertig
+    /// geprüft war und es weitergehen konnte, musste man erraten.
+    /// </summary>
     public string SummaryText => Report is null
-        ? "Es ist noch keine Datei geprueft."
+        ? "Es ist noch keine Datei geprüft."
         : Report.Verdict switch
         {
             PreflightVerdict.Suitable =>
-                $"Die Datei kann verarbeitet werden – {Report.PageCount} Seite(n), {SizeText}.",
+                $"Die PDF wurde erfolgreich geprüft – {PageText}, {SizeText}. "
+                + "Klicken Sie auf „Weiter“, um die Rechnungsdaten zu erfassen.",
             PreflightVerdict.SuitableWithWarnings =>
-                $"Die Datei kann verarbeitet werden – {Report.PageCount} Seite(n), {SizeText}. "
-                + "Bitte beachten Sie die Hinweise.",
+                $"Die PDF wurde geprüft – {PageText}, {SizeText}. Bitte beachten Sie die "
+                + "Hinweise und klicken Sie danach auf „Weiter“.",
             _ => "Die Datei kann nicht verarbeitet werden. Die Liste nennt den Grund "
-                 + "und was Sie tun koennen.",
+                 + "und was Sie tun können.",
         };
+
+    private string PageText => Plural.Count(Report?.PageCount ?? 0, "Seite", "Seiten");
 
     private string SizeText => Report is null
         ? string.Empty
@@ -135,40 +145,13 @@ public sealed partial class PdfSelectionViewModel(
 
         DetectionNotes.Clear();
 
-        if (!Detection.HasUsableText)
+        foreach (DetectionEntry entry in DetectionOverview.Describe(Detection))
         {
-            DetectionNotes.Add(new DetectionNote(
-                DetectionNoteKind.Missing,
-                "In dieser PDF wurde kein ausreichend verwertbarer Text gefunden. "
-                + "Die Rechnungsdaten muessen von Hand erfasst werden."));
-        }
-        else
-        {
-            AddNote(Detection.InvoiceNumber is not null, "Rechnungsnummer");
-            AddNote(Detection.IssueDate is not null, "Rechnungsdatum");
-            AddNote(Detection.DeliveryDate is not null, "Leistungsdatum");
-            AddNote(Detection.DueDate is not null, "Faelligkeitsdatum");
-            AddNote(Detection.Seller.HasAnything, "Verkaeuferangaben");
-            AddNote(Detection.Buyer.HasAnything, "Empfaengerangaben");
-            AddNote(Detection.Totals.Gross is not null, "Gesamtbetrag");
-            AddNote(Detection.Iban is not null, "IBAN");
-
-            // Die Positionserkennung ist nicht umgesetzt. Der Hinweis sagt das
-            // ausdruecklich, damit niemand auf eine Automatik wartet, die es
-            // nicht gibt.
-            DetectionNotes.Add(new DetectionNote(
-                DetectionNoteKind.Missing,
-                "Rechnungspositionen werden noch nicht aus der PDF uebernommen. "
-                + "Bitte erfassen Sie sie im naechsten Schritt von Hand."));
+            DetectionNotes.Add(DetectionNote.From(entry));
         }
 
         OnPropertyChanged(nameof(HasDetectionNotes));
     }
-
-    private void AddNote(bool found, string label)
-        => DetectionNotes.Add(found
-            ? new DetectionNote(DetectionNoteKind.Found, $"{label} erkannt")
-            : new DetectionNote(DetectionNoteKind.Missing, $"{label} nicht gefunden"));
 
     private async Task<CompanyTemplate> LoadTemplateSafelyAsync(CancellationToken cancellationToken)
     {

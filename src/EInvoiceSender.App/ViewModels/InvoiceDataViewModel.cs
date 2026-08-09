@@ -4,6 +4,7 @@ using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf.Detection;
 using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Text;
 using EInvoiceSender.Core.Validation;
 
 namespace EInvoiceSender.App.ViewModels;
@@ -36,7 +37,7 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
     [NotifyPropertyChangedFor(nameof(HasPrefillMessage))]
     private PrefillSummary? _prefill;
 
-    /// <summary>Ein Satz darueber, was vorausgefuellt wurde.</summary>
+    /// <summary>Ein Satz darüber, was vorausgefüllt wurde.</summary>
     public string PrefillMessage
     {
         get
@@ -46,14 +47,17 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
                 return string.Empty;
             }
 
-            string text = $"{summary.FilledFields} Feld(er) wurden aus der PDF vorausgefuellt.";
+            int count = summary.FilledFields;
+
+            string text = $"{Plural.Count(count, "Feld", "Felder")} "
+                          + $"{Plural.Word(count, "wurde", "wurden")} aus der PDF vorausgefüllt.";
 
             if (summary.UncertainFields.Count > 0)
             {
-                text += $" Bitte pruefen Sie besonders: {string.Join(", ", summary.UncertainFields)}.";
+                text += $" Bitte prüfen Sie besonders: {string.Join(", ", summary.UncertainFields)}.";
             }
 
-            return text + " Jeder Wert laesst sich ueberschreiben.";
+            return text + " Jeder Wert lässt sich überschreiben.";
         }
     }
 
@@ -166,8 +170,9 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
         ShowFindings(buildReport.Concat(ruleReport));
 
         statusMessage = ruleReport.HasErrors
-            ? $"{ruleReport.ErrorCount} Angabe(n) muessen noch korrigiert werden."
-            : "Die Angaben sind vollstaendig und in sich stimmig.";
+            ? $"{Plural.Count(ruleReport.ErrorCount, "Angabe", "Angaben")} "
+              + $"{Plural.Word(ruleReport.ErrorCount, "muss", "müssen")} noch korrigiert werden."
+            : "Die Angaben sind vollständig und in sich stimmig.";
 
         return ruleReport.HasErrors ? null : invoice;
     }
