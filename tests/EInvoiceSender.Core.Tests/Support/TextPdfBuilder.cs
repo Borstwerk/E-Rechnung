@@ -74,6 +74,76 @@ public static class TextPdfBuilder
         return Assemble(body);
     }
 
+    /// <summary>
+    /// Erzeugt eine PDF mit zwei nebeneinander stehenden Spalten – der Fall
+    /// "Verkaeufer links, Kaeufer rechts", der in echten Rechnungen haeufig
+    /// ist. Die Zeilen werden paarweise auf dieselbe Grundlinie gesetzt.
+    /// </summary>
+    public static byte[] CreateTwoColumn(
+        IReadOnlyList<string> left, IReadOnlyList<string> right, IEnumerable<string>? below = null)
+    {
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
+
+        var stream = new MemoryStream();
+        Write(stream, "BT\n/F1 10 Tf\n");
+
+        int rows = Math.Max(left.Count, right.Count);
+
+        for (int i = 0; i < rows; i++)
+        {
+            int y = TopMargin - (i * LineHeight);
+
+            if (i < left.Count)
+            {
+                WriteAt(stream, LeftMargin, y, left[i]);
+            }
+
+            if (i < right.Count)
+            {
+                WriteAt(stream, RightColumn, y, right[i]);
+            }
+        }
+
+        int next = TopMargin - ((rows + 1) * LineHeight);
+
+        foreach (string line in below ?? [])
+        {
+            WriteAt(stream, LeftMargin, next, line);
+            next -= LineHeight;
+        }
+
+        Write(stream, "ET");
+
+        return Assemble(SinglePageBody(stream.ToArray()));
+    }
+
+    private const int RightColumn = 320;
+
+    private static void WriteAt(Stream stream, int x, int y, string text)
+    {
+        Write(stream, string.Create(CultureInfo.InvariantCulture, $"1 0 0 1 {x} {y} Tm\n"));
+        stream.WriteByte((byte)'(');
+        stream.Write(EscapeWinAnsi(text));
+        Write(stream, ") Tj\n");
+    }
+
+    private static List<byte[]> SinglePageBody(byte[] content)
+    {
+        byte[] header = Ascii($"<< /Length {content.Length} >>\nstream\n");
+        byte[] footer = Ascii("\nendstream");
+
+        return
+        [
+            Ascii("<< /Type /Catalog /Pages 2 0 R >>"),
+            Ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            Ascii($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {PageWidth} {PageHeight}] "
+                  + "/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"),
+            [.. header, .. content, .. footer],
+            Ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"),
+        ];
+    }
+
     /// <summary>Baut den Zeichenstrom einer Seite.</summary>
     private static byte[] BuildContent(IReadOnlyList<string> lines)
     {
