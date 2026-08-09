@@ -20,55 +20,34 @@ namespace EInvoiceSender.Core.Models;
 /// </summary>
 public sealed partial class InvoiceDraft : ObservableObject
 {
-    private readonly Dictionary<string, FieldOrigin> _origins = [];
-    private bool _isPrefilling;
+    private readonly FieldOriginTracker _origins = new();
 
-    /// <summary>
-    /// Woher der Inhalt eines Feldes stammt.
-    ///
-    /// Ein Feld, das der Anwender anfasst, gilt anschliessend als von Hand
-    /// erfasst – auch dann, wenn er den vorgeschlagenen Wert nur bestaetigt
-    /// und wieder hineinschreibt. Das ist Absicht: Was durch die Hand des
-    /// Menschen gegangen ist, braucht keine Warnung mehr.
-    /// </summary>
-    public FieldOrigin OriginOf(string propertyName)
-        => _origins.TryGetValue(propertyName, out FieldOrigin origin) ? origin : FieldOrigin.Default;
-
-    /// <summary>
-    /// Fuehrt eine Vorbefuellung aus. Aenderungen innerhalb von
-    /// <paramref name="fill"/> loeschen die Herkunft **nicht**, alles danach
-    /// schon.
-    /// </summary>
-    public void Prefill(Action<InvoiceDraft> fill)
-    {
-        ArgumentNullException.ThrowIfNull(fill);
-
-        _isPrefilling = true;
-
-        try
-        {
-            fill(this);
-        }
-        finally
-        {
-            _isPrefilling = false;
-        }
-    }
-
-    /// <summary>Merkt sich, woher ein Feld stammt. Nur waehrend der Vorbefuellung wirksam.</summary>
-    public void MarkOrigin(string propertyName, FieldOrigin origin)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
-
-        _origins[propertyName] = origin;
-        OnPropertyChanged(nameof(Origins));
-    }
+    /// <summary>Woher der Inhalt eines Feldes stammt.</summary>
+    public FieldOrigin OriginOf(string propertyName) => _origins.OriginOf(propertyName);
 
     /// <summary>
     /// Alle vermerkten Herkuenfte. Die Oberflaeche bindet daran, um die
     /// Kennzeichnung neben den Feldern anzuzeigen.
     /// </summary>
-    public IReadOnlyDictionary<string, FieldOrigin> Origins => _origins;
+    public IReadOnlyDictionary<string, FieldOrigin> Origins => _origins.Origins;
+
+    /// <summary>
+    /// Fuehrt eine Vorbefuellung aus. Aenderungen innerhalb von
+    /// <paramref name="fill"/> gelten nicht als Benutzereingabe.
+    /// </summary>
+    public void Prefill(Action<InvoiceDraft> fill)
+    {
+        ArgumentNullException.ThrowIfNull(fill);
+
+        _origins.DuringPrefill(() => fill(this));
+    }
+
+    /// <summary>Vermerkt, woher ein Feld stammt.</summary>
+    public void MarkOrigin(string propertyName, FieldOrigin origin)
+    {
+        _origins.Mark(propertyName, origin);
+        OnPropertyChanged(nameof(Origins));
+    }
 
     /// <summary>
     /// Jede Aenderung durch den Anwender setzt die Herkunft auf "von Hand".
@@ -79,18 +58,15 @@ public sealed partial class InvoiceDraft : ObservableObject
     {
         base.OnPropertyChanged(e);
 
-        if (_isPrefilling || e.PropertyName is null or nameof(Origins))
+        if (_origins.IsPrefilling || e.PropertyName is null or nameof(Origins))
         {
             return;
         }
 
-        if (_origins.TryGetValue(e.PropertyName, out FieldOrigin origin) && origin == FieldOrigin.Manual)
+        if (_origins.MarkAsManual(e.PropertyName))
         {
-            return;
+            base.OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Origins)));
         }
-
-        _origins[e.PropertyName] = FieldOrigin.Manual;
-        base.OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Origins)));
     }
 
     // --- Dokument ----------------------------------------------------------
@@ -256,33 +232,6 @@ public sealed partial class InvoiceDraft : ObservableObject
         {
             Lines[i].Number = i + 1;
         }
-    }
-
-    // --- Bruecken fuer die Datumsauswahl der Oberflaeche --------------------
-    //
-    // Fachlich ist ein Rechnungsdatum ein Tag ohne Uhrzeit, deshalb DateOnly.
-    // Der WPF-DatePicker kennt aber nur DateTime?. Die Umrechnung steht hier
-    // und nicht in der Oberflaeche, damit sie mitgetestet wird.
-
-    /// <summary>Rechnungsdatum als <c>DateTime?</c> fuer die Datumsauswahl.</summary>
-    public DateTime? IssueDateAsDateTime
-    {
-        get => IssueDate?.ToDateTime(TimeOnly.MinValue);
-        set => IssueDate = value is null ? null : DateOnly.FromDateTime(value.Value);
-    }
-
-    /// <summary>Faelligkeitsdatum als <c>DateTime?</c> fuer die Datumsauswahl.</summary>
-    public DateTime? DueDateAsDateTime
-    {
-        get => DueDate?.ToDateTime(TimeOnly.MinValue);
-        set => DueDate = value is null ? null : DateOnly.FromDateTime(value.Value);
-    }
-
-    /// <summary>Leistungsdatum als <c>DateTime?</c> fuer die Datumsauswahl.</summary>
-    public DateTime? DeliveryDateAsDateTime
-    {
-        get => DeliveryDate?.ToDateTime(TimeOnly.MinValue);
-        set => DeliveryDate = value is null ? null : DateOnly.FromDateTime(value.Value);
     }
 
     /// <summary>

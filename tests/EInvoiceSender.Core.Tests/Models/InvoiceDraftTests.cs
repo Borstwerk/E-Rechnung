@@ -99,25 +99,6 @@ public sealed class InvoiceDraftTests
         Assert.Equal([1, 2], draft.Lines.Select(l => l.Number));
     }
 
-    /// <summary>
-    /// Der WPF-DatePicker kennt nur <c>DateTime?</c>. Die Umrechnung steht im
-    /// Kern und wird deshalb hier mitgeprueft.
-    /// </summary>
-    [Fact]
-    public void DieDatumsbrueckeRechnetInBeideRichtungen()
-    {
-        var draft = new InvoiceDraft { IssueDate = new DateOnly(2026, 3, 15) };
-
-        Assert.Equal(new DateTime(2026, 3, 15, 0, 0, 0, DateTimeKind.Unspecified), draft.IssueDateAsDateTime);
-
-        draft.DueDateAsDateTime = new DateTime(2026, 3, 29, 13, 45, 0, DateTimeKind.Unspecified);
-
-        Assert.Equal(new DateOnly(2026, 3, 29), draft.DueDate);
-
-        draft.DueDateAsDateTime = null;
-
-        Assert.Null(draft.DueDate);
-    }
 
     public static InvoiceDraft FilledDraft()
     {

@@ -5,6 +5,7 @@
              xmlns:conv="clr-namespace:EInvoiceSender.App.Converters">
   <Application.Resources>
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <conv:DateOnlyConverter x:Key="DateOnly" />
     <conv:FieldOriginConverter x:Key="FieldOrigin" />
     <conv:FieldOriginVisibilityConverter x:Key="FieldOriginVisible" />
 
