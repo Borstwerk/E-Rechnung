@@ -4,8 +4,8 @@
     Windows-Installer (MSI).
 
     Bewusst NICHT Teil von EInvoiceSender.sln: WiX erzeugt MSI-Dateien nur
-    unter Windows. Auf einem Linux-Agenten wuerde die Solution sonst nicht mehr
-    bauen. Der Installer wird ausschliesslich im Windows-Job der CI gebaut.
+    unter Windows. Auf einem Linux-Agenten würde die Solution sonst nicht mehr
+    bauen. Der Installer wird ausschließlich im Windows-Job der CI gebaut.
 
     Bauen:
       dotnet build installer/EInvoiceSender.Setup -c Release ^
@@ -18,12 +18,25 @@
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
 
+    <!--
+      WiX kennt keine portablen Symboldateien.
+
+      Directory.Build.props setzt für die .NET-Projekte
+      <DebugType>portable</DebugType>; diese Einstellung greift auch hier, weil
+      die Datei im Wurzelverzeichnis liegt. Die WiX-SDK reicht $(DebugType)
+      unverändert als PdbType an wix.exe weiter, und der lehnt "portable" mit
+      WIX0268 ab. Für ein MSI wird ohnehin keine Symboldatei gebraucht, also
+      "none" – gesetzt hier im Installerprojekt, damit die .NET-Projekte ihre
+      portablen Symboldateien behalten.
+    -->
+    <DebugType>none</DebugType>
+
     <!-- Zentral gepflegte Produktangaben -->
     <ProductName>EInvoiceSender</ProductName>
     <ProductManufacturer>EInvoiceSender Projekt</ProductManufacturer>
     <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.0</ProductVersion>
 
-    <!-- Verzeichnis der zuvor veroeffentlichten Anwendung -->
+    <!-- Verzeichnis der zuvor veröffentlichten Anwendung -->
     <PublishDir Condition="'$(PublishDir)' == ''">..\..\artifacts\publish\win-x64\</PublishDir>
 
     <DefineConstants>

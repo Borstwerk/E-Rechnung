@@ -1,16 +1,16 @@
 # Einheitliche Zeilenenden im Repository.
 #
-# Alle Textdateien werden mit LF gespeichert. Das haelt die Ausgabe von
+# Alle Textdateien werden mit LF gespeichert. Das hält die Ausgabe von
 # "dotnet format --verify-no-changes" auf Linux- und Windows-Agenten gleich und
 # vermeidet Diffs, die nur aus Zeilenenden bestehen.
 * text=auto eol=lf
 
-# Windows-Skripte brauchen CRLF, sonst scheitert die Ausfuehrung.
+# Windows-Skripte brauchen CRLF, sonst scheitert die Ausführung.
 *.cmd text eol=crlf
 *.bat text eol=crlf
 *.ps1 text eol=crlf
 
-# Binaerdateien nie umkodieren.
+# Binärdateien nie umkodieren.
 *.pdf binary
 *.png binary
 *.jpg binary

@@ -60,9 +60,23 @@ public sealed class GermanSpellingTests
     private static readonly System.Text.RegularExpressions.Regex IdAttribute =
         new("\\bId=\"[^\"]*\"", System.Text.RegularExpressions.RegexOptions.Compiled);
 
+    /// <summary>
+    /// Was geprüft wird.
+    ///
+    /// Nachgetragen: <c>.wixproj</c>, <c>.editorconfig</c> und
+    /// <c>.gitattributes</c>. In allen dreien standen deutsche Kommentare, und
+    /// keine der drei Endungen war erfasst – der Wächter hat sie nie gesehen.
+    ///
+    /// **Nicht erfasst ist <c>.sln</c>, und das bleibt so.** Eine Projektmappe
+    /// besteht überwiegend aus GUIDs, und deren Hex-Ziffern ergeben Folgen wie
+    /// <c>FAE04EC0</c> oder <c>BAEE</c>. Jeder Stamm mit „ae“ schlüge dort an,
+    /// ohne dass ein einziges deutsches Wort im Spiel wäre. Deutscher Text
+    /// steht in einer Projektmappe nicht.
+    /// </summary>
     private static readonly string[] Extensions =
     [
-        ".cs", ".xaml", ".md", ".ps1", ".sh", ".wxs", ".csproj", ".props", ".yml",
+        ".cs", ".xaml", ".md", ".ps1", ".sh", ".wxs", ".wixproj", ".csproj",
+        ".props", ".yml", ".editorconfig", ".gitattributes",
     ];
 
     [Fact]
