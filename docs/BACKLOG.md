@@ -17,6 +17,17 @@ hierher, sondern in die Commit-Historie.
 
 ## Code
 
+- **Wiederholung im Eingabeformular auflösen.** Die Karten für Verkäufer und
+  Käufer haben denselben Aufbau, unterscheiden sich aber in jedem
+  Bindungspfad. Sauber wäre ein gemeinsames `PartyDraft` im Entwurf, an das
+  beide Karten mit einer gemeinsamen Vorlage binden - dann verschwinden rund
+  200 Zeilen XAML. Der Umbau greift in `InvoiceDraft`, in die Vorbefüllung und
+  in die Regelprüfung; er gehört nicht in eine Fehlerbehebung.
+- **Herkunftshinweis als eigenes Bedienelement.** Beschriftung, Feld und
+  Hinweis stehen heute je Feld ausgeschrieben da. Ein kleines
+  ContentControl mit einer Vorlage würde das zusammenfassen. Zurückgestellt,
+  weil eine fehlerhafte ControlTemplate erst zur Laufzeit auffällt und die
+  Oberfläche hier nicht ausgeführt werden kann.
 - **InvoiceDraft verkleinern.** Mit 592 Zeilen die größte Klasse des Kerns.
   Die Umwandlung in das Domänenmodell (`TryBuildInvoice` und die
   Bau-Hilfsmethoden, rund 300 Zeilen) gehört in eine eigene Klasse. Ein erster
@@ -24,6 +35,15 @@ hierher, sondern in die Commit-Historie.
   unqualifizierten Feldzugriffe veränderte Zeichenketten - unter anderem die
   FieldPath-Angaben der Befunde - und Namen in Objektinitialisierern. Der
   Umbau braucht einen werkzeuggestützten Rename, keine Textersetzung.
+
+## Vor der nächsten Freigabe
+
+- **Sollfassungen erneut gegen das CEN-Schematron prüfen.** Mit der Umstellung
+  auf echte Umlaute hat sich der deutsche Text in den Testdaten geändert
+  (Musterstraße, März, Gebäude) und damit auch die abgelegten Sollfassungen.
+  Der Aufbau der XML ist unverändert, die externe Gegenprüfung ist damit aber
+  nicht mehr die zuletzt bestätigte:
+  `build/validate-golden-masters.sh`.
 
 ## Nur auf einem Windows-Rechner prüfbar
 

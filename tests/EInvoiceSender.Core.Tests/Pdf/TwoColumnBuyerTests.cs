@@ -112,51 +112,8 @@ public sealed class TwoColumnBuyerTests : IDisposable
         Assert.Equal("Nordlicht Handel GmbH", result.Buyer.Name?.Value);
     }
 
-    /// <summary>
-    /// Baut die Testrechnung nach: links der Empfängerblock, rechts die
-    /// Rechnungsdaten auf denselben Grundlinien.
-    /// </summary>
-    private Task<InvoiceDetectionResult> DetectTestInvoice()
-        => Detect(TextPdfBuilder.CreateTwoColumn(
-            left:
-            [
-                "Muster IT GmbH",
-                "Musterstraße 10",
-                "18055 Rostock",
-                "USt-IdNr.: DE123456789",
-                string.Empty,
-                "Rechnung an",
-                "Nordlicht Handel GmbH",
-                "Hafenstraße 22",
-                "20095 Hamburg",
-                "Deutschland",
-                "USt-IdNr.: DE987654321",
-            ],
-            right:
-            [
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                string.Empty,
-                "Rechnungsnummer: RE-2026-0815",
-                "Rechnungsdatum: 09.08.2026",
-                "Leistungsdatum: 08.08.2026",
-                "Fällig am: 23.08.2026",
-                "Währung: EUR",
-            ],
-            below:
-            [
-                "Pos Bezeichnung Menge Einheit Einzelpreis Betrag",
-                "1 IT-Beratung 4 Std 100,00 400,00",
-                "2 Projektleitung 2 Std 100,00 200,00",
-                "Nettobetrag 600,00 EUR",
-                "Umsatzsteuer 19 % 114,00 EUR",
-                "Gesamtbetrag 714,00 EUR",
-                "Zahlbetrag 714,00 EUR",
-                "IBAN DE89 3704 0044 0532 0130 00",
-                "BIC COBADEFFXXX",
-            ]));
+    /// <summary>Die Testrechnung – siehe <see cref="TestInvoice"/>.</summary>
+    private Task<InvoiceDetectionResult> DetectTestInvoice() => Detect(TestInvoice.CreatePdf());
 
     private async Task<InvoiceDetectionResult> Detect(byte[] pdf)
     {
