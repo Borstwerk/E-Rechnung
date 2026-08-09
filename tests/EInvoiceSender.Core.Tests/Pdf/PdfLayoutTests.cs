@@ -27,9 +27,9 @@ public sealed class PdfLayoutTests : IDisposable
         => _detector = new InvoiceDataDetector(_extractor, NullLogger<InvoiceDataDetector>.Instance);
 
     /// <summary>
-    /// Zwei Spalten auf derselben Grundlinie werden zu **einer** Textzeile
-    /// zusammengefasst – von links nach rechts. Das ist die Folge daraus, dass
-    /// der Extraktor nach Grundlinien gruppiert und keine Spalten kennt.
+    /// Zwei Spalten auf derselben Grundlinie bleiben als Zeilentext
+    /// zusammengefasst – Summenzeilen brauchen Beschriftung und Betrag
+    /// gemeinsam. Getrennt werden sie in Abschnitten.
     /// </summary>
     [Fact]
     public async Task ZweiSpaltenLandenInEinerZeile()
@@ -41,23 +41,24 @@ public sealed class PdfLayoutTests : IDisposable
 
         PdfTextResult result = await _extractor.ExtractAsync(path, TestContext.Current.CancellationToken);
 
-        Assert.Contains(
+        PdfTextLine merged = Assert.Single(
             result.Lines,
             l => l.Text.Contains("Muster IT GmbH", StringComparison.Ordinal)
                  && l.Text.Contains("Rechnung an", StringComparison.Ordinal));
+
+        // ... aber als zwei Abschnitte, die ihre Spalte kennen.
+        Assert.Equal(2, merged.Segments.Count);
+        Assert.Equal("Muster IT GmbH", merged.Segments[0].Text);
+        Assert.Equal("Rechnung an", merged.Segments[1].Text);
+        Assert.True(merged.Segments[1].Left > merged.Segments[0].Left);
     }
 
     /// <summary>
-    /// Folge daraus: Im zweispaltigen Briefkopf steht hinter "Rechnung an" die
-    /// naechste Zeile – die ebenfalls beide Spalten enthaelt. Der Kaeufername
-    /// wird deshalb mit dem Verkaeuferteil vermengt.
-    ///
-    /// Das ist die derzeitige Grenze und der Grund, warum der Kaeufer aus einem
-    /// zweispaltigen Kopf nur mittlere Sicherheit erreicht. Ein Ausbau muss die
-    /// Wortpositionen auswerten, die der Extraktor bereits mitliefert.
+    /// Der Adressblock wird aus derselben Spalte gelesen wie das Schlüsselwort.
+    /// Vorher lief hier der Text der rechten Spalte hinein.
     /// </summary>
     [Fact]
-    public async Task ImZweispaltigenKopfWirdDerKaeufernameNochNichtSauberGetrennt()
+    public async Task ImZweispaltigenKopfWirdDerKäufernameSauberGetrennt()
     {
         string path = Temp(TextPdfBuilder.CreateTwoColumn(
             left: ["Muster IT GmbH", "Musterstrasse 10", "18055 Rostock", "USt-IdNr. DE123456789"],
@@ -71,9 +72,8 @@ public sealed class PdfLayoutTests : IDisposable
         Assert.Equal("RE-2026-0815", result.InvoiceNumber?.Value);
         Assert.Equal(1190.00m, result.Totals.Gross?.Value);
 
-        // Der Kaeufername traegt noch den Verkaeuferteil derselben Zeile mit.
-        Assert.NotNull(result.Buyer.Name);
-        Assert.Contains("Beispielkunde AG", result.Buyer.Name.Value, StringComparison.Ordinal);
+        Assert.Equal("Beispielkunde AG", result.Buyer.Name?.Value);
+        Assert.Equal("20095", result.Buyer.PostalCode?.Value);
     }
 
     /// <summary>

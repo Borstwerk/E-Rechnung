@@ -33,8 +33,36 @@ internal static class PartyDetector
         "empfänger", "bill to", "invoice to", "lieferanschrift", "rechnungsadresse",
     ];
 
-    /// <summary>Mehr Zeilen sind erfahrungsgemaess schon der naechste Abschnitt.</summary>
+    /// <summary>Mehr Zeilen sind erfahrungsgemäß schon der nächste Abschnitt.</summary>
     private const int AddressBlockLines = 5;
+
+    /// <summary>
+    /// Waagerechte Toleranz, innerhalb derer ein Abschnitt noch zur selben
+    /// Spalte gehört.
+    /// </summary>
+    private const double SameColumnToleranceInPoints = 40;
+
+    /// <summary>
+    /// Begriffe, die eine Zeile als Rechnungsangabe ausweisen und damit als
+    /// Firmenname ausschließen.
+    ///
+    /// Ohne diese Sperre wurde in einer zweispaltigen Rechnung „Währung: EUR“
+    /// zum Käufernamen: Rechts neben dem Empfängerblock standen die
+    /// Rechnungsdaten, und der Adressblock wurde rein nach Lesereihenfolge
+    /// gelesen. Die räumliche Auswertung unten behebt die Ursache; diese Liste
+    /// fängt zusätzlich die Fälle ab, in denen die Spaltenerkennung nicht
+    /// greift.
+    /// </summary>
+    private static readonly string[] MetadataTerms =
+    [
+        "rechnungsnummer", "rechnungs-nr", "rechnungsnr", "rechnungsdatum", "rechnung vom",
+        "leistungsdatum", "lieferdatum", "leistungszeitraum", "fällig", "faellig",
+        "zahlbar", "zahlungsziel", "zahlungsbedingung", "währung", "waehrung", "currency",
+        "netto", "brutto", "umsatzsteuer", "mehrwertsteuer", "mwst", "steuersatz",
+        "gesamtbetrag", "rechnungsbetrag", "gesamtsumme", "zwischensumme", "zahlbetrag",
+        "iban", "bic", "swift", "seite", "kundennummer", "kunden-nr", "bestellnummer",
+        "auftragsnummer", "ust-id", "ust.-id", "steuernummer", "telefon", "telefax",
+    ];
 
     public static DetectedParties Detect(
         IReadOnlyList<PdfTextLine> lines, CompanyTemplate? ownCompany)
@@ -85,20 +113,45 @@ internal static class PartyDetector
     {
         for (int i = 0; i < lines.Count; i++)
         {
-            if (DetectionParsers.FirstKeywordIn(lines[i].Text, BuyerKeywords) is null)
+            PdfTextSegment? keywordSegment = SegmentWithKeyword(lines[i], BuyerKeywords);
+
+            if (keywordSegment is null)
             {
                 continue;
             }
 
-            return BuildFromAddressBlock(
-                [.. lines.Skip(i + 1).Take(AddressBlockLines)], lines[i].Text.Trim(), ownCompany);
+            // Der Adressblock steht **unter** dem Schlüsselwort, also in
+            // derselben Spalte. Was rechts daneben steht, gehört zu einem
+            // anderen Block und darf hier nicht hineinlaufen.
+            List<string> block =
+            [
+                .. lines.Skip(i + 1).Take(AddressBlockLines)
+                    .Select(l => TextInColumn(l, keywordSegment.Left))
+                    .Where(t => t is { Length: > 0 })
+                    .Select(t => t!),
+            ];
+
+            return BuildFromAddressBlock(block, keywordSegment.Text.Trim(), ownCompany);
         }
 
         return new DetectedParty();
     }
 
+    private static PdfTextSegment? SegmentWithKeyword(PdfTextLine line, string[] keywords)
+        => line.Segments.FirstOrDefault(s => DetectionParsers.FirstKeywordIn(s.Text, keywords) is not null);
+
+    /// <summary>
+    /// Liefert den Abschnitt einer Zeile, der waagerecht zur angegebenen Spalte
+    /// gehört – oder <c>null</c>, wenn die Zeile dort nichts stehen hat.
+    /// </summary>
+    private static string? TextInColumn(PdfTextLine line, double columnLeft)
+        => line.Segments
+            .Where(s => Math.Abs(s.Left - columnLeft) <= SameColumnToleranceInPoints)
+            .Select(s => s.Text)
+            .FirstOrDefault();
+
     private static DetectedParty BuildFromAddressBlock(
-        IReadOnlyList<PdfTextLine> block, string keywordLine, CompanyTemplate? ownCompany)
+        IReadOnlyList<string> block, string keywordLine, CompanyTemplate? ownCompany)
     {
         DetectedValue<string>? name = null;
         DetectedValue<string>? street = null;
@@ -107,28 +160,34 @@ internal static class PartyDetector
 
         string reason = $"Adressblock unter \"{keywordLine}\".";
 
-        foreach (PdfTextLine line in block)
+        foreach (string line in block)
         {
-            Match place = DetectionParsers.PostalCodeAndCity().Match(line.Text);
+            // Eine Rechnungsangabe ist nie ein Firmenname oder eine Anschrift.
+            if (IsMetadata(line))
+            {
+                continue;
+            }
+
+            Match place = DetectionParsers.PostalCodeAndCity().Match(line);
 
             if (place.Success && postalCode is null)
             {
-                postalCode = Value(place.Groups["plz"].Value, line.Text, reason);
-                city = Value(place.Groups["ort"].Value.Trim(), line.Text, reason);
+                postalCode = Value(place.Groups["plz"].Value, line, reason);
+                city = Value(place.Groups["ort"].Value.Trim(), line, reason);
 
                 continue;
             }
 
-            if (street is null && DetectionParsers.Street().IsMatch(line.Text))
+            if (street is null && DetectionParsers.Street().IsMatch(line))
             {
-                street = Value(line.Text.Trim(), line.Text, reason);
+                street = Value(line.Trim(), line, reason);
 
                 continue;
             }
 
-            if (name is null && line.Text.Trim().Length > 2 && !IsOwnCompany(line.Text, ownCompany))
+            if (name is null && line.Trim().Length > 2 && !IsOwnCompany(line, ownCompany))
             {
-                name = Value(line.Text.Trim(), line.Text, $"Erste Zeile unter \"{keywordLine}\".");
+                name = Value(line.Trim(), line, $"Erste Zeile unter \"{keywordLine}\".");
             }
         }
 
@@ -144,7 +203,15 @@ internal static class PartyDetector
     private static DetectedValue<string> Value(string value, string source, string reason)
         => new(value, DetectionConfidence.Medium, source, reason);
 
-    /// <summary>Die eigene Firma kann nicht der Kaeufer sein.</summary>
+    /// <summary>Enthält die Zeile eine Rechnungsangabe statt einer Anschrift?</summary>
+    private static bool IsMetadata(string line)
+    {
+        string lower = line.ToLowerInvariant();
+
+        return MetadataTerms.Any(t => lower.Contains(t, StringComparison.Ordinal));
+    }
+
+    /// <summary>Die eigene Firma kann nicht der Käufer sein.</summary>
     private static bool IsOwnCompany(string line, CompanyTemplate? ownCompany)
         => ownCompany?.SellerName is { Length: > 0 } own
            && line.Contains(own, StringComparison.OrdinalIgnoreCase);

@@ -13,7 +13,29 @@ namespace EInvoiceSender.Core.Pdf;
 /// Abstand vom oberen Seitenrand in PDF-Punkten. Wird gebraucht, um Briefkopf
 /// und Fussbereich von der Dokumentmitte zu unterscheiden.
 /// </param>
-public sealed record PdfTextLine(string Text, int PageNumber, double Top);
+public sealed record PdfTextLine(
+    string Text,
+    int PageNumber,
+    double Top,
+    IReadOnlyList<PdfTextSegment> Segments)
+{
+    /// <summary>Der linke Rand des ersten Abschnitts.</summary>
+    public double Left => Segments.Count > 0 ? Segments[0].Left : 0;
+}
+
+/// <summary>
+/// Ein waagerecht zusammenhängender Textblock innerhalb einer Zeile.
+///
+/// Zweispaltige Rechnungen setzen Empfängerblock und Rechnungsdaten auf
+/// dieselbe Grundlinie. Als eine Textzeile gelesen ergibt das Unsinn –
+/// „Nordlicht Handel GmbH Rechnungsnummer: RE-2026-0815“. Die Abschnitte
+/// halten deshalb fest, was räumlich zusammengehört, ohne dass die Zeile
+/// selbst zerrissen wird: Summenzeilen brauchen Beschriftung und Betrag
+/// weiterhin gemeinsam.
+/// </summary>
+/// <param name="Text">Der Inhalt des Abschnitts.</param>
+/// <param name="Left">Sein linker Rand in PDF-Punkten.</param>
+public sealed record PdfTextSegment(string Text, double Left);
 
 /// <summary>Das Ergebnis der Textextraktion.</summary>
 /// <param name="Lines">Alle Zeilen in Lesereihenfolge.</param>
@@ -80,6 +102,14 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
     /// einem Wasserzeichen; das ist keine Grundlage fuer eine Erkennung.
     /// </summary>
     private const int MinimumUsableCharacters = 120;
+
+    /// <summary>
+    /// Ab diesem waagerechten Abstand zwischen zwei Wörtern beginnt ein neuer
+    /// Abschnitt. Der Wert liegt bewusst hoch: Innerhalb eines Textblocks
+    /// stehen Wörter selten so weit auseinander, zwischen zwei Spalten fast
+    /// immer.
+    /// </summary>
+    private const double ColumnGapInPoints = 60;
 
     /// <inheritdoc />
     public async Task<PdfTextResult> ExtractAsync(
@@ -149,25 +179,68 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
 
         foreach (IGrouping<double, Word> row in rows)
         {
-            var builder = new StringBuilder();
+            List<PdfTextSegment> segments = SplitIntoSegments([.. row.OrderBy(w => w.BoundingBox.Left)]);
 
-            foreach (Word word in row.OrderBy(w => w.BoundingBox.Left))
+            if (segments.Count == 0)
             {
-                if (builder.Length > 0)
-                {
-                    builder.Append(' ');
-                }
-
-                builder.Append(word.Text);
+                continue;
             }
 
-            string text = builder.ToString().Trim();
+            string text = string.Join(" ", segments.Select(s => s.Text));
 
-            if (text.Length > 0)
-            {
-                yield return new PdfTextLine(text, page.Number, pageTop - row.Key);
-            }
+            yield return new PdfTextLine(text, page.Number, pageTop - row.Key, segments);
         }
+    }
+
+    /// <summary>
+    /// Zerlegt die Wörter einer Grundlinie dort in Abschnitte, wo eine grosse
+    /// Lücke auf einen Spaltenwechsel hindeutet.
+    /// </summary>
+    private static List<PdfTextSegment> SplitIntoSegments(IReadOnlyList<Word> words)
+    {
+        var segments = new List<PdfTextSegment>();
+        var builder = new StringBuilder();
+        double left = 0;
+        double previousRight = 0;
+
+        foreach (Word word in words)
+        {
+            bool startsNewSegment = builder.Length > 0
+                                    && word.BoundingBox.Left - previousRight > ColumnGapInPoints;
+
+            if (startsNewSegment)
+            {
+                Flush(segments, builder, left);
+            }
+
+            if (builder.Length == 0)
+            {
+                left = word.BoundingBox.Left;
+            }
+            else
+            {
+                builder.Append(' ');
+            }
+
+            builder.Append(word.Text);
+            previousRight = word.BoundingBox.Right;
+        }
+
+        Flush(segments, builder, left);
+
+        return segments;
+    }
+
+    private static void Flush(List<PdfTextSegment> segments, StringBuilder builder, double left)
+    {
+        string text = builder.ToString().Trim();
+
+        if (text.Length > 0)
+        {
+            segments.Add(new PdfTextSegment(text, left));
+        }
+
+        builder.Clear();
     }
 
     [LoggerMessage(
