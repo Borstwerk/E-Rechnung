@@ -20,6 +20,76 @@ namespace EInvoiceSender.Core.Models;
 /// </summary>
 public sealed partial class InvoiceDraft : ObservableObject
 {
+    private readonly Dictionary<string, FieldOrigin> _origins = [];
+    private bool _isPrefilling;
+
+    /// <summary>
+    /// Woher der Inhalt eines Feldes stammt.
+    ///
+    /// Ein Feld, das der Anwender anfasst, gilt anschliessend als von Hand
+    /// erfasst – auch dann, wenn er den vorgeschlagenen Wert nur bestaetigt
+    /// und wieder hineinschreibt. Das ist Absicht: Was durch die Hand des
+    /// Menschen gegangen ist, braucht keine Warnung mehr.
+    /// </summary>
+    public FieldOrigin OriginOf(string propertyName)
+        => _origins.TryGetValue(propertyName, out FieldOrigin origin) ? origin : FieldOrigin.Manual;
+
+    /// <summary>
+    /// Fuehrt eine Vorbefuellung aus. Aenderungen innerhalb von
+    /// <paramref name="fill"/> loeschen die Herkunft **nicht**, alles danach
+    /// schon.
+    /// </summary>
+    public void Prefill(Action<InvoiceDraft> fill)
+    {
+        ArgumentNullException.ThrowIfNull(fill);
+
+        _isPrefilling = true;
+
+        try
+        {
+            fill(this);
+        }
+        finally
+        {
+            _isPrefilling = false;
+        }
+    }
+
+    /// <summary>Merkt sich, woher ein Feld stammt. Nur waehrend der Vorbefuellung wirksam.</summary>
+    public void MarkOrigin(string propertyName, FieldOrigin origin)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
+
+        _origins[propertyName] = origin;
+        OnPropertyChanged(nameof(Origins));
+    }
+
+    /// <summary>
+    /// Alle vermerkten Herkuenfte. Die Oberflaeche bindet daran, um die
+    /// Kennzeichnung neben den Feldern anzuzeigen.
+    /// </summary>
+    public IReadOnlyDictionary<string, FieldOrigin> Origins => _origins;
+
+    /// <summary>
+    /// Jede Aenderung durch den Anwender setzt die Herkunft auf "von Hand".
+    /// Damit verschwindet die Kennzeichnung genau dann, wenn sie ihren Zweck
+    /// erfuellt hat.
+    /// </summary>
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        if (_isPrefilling || e.PropertyName is null or nameof(Origins))
+        {
+            return;
+        }
+
+        if (_origins.Remove(e.PropertyName))
+        {
+            base.OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Origins)));
+        }
+    }
+
     // --- Dokument ----------------------------------------------------------
 
     [ObservableProperty]

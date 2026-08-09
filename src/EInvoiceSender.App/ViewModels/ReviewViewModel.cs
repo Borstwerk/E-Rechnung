@@ -4,6 +4,7 @@ using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf.Detection;
 
 namespace EInvoiceSender.App.ViewModels;
 
@@ -112,6 +113,26 @@ public sealed partial class ReviewViewModel : StepViewModel
         OnPropertyChanged(nameof(PayableText));
     }
 
+    /// <summary>Das Ergebnis des Abgleichs mit dem PDF-Betrag.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTotalsComparison))]
+    [NotifyPropertyChangedFor(nameof(TotalsComparisonGlyph))]
+    private TotalsComparison? _totalsComparison;
+
+    /// <summary>Liegt ein Abgleich vor?</summary>
+    public bool HasTotalsComparison => TotalsComparison is not null;
+
+    /// <summary>Zeichen zur farbunabhaengigen Kennzeichnung des Abgleichs.</summary>
+    public string TotalsComparisonGlyph => TotalsComparison switch
+    {
+        { WasPerformed: true, Matches: true } => "\u2713",
+        { WasPerformed: true } => "!",
+        _ => "i",
+    };
+
+    /// <summary>Uebernimmt das Ergebnis des Summenabgleichs.</summary>
+    public void ShowTotalsComparison(TotalsComparison comparison) => TotalsComparison = comparison;
+
     /// <summary>Setzt den Schritt auf den Anfangszustand zurueck.</summary>
     public void Reset()
     {
@@ -120,6 +141,7 @@ public sealed partial class ReviewViewModel : StepViewModel
         SourceAlreadyContainsInvoice = false;
         Invoice = null;
         Totals = null;
+        TotalsComparison = null;
         PreviewImage = null;
         ClearFindings();
     }

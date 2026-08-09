@@ -18,6 +18,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="MimeKit" />
     <PackageReference Include="PdfSharp" />
+    <PackageReference Include="PdfPig" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf.Detection;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Validation;
 
@@ -25,6 +26,59 @@ public sealed partial class InvoiceDataViewModel(IEInvoiceService service) : Ste
 
     [ObservableProperty]
     private InvoiceTotals? _totals;
+
+    /// <summary>
+    /// Was die Vorbefuellung aus der PDF uebernommen hat. Leer, solange nichts
+    /// erkannt wurde.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PrefillMessage))]
+    [NotifyPropertyChangedFor(nameof(HasPrefillMessage))]
+    private PrefillSummary? _prefill;
+
+    /// <summary>Ein Satz darueber, was vorausgefuellt wurde.</summary>
+    public string PrefillMessage
+    {
+        get
+        {
+            if (Prefill is not { FilledFields: > 0 } summary)
+            {
+                return string.Empty;
+            }
+
+            string text = $"{summary.FilledFields} Feld(er) wurden aus der PDF vorausgefuellt.";
+
+            if (summary.UncertainFields.Count > 0)
+            {
+                text += $" Bitte pruefen Sie besonders: {string.Join(", ", summary.UncertainFields)}.";
+            }
+
+            return text + " Jeder Wert laesst sich ueberschreiben.";
+        }
+    }
+
+    /// <summary>Gibt es einen Hinweis zur Vorbefuellung?</summary>
+    public bool HasPrefillMessage => PrefillMessage.Length > 0;
+
+    /// <summary>
+    /// Uebernimmt ein Erkennungsergebnis in das Formular.
+    ///
+    /// Die Vertrauensstufen entscheiden dabei, was uebernommen wird – siehe
+    /// <see cref="DraftPrefiller"/>. Nichts davon geht ungeprueft weiter: Der
+    /// Weg fuehrt immer ueber die Bestaetigung in Schritt 3.
+    /// </summary>
+    public void ApplyDetection(InvoiceDetectionResult detection, CompanyTemplate? ownCompany)
+    {
+        ArgumentNullException.ThrowIfNull(detection);
+
+        if (!detection.HasUsableText)
+        {
+            return;
+        }
+
+        Prefill = DraftPrefiller.Apply(Draft, detection, ownCompany);
+        RecalculateTotals();
+    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RemoveLineCommand))]

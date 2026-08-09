@@ -51,6 +51,22 @@
           <TextBlock Text="{Binding PayableText}" FontWeight="SemiBold" />
         </UniformGrid>
 
+        <!--
+          Abgleich mit dem aus der PDF gelesenen Betrag. Das ist ein zweites,
+          unabhaengiges Signal - keine rechtliche Wahrheit. Eine Abweichung
+          blockiert deshalb nichts, sie weist nur hin.
+        -->
+        <Border BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,14,0,0"
+                Background="#F4F4F4" BorderBrush="#C8C8C8"
+                Visibility="{Binding HasTotalsComparison, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding TotalsComparisonGlyph}" FontWeight="Bold" MinWidth="16"
+                       TextAlignment="Center" Margin="0,0,8,0" VerticalAlignment="Top" />
+            <TextBlock Text="{Binding TotalsComparison.Message}" TextWrapping="Wrap"
+                       AutomationProperties.LiveSetting="Polite" />
+          </StackPanel>
+        </Border>
+
         <TextBlock Style="{StaticResource Abschnitt}" Text="Speicherort" />
         <TextBox Text="{Binding OutputDirectory, UpdateSourceTrigger=PropertyChanged}" TabIndex="58"
                  AutomationProperties.Name="Ausgabeverzeichnis" />

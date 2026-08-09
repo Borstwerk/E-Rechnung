@@ -39,6 +39,26 @@
                    Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
         <ItemsControl ItemsSource="{Binding Findings}"
                       AutomationProperties.Name="Befunde der Eingangspruefung" />
+
+        <!--
+          Was aus dem PDF-Text gelesen werden konnte. Zeichen und Wort stehen
+          nebeneinander, damit die Uebersicht auch ohne Farbwahrnehmung
+          vollstaendig lesbar bleibt.
+        -->
+        <TextBlock Style="{StaticResource Abschnitt}" Text="PDF analysiert"
+                   Visibility="{Binding HasDetectionNotes, Converter={StaticResource BoolToVisibility}}" />
+        <ItemsControl ItemsSource="{Binding DetectionNotes}"
+                      AutomationProperties.Name="Ergebnis der Datenerkennung">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Margin="0,2">
+                <TextBlock Text="{Binding Glyph}" FontWeight="Bold" MinWidth="16"
+                           TextAlignment="Center" Margin="0,0,6,0" />
+                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
       </StackPanel>
     </ScrollViewer>
 

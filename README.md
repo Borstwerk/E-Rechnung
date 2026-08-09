@@ -10,6 +10,12 @@ vergibt keine Rechnungsnummern, fuehrt keine Buchhaltung und versendet nichts
 von selbst. Sie nimmt die Rechnung, die Sie ohnehin schon haben, und macht
 daraus eine elektronische Rechnung.
 
+Nach der Auswahl der PDF versucht die Anwendung, das Formular aus dem bereits
+vorhandenen PDF-Text **vorauszufuellen**. Jeder Vorschlag ist gekennzeichnet
+und laesst sich ueberschreiben; unsichere Werte werden gar nicht erst
+eingetragen. Es findet keine Texterkennung an Bildern statt, und die
+Bestaetigung durch Sie bleibt in jedem Fall erforderlich.
+
 Alles laeuft oertlich auf Ihrem Rechner. Es werden keine Rechnungsdaten,
 PDF-Dateien, E-Mail-Adressen oder Bankverbindungen an fremde Rechner
 uebertragen.

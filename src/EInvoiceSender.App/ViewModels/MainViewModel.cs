@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf.Detection;
 using EInvoiceSender.Core.Services;
 
 namespace EInvoiceSender.App.ViewModels;
@@ -22,6 +23,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly ISettingsStore _settingsStore;
     private Invoice? _confirmedInvoice;
+    private bool _hasPrefilled;
 
     public MainViewModel(
         PdfSelectionViewModel pdfSelection,
@@ -156,8 +158,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         switch (CurrentStep)
         {
             case WizardStep.SelectPdf when PdfSelection.IsSuitable:
+                await PrefillFromDetectionAsync(cancellationToken).ConfigureAwait(true);
                 CurrentStep = WizardStep.EnterData;
-                StatusMessage = "Erfassen Sie die Rechnungsdaten so, wie sie in der PDF stehen.";
                 break;
 
             case WizardStep.EnterData:
@@ -181,6 +183,44 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _ => false,
     };
 
+    /// <summary>
+    /// Uebergibt das Erkennungsergebnis aus Schritt 1 an das Formular.
+    ///
+    /// Passiert genau einmal beim Uebergang, nicht bei jedem Blaettern – sonst
+    /// wuerden von Hand geaenderte Werte wieder ueberschrieben.
+    /// </summary>
+    private async Task PrefillFromDetectionAsync(CancellationToken cancellationToken)
+    {
+        StatusMessage = "Erfassen Sie die Rechnungsdaten so, wie sie in der PDF stehen.";
+
+        if (_hasPrefilled || PdfSelection.Detection is not { HasUsableText: true } detection)
+        {
+            return;
+        }
+
+        _hasPrefilled = true;
+
+        CompanyTemplate? template = null;
+
+        try
+        {
+            template = await _settingsStore.LoadTemplateAsync(cancellationToken).ConfigureAwait(true);
+        }
+        catch (IOException)
+        {
+            // Ohne Vorlage wird eben weniger vorausgefuellt.
+        }
+
+        InvoiceData.ApplyDetection(detection, template);
+
+        if (InvoiceData.Prefill is { FilledFields: > 0 } summary)
+        {
+            StatusMessage =
+                $"{summary.FilledFields} Feld(er) wurden aus der PDF vorausgefuellt. "
+                + "Bitte pruefen und ergaenzen Sie die Angaben.";
+        }
+    }
+
     private void EnterReviewIfDataIsValid()
     {
         Invoice? invoice = InvoiceData.Validate(out string message);
@@ -198,6 +238,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             InvoiceData.Totals,
             PdfSelection.PreviewImage,
             PdfSelection.Report?.HasExistingInvoice == true);
+
+        // Der aus der PDF gelesene Betrag ist keine rechtliche Wahrheit,
+        // sondern ein zweites, unabhaengiges Signal. Weicht er ab, sieht der
+        // Anwender das genau dort, wo er ohnehin vergleichen soll.
+        Review.ShowTotalsComparison(PdfSelection.Detection is { HasUsableText: true } detection
+            ? TotalsCrossCheck.Compare(detection.Totals, InvoiceData.Totals)
+            : TotalsComparison.NotPossible);
 
         CurrentStep = WizardStep.Review;
     }
@@ -271,6 +318,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Generation.Reset();
         Result.Reset();
         _confirmedInvoice = null;
+        _hasPrefilled = false;
 
         CurrentStep = WizardStep.SelectPdf;
         ErrorMessage = string.Empty;

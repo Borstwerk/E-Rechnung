@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 377 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberflaeche |
+| `tests/EInvoiceSender.Core.Tests` | 433 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberflaeche |
 | `tests/EInvoiceSender.IntegrationTests` | 48 | Gesamtablauf, PDF/A-3, Einbettung und Rueckextraktion, externe Gegenpruefung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **425** | |
+| **Summe** | **481** | |
 
 ## Ebenen
 
@@ -71,6 +71,33 @@ auftraten und die kein bestehender Test finden konnte:
 
 Beim ersten Lauf hat Regel 2 sofort einen echten Fehler in neu geschriebenem
 Code gefunden.
+
+### Datenerkennung
+
+Die Tests der PDF-Datenerkennung pruefen ueberwiegend, was **nicht** erkannt
+werden darf. Das ist Absicht: Ein leeres Feld kostet ein paar Tastenanschlaege,
+ein falsch gefuelltes Feld, das jemand uebersieht, kostet eine fehlerhafte
+Rechnung.
+
+Ausdruecklich abgedeckte Fehlzuordnungen:
+
+- eine Telefon- oder Kundennummer wird nicht zur Rechnungsnummer,
+- eine Postleitzahl wird nicht als Betrag gelesen,
+- ein Rabatt- oder Skontoprozentsatz wird nicht zum Steuersatz,
+- der Prozentwert aus "Umsatzsteuer 19 % 190,00" wird nicht zum Steuerbetrag,
+- eine IBAN mit falscher Pruefsumme wird verworfen, nicht uebernommen,
+- ein unmoegliches Datum wie 32.13.2026 wird verworfen,
+- die eigene Firma wird nicht zum Kaeufer,
+- ohne belastbares Signal wird kein Verkaeufer geraten,
+- unsichere Werte und Positionen fuellen das Formular nicht aus,
+- eine PDF ohne Text bleibt von Hand erfassbar.
+
+Die Testvorgaben entstehen mit `TextPdfBuilder`, der PDF-Dateien mit echtem,
+maschinenlesbarem Text erzeugt. Er baut die Datei von Hand mit der
+Standardschrift Helvetica – so braucht der Build-Agent keine Schriftausstattung
+und es kommt keine Schriftdatei fremder Lizenz ins Repository. Fuer die
+Textextraktion ist eine nicht eingebettete Schrift gleichgueltig, und diese
+Dateien durchlaufen die PDF/A-Aufwertung nie.
 
 ## Externe Validatoren sind das Freigabegate
 

@@ -76,6 +76,11 @@ public partial class App : Application
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<IEInvoiceService, EInvoiceService>();
 
+        // Lokale Datenerkennung: liest nur bereits vorhandenen PDF-Text aus.
+        // Kein OCR, keine externen Dienste, nichts verlaesst das Geraet.
+        services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
+        services.AddSingleton<IInvoiceDataDetector, InvoiceDataDetector>();
+
         // Referenzvalidatoren sind optional: Ohne Java oder ohne die
         // Mustang-JAR startet die Anwendung normal weiter. Der Validator meldet
         // sich dann als nicht verfuegbar, und der Bericht weist die Pruefung

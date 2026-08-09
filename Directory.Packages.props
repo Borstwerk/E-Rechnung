@@ -21,6 +21,7 @@
 
   <ItemGroup Label="PDF">
     <PackageVersion Include="PdfSharp" Version="6.2.4" />
+    <PackageVersion Include="PdfPig" Version="0.1.15" />
     <PackageVersion Include="PDFtoImage" Version="5.3.0" />
   </ItemGroup>
 

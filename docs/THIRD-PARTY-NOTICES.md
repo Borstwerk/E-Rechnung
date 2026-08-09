@@ -16,12 +16,37 @@ Auswahlgrund je Paket – steht in
 | Microsoft.Extensions.DependencyInjection | 10.0.10 | MIT | Composition Root der Anwendung |
 | Microsoft.Extensions.Logging(.Abstractions) | 10.0.10 | MIT | Protokollierung |
 | PdfSharp | 6.2.4 | MIT | PDF lesen, aufwerten, Anhaenge einbetten |
+| PdfPig | 0.1.15 | Apache-2.0 | Textextraktion fuer die lokale Datenerkennung |
 | PDFtoImage | 5.3.0 | MIT | Vorschaubild der ersten Seite (PDFium) |
 | MimeKit | 4.17.0 | MIT | `.eml`-Entwurf nach RFC 5322 |
 | System.Security.Cryptography.ProtectedData | 10.0.10 | MIT | DPAPI-Schutz der IBAN unter Windows |
 
 PDFium (ueber PDFtoImage) steht unter der BSD-3-Clause-Lizenz von Google.
 SkiaSharp (ebenfalls ueber PDFtoImage) steht unter MIT.
+
+### Warum PdfPig neben PdfSharp
+
+Beide Bibliotheken lesen PDF-Dateien, aber nicht dasselbe. PdfSharp schreibt
+und veraendert Dateien – dafuer wird es hier verwendet – und besitzt **keine**
+Textextraktion. Nachgeprueft an der Assembly: Es gibt einen Parser fuer
+Zeichenanweisungen, aber keine Schnittstelle, die daraus lesbaren Text macht.
+Das selbst zu bauen hiesse, Zeichensatzkodierungen und ToUnicode-Tabellen
+umzusetzen; ein Fehler darin erzeugt still verfaelschten Text, der dann in
+Rechnungsfelder wandert.
+
+Geprueft wurde vor der Aufnahme:
+
+- **Lizenz:** Apache-2.0, als SPDX-Kennung unmittelbar im Paketmanifest.
+- **Pflegezustand:** laufende Veroeffentlichungen bis zum Zeitpunkt der
+  Aufnahme.
+- **Abhaengigkeiten:** rein verwaltet, keine nativen Bestandteile.
+- **Reichweite:** wird ausschliesslich fuer die Datenerkennung verwendet und
+  beruehrt weder die XML-Erzeugung noch den PDF/A-Weg. Faellt die Erkennung
+  aus, bleibt die Anwendung voll benutzbar.
+
+**Fassung 0.1.15 ist vor 1.0.** Die Schnittstelle kann sich also noch aendern.
+Da die Bibliothek nur an einer Stelle und nur fuer eine Komfortfunktion
+verwendet wird, ist der Aufwand eines spaeteren Wechsels ueberschaubar.
 
 ## Nur beim Entwickeln und Testen
 

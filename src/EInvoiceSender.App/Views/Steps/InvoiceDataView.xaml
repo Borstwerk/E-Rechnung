@@ -17,6 +17,17 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel>
 
+      <!-- Was aus der PDF vorausgefuellt wurde -->
+      <Border Background="#EEF5FF" BorderBrush="#5A8FC8" BorderThickness="1" CornerRadius="3"
+              Padding="10,8" Margin="0,0,0,8"
+              Visibility="{Binding HasPrefillMessage, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="i" FontWeight="Bold" MinWidth="16" TextAlignment="Center" Margin="0,0,8,0" />
+          <TextBlock Text="{Binding PrefillMessage}" TextWrapping="Wrap"
+                     AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+      </Border>
+
       <!-- Dokument -->
       <TextBlock Style="{StaticResource Abschnitt}" Text="Dokument" />
       <Grid>
@@ -29,6 +40,7 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -63,6 +75,16 @@
         <TextBox Grid.Row="1" Grid.Column="5" Style="{StaticResource Feld}" TabIndex="15"
                  Text="{Binding Draft.PaymentTerms, UpdateSourceTrigger=PropertyChanged}"
                  AutomationProperties.Name="Zahlungsbedingungen" />
+
+        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=InvoiceNumber}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=InvoiceNumber}"
+                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
+        <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=IssueDate}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=IssueDate}"
+                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
+        <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=DueDate}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=DueDate}"
+                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
       </Grid>
 
       <!-- Verkaeufer und Kaeufer nebeneinander -->
@@ -79,6 +101,10 @@
             <TextBox Style="{StaticResource Feld}" TabIndex="20"
                      Text="{Binding Draft.SellerName, UpdateSourceTrigger=PropertyChanged}"
                      AutomationProperties.Name="Name des Rechnungsstellers" />
+            <TextBlock />
+        <TextBlock Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerName}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerName}"
+                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
             <TextBlock Text="Strasse" />
             <TextBox Style="{StaticResource Feld}" TabIndex="21"
                      Text="{Binding Draft.SellerStreet, UpdateSourceTrigger=PropertyChanged}"
@@ -114,6 +140,10 @@
             <TextBox Style="{StaticResource Feld}" TabIndex="30"
                      Text="{Binding Draft.BuyerName, UpdateSourceTrigger=PropertyChanged}"
                      AutomationProperties.Name="Name des Rechnungsempfaengers" />
+            <TextBlock />
+        <TextBlock Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BuyerName}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BuyerName}"
+                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
             <TextBlock Text="Strasse" />
             <TextBox Style="{StaticResource Feld}" TabIndex="31"
                      Text="{Binding Draft.BuyerStreet, UpdateSourceTrigger=PropertyChanged}"
@@ -154,6 +184,9 @@
         <TextBox Style="{StaticResource Feld}" TabIndex="41"
                  Text="{Binding Draft.BankIban, UpdateSourceTrigger=PropertyChanged}"
                  AutomationProperties.Name="IBAN" />
+        <TextBlock Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BankIban}"
+                   Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BankIban}"
+                   FontSize="11" Foreground="#4A6E30" Margin="0,0,12,4" />
         <TextBlock Text="BIC (freiwillig)" />
         <TextBox Style="{StaticResource Feld}" TabIndex="42"
                  Text="{Binding Draft.BankBic, UpdateSourceTrigger=PropertyChanged}"

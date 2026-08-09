@@ -54,6 +54,36 @@ verschluesselt abgelegt und ist nur unter dem eigenen Benutzerkonto lesbar.
 Steht DPAPI nicht zur Verfuegung, wird sie **gar nicht** gespeichert, statt im
 Klartext auf der Platte zu landen.
 
+## Grenzen der Datenerkennung
+
+Nach der Auswahl einer PDF versucht die Anwendung, das Formular aus dem bereits
+vorhandenen PDF-Text vorauszufuellen. Das ist eine **Schreibhilfe**, keine
+Quelle der Wahrheit.
+
+- **Kein OCR.** Ausgewertet wird nur Text, der schon in der Datei steht. Eine
+  eingescannte Rechnung besteht aus Bildern und liefert nichts. Die Anwendung
+  sagt das ausdruecklich und Sie erfassen die Daten von Hand.
+- **Kein Wert geht ungeprueft weiter.** Der Weg lautet immer: PDF →
+  Erkennungsergebnis → Formular → Ihre Bestaetigung → E-Rechnung. Das ist
+  durch die Bauart sichergestellt, nicht durch eine Zusage.
+- **Unsichere Werte fuellen nichts aus.** Jeder gelesene Wert traegt eine
+  Vertrauensstufe. Was nicht mindestens mittlere Sicherheit hat, wird
+  angezeigt, aber nicht eingetragen.
+- **Positionen werden zurueckhaltend behandelt.** Rechnungstabellen sind
+  uneinheitlich aufgebaut. Solange die Struktur nicht sicher erkannt wird,
+  bleibt die Positionsliste leer – eine falsche Position wuerde den
+  Rechnungsbetrag veraendern.
+- **Verkaeufer und Kaeufer** werden nur zugeordnet, wenn es ein belastbares
+  Signal gibt: die gespeicherte eigene Firmenvorlage oder ein Schluesselwort
+  wie "Rechnung an". Ohne beides bleiben die Felder leer. Vertauschte Parteien
+  waeren schlimmer als leere Felder.
+- **Der aus der PDF gelesene Gesamtbetrag** dient dem Abgleich mit den
+  erfassten Positionen. Er ist ein zweites, unabhaengiges Signal – keine
+  rechtliche Wahrheit. Eine Abweichung blockiert nichts, sie weist hin.
+- **Alles bleibt oertlich.** Der Text wird im Arbeitsspeicher ausgewertet und
+  danach verworfen. Er wird nicht gespeichert, nicht protokolliert und nicht
+  uebertragen. Es gibt keine Cloud-Auswertung und keinen externen Dienst.
+
 ## Keine Steuerberatung
 
 Geprueft wird das **Format**, nicht die inhaltliche oder steuerliche

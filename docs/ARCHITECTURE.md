@@ -24,6 +24,7 @@ automatisiert pruefen – auch auf einem Build-Agenten ohne Bildschirm.
 | `Validation` | Regelwerk EN 16931, Codelisten, Befunde und Pruefberichte |
 | `Zugferd` | CII-XML erzeugen und zurueclesen |
 | `Pdf` | PDF-Analyse, Eingangspruefung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
+| `Pdf/Detection` | oertliche Datenerkennung: Textextraktion, Erkennungsregeln, Vertrauensstufen, Vorbefuellung, Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
 | `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporaere Arbeitsverzeichnisse |
 | `Security` | sichere XML-Verarbeitung, Prozessausfuehrung mit Zeitlimit |
@@ -78,10 +79,40 @@ Zwei Regeln gelten in der Oberflaeche ausnahmslos und werden von Tests bewacht:
 
 Beide Regeln stammen aus Fehlern, die im laufenden Programm aufgetreten sind.
 
+## Die Datenerkennung
+
+Nach der Eingangspruefung liest die Anwendung den bereits vorhandenen Text der
+PDF und versucht, das Formular vorauszufuellen.
+
+```
+PDF  →  PdfTextExtractor  →  InvoiceDataDetector  →  InvoiceDetectionResult
+                                                          ↓  DraftPrefiller
+                                                     InvoiceDraft
+                                                          ↓  Bestaetigung
+                                                       Invoice
+```
+
+Drei Eigenschaften machen das ungefaehrlich:
+
+1. **`InvoiceDetectionResult` ist kein Rechnungsmodell** und laesst sich auch
+   nicht in eines verwandeln. Es fuellt nur das Formular vor. Damit ist durch
+   die Bauart ausgeschlossen, dass ein gelesener Wert ungeprueft in der
+   E-Rechnung landet.
+2. **Jeder Wert traegt eine Vertrauensstufe** und die Zeile, aus der er stammt.
+   Nur `High` und `Medium` fuellen ein Feld; `Low` wird angezeigt, aber nie
+   eingetragen.
+3. **Jedes vorausgefuellte Feld ist gekennzeichnet** (`FieldOrigin`). Sobald
+   der Anwender es anfasst, gilt es als von Hand erfasst und die Kennzeichnung
+   verschwindet.
+
+Kein OCR, keine externen Dienste. Der Text wird im Arbeitsspeicher ausgewertet
+und danach verworfen.
+
 ## Der Ablauf
 
 ```
 1. PDF auswaehlen      →  AnalyzePdfAsync   →  geeignet? Gruende nennen
+                       →  DetectAsync       →  Formular vorausfuellen
 2. Daten erfassen      →  InvoiceDraft      →  ValidateInvoice
 3. Vergleichen         →  Pflichtbestaetigung des Anwenders
 4. Erzeugen            →  CreateAsync       →  neun Schritte mit Fortschritt
