@@ -79,6 +79,25 @@ hierher, sondern in die Commit-Historie.
   (`ProductionWithoutJavaTests`), und der vollständige Ablauf ohne jeden
   Validator ist als Ende-zu-Ende-Test abgedeckt
   (`OhneJedenExternenValidatorEntstehtEineVollständigeDatei`).
-- **Installer:** MSI bauen, aktualisieren, deinstallieren.
+- **Installer, Benutzerinstallation** (die Vorgabe):
+
+  1. MSI ohne erhöhte Rechte starten – es darf **keine** Rückfrage von
+     Windows kommen.
+  2. Anwendung startet.
+  3. Die Dateien liegen unter
+     `%LOCALAPPDATA%\Programs\EInvoiceSender Projekt\EInvoiceSender`.
+  4. Startmenüeintrag vorhanden, Desktopverknüpfung nur bei Auswahl.
+  5. Aktualisierung derselben Installation mit gleicher und höherer Version.
+  6. Deinstallation entfernt Programm und Verknüpfungen; die Daten unter
+     `%LOCALAPPDATA%\EInvoiceSender` bleiben erhalten.
+
+- **Installer, Installation für alle Benutzer** (der zweite Weg desselben
+  Pakets): `msiexec /i EInvoiceSender-Setup.msi MSIINSTALLPERUSER=""` – hier
+  ist die Rückfrage von Windows erwartet, und die Dateien landen unter
+  `C:\Program Files`.
+
+- **Der Bau selbst** muss aus einer gewöhnlichen PowerShell-Sitzung laufen,
+  ohne erhöhte Rechte, und die MSI-Prüfung fehlerfrei durchlaufen:
+  `.\build\Build-Installer.ps1`.
 - **`.eml` im klassischen und im neuen Outlook** praktisch öffnen.
 - **DPAPI-Schutz der IBAN** in den Einstellungen.

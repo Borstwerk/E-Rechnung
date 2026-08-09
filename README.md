@@ -108,11 +108,22 @@ dotnet format EInvoiceSender.sln --verify-no-changes
 
 ## Installer
 
-`Build-Installer.ps1` erzeugt ein MSI, das **pro Benutzer** und ohne
-Administratorrechte installiert. Es legt einen Startmenüeintrag an, auf Wunsch
-eine Desktopverknüpfung, unterstützt Upgrades, wehrt Downgrades mit einer
+`Build-Installer.ps1` erzeugt ein MSI. Vorgegeben ist die Installation
+**nur für Sie** – ohne Administratorrechte, nach
+`%LOCALAPPDATA%\Programs\EInvoiceSender Projekt\EInvoiceSender`. Dasselbe
+Paket kann auch für alle Benutzer installiert werden; das verlangt dann die
+übliche Rückfrage von Windows:
+
+```powershell
+msiexec /i EInvoiceSender-Setup.msi MSIINSTALLPERUSER=""
+```
+
+Der Installer legt einen Startmenüeintrag an, auf Wunsch eine
+Desktopverknüpfung, unterstützt Upgrades, wehrt Downgrades mit einer
 verständlichen Meldung ab und lässt Ihre Daten bei der Deinstallation
-unangetastet. WiX erzeugt MSI-Dateien nur unter Windows.
+unangetastet – sie liegen unter `%LOCALAPPDATA%\EInvoiceSender` und damit
+außerhalb des Installationsordners. WiX erzeugt MSI-Dateien nur unter
+Windows.
 
 ## Einschränkungen in Kürze
 

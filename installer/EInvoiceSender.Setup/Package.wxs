@@ -4,22 +4,55 @@
 
   Festlegungen und ihre Gründe:
 
-  * Scope="perUser" – die Installation braucht keine Administratorrechte.
-    Das ist für Einzelunternehmer und kleine Betriebe die deutlich
-    unkompliziertere Variante, und die Anwendung schreibt ohnehin nur in das
-    Benutzerprofil.
+  * Scope="perUserOrMachine" – ein Paket für beide Fälle. Vorgegeben ist die
+    Benutzerinstallation ohne Administratorrechte; wer will, installiert für
+    alle Benutzer und bestätigt dabei die Rückfrage von Windows.
+
+    Vorher stand hier "perUser", und INSTALLFOLDER lag fest unter
+    LocalAppDataFolder. Damit landeten sämtliche Programmdateien im
+    Benutzerprofil – und genau das beanstandet die MSI-Prüfung ICE38: Eine
+    Komponente, die in das Benutzerprofil installiert, braucht einen
+    Registrierungswert unter HKCU als Schlüsselpfad, keine Datei. Bei rund
+    580 eingelesenen Laufzeitdateien ergab das 580 Fehler. Der Harvester kann
+    keine Registrierungsschlüssel erfinden, und ICE38 zu unterdrücken hieße
+    nur, die Prüfung zum Schweigen zu bringen.
+
+    Die Lösung liegt nicht bei den Dateien, sondern beim Ziel: Ein Paket, das
+    auch für alle Benutzer installiert werden kann, installiert nicht mehr
+    zwingend in das Benutzerprofil. Dateien als Schlüsselpfad sind dann
+    richtig, und ICE38 hat nichts mehr zu beanstanden.
+
+  * INSTALLFOLDER liegt unter ProgramFiles64Folder. Windows Installer löst
+    diesen Ordner je nach Installationsart selbst auf – bei einer
+    Benutzerinstallation nach %LOCALAPPDATA%\Programs, sonst nach
+    C:\Program Files. Kein fest verdrahteter Pfad, keine Fallunterscheidung
+    im Paket.
+
+  * MSIINSTALLPERUSER=1 macht die Benutzerinstallation zur Vorgabe. Ohne
+    diese Eigenschaft wäre bei ALLUSERS=2 die Installation für alle Benutzer
+    vorgegeben, und jeder Doppelklick führte zu einer Rückfrage von Windows.
+
+  * Die Verknüpfungen liegen unter HKMU statt HKCU. WiX übersetzt das je nach
+    Installationsart nach HKCU oder HKLM. Ein festes HKCU wäre bei einer
+    Installation für alle Benutzer die falsche Stelle.
+
   * UpgradeCode bleibt über alle Versionen unverändert. Nur so erkennt
     Windows eine spätere Fassung als Aktualisierung statt als zweite
     Installation.
+
   * MajorUpgrade mit AllowSameVersionUpgrades: eine neuere Fassung ersetzt die
     alte, eine ältere wird mit verständlicher Meldung abgelehnt.
+
   * Die Id-Attribute bleiben in ASCII geschrieben. Sie sind Kennungen,
     keine angezeigten Texte, und werden in dieser Datei gegenseitig
     referenziert. Angezeigt werden Title, Description und Name - dort stehen
     Umlaute.
+
   * Benutzerdaten unter %LOCALAPPDATA%\EInvoiceSender werden bei der
     Deinstallation NICHT entfernt. Vorlage, Einstellungen und Protokolle
-    gehören dem Benutzer; sie ungefragt zu löschen wäre übergriffig.
+    gehören dem Benutzer; sie ungefragt zu löschen wäre übergriffig. Sie
+    liegen außerhalb des Installationsordners und sind vom Wechsel des
+    Zielverzeichnisses nicht betroffen.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
@@ -28,10 +61,17 @@
            Manufacturer="$(ProductManufacturer)"
            Version="$(ProductVersion)"
            UpgradeCode="7f3c1d92-4b6a-4d21-9d0e-2a5c8b1e7f40"
-           Scope="perUser"
+           Scope="perUserOrMachine"
            Compressed="yes">
 
     <SummaryInformation Description="Elektronische Rechnungen aus vorhandenen PDF-Rechnungen erstellen" />
+
+    <!--
+      Vorgabe: Installation nur für den angemeldeten Benutzer. Wer für alle
+      Benutzer installieren möchte, ruft das Paket mit
+      MSIINSTALLPERUSER="" auf und bestätigt die Rückfrage von Windows.
+    -->
+    <Property Id="MSIINSTALLPERUSER" Value="1" />
 
     <MajorUpgrade
       AllowSameVersionUpgrades="yes"
@@ -55,7 +95,12 @@
       <ComponentRef Id="DesktopVerknuepfung" />
     </Feature>
 
-    <StandardDirectory Id="LocalAppDataFolder">
+    <!--
+      Der Zielordner wird von Windows Installer aufgelöst, nicht vom Paket
+      festgelegt: benutzerbezogen unter %LOCALAPPDATA%\Programs, sonst unter
+      C:\Program Files.
+    -->
+    <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="HerstellerOrdner" Name="$(ProductManufacturer)">
         <Directory Id="INSTALLFOLDER" Name="$(ProductName)" />
       </Directory>
@@ -75,7 +120,7 @@
                 Target="[INSTALLFOLDER]EInvoiceSender.exe"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="StartmenuOrdnerEntfernen" Directory="StartmenuOrdner" On="uninstall" />
-      <RegistryValue Root="HKCU" Key="Software\$(ProductManufacturer)\$(ProductName)"
+      <RegistryValue Root="HKMU" Key="Software\$(ProductManufacturer)\$(ProductName)"
                      Name="Startmenu" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
@@ -85,7 +130,7 @@
                 Name="$(ProductName)"
                 Target="[INSTALLFOLDER]EInvoiceSender.exe"
                 WorkingDirectory="INSTALLFOLDER" />
-      <RegistryValue Root="HKCU" Key="Software\$(ProductManufacturer)\$(ProductName)"
+      <RegistryValue Root="HKMU" Key="Software\$(ProductManufacturer)\$(ProductName)"
                      Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>
