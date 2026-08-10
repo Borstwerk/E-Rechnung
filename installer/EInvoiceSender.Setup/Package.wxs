@@ -28,9 +28,13 @@
     C:\Program Files. Kein fest verdrahteter Pfad, keine Fallunterscheidung
     im Paket.
 
-  * MSIINSTALLPERUSER=1 macht die Benutzerinstallation zur Vorgabe. Ohne
-    diese Eigenschaft wäre bei ALLUSERS=2 die Installation für alle Benutzer
-    vorgegeben, und jeder Doppelklick führte zu einer Rückfrage von Windows.
+  * Die Vorgabe „nur für mich“ kommt aus dem Scope selbst: WiX setzt für
+    perUserOrMachine sowohl ALLUSERS=2 als auch MSIINSTALLPERUSER=1. Diese
+    beiden Eigenschaften gehören deshalb **nicht** von Hand in dieses Paket –
+    eine zweite Festlegung wäre bestenfalls überflüssig und schlimmstenfalls
+    eine doppelte Definition. Wer für alle Benutzer installieren will, ruft
+    das Paket mit MSIINSTALLPERUSER="" auf und bestätigt die Rückfrage von
+    Windows.
 
   * Die Verknüpfungen liegen unter HKMU statt HKCU. WiX übersetzt das je nach
     Installationsart nach HKCU oder HKLM. Ein festes HKCU wäre bei einer
@@ -65,13 +69,6 @@
            Compressed="yes">
 
     <SummaryInformation Description="Elektronische Rechnungen aus vorhandenen PDF-Rechnungen erstellen" />
-
-    <!--
-      Vorgabe: Installation nur für den angemeldeten Benutzer. Wer für alle
-      Benutzer installieren möchte, ruft das Paket mit
-      MSIINSTALLPERUSER="" auf und bestätigt die Rückfrage von Windows.
-    -->
-    <Property Id="MSIINSTALLPERUSER" Value="1" />
 
     <MajorUpgrade
       AllowSameVersionUpgrades="yes"

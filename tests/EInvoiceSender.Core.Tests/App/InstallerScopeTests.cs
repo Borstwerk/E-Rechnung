@@ -45,20 +45,20 @@ public sealed class InstallerScopeTests
         => Assert.Equal("perUserOrMachine", Scope());
 
     /// <summary>
-    /// Die Vorgabe bleibt die Benutzerinstallation ohne Administratorrechte.
-    /// Ohne diese Eigenschaft wäre bei ALLUSERS=2 die Installation für alle
-    /// Benutzer vorgegeben – und jeder Doppelklick führte zu einer Rückfrage
-    /// von Windows.
+    /// Die Vorgabe „nur für mich“ kommt aus dem Scope, nicht aus einer eigenen
+    /// Eigenschaft: WiX setzt für <c>perUserOrMachine</c> selbst
+    /// <c>ALLUSERS=2</c> und <c>MSIINSTALLPERUSER=1</c>. Beide hier noch
+    /// einmal festzulegen wäre überflüssig und je nach Verarbeitung eine
+    /// doppelte Definition.
     /// </summary>
-    [Fact]
-    public void DieBenutzerinstallationBleibtDieVorgabe()
+    [Theory]
+    [InlineData("ALLUSERS")]
+    [InlineData("MSIINSTALLPERUSER")]
+    public void DieVorgabeKommtAusDemScopeUndNichtAusEinerEigenenEigenschaft(string property)
     {
-        XElement? property = Package()
-            .Elements(Wxs + "Property")
-            .FirstOrDefault(p => p.Attribute("Id")?.Value == "MSIINSTALLPERUSER");
-
-        Assert.True(property is not null, "MSIINSTALLPERUSER ist nicht gesetzt.");
-        Assert.Equal("1", property!.Attribute("Value")?.Value);
+        Assert.DoesNotContain(
+            Package().Elements(Wxs + "Property"),
+            p => string.Equals(p.Attribute("Id")?.Value, property, StringComparison.Ordinal));
     }
 
     [Fact]
