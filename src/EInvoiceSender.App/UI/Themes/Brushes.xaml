@@ -1,0 +1,111 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
+
+  <!--
+    Diese Datei bringt mit, was sie braucht.
+
+    WPF löst einen StaticResource-Verweis beim Laden auf und sucht dabei nur
+    im eigenen Wörterbuch und in dem, was darüber bereits eingetragen ist.
+    Ein Verweis auf ein Geschwisterwörterbuch, das zufällig vorher in
+    Theme.xaml eingehängt wurde, funktioniert deshalb nur, solange genau
+    diese Reihenfolge gilt – und bricht die Anwendung beim Start, sobald
+    jemand die Reihenfolge ändert oder diese Datei einzeln lädt.
+
+    WPF hält geladene Wörterbücher unter ihrer Adresse fest; das mehrfache
+    Einhängen kostet daher kaum etwas.
+  -->
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Colors.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+
+  <!--
+    Pinsel zu den Farben aus Colors.xaml.
+
+    Die Ansichten binden ausschließlich an diese Namen. Sie sagen, wofür eine
+    Farbe steht, nicht welche sie ist – „Status.Error.Surface“ statt „#FDECEC“.
+
+    Alle Pinsel sind eingefroren. Ein eingefrorener Pinsel wird von WPF
+    zwischen allen Verwendungsstellen geteilt, statt je Element kopiert zu
+    werden; bei einer Liste mit vielen Befunden ist das der Unterschied
+    zwischen einem Pinsel und hunderten.
+  -->
+
+  <!-- === Dachmarke ============================================== -->
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Brand.Dark"
+                   Color="{StaticResource BorstWerk.Color.Brand.Dark}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Brand.Accent"
+                   Color="{StaticResource BorstWerk.Color.Brand.Accent}" po:Freeze="True" />
+
+  <!-- === Produktfarbe ========================================== -->
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.ProductAccent"
+                   Color="{StaticResource BorstWerk.Color.ProductAccent}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.ProductAccent.Hover"
+                   Color="{StaticResource BorstWerk.Color.ProductAccent.Hover}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.ProductAccent.Pressed"
+                   Color="{StaticResource BorstWerk.Color.ProductAccent.Pressed}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.ProductAccent.Subtle"
+                   Color="{StaticResource BorstWerk.Color.ProductAccent.Subtle}" po:Freeze="True" />
+
+  <!-- === Flächen und Rahmen ==================================== -->
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Background"
+                   Color="{StaticResource BorstWerk.Color.Background}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Surface"
+                   Color="{StaticResource BorstWerk.Color.Surface}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Surface.Muted"
+                   Color="{StaticResource BorstWerk.Color.Surface.Muted}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Border"
+                   Color="{StaticResource BorstWerk.Color.Border}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Border.Input"
+                   Color="{StaticResource BorstWerk.Color.Border.Input}" po:Freeze="True" />
+
+  <!-- === Text ================================================== -->
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Text.Primary"
+                   Color="{StaticResource BorstWerk.Color.Text.Primary}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Text.Secondary"
+                   Color="{StaticResource BorstWerk.Color.Text.Secondary}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Text.Muted"
+                   Color="{StaticResource BorstWerk.Color.Text.Muted}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Text.OnAccent"
+                   Color="{StaticResource BorstWerk.Color.Text.OnAccent}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Text.OnDark"
+                   Color="{StaticResource BorstWerk.Color.Text.OnDark}" po:Freeze="True" />
+
+  <!-- === Status ================================================ -->
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Success"
+                   Color="{StaticResource BorstWerk.Color.Status.Success}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Success.Surface"
+                   Color="{StaticResource BorstWerk.Color.Status.Success.Surface}" po:Freeze="True" />
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Info"
+                   Color="{StaticResource BorstWerk.Color.Status.Info}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Info.Surface"
+                   Color="{StaticResource BorstWerk.Color.Status.Info.Surface}" po:Freeze="True" />
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Warning"
+                   Color="{StaticResource BorstWerk.Color.Status.Warning}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Warning.Surface"
+                   Color="{StaticResource BorstWerk.Color.Status.Warning.Surface}" po:Freeze="True" />
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Error"
+                   Color="{StaticResource BorstWerk.Color.Status.Error}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Error.Surface"
+                   Color="{StaticResource BorstWerk.Color.Status.Error.Surface}" po:Freeze="True" />
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Neutral"
+                   Color="{StaticResource BorstWerk.Color.Status.Neutral}" po:Freeze="True" />
+  <SolidColorBrush x:Key="BorstWerk.Brush.Status.Neutral.Surface"
+                   Color="{StaticResource BorstWerk.Color.Status.Neutral.Surface}" po:Freeze="True" />
+
+  <!-- === Herkunft eines Feldinhalts ============================ -->
+
+  <SolidColorBrush x:Key="BorstWerk.Brush.FieldOrigin"
+                   Color="{StaticResource BorstWerk.Color.FieldOrigin}" po:Freeze="True" />
+
+</ResourceDictionary>

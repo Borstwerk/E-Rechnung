@@ -120,6 +120,10 @@ public partial class MainWindow : Window
         return true;
     }
 
+    /// <summary>Öffnet den Info-Bereich.</summary>
+    private void OnAboutClicked(object sender, RoutedEventArgs e)
+        => new AboutWindow { Owner = this }.ShowDialog();
+
     /// <summary>
     /// Öffnet die Einstellungen und übernimmt danach die geänderten Vorgaben.
     ///

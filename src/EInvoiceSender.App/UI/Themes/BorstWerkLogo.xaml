@@ -1,0 +1,74 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
+
+  <!--
+    Diese Datei bringt mit, was sie braucht.
+
+    WPF löst einen StaticResource-Verweis beim Laden auf und sucht dabei nur
+    im eigenen Wörterbuch und in dem, was darüber bereits eingetragen ist.
+    Ein Verweis auf ein Geschwisterwörterbuch, das zufällig vorher in
+    Theme.xaml eingehängt wurde, funktioniert deshalb nur, solange genau
+    diese Reihenfolge gilt – und bricht die Anwendung beim Start, sobald
+    jemand die Reihenfolge ändert oder diese Datei einzeln lädt.
+
+    WPF hält geladene Wörterbücher unter ihrer Adresse fest; das mehrfache
+    Einhängen kostet daher kaum etwas.
+  -->
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Colors.xaml" />
+    <ResourceDictionary Source="Brushes.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+
+  <!--
+    Das BorstWerk-Zeichen als Vektorzeichnung.
+
+    **Die Pfaddaten stammen aus build/icon/BorstWerkMark.cs.** Dort werden sie
+    auch für die Windows-Symboldatei verwendet. Zwei getrennt gepflegte
+    Fassungen desselben Zeichens driften auseinander, ohne dass es jemandem
+    auffällt – beide sähen für sich betrachtet richtig aus. Der Test
+    `BorstWerkMarkTests` vergleicht die Zeichenketten hier mit denen dort und
+    schlägt an, sobald eine Seite geändert wird.
+
+    **Das vorangestellte `F0`** ist die WPF-Schreibweise für die Füllregel
+    EvenOdd. Sie sorgt dafür, dass die Innenform der Schale offen bleibt,
+    statt mitgefüllt zu werden. In den Pfaddaten des Erzeugers steht sie
+    nicht, weil Skia die Regel getrennt vom Pfad übergeben bekommt; der Test
+    weiß davon und lässt das Kürzel beim Vergleich außer Acht.
+
+    **Vektor und nicht Rasterbild**, damit das Zeichen bei 150 % und 200 %
+    Skalierung scharf bleibt.
+
+    Zwei Fassungen: eine für helle Flächen, eine für dunkle. Eine einzelne
+    Fassung mit umgefärbtem Pinsel ginge nicht – der Ocker bleibt in beiden
+    Fällen derselbe, nur der Körper des B wechselt.
+  -->
+
+  <DrawingImage x:Key="BorstWerk.Logo.OnLight" po:Freeze="True">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="{StaticResource BorstWerk.Brush.Brand.Dark}"
+                         Geometry="M 13,10 L 20,10 L 20,54 L 13,54 Z" />
+        <GeometryDrawing Brush="{StaticResource BorstWerk.Brush.Brand.Dark}"
+                         Geometry="F0 M 20,10 A 19,10.5 0 0 1 20,31 L 20,10 Z M 20,16 A 13,4.5 0 0 1 20,25 L 20,16 Z" />
+        <GeometryDrawing Brush="{StaticResource BorstWerk.Brush.Brand.Accent}"
+                         Geometry="F0 M 20,31 A 21,11.5 0 0 1 20,54 L 20,31 Z M 20,37 A 15,5.5 0 0 1 20,48 L 20,37 Z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <DrawingImage x:Key="BorstWerk.Logo.OnDark" po:Freeze="True">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="{StaticResource BorstWerk.Brush.Text.OnDark}"
+                         Geometry="M 13,10 L 20,10 L 20,54 L 13,54 Z" />
+        <GeometryDrawing Brush="{StaticResource BorstWerk.Brush.Text.OnDark}"
+                         Geometry="F0 M 20,10 A 19,10.5 0 0 1 20,31 L 20,10 Z M 20,16 A 13,4.5 0 0 1 20,25 L 20,16 Z" />
+        <GeometryDrawing Brush="{StaticResource BorstWerk.Brush.Brand.Accent}"
+                         Geometry="F0 M 20,31 A 21,11.5 0 0 1 20,54 L 20,31 Z M 20,37 A 15,5.5 0 0 1 20,48 L 20,37 Z" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+</ResourceDictionary>

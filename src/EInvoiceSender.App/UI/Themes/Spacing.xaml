@@ -1,0 +1,67 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+  <!--
+    Abstände und Radien auf einem 4-Punkt-Raster.
+
+    **Wozu ein Raster.** Vorher standen in den Ansichten Werte wie 3, 6, 10,
+    14 – jeder für sich vernünftig gewählt, zusammen aber unruhig. Wenn alle
+    Abstände Vielfache von vier sind, ordnet sich die Oberfläche von selbst,
+    und niemand muss beim Einfügen einer Zeile abwägen, ob nun 10 oder 12
+    passt.
+
+    **Als Thickness und als Zahl.** WPF kann eine Zahl nicht als Margin
+    verwenden; deshalb stehen die gebräuchlichen Kombinationen zusätzlich als
+    fertige Thickness da. Das ist Absicht und keine Verdopplung – die Zahlen
+    dienen dort, wo eine einzelne Kante gemeint ist.
+  -->
+
+  <sys:Double x:Key="BorstWerk.Space.XSmall">4</sys:Double>
+  <sys:Double x:Key="BorstWerk.Space.Small">8</sys:Double>
+  <sys:Double x:Key="BorstWerk.Space.Medium">12</sys:Double>
+  <sys:Double x:Key="BorstWerk.Space.Large">16</sys:Double>
+  <sys:Double x:Key="BorstWerk.Space.XLarge">24</sys:Double>
+  <sys:Double x:Key="BorstWerk.Space.XXLarge">32</sys:Double>
+
+  <!-- Gebräuchliche Abstände als Thickness. -->
+  <Thickness x:Key="BorstWerk.Margin.None">0</Thickness>
+  <Thickness x:Key="BorstWerk.Margin.Field">0,0,0,12</Thickness>
+  <Thickness x:Key="BorstWerk.Margin.Section">0,0,0,16</Thickness>
+  <Thickness x:Key="BorstWerk.Margin.Card">16</Thickness>
+
+  <!-- Innenabstand des Fensters. -->
+  <Thickness x:Key="BorstWerk.Padding.Window">20</Thickness>
+
+  <!-- Innenabstand einer Karte: 16 bis 24 laut Vorgabe. -->
+  <Thickness x:Key="BorstWerk.Padding.Card">16</Thickness>
+
+  <!-- Innenabstand eines Status- oder Befundfeldes. -->
+  <Thickness x:Key="BorstWerk.Padding.Status">12,10</Thickness>
+
+  <!--
+    Innenabstand einer Schaltfläche. Zusammen mit der Mindesthöhe ergibt das
+    eine Bedienfläche, die auch mit der Maus gut zu treffen ist.
+  -->
+  <Thickness x:Key="BorstWerk.Padding.Button">16,6</Thickness>
+
+  <!-- Innenabstand eines Eingabefeldes. -->
+  <Thickness x:Key="BorstWerk.Padding.Input">8,5</Thickness>
+
+  <!--
+    Mindesthöhe für Bedienelemente. 30 geräteunabhängige Pixel sind bei
+    100 % gut zu treffen und wachsen bei 150 % und 200 % mit.
+  -->
+  <sys:Double x:Key="BorstWerk.Size.ControlHeight">30</sys:Double>
+
+  <!-- === Radien ================================================ -->
+
+  <!--
+    Zurückhaltend. Keine Pillenform für gewöhnliche Schaltflächen – die
+    signalisiert eine Betonung, die eine Zurück-Schaltfläche nicht hat.
+  -->
+  <CornerRadius x:Key="BorstWerk.Radius.Small">4</CornerRadius>
+  <CornerRadius x:Key="BorstWerk.Radius.Medium">6</CornerRadius>
+  <CornerRadius x:Key="BorstWerk.Radius.Large">10</CornerRadius>
+
+</ResourceDictionary>

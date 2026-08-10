@@ -1,0 +1,168 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+  <!--
+    Diese Datei bringt mit, was sie braucht.
+
+    WPF löst einen StaticResource-Verweis beim Laden auf und sucht dabei nur
+    im eigenen Wörterbuch und in dem, was darüber bereits eingetragen ist.
+    Ein Verweis auf ein Geschwisterwörterbuch, das zufällig vorher in
+    Theme.xaml eingehängt wurde, funktioniert deshalb nur, solange genau
+    diese Reihenfolge gilt – und bricht die Anwendung beim Start, sobald
+    jemand die Reihenfolge ändert oder diese Datei einzeln lädt.
+
+    WPF hält geladene Wörterbücher unter ihrer Adresse fest; das mehrfache
+    Einhängen kostet daher kaum etwas.
+  -->
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Colors.xaml" />
+    <ResourceDictionary Source="Brushes.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+
+  <!--
+    Schrift und Schriftgrößen.
+
+    **Keine mitgelieferte Schriftdatei.** Verwendet wird, was Windows
+    mitbringt: Segoe UI Variable ab Windows 11, sonst Segoe UI. WPF geht die
+    Liste der Reihe nach durch und nimmt die erste vorhandene. Damit gibt es
+    keine Lizenzfrage, keine Datei im Installationspaket und kein Nachladen.
+
+    **Die Größen sind Zahlen, keine Stile.** Ein Stil legt Größe, Gewicht und
+    Abstand zusammen fest; die Zahlen hier lassen sich auch einzeln
+    verwenden, etwa für ein Textfeld, das nur die Größe braucht.
+
+    Die Werte stammen aus der Gestaltungsvorgabe. Sie sind in
+    geräteunabhängigen Pixeln angegeben – Windows rechnet sie bei 150 % und
+    200 % selbst hoch, weshalb hier nichts skaliert werden muss und auch
+    nichts skaliert werden darf.
+  -->
+
+  <FontFamily x:Key="BorstWerk.FontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
+
+  <!--
+    Für Beträge und Kennungen: Ziffern gleicher Breite stehen untereinander,
+    sonst wandert das Komma von Zeile zu Zeile.
+  -->
+  <FontFamily x:Key="BorstWerk.FontFamily.Mono">Consolas, Cascadia Mono, Courier New</FontFamily>
+
+  <sys:Double x:Key="BorstWerk.FontSize.PageTitle">24</sys:Double>
+  <sys:Double x:Key="BorstWerk.FontSize.SectionTitle">18</sys:Double>
+  <sys:Double x:Key="BorstWerk.FontSize.CardTitle">15</sys:Double>
+  <sys:Double x:Key="BorstWerk.FontSize.Body">14</sys:Double>
+  <sys:Double x:Key="BorstWerk.FontSize.Label">13</sys:Double>
+  <sys:Double x:Key="BorstWerk.FontSize.Hint">12</sys:Double>
+  <sys:Double x:Key="BorstWerk.FontSize.Technical">11</sys:Double>
+
+  <!-- === Textstile ============================================== -->
+
+  <!--
+    Der Titel des aktuellen Schritts. Er trägt LiveSetting an seiner
+    Verwendungsstelle, nicht hier: Ob eine Sprachausgabe eine Änderung
+    ansagen soll, hängt von der Stelle ab, nicht von der Schriftgröße.
+  -->
+  <Style x:Key="BorstWerk.Text.PageTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.PageTitle}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Primary}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="0" />
+  </Style>
+
+  <Style x:Key="BorstWerk.Text.SectionTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.SectionTitle}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Primary}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="0,0,0,12" />
+  </Style>
+
+  <Style x:Key="BorstWerk.Text.CardTitle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.CardTitle}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Primary}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="0,16,0,4" />
+  </Style>
+
+  <Style x:Key="BorstWerk.Text.Body" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.Body}" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Primary}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Beschriftung eines Eingabefeldes. Steht über dem Feld, nie nur darin. -->
+  <Style x:Key="BorstWerk.Text.Label" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.Label}" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style x:Key="BorstWerk.Text.Hint" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.Hint}" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Muted}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style x:Key="BorstWerk.Text.Technical" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.Technical}" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Muted}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- === Vorgabe für jeden Textblock ============================ -->
+
+  <!--
+    Schrift und Farbe für alles, was keinen eigenen Stil trägt.
+
+    Die Ränder stehen absichtlich auf den Werten, die vor der Umstellung
+    galten. Sie sind kein schönes Rastermaß, aber jede Ansicht ist um sie
+    herum gebaut; sie jetzt auf 4/8/12 zu ziehen hieße, jedes Formular neu
+    auszurichten – ein Umbau, den dieser Auftrag ausdrücklich nicht will.
+  -->
+  <Style TargetType="TextBlock">
+    <Setter Property="FontFamily" Value="{StaticResource BorstWerk.FontFamily}" />
+    <Setter Property="FontSize" Value="{StaticResource BorstWerk.FontSize.Body}" />
+    <Setter Property="Foreground" Value="{StaticResource BorstWerk.Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,4,8,4" />
+  </Style>
+
+  <!-- === Die gewachsenen Namen der Anwendung ==================== -->
+
+  <!--
+    Diese Stile hießen schon so, bevor es BorstWerk gab, und die Ansichten
+    verweisen an vielen Stellen auf sie. Sie bleiben erhalten und beziehen
+    ihre Werte jetzt aus den Bausteinen darüber.
+
+    Sie alle umzubenennen wäre eine Umbenennung quer durch jede Ansicht,
+    ohne dass sich am Ergebnis etwas änderte – viel Bewegung im Verlauf für
+    nichts, und jede berührte Zeile eine Gelegenheit für einen Fehler.
+  -->
+
+  <Style x:Key="Überschrift" TargetType="TextBlock"
+         BasedOn="{StaticResource BorstWerk.Text.SectionTitle}" />
+
+  <Style x:Key="Abschnitt" TargetType="TextBlock"
+         BasedOn="{StaticResource BorstWerk.Text.CardTitle}" />
+
+  <Style x:Key="Feldbeschriftung" TargetType="TextBlock"
+         BasedOn="{StaticResource BorstWerk.Text.Label}" />
+
+  <!-- Ein Betrag in der Summenaufstellung: rechtsbündig unter seinesgleichen. -->
+  <Style x:Key="Betrag" TargetType="TextBlock"
+         BasedOn="{StaticResource BorstWerk.Text.Body}">
+    <Setter Property="TextAlignment" Value="Right" />
+    <Setter Property="MinWidth" Value="110" />
+    <Setter Property="Margin" Value="0,2,0,2" />
+  </Style>
+
+  <Style x:Key="Betragsbeschriftung" TargetType="TextBlock"
+         BasedOn="{StaticResource BorstWerk.Text.Body}">
+    <Setter Property="TextAlignment" Value="Right" />
+    <Setter Property="Margin" Value="0,2,16,2" />
+  </Style>
+
+</ResourceDictionary>

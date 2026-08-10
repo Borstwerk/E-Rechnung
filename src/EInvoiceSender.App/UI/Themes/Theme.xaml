@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!--
+    Sammelt die Gestaltungsbausteine. App.xaml bindet nur diese eine Datei ein.
+
+    **Die Reihenfolge ist nicht beliebig.** Ein StaticResource-Verweis wird
+    beim Laden aufgelöst und findet nur, was vorher schon eingetragen ist.
+    Farben also vor Pinseln, Pinsel vor allem, was Pinsel benutzt.
+
+    Ein dynamischer Verweis (DynamicResource) käme ohne diese Ordnung aus,
+    kostet aber bei jedem Element einen Nachschlagevorgang zur Laufzeit und
+    verdeckt Tippfehler: Ein nicht gefundener dynamischer Verweis bleibt
+    einfach leer, ein statischer bricht den Bau ab. Bei einer Oberfläche ohne
+    Farbumschaltung ist der statische Verweis die bessere Wahl.
+  -->
+
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Colors.xaml" />
+    <ResourceDictionary Source="Brushes.xaml" />
+    <ResourceDictionary Source="Typography.xaml" />
+    <ResourceDictionary Source="Spacing.xaml" />
+    <ResourceDictionary Source="BorstWerkLogo.xaml" />
+    <ResourceDictionary Source="Controls.Buttons.xaml" />
+    <ResourceDictionary Source="Controls.Input.xaml" />
+    <ResourceDictionary Source="Controls.Status.xaml" />
+  </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

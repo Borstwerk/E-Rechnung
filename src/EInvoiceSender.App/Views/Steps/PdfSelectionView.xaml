@@ -73,11 +73,12 @@
     </ScrollViewer>
 
     <!-- Vorschau -->
-    <Border Grid.Row="0" Grid.RowSpan="4" Grid.Column="1" BorderBrush="#C8C8C8" BorderThickness="1"
-            Background="#FAFAFA">
+    <Border Grid.Row="0" Grid.RowSpan="4" Grid.Column="1"
+            Style="{StaticResource BorstWerk.Card.Muted}" Padding="0">
       <Grid>
         <TextBlock Text="Keine Vorschau verfügbar." HorizontalAlignment="Center"
-                   VerticalAlignment="Center" Foreground="#777" />
+                   VerticalAlignment="Center"
+                   Style="{StaticResource BorstWerk.Text.Hint}" />
         <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="6"
                AutomationProperties.Name="Vorschau der ersten Seite" />
       </Grid>

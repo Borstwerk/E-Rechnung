@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Erzeugt die Symboldateien aus der Zeichengeometrie.
+
+    Bewusst **nicht** Teil von EInvoiceSender.sln: Das Werkzeug läuft einmal
+    von Hand, sein Ergebnis wird eingecheckt. Im Bau der Anwendung hat es
+    nichts zu suchen, und die CI soll es nicht übersetzen müssen.
+
+    Der Aufruf steht im Kopf von Program.cs.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BorstWerk.IconTool</RootNamespace>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.0" />
+  </ItemGroup>
+
+</Project>

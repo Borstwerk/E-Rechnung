@@ -70,6 +70,15 @@
 
     <SummaryInformation Description="Elektronische Rechnungen aus vorhandenen PDF-Rechnungen erstellen" />
 
+    <!--
+      Das Symbol für „Apps und Features“ und die Verknüpfungen. Dieselbe
+      Datei, die auch die Programmdatei trägt; sie wird von build/icon aus
+      der Zeichengeometrie erzeugt.
+    -->
+    <Icon Id="BorstWerkEInvoice.ico"
+          SourceFile="..\..\src\EInvoiceSender.App\Assets\BorstWerkEInvoice.ico" />
+    <Property Id="ARPPRODUCTICON" Value="BorstWerkEInvoice.ico" />
+
     <MajorUpgrade
       AllowSameVersionUpgrades="yes"
       DowngradeErrorMessage="Es ist bereits eine neuere Fassung von $(ProductName) installiert. Bitte deinstallieren Sie diese zuerst, wenn Sie eine ältere Fassung einsetzen möchten." />
@@ -115,7 +124,8 @@
                 Name="$(ProductName)"
                 Description="Elektronische Rechnung aus einer vorhandenen PDF-Rechnung erstellen"
                 Target="[INSTALLFOLDER]EInvoiceSender.exe"
-                WorkingDirectory="INSTALLFOLDER" />
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="BorstWerkEInvoice.ico" />
       <RemoveFolder Id="StartmenuOrdnerEntfernen" Directory="StartmenuOrdner" On="uninstall" />
       <RegistryValue Root="HKMU" Key="Software\$(ProductManufacturer)\$(ProductName)"
                      Name="Startmenu" Type="integer" Value="1" KeyPath="yes" />
@@ -126,7 +136,8 @@
       <Shortcut Id="DesktopEintrag"
                 Name="$(ProductName)"
                 Target="[INSTALLFOLDER]EInvoiceSender.exe"
-                WorkingDirectory="INSTALLFOLDER" />
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="BorstWerkEInvoice.ico" />
       <RegistryValue Root="HKMU" Key="Software\$(ProductManufacturer)\$(ProductName)"
                      Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
     </Component>

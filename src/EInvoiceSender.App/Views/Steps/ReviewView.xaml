@@ -19,11 +19,12 @@
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
-    <Border Grid.Column="0" BorderBrush="#C8C8C8" BorderThickness="1" Margin="0,0,12,0"
-            Background="#FAFAFA">
+    <Border Grid.Column="0" Margin="0,0,12,0"
+            Style="{StaticResource BorstWerk.Card.Muted}" Padding="0">
       <Grid>
         <TextBlock Text="Keine Vorschau verfügbar." HorizontalAlignment="Center"
-                   VerticalAlignment="Center" Foreground="#777" />
+                   VerticalAlignment="Center"
+                   Style="{StaticResource BorstWerk.Text.Hint}" />
         <Image Source="{Binding PreviewImage}" Stretch="Uniform" Margin="6"
                AutomationProperties.Name="Vorschau der PDF-Rechnung" />
       </Grid>
@@ -56,8 +57,7 @@
           unabhängiges Signal - keine rechtliche Wahrheit. Eine Abweichung
           blockiert deshalb nichts, sie weist nur hin.
         -->
-        <Border BorderThickness="1" CornerRadius="3" Padding="10,8" Margin="0,14,0,0"
-                Background="#F4F4F4" BorderBrush="#C8C8C8"
+        <Border Margin="0,16,0,0" Style="{StaticResource BorstWerk.Status.Base}"
                 Visibility="{Binding HasTotalsComparison, Converter={StaticResource BoolToVisibility}}">
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="{Binding TotalsComparisonGlyph}" FontWeight="Bold" MinWidth="16"
@@ -83,7 +83,8 @@
         <CheckBox IsChecked="{Binding ExistingInvoiceReplacementConfirmed}" TabIndex="61"
                   Visibility="{Binding ShowsReplacementQuestion, Converter={StaticResource BoolToVisibility}}"
                   AutomationProperties.Name="Bestätigung zum Ersetzen vorhandener Rechnungsdaten">
-          <TextBlock TextWrapping="Wrap" Foreground="#8A5A00"
+          <TextBlock TextWrapping="Wrap"
+                     Foreground="{StaticResource BorstWerk.Brush.Status.Warning}"
                      Text="Diese PDF enthält bereits strukturierte Rechnungsdaten. Ich möchte sie durch die hier erfassten ersetzen." />
         </CheckBox>
 

@@ -1,10 +1,12 @@
-# EInvoiceSender
+# BorstWerk E-Rechnung
 
-EInvoiceSender ist eine Windows-Desktopanwendung, die aus einer **bereits vorhandenen PDF-Rechnung** eine **ZUGFeRD-/Factur-X-Rechnung** im Profil EN 16931 erzeugt.
+BorstWerk E-Rechnung ist eine Windows-Desktopanwendung, die aus einer **bereits vorhandenen PDF-Rechnung** eine **ZUGFeRD-/Factur-X-Rechnung** im Profil EN 16931 erzeugt.
 
 Die Anwendung ist bewusst **kein Rechnungsprogramm**. Sie schreibt keine Rechnungen, vergibt keine Rechnungsnummern, führt keine Buchhaltung und versendet keine E-Mails selbst. Sie nimmt die Rechnung, die bereits vorhanden ist, ergänzt die benötigten strukturierten Rechnungsdaten und erzeugt daraus eine elektronische Rechnung.
 
 Alles läuft **lokal auf dem eigenen Rechner**. Rechnungen, Adressen, Bankverbindungen und E-Mail-Daten werden nicht an externe Dienste übertragen.
+
+Die Anwendung gehört zur Werkzeugfamilie **BorstWerk** und ist eigenständig installier- und nutzbar.
 
 ---
 
@@ -37,7 +39,7 @@ Alternativ kann eine portable ZIP-Fassung verwendet werden.
 
 ## So funktioniert es
 
-EInvoiceSender führt in fünf Schritten durch den Vorgang:
+Die Anwendung führt in fünf Schritten durch den Vorgang:
 
 1. **PDF auswählen**  
    Die vorhandene Rechnung wird geprüft und als Vorschau angezeigt. Die Originaldatei wird nur gelesen und niemals verändert.
@@ -56,7 +58,7 @@ EInvoiceSender führt in fünf Schritten durch den Vorgang:
 
 ## Welche Daten kann die Anwendung aus der PDF lesen?
 
-Bei digital erzeugten PDFs versucht EInvoiceSender, bereits vorhandenen PDF-Text lokal auszulesen und das Formular damit vorauszufüllen.
+Bei digital erzeugten PDFs versucht die Anwendung, bereits vorhandenen PDF-Text lokal auszulesen und das Formular damit vorauszufüllen.
 
 Derzeit werden unter anderem erkannt:
 
@@ -99,7 +101,7 @@ Sensible gespeicherte Daten wie die IBAN werden unter Windows geschützt abgeleg
 
 Die Verarbeitung erfolgt lokal.
 
-EInvoiceSender:
+Die Anwendung:
 
 - lädt keine Rechnung zu einem Webdienst hoch,
 - verwendet keine Cloud-KI für Rechnungsinhalte,
@@ -261,6 +263,28 @@ Das Projekt orientiert sich an einer einfachen, wartbaren Struktur. Besonders wi
 - keine unnötigen neuen Abhängigkeiten
 
 Fachlich kritische Änderungen an CII/XML, PDF/A, Einbettung, Summen oder Steuerlogik müssen zusätzlich gegen die vorhandenen Golden Master und externen Referenzvalidatoren geprüft werden.
+
+## Oberfläche und Symbole
+
+Farben, Schriftgrößen, Abstände und Bedienelemente stehen unter
+`src/EInvoiceSender.App/UI/Themes/`. In den Ansichten steht kein Farbwert –
+wer eine Farbe ändern will, ändert sie dort.
+
+Das BorstWerk-Zeichen und die Windows-Symboldatei entstehen aus einer
+gemeinsamen Geometrie:
+
+```powershell
+dotnet run --project build/icon
+```
+
+Das schreibt `src/EInvoiceSender.App/Assets/BorstWerkEInvoice.ico` und die
+Vorschau unter `docs/images/`. Die Pfaddaten stehen in
+`build/icon/BorstWerkMark.cs` und noch einmal in
+`UI/Themes/BorstWerkLogo.xaml`; ein Test vergleicht beide, damit die
+Vektorzeichnung in der Oberfläche und das Symbol nicht auseinanderlaufen.
+
+Das Werkzeug ist nicht Teil der Projektmappe und läuft nicht im Bau mit –
+das Ergebnis ist eingecheckt.
 
 ## Weitere Unterlagen
 

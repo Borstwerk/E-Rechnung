@@ -32,8 +32,19 @@
     <DebugType>none</DebugType>
 
     <!-- Zentral gepflegte Produktangaben -->
-    <ProductName>EInvoiceSender</ProductName>
-    <ProductManufacturer>EInvoiceSender Projekt</ProductManufacturer>
+    <!--
+      Der sichtbare Name. Er bestimmt den Eintrag in „Apps und Features“, den
+      Startmenüordner und – zusammen mit dem Hersteller – das
+      Installationsverzeichnis.
+
+      Der **Datenordner der Anwendung** ändert sich dadurch ausdrücklich
+      nicht: Vorlage, Einstellungen und Protokolle liegen weiterhin unter
+      %LOCALAPPDATA%\EInvoiceSender. Ihn mit umzubenennen hieße, jedem
+      vorhandenen Anwender beim Aktualisieren seine Firmenvorlage zu
+      verstecken – für einen Namen ein schlechter Tausch.
+    -->
+    <ProductName>BorstWerk E-Rechnung</ProductName>
+    <ProductManufacturer>BorstWerk</ProductManufacturer>
     <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.0</ProductVersion>
 
     <!-- Verzeichnis der zuvor veröffentlichten Anwendung -->

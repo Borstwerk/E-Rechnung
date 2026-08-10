@@ -4,148 +4,114 @@
              xmlns:vm="clr-namespace:EInvoiceSender.App.ViewModels"
              xmlns:conv="clr-namespace:EInvoiceSender.App.Converters">
   <Application.Resources>
-    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-    <conv:DateOnlyConverter x:Key="DateOnly" />
-    <conv:FieldOriginConverter x:Key="FieldOrigin" />
-    <conv:FieldOriginVisibilityConverter x:Key="FieldOriginVisible" />
+    <ResourceDictionary>
 
-    <!--
-      Bewusst nüchtern gehalten: Der Arbeitsablauf hat Vorrang vor der
-      Gestaltung. Wichtig sind lesbare Schriftgrößen, sichtbarer Fokus und
-      ausreichend große Bedienflächen.
-    -->
-    <Style TargetType="TextBlock">
-      <Setter Property="VerticalAlignment" Value="Center" />
-      <Setter Property="Margin" Value="0,4,8,4" />
-    </Style>
+      <!--
+        Die Gestaltung steht unter UI/Themes. Hier wird sie nur eingehängt;
+        Farbwerte, Schriftgrößen und Abstände stehen dort und nirgends sonst.
+      -->
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="UI/Themes/Theme.xaml" />
+      </ResourceDictionary.MergedDictionaries>
 
-    <Style TargetType="TextBox">
-      <Setter Property="Margin" Value="0,4,0,4" />
-      <Setter Property="Padding" Value="4,3" />
-      <Setter Property="MinWidth" Value="120" />
-    </Style>
+      <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+      <conv:DateOnlyConverter x:Key="DateOnly" />
+      <conv:FieldOriginConverter x:Key="FieldOrigin" />
+      <conv:FieldOriginVisibilityConverter x:Key="FieldOriginVisible" />
 
-    <Style TargetType="Button">
-      <Setter Property="Margin" Value="0,0,8,0" />
-      <Setter Property="Padding" Value="14,6" />
-      <Setter Property="MinWidth" Value="110" />
-    </Style>
+      <!--
+        Darstellung eines Befundes.
 
-    <Style TargetType="CheckBox">
-      <Setter Property="Margin" Value="0,6,0,6" />
-      <Setter Property="VerticalContentAlignment" Value="Center" />
-    </Style>
+        Ohne diese Vorlage zeigt WPF für jeden Eintrag das Ergebnis von
+        ToString(), also den Klassennamen. Genau das war beim ersten Durchlauf
+        zu sehen. Die Vorlage steht bewusst hier und nicht am einzelnen
+        ItemsControl: Befunde werden an drei Stellen angezeigt (Schritt 1, 2
+        und 4), und eine implizite DataTemplate gilt für alle drei zugleich.
 
-    <Style x:Key="Überschrift" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="17" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Margin" Value="0,0,0,10" />
-    </Style>
+        Sie bleibt auch nach der Umstellung auf BorstWerk hier und wandert
+        nicht in die Themes: Das ist eine Anzeigevorlage für ein bestimmtes
+        ViewModel, kein Gestaltungsbaustein. Die Farben darin kommen jetzt
+        aus den Statusbausteinen.
 
-    <Style x:Key="Abschnitt" TargetType="TextBlock">
-      <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Margin" Value="0,14,0,4" />
-    </Style>
+        Barrierefreiheit: Der Schweregrad steht als Wort und als Zeichen da,
+        nicht nur als Farbe. AutomationProperties.Name fasst beides mit der
+        Meldung zu einem Satz zusammen, damit eine Sprachausgabe den Eintrag
+        am Stück vorliest statt in Bruchstücken.
+      -->
+      <DataTemplate DataType="{x:Type vm:FindingViewModel}">
+        <Border Margin="0,4" x:Name="Rahmen"
+                Style="{StaticResource BorstWerk.Status.Base}">
+          <AutomationProperties.Name>
+            <MultiBinding StringFormat="{}{0}: {1}">
+              <Binding Path="SeverityLabel" />
+              <Binding Path="Message" />
+            </MultiBinding>
+          </AutomationProperties.Name>
 
-    <!--
-      Beschriftung eines Eingabefeldes. Steht unmittelbar über dem Feld, damit
-      Beschriftung, Feld und Herkunftshinweis als eine Einheit lesbar sind.
-    -->
-    <Style x:Key="Feldbeschriftung" TargetType="TextBlock">
-      <Setter Property="Margin" Value="0,0,0,1" />
-      <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-    <!--
-      Hinweis, woher der Inhalt eines Feldes stammt.
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding SeverityGlyph}"
+                       x:Name="Zeichen"
+                       FontWeight="Bold" MinWidth="16" TextAlignment="Center"
+                       VerticalAlignment="Top" Margin="0,0,6,0" />
 
-      Bewusst als eigener Stil und nicht je Feld ausformuliert: Der Hinweis
-      sieht überall gleich aus, und die Farbe steht an einer Stelle. Ohne
-      Inhalt blendet der Konverter ihn aus – die Zeile fällt dann samt ihrer
-      Rasterzeile auf null zusammen.
-    -->
-    <Style x:Key="Herkunftshinweis" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="11" />
-      <Setter Property="Foreground" Value="#3F6428" />
-      <Setter Property="Margin" Value="0,1,0,0" />
-      <Setter Property="TextWrapping" Value="Wrap" />
-    </Style>
+            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SeverityLabel}"
+                       x:Name="Schweregrad"
+                       FontWeight="SemiBold" MinWidth="62" VerticalAlignment="Top"
+                       Margin="0,0,8,0" />
 
-    <!-- Ein Betrag in der Summenaufstellung: rechtsbündig unter seinesgleichen. -->
-    <Style x:Key="Betrag" TargetType="TextBlock">
-      <Setter Property="TextAlignment" Value="Right" />
-      <Setter Property="MinWidth" Value="110" />
-      <Setter Property="Margin" Value="0,2,0,2" />
-    </Style>
+            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Message}"
+                       TextWrapping="Wrap" VerticalAlignment="Top" Margin="0" />
 
-    <Style x:Key="Betragsbeschriftung" TargetType="TextBlock">
-      <Setter Property="TextAlignment" Value="Right" />
-      <Setter Property="Margin" Value="0,2,16,2" />
-    </Style>
+            <!-- Immer belegt: enthält mindestens die Regelkennung. -->
+            <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TechnicalDetail}"
+                       Style="{StaticResource BorstWerk.Text.Technical}"
+                       Margin="0,4,0,0" />
+          </Grid>
+        </Border>
 
-    <!--
-      Darstellung eines Befundes.
+        <!--
+          Der Schweregrad färbt Fläche, Rahmen, Zeichen und Wort. Die Farbe
+          ist dabei die Zugabe: Zeichen und ausgeschriebener Schweregrad
+          stehen unabhängig davon da.
+        -->
+        <DataTemplate.Triggers>
+          <DataTrigger Binding="{Binding Severity}" Value="Error">
+            <Setter TargetName="Rahmen" Property="Style"
+                    Value="{StaticResource BorstWerk.Status.Error}" />
+            <Setter TargetName="Zeichen" Property="Foreground"
+                    Value="{StaticResource BorstWerk.Brush.Status.Error}" />
+            <Setter TargetName="Schweregrad" Property="Foreground"
+                    Value="{StaticResource BorstWerk.Brush.Status.Error}" />
+          </DataTrigger>
+          <DataTrigger Binding="{Binding Severity}" Value="Warning">
+            <Setter TargetName="Rahmen" Property="Style"
+                    Value="{StaticResource BorstWerk.Status.Warning}" />
+            <Setter TargetName="Zeichen" Property="Foreground"
+                    Value="{StaticResource BorstWerk.Brush.Status.Warning}" />
+            <Setter TargetName="Schweregrad" Property="Foreground"
+                    Value="{StaticResource BorstWerk.Brush.Status.Warning}" />
+          </DataTrigger>
+          <DataTrigger Binding="{Binding Severity}" Value="Information">
+            <Setter TargetName="Rahmen" Property="Style"
+                    Value="{StaticResource BorstWerk.Status.Info}" />
+            <Setter TargetName="Zeichen" Property="Foreground"
+                    Value="{StaticResource BorstWerk.Brush.Status.Info}" />
+            <Setter TargetName="Schweregrad" Property="Foreground"
+                    Value="{StaticResource BorstWerk.Brush.Status.Info}" />
+          </DataTrigger>
+        </DataTemplate.Triggers>
+      </DataTemplate>
 
-      Ohne diese Vorlage zeigt WPF für jeden Eintrag das Ergebnis von
-      ToString(), also den Klassennamen. Genau das war beim ersten Durchlauf
-      zu sehen. Die Vorlage steht bewusst hier und nicht am einzelnen
-      ItemsControl: Befunde werden an drei Stellen angezeigt (Schritt 1, 2
-      und 4), und eine implizite DataTemplate gilt für alle drei zugleich.
-
-      Barrierefreiheit: Der Schweregrad steht als Wort und als Zeichen da,
-      nicht nur als Farbe. AutomationProperties.Name fasst beides mit der
-      Meldung zu einem Satz zusammen, damit eine Sprachausgabe den Eintrag
-      am Stück vorliest statt in Bruchstücken.
-    -->
-    <DataTemplate DataType="{x:Type vm:FindingViewModel}">
-      <Border Margin="0,3" Padding="8,6" BorderThickness="1" CornerRadius="3"
-              x:Name="Rahmen" Background="#F4F4F4" BorderBrush="#C8C8C8">
-        <AutomationProperties.Name>
-          <MultiBinding StringFormat="{}{0}: {1}">
-            <Binding Path="SeverityLabel" />
-            <Binding Path="Message" />
-          </MultiBinding>
-        </AutomationProperties.Name>
-
-        <Grid>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-          </Grid.ColumnDefinitions>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-          </Grid.RowDefinitions>
-
-          <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding SeverityGlyph}"
-                     FontWeight="Bold" MinWidth="16" TextAlignment="Center"
-                     VerticalAlignment="Top" Margin="0,0,6,0" />
-
-          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SeverityLabel}"
-                     FontWeight="SemiBold" MinWidth="62" VerticalAlignment="Top"
-                     Margin="0,0,8,0" />
-
-          <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Message}"
-                     TextWrapping="Wrap" VerticalAlignment="Top" Margin="0" />
-
-          <!-- Immer belegt: enthält mindestens die Regelkennung. -->
-          <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TechnicalDetail}"
-                     TextWrapping="Wrap" FontSize="11" Foreground="#5A5A5A"
-                     Margin="0,3,0,0" />
-        </Grid>
-      </Border>
-
-      <DataTemplate.Triggers>
-        <DataTrigger Binding="{Binding Severity}" Value="Error">
-          <Setter TargetName="Rahmen" Property="Background" Value="#FDECEC" />
-          <Setter TargetName="Rahmen" Property="BorderBrush" Value="#C0392B" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding Severity}" Value="Warning">
-          <Setter TargetName="Rahmen" Property="Background" Value="#FDF6E3" />
-          <Setter TargetName="Rahmen" Property="BorderBrush" Value="#B7860B" />
-        </DataTrigger>
-      </DataTemplate.Triggers>
-    </DataTemplate>
+    </ResourceDictionary>
   </Application.Resources>
 </Application>

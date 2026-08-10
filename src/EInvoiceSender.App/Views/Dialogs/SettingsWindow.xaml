@@ -7,10 +7,12 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
         Title="Einstellungen und Firmenvorlage"
+        Icon="/Assets/BorstWerkEInvoice.ico"
+        Background="{StaticResource BorstWerk.Brush.Background}"
         Height="700" Width="760" MinHeight="480" MinWidth="620"
         WindowStartupLocation="CenterOwner">
 
-  <Grid Margin="16">
+  <Grid Margin="20">
     <Grid.RowDefinitions>
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
@@ -49,7 +51,8 @@
         </UniformGrid>
 
         <TextBlock Style="{StaticResource Abschnitt}" Text="Bankverbindung" />
-        <TextBlock Text="{Binding BankStorageHint}" TextWrapping="Wrap" Foreground="#555"
+        <TextBlock Text="{Binding BankStorageHint}" TextWrapping="Wrap"
+                   Foreground="{StaticResource BorstWerk.Brush.Text.Secondary}"
                    Margin="0,0,0,6" />
         <UniformGrid Columns="2">
           <TextBlock Text="Kontoinhaber" />
@@ -97,7 +100,9 @@
 
     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
       <Button Content="_Zurücksetzen" Command="{Binding ResetCommand}" TabIndex="20" />
-      <Button Content="_Speichern" Command="{Binding SaveCommand}" TabIndex="21" IsDefault="True" />
+      <!-- Die Primäraktion dieses Dialogs. -->
+      <Button Content="_Speichern" Command="{Binding SaveCommand}" TabIndex="21" IsDefault="True"
+              Style="{StaticResource BorstWerk.Button.Primary}" />
       <Button Content="Schließen" Click="OnCloseClicked" TabIndex="22" IsCancel="True" />
     </StackPanel>
   </Grid>

@@ -52,11 +52,11 @@
         hier: Die Statuszeile des Fensters meldet den Stand des Arbeitsablaufs,
         nicht dieselbe Zahl ein zweites Mal.
       -->
-      <Border Background="#EEF5FF" BorderBrush="#5A8FC8" BorderThickness="1" CornerRadius="3"
-              Padding="10,8" Margin="0,0,0,8"
+      <Border Style="{StaticResource BorstWerk.Status.Info}" Margin="0,0,0,8"
               Visibility="{Binding HasPrefillMessage, Converter={StaticResource BoolToVisibility}}">
         <StackPanel Orientation="Horizontal">
-          <TextBlock Text="i" FontWeight="Bold" MinWidth="16" TextAlignment="Center" Margin="0,0,8,0" />
+          <TextBlock Text="i" FontWeight="Bold" MinWidth="16" TextAlignment="Center" Margin="0,0,8,0"
+                     Foreground="{StaticResource BorstWerk.Brush.Status.Info}" />
           <TextBlock Text="{Binding PrefillMessage}" TextWrapping="Wrap"
                      AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
@@ -67,8 +67,7 @@
         nichts ausgetauscht, ohne zu fragen: Im Formular können längst eigene
         Angaben stehen.
       -->
-      <Border Background="#FDF6E3" BorderBrush="#B7860B" BorderThickness="1" CornerRadius="3"
-              Padding="10,8" Margin="0,0,0,8"
+      <Border Style="{StaticResource BorstWerk.Status.Warning}" Margin="0,0,0,8"
               Visibility="{Binding HasTemplateQuestion, Converter={StaticResource BoolToVisibility}}">
         <StackPanel>
           <TextBlock TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"
@@ -167,8 +166,7 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Margin="0,0,8,0" Padding="12,10,12,12"
-                BorderBrush="#D0D0D0" BorderThickness="1" CornerRadius="3">
+        <Border Grid.Column="0" Margin="0,0,8,0" Style="{StaticResource BorstWerk.Card}">
           <StackPanel>
             <TextBlock Style="{StaticResource Abschnitt}" Text="Verkäufer (Sie)" Margin="0,0,0,8" />
             <Grid>
@@ -292,8 +290,7 @@
           </StackPanel>
         </Border>
 
-        <Border Grid.Column="1" Margin="8,0,0,0" Padding="12,10,12,12"
-                BorderBrush="#D0D0D0" BorderThickness="1" CornerRadius="3">
+        <Border Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource BorstWerk.Card}">
           <StackPanel>
             <TextBlock Style="{StaticResource Abschnitt}" Text="Käufer (Empfänger)" Margin="0,0,0,8" />
             <Grid>
@@ -517,7 +514,7 @@
                      Text="{Binding Totals.TaxTotal, StringFormat=N2}" />
 
           <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,4"
-                  BorderBrush="#C8C8C8" BorderThickness="0,1,0,0" />
+                  BorderBrush="{StaticResource BorstWerk.Brush.Border}" BorderThickness="0,1,0,0" />
 
           <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource Betragsbeschriftung}"
                      Text="Brutto" FontWeight="SemiBold" />

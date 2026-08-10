@@ -1,0 +1,72 @@
+<Window x:Class="EInvoiceSender.App.Views.Dialogs.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Über BorstWerk E-Rechnung"
+        Icon="/Assets/BorstWerkEInvoice.ico"
+        Background="{StaticResource BorstWerk.Brush.Background}"
+        SizeToContent="Height"
+        Width="520"
+        MinWidth="420"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+  <!--
+    Der Info-Bereich. Klein und sachlich.
+
+    Was hier **nicht** steht, ist Absicht: kein Leitbild, kein Aufruf zum
+    Mitmachen, keine Spendenbitte, keine Entwicklerbiografie. Die Grundsätze
+    des Projekts stehen in seinen Werkzeugen, nicht auf einer Tafel darüber.
+
+    Die Angaben zur örtlichen Verarbeitung stehen hier, weil sie für den
+    Anwender eine sachliche Auskunft sind – im Arbeitsablauf hätten sie
+    nichts verloren.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="620">
+    <StackPanel Margin="24">
+
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+        <Image Source="{StaticResource BorstWerk.Logo.OnLight}"
+               Width="40" Height="40" VerticalAlignment="Center" Margin="0,0,14,0"
+               AutomationProperties.Name="BorstWerk"
+               RenderOptions.BitmapScalingMode="HighQuality" />
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock Text="BorstWerk E-Rechnung"
+                     Style="{StaticResource BorstWerk.Text.SectionTitle}" Margin="0" />
+          <TextBlock x:Name="Fassung" Style="{StaticResource BorstWerk.Text.Hint}"
+                     Margin="0,2,0,0" />
+        </StackPanel>
+      </StackPanel>
+
+      <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,16"
+                 Text="Erstellt aus einer vorhandenen PDF-Rechnung und den von Ihnen bestätigten Angaben eine elektronische Rechnung im Format ZUGFeRD/Factur-X, Profil EN 16931." />
+
+      <TextBlock Text="Verarbeitung" Style="{StaticResource BorstWerk.Text.CardTitle}" Margin="0,0,0,4" />
+      <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,16"
+                 Text="Die Anwendung arbeitet vollständig auf diesem Rechner. Rechnungsdaten, PDF-Dateien, Bankverbindungen und E-Mail-Adressen werden nicht an andere Stellen übertragen. Es gibt keine Nutzungsstatistik und keine automatische Fehlerübermittlung." />
+
+      <TextBlock Text="Lizenz" Style="{StaticResource BorstWerk.Text.CardTitle}" Margin="0,0,0,4" />
+      <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,4"
+                 Text="Privates Open-Source-Projekt unter der MIT-Lizenz. Ohne Supportzusage." />
+      <TextBlock Style="{StaticResource BorstWerk.Text.Hint}" Margin="0,0,0,16"
+                 Text="Die Lizenzhinweise der verwendeten Fremdkomponenten liegen als Datei im Installationsverzeichnis." />
+
+      <TextBlock Text="Entstehung" Style="{StaticResource BorstWerk.Text.CardTitle}" Margin="0,0,0,4" />
+      <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,16"
+                 Text="Mit KI-Unterstützung entwickelt. Konzeption, Anforderungen, Prüfung und Projektpflege erfolgen durch den Projektmaintainer." />
+
+      <!--
+        Die Grenzen gehören hierher und nicht in ein Werbeversprechen. Wer
+        wissen will, was das Werkzeug nicht kann, soll es an einer Stelle
+        nachlesen können.
+      -->
+      <TextBlock Text="Grenzen" Style="{StaticResource BorstWerk.Text.CardTitle}" Margin="0,0,0,4" />
+      <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,20"
+                 Text="Die Anwendung ist kein Rechnungsprogramm und keine Buchhaltung. Sie prüft die erfasste Rechnung gegen die Regeln der EN 16931, ersetzt aber keine steuerliche Beratung. Nicht jede PDF-Datei lässt sich übernehmen – etwa wenn Schriftarten fehlen oder die Datei geschützt ist." />
+
+      <Button Content="_Schließen" Click="OnCloseClicked" IsDefault="True" IsCancel="True"
+              HorizontalAlignment="Right" Margin="0"
+              Style="{StaticResource BorstWerk.Button.Primary}" />
+    </StackPanel>
+  </ScrollViewer>
+</Window>

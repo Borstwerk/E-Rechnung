@@ -13,11 +13,30 @@
     <AssemblyName>EInvoiceSender</AssemblyName>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!--
+      Das Symbol der Programmdatei. Windows zeigt es im Explorer, in der
+      Taskleiste, im Startmenü und in der Titelleiste; das Installationspaket
+      verwendet dieselbe Datei für den Eintrag in „Apps und Features“.
+
+      Erzeugt aus der Zeichengeometrie durch build/icon – die Datei wird nicht
+      von Hand bearbeitet.
+    -->
+    <ApplicationIcon>Assets\BorstWerkEInvoice.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <SatelliteResourceLanguages>de;en</SatelliteResourceLanguages>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Zusätzlich als Ressource eingebettet: ApplicationIcon setzt nur das
+      Symbol der EXE-Datei. Damit auch das Fenster selbst es tragen kann,
+      muss es zur Laufzeit ladbar sein.
+    -->
+    <Resource Include="Assets\BorstWerkEInvoice.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EInvoiceSender.Core\EInvoiceSender.Core.csproj" />

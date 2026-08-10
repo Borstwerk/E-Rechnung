@@ -85,11 +85,16 @@ hierher, sondern in die Commit-Historie.
      Windows kommen.
   2. Anwendung startet.
   3. Die Dateien liegen unter
-     `%LOCALAPPDATA%\Programs\EInvoiceSender Projekt\EInvoiceSender`.
+     `%LOCALAPPDATA%\Programs\BorstWerk\BorstWerk E-Rechnung`.
   4. Startmenüeintrag vorhanden, Desktopverknüpfung nur bei Auswahl.
   5. Aktualisierung derselben Installation mit gleicher und höherer Version.
   6. Deinstallation entfernt Programm und Verknüpfungen; die Daten unter
-     `%LOCALAPPDATA%\EInvoiceSender` bleiben erhalten.
+     `%LOCALAPPDATA%\EInvoiceSender` bleiben erhalten. Dieser Ordner behält
+     seinen alten Namen – er wurde mit der Umbenennung auf BorstWerk
+     bewusst nicht mit umgezogen, weil sonst vorhandene Firmenvorlagen nach
+     einer Aktualisierung verschwunden wären.
+  7. Symbol prüfen: in der Taskleiste, im Startmenü, im Explorer und im
+     Eintrag unter „Apps und Features“.
 
 - **Installer, Installation für alle Benutzer** (der zweite Weg desselben
   Pakets): `msiexec /i EInvoiceSender-Setup.msi MSIINSTALLPERUSER=""` – hier
@@ -99,5 +104,24 @@ hierher, sondern in die Commit-Historie.
 - **Der Bau selbst** muss aus einer gewöhnlichen PowerShell-Sitzung laufen,
   ohne erhöhte Rechte, und die MSI-Prüfung fehlerfrei durchlaufen:
   `.\build\Build-Installer.ps1`.
+- **Sichtprüfung der BorstWerk-Oberfläche** (WPF lässt sich nur unter Windows
+  ausführen; automatisiert geprüft sind Farbwerte, Kontraste, Fokusstile und
+  Ressourcenschlüssel, nicht ihr Aussehen):
+
+  1. Skalierung 100 %, 150 % und 200 % – der Ablauf muss in allen dreien
+     vollständig bedienbar bleiben.
+  2. Kleinste zulässige Fenstergröße (940 × 640): Kopf, Schritt, Statuszeile
+     und Navigation dürfen sich nicht überlagern.
+  3. Mit der Tabulatortaste durch jeden Schritt gehen: Der Fokus muss überall
+     sichtbar sein – auch auf der eingefärbten Schaltfläche „Weiter“.
+  4. Zugriffstasten prüfen: Alt+W, Alt+Z, Alt+R, Alt+E, Alt+Ü.
+  5. Alle vier Statusarten ansehen – Fehler, Warnung, Hinweis, Erfolg. Jede
+     muss Zeichen, Wort und Farbe zeigen.
+  6. Einstellungen und „Über“ öffnen.
+  7. Fenstersymbol, Taskleistensymbol und Startmenüeintrag.
+
+- **Fassungsnummer im Info-Bereich:** Sie wird aus der Programmdatei gelesen.
+  Am gebauten Installationspaket prüfen, dass dort nicht „unbekannt“ steht.
+
 - **`.eml` im klassischen und im neuen Outlook** praktisch öffnen.
 - **DPAPI-Schutz der IBAN** in den Einstellungen.

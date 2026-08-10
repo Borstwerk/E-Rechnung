@@ -7,7 +7,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="EInvoiceSender – E-Rechnung erstellen"
+        Title="BorstWerk E-Rechnung"
+        Icon="/Assets/BorstWerkEInvoice.ico"
+        Background="{StaticResource BorstWerk.Brush.Background}"
         Height="860" Width="1200"
         MinHeight="640" MinWidth="940"
         WindowStartupLocation="CenterScreen"
@@ -20,8 +22,9 @@
     Schritt, Statuszeile und Navigation. Die Schritte selbst sind eigene
     UserControls unter Views/Steps.
   -->
-  <Grid Margin="16">
+  <Grid Margin="20">
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -29,20 +32,79 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <!-- Kopfzeile -->
-    <TextBlock Grid.Row="0" Text="{Binding StepTitle}" Style="{StaticResource Überschrift}"
+    <!--
+      Produktkopf: Zeichen und Produktname, sonst nichts.
+
+      Bewusst schmal gehalten. Der Anwender ist hier, um eine Rechnung zu
+      erzeugen; die Marke soll erkennbar sein und dann aus dem Weg gehen.
+      Kein Untertitel, kein Anspruch, keine Werbefläche – was über das
+      Projekt zu sagen ist, steht unter „Über“.
+
+      Der Kopf ist für die Sprachausgabe ein Element mit einem Namen. Ohne
+      das läse sie „Bild“ und danach den Text; so kommt ein Satz heraus.
+    -->
+    <Grid Grid.Row="0" Margin="0,0,0,16">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <StackPanel Grid.Column="0" Orientation="Horizontal"
+                  AutomationProperties.Name="BorstWerk E-Rechnung">
+        <Image Source="{StaticResource BorstWerk.Logo.OnLight}"
+               Width="24" Height="24" VerticalAlignment="Center"
+               Margin="0,0,10,0"
+               AutomationProperties.Name="BorstWerk"
+               RenderOptions.BitmapScalingMode="HighQuality" />
+
+        <TextBlock VerticalAlignment="Center" Margin="0"
+                   FontSize="{StaticResource BorstWerk.FontSize.CardTitle}"
+                   Foreground="{StaticResource BorstWerk.Brush.Text.Secondary}">
+          <Run Text="BorstWerk" FontWeight="SemiBold"
+               Foreground="{StaticResource BorstWerk.Brush.Text.Primary}" /><Run Text=" E-Rechnung" />
+        </TextBlock>
+      </StackPanel>
+
+      <!--
+        Der Info-Bereich sitzt hier und nicht in der Navigation unten: Dort
+        stehen die vier Schaltflächen des Arbeitsablaufs, und „Über“ gehört
+        nicht dazu. Klein gehalten, weil es beim Rechnungschreiben niemanden
+        interessiert.
+      -->
+      <Button Grid.Column="1" Content="_Über ..." Click="OnAboutClicked" TabIndex="95"
+              MinWidth="0" Margin="0" Padding="10,4"
+              FontSize="{StaticResource BorstWerk.FontSize.Label}"
+              AutomationProperties.HelpText="Zeigt Fassung, Lizenz und Hinweise zur Anwendung." />
+    </Grid>
+
+    <!-- Titel des aktuellen Schritts -->
+    <TextBlock Grid.Row="1" Text="{Binding StepTitle}"
+               Style="{StaticResource BorstWerk.Text.PageTitle}"
+               Margin="0,0,0,12"
                AutomationProperties.LiveSetting="Polite" />
 
     <!-- Globale Störungsanzeige -->
-    <Border Grid.Row="1" Background="#FDECEC" BorderBrush="#C0392B" BorderThickness="1"
-            CornerRadius="3" Padding="10,8" Margin="0,0,0,10"
+    <Border Grid.Row="2" Style="{StaticResource BorstWerk.Status.Error}" Margin="0,0,0,12"
             Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
-      <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
-                 AutomationProperties.LiveSetting="Assertive" />
+      <StackPanel Orientation="Horizontal">
+        <!--
+          Zeichen und Wort zusätzlich zur Farbe: Eine rot umrandete Fläche
+          allein sagt farbfehlsichtigen Anwendern nicht, dass hier ein
+          Fehler steht.
+        -->
+        <TextBlock Text="✕" FontWeight="Bold" MinWidth="16" TextAlignment="Center"
+                   VerticalAlignment="Top" Margin="0,0,8,0"
+                   Foreground="{StaticResource BorstWerk.Brush.Status.Error}" />
+        <TextBlock Text="Fehler" FontWeight="SemiBold" VerticalAlignment="Top"
+                   Margin="0,0,8,0"
+                   Foreground="{StaticResource BorstWerk.Brush.Status.Error}" />
+        <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Assertive" />
+      </StackPanel>
     </Border>
 
     <!-- Der aktuelle Schritt -->
-    <Grid Grid.Row="2">
+    <Grid Grid.Row="3">
       <steps:PdfSelectionView x:Name="ViewSchritt1" DataContext="{Binding PdfSelection}" />
       <steps:InvoiceDataView x:Name="ViewSchritt2" DataContext="{Binding InvoiceData}" />
       <steps:ReviewView x:Name="ViewSchritt3" DataContext="{Binding Review}" />
@@ -51,18 +113,25 @@
     </Grid>
 
     <!-- Statuszeile -->
-    <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" TextWrapping="Wrap"
-               Margin="0,12,0,8" AutomationProperties.LiveSetting="Polite" />
+    <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" TextWrapping="Wrap"
+               Margin="0,16,0,12"
+               Foreground="{StaticResource BorstWerk.Brush.Text.Secondary}"
+               AutomationProperties.LiveSetting="Polite" />
 
     <!-- Navigation -->
-    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+    <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
       <Button Content="_Einstellungen ..." Click="OnSettingsClicked" TabIndex="90"
               AutomationProperties.HelpText="Öffnet die Firmenvorlage und die Standardwerte." />
       <Button Content="Neue _Rechnung" Command="{Binding StartOverCommand}" TabIndex="91"
               AutomationProperties.HelpText="Verwirft den aktuellen Stand und beginnt von vorn." />
       <Separator Width="16" Visibility="Hidden" />
       <Button Content="_Zurück" Command="{Binding GoBackCommand}" TabIndex="92" />
-      <Button Content="_Weiter" Command="{Binding GoForwardCommand}" TabIndex="93" IsDefault="True" />
+      <!--
+        Die einzige Primäraktion des Fensters. Sie trägt die Produktfarbe;
+        alles andere daneben bleibt neutral, sonst hebt sich nichts mehr ab.
+      -->
+      <Button Content="_Weiter" Command="{Binding GoForwardCommand}" TabIndex="93" IsDefault="True"
+              Style="{StaticResource BorstWerk.Button.Primary}" Margin="0" />
     </StackPanel>
   </Grid>
 </Window>
