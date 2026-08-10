@@ -36,6 +36,24 @@ Console.WriteLine($"geschrieben: {Relative(previewPath)}");
 
 // Eine Übersicht der kleinen Größen nebeneinander – damit sich vor dem
 // Einchecken beurteilen lässt, ob das Zeichen klein noch lesbar ist.
+// Bilder für die visuelle Abnahme des Markenlogos.
+if (args.Contains("--abnahme"))
+{
+    string ziel = Path.Combine(Path.GetTempPath(), "abnahme");
+    Directory.CreateDirectory(ziel);
+
+    Speichern(Path.Combine(ziel, "01-logo-hell.png"), AufGrund(512, "#FFFFFF", onDark: false));
+    Speichern(Path.Combine(ziel, "02-logo-dunkel.png"), AufGrund(512, BorstWerkMark.BrandDark, onDark: true));
+
+    foreach (int größe in new[] { 256, 64, 32, 16 })
+    {
+        using SKBitmap icon = RenderAppIcon(größe);
+        Speichern(Path.Combine(ziel, $"03-icon-{größe:D3}.png"), Kopie(icon));
+    }
+
+    Console.WriteLine($"geschrieben: {ziel}");
+}
+
 if (args.Contains("--preview"))
 {
     string sheet = Path.Combine(Path.GetTempPath(), "borstwerk-icon-preview.png");
@@ -45,7 +63,14 @@ if (args.Contains("--preview"))
 
 return 0;
 
-/// <summary>Zeichnet das App-Symbol in der gewünschten Kantenlänge.</summary>
+/// <summary>
+/// Zeichnet das App-Symbol in der gewünschten Kantenlänge.
+///
+/// Die drei Zahlen darin sind am Markenblatt abgemessen, nicht gewählt:
+/// Eckradius, Füllgrad und der leichte Versatz nach unten. In der Vorlage
+/// misst die Kachel 178 Punkte, das Zeichen 112 × 131, und sein Mittelpunkt
+/// liegt 7,5 Punkte unter der Kachelmitte.
+/// </summary>
 static SKBitmap RenderAppIcon(int size)
 {
     var bitmap = new SKBitmap(new SKImageInfo(size, size, SKColorType.Rgba8888, SKAlphaType.Premul));
@@ -53,17 +78,16 @@ static SKBitmap RenderAppIcon(int size)
     using var canvas = new SKCanvas(bitmap);
     canvas.Clear(SKColors.Transparent);
 
-    // Abgerundetes Quadrat in Graphit als Grund. Der Radius wächst mit der
-    // Größe mit; bei 16 Pixeln bleibt er klein genug, dass die Ecken nicht
-    // ausfransen.
     using (var ground = new SKPaint { Color = Parse(BorstWerkMark.BrandDark), IsAntialias = true })
     {
-        canvas.DrawRoundRect(new SKRect(0, 0, size, size), size * 0.22f, size * 0.22f, ground);
+        float radius = size * (float)BorstWerkMark.TileCornerRadius;
+        canvas.DrawRoundRect(new SKRect(0, 0, size, size), radius, radius, ground);
     }
 
-    // Das Zeichen füllt gut zwei Drittel der Fläche – genug Luft, damit es in
-    // der Taskleiste nicht an den Rand stößt.
-    DrawMark(canvas, onDark: true, extent: size, fill: 0.66f);
+    canvas.Save();
+    canvas.Translate(0, size * (float)BorstWerkMark.TileMarkOffsetY);
+    DrawMark(canvas, onDark: true, extent: size, fill: (float)BorstWerkMark.TileMarkFill);
+    canvas.Restore();
 
     return bitmap;
 }
@@ -81,8 +105,9 @@ static SKBitmap RenderMark(int size, bool onDark)
 }
 
 /// <summary>
-/// Die drei Teile des Zeichens: der Stamm als Fläche, die beiden Schalen als
-/// Linien mit flachen Enden.
+/// Zeichnet das Zeichen: zwei Flächen, Körper und Ring. Der Maulschlüssel
+/// steckt bereits in der Kontur des Körpers – er ist eine offene Kerbe und
+/// kein Loch, also nichts, was hier noch auszurechnen wäre.
 ///
 /// Eingepasst wird anhand der tatsächlichen Ausmaße: Die Zeichnung wird
 /// gemessen, mittig gesetzt und auf den verfügbaren Platz skaliert. Von Hand
@@ -105,13 +130,11 @@ static void DrawMark(SKCanvas canvas, bool onDark, float extent, float fill)
         Style = SKPaintStyle.Fill,
     };
 
-    using SKPath stem = SKPath.ParseSvgPathData(BorstWerkMark.StemPath);
-    using SKPath upper = EvenOdd(BorstWerkMark.UpperBowlPath);
-    using SKPath lower = EvenOdd(BorstWerkMark.LowerBowlPath);
+    using SKPath körper = SKPath.ParseSvgPathData(BorstWerkMark.BodyPath);
+    using SKPath ring = SKPath.ParseSvgPathData(BorstWerkMark.RingPath);
 
-    SKRect bounds = stem.Bounds;
-    bounds.Union(upper.Bounds);
-    bounds.Union(lower.Bounds);
+    SKRect bounds = körper.Bounds;
+    bounds.Union(ring.Bounds);
 
     float scale = fill * extent / Math.Max(bounds.Width, bounds.Height);
 
@@ -120,23 +143,14 @@ static void DrawMark(SKCanvas canvas, bool onDark, float extent, float fill)
     canvas.Scale(scale);
     canvas.Translate(-bounds.MidX, -bounds.MidY);
 
-    canvas.DrawPath(stem, body);
-    canvas.DrawPath(upper, body);
-    canvas.DrawPath(lower, accent);
+    // Erst der Ring, dann der Körper: Sie stoßen aneinander, statt sich zu
+    // überlappen. Der Körper zuletzt, damit ein etwaiger Rundungssaum an der
+    // gemeinsamen Kante unter ihm verschwindet und nicht als heller Spalt
+    // stehen bleibt.
+    canvas.DrawPath(ring, accent);
+    canvas.DrawPath(körper, body);
 
     canvas.Restore();
-}
-
-/// <summary>
-/// Liest einen Pfad aus zwei Teilpfaden und stellt ihn auf EvenOdd um, damit
-/// die Innenform offen bleibt. Ohne diese Regel füllt Skia die Schale voll.
-/// </summary>
-static SKPath EvenOdd(string pathData)
-{
-    SKPath path = SKPath.ParseSvgPathData(pathData);
-    path.FillType = SKPathFillType.EvenOdd;
-
-    return path;
 }
 
 /// <summary>
@@ -210,6 +224,35 @@ static void WriteSizeSheet(string path, int[] sizes)
 
     using SKData png = sheet.Encode(SKEncodedImageFormat.Png, 100);
     File.WriteAllBytes(path, png.ToArray());
+}
+
+/// <summary>Zeichnet das Zeichen mittig auf eine einfarbige Fläche.</summary>
+static SKBitmap AufGrund(int größe, string grund, bool onDark)
+{
+    var bitmap = new SKBitmap(new SKImageInfo(größe, größe, SKColorType.Rgba8888, SKAlphaType.Premul));
+
+    using var canvas = new SKCanvas(bitmap);
+    canvas.Clear(Parse(grund));
+    DrawMark(canvas, onDark, extent: größe, fill: 0.74f);
+
+    return bitmap;
+}
+
+static SKBitmap Kopie(SKBitmap quelle)
+{
+    var kopie = new SKBitmap(quelle.Info);
+    quelle.CopyTo(kopie);
+
+    return kopie;
+}
+
+static void Speichern(string pfad, SKBitmap bild)
+{
+    using (bild)
+    using (SKData png = bild.Encode(SKEncodedImageFormat.Png, 100))
+    {
+        File.WriteAllBytes(pfad, png.ToArray());
+    }
 }
 
 static SKColor Parse(string hex) => SKColor.Parse(hex);

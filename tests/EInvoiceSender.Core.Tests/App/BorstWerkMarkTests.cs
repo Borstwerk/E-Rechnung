@@ -13,6 +13,9 @@ namespace EInvoiceSender.Core.Tests.App;
 /// * <c>build/icon/BorstWerkMark.cs</c> zeichnet damit die Windows-Symboldatei,
 /// * <c>UI/Themes/BorstWerkLogo.xaml</c> zeichnet damit das Zeichen im Fenster.
 ///
+/// Die Pfade selbst sind aus dem Markenblatt vermessen und nicht entworfen;
+/// wie das geschah, steht in <c>build/icon/BorstWerkMark.cs</c>.
+///
 /// Zusammenlegen ginge nur, indem eine Seite die andere zur Bauzeit erzeugt.
 /// Das Werkzeug gehört aber bewusst nicht zur Projektmappe – sein Ergebnis
 /// ist eingecheckt, und die CI soll es nicht übersetzen müssen.
@@ -24,7 +27,11 @@ namespace EInvoiceSender.Core.Tests.App;
 /// </summary>
 public sealed class BorstWerkMarkTests
 {
-    /// <summary>Erfasst eine Pfadangabe im Erzeuger.</summary>
+    /// <summary>
+    /// Erfasst eine Pfadangabe im Erzeuger. Die Pfade sind lang und über
+    /// mehrere aneinandergehängte Zeichenketten verteilt; <c>Unquote</c>
+    /// setzt sie wieder zusammen.
+    /// </summary>
     private static readonly Regex GeneratorPath = new(
         @"public const string (?<name>\w+Path)\s*=\s*(?<value>""[^;]*?"");",
         RegexOptions.Compiled | RegexOptions.Singleline);
@@ -35,9 +42,8 @@ public sealed class BorstWerkMarkTests
         RegexOptions.Compiled);
 
     [Theory]
-    [InlineData("StemPath")]
-    [InlineData("UpperBowlPath")]
-    [InlineData("LowerBowlPath")]
+    [InlineData("BodyPath")]
+    [InlineData("RingPath")]
     public void DasXamlZeichnetDenselbenPfadWieDerSymbolerzeuger(string name)
     {
         string expected = GeneratorPaths()[name];
@@ -52,12 +58,12 @@ public sealed class BorstWerkMarkTests
 
     /// <summary>
     /// Beide Fassungen des Zeichens – hell und dunkel – zeichnen dieselben
-    /// drei Teile. Fehlte in einer ein Teil, wäre das Zeichen auf dunklem
+    /// zwei Flächen. Fehlte in einer eine, wäre das Zeichen auf dunklem
     /// Grund ein anderes als auf hellem.
     /// </summary>
     [Fact]
-    public void BeideFassungenZeichnenDreiTeile()
-        => Assert.Equal(6, XamlPaths().Count);
+    public void BeideFassungenZeichnenZweiFlächen()
+        => Assert.Equal(4, XamlPaths().Count);
 
     /// <summary>
     /// Ohne diese Prüfung wäre der Vergleich oben wertlos: Findet die Suche
@@ -66,7 +72,7 @@ public sealed class BorstWerkMarkTests
     [Fact]
     public void DieSucheFindetInBeidenDateienPfade()
     {
-        Assert.Equal(3, GeneratorPaths().Count);
+        Assert.Equal(2, GeneratorPaths().Count);
         Assert.NotEmpty(XamlPaths());
     }
 

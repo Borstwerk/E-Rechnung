@@ -19,11 +19,14 @@
 
   <!-- === Dachmarke ============================================== -->
 
-  <!-- Graphit. Grund des App-Symbols und des Kopfbereichs. -->
-  <Color x:Key="BorstWerk.Color.Brand.Dark">#0F172A</Color>
+  <!--
+    Graphit und Ocker stehen so im Markenblatt. Sie gehören zum Zeichen und
+    sind keine Gestaltungsentscheidung dieser Anwendung.
+  -->
+  <Color x:Key="BorstWerk.Color.Brand.Dark">#1F2937</Color>
 
   <!-- Warmer Ocker. Der Akzent der Dachmarke, im Zeichen selbst. -->
-  <Color x:Key="BorstWerk.Color.Brand.Accent">#D49A00</Color>
+  <Color x:Key="BorstWerk.Color.Brand.Accent">#D4A64B</Color>
 
   <!-- === Produktfarbe E-Rechnung ================================ -->
 
