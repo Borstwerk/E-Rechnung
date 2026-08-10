@@ -1,148 +1,272 @@
 # EInvoiceSender
 
-Eine Windows-Desktopanwendung, die aus einer **vorhandenen PDF-Rechnung** und
-von Hand erfassten, ausdrücklich bestätigten Rechnungsdaten eine
-**ZUGFeRD-/Factur-X-Rechnung** (Profil EN 16931, PDF/A-3) erzeugt und einen
-E-Mail-Entwurf vorbereitet.
+EInvoiceSender ist eine Windows-Desktopanwendung, die aus einer **bereits vorhandenen PDF-Rechnung** eine **ZUGFeRD-/Factur-X-Rechnung** im Profil EN 16931 erzeugt.
 
-Die Anwendung ist **kein Rechnungsprogramm**: Sie schreibt keine Rechnungen,
-vergibt keine Rechnungsnummern, führt keine Buchhaltung und versendet nichts
-von selbst. Sie nimmt die Rechnung, die Sie ohnehin schon haben, und macht
-daraus eine elektronische Rechnung.
+Die Anwendung ist bewusst **kein Rechnungsprogramm**. Sie schreibt keine Rechnungen, vergibt keine Rechnungsnummern, führt keine Buchhaltung und versendet keine E-Mails selbst. Sie nimmt die Rechnung, die bereits vorhanden ist, ergänzt die benötigten strukturierten Rechnungsdaten und erzeugt daraus eine elektronische Rechnung.
 
-Nach der Auswahl der PDF versucht die Anwendung, das Formular aus dem bereits
-vorhandenen PDF-Text **vorauszufüllen**. Gelesen werden derzeit:
+Alles läuft **lokal auf dem eigenen Rechner**. Rechnungen, Adressen, Bankverbindungen und E-Mail-Daten werden nicht an externe Dienste übertragen.
+
+---
+
+# Für Anwender
+
+## Was brauche ich?
+
+- Windows 10 oder Windows 11, 64 Bit
+- eine vorhandene PDF-Rechnung
+
+Mehr nicht.
+
+Die ausgelieferte Anwendung bringt die benötigte .NET-Laufzeit mit. **Java wird für die installierte Anwendung nicht benötigt** und vom Installer auch nicht eingerichtet.
+
+## Installation
+
+Für die normale Nutzung ist das MSI-Installationspaket vorgesehen.
+
+Die Standardinstallation erfolgt **nur für den aktuellen Benutzer** und benötigt keine Administratorrechte. Die Anwendung wird dabei unter dem persönlichen Windows-Programmverzeichnis installiert.
+
+Der Installer:
+
+- legt einen Eintrag im Startmenü an,
+- kann optional eine Desktopverknüpfung erstellen,
+- unterstützt spätere Updates,
+- verhindert versehentliche Downgrades,
+- lässt persönliche Einstellungen bei der Deinstallation unangetastet.
+
+Alternativ kann eine portable ZIP-Fassung verwendet werden.
+
+## So funktioniert es
+
+EInvoiceSender führt in fünf Schritten durch den Vorgang:
+
+1. **PDF auswählen**  
+   Die vorhandene Rechnung wird geprüft und als Vorschau angezeigt. Die Originaldatei wird nur gelesen und niemals verändert.
+
+2. **Rechnungsdaten prüfen und ergänzen**  
+   Erkannte Angaben werden in das Formular übernommen. Fehlende oder unsichere Angaben können ergänzt beziehungsweise korrigiert werden.
+
+3. **PDF und strukturierte Daten vergleichen**  
+   Vor der Erzeugung muss ausdrücklich bestätigt werden, dass die erfassten Rechnungsdaten mit der sichtbaren PDF übereinstimmen.
+
+4. **E-Rechnung erzeugen**  
+   Die strukturierte XML wird erstellt, geprüft und in die PDF/A-3-Datei eingebettet.
+
+5. **Ergebnis speichern und E-Mail vorbereiten**  
+   Die fertige Datei und ein Prüfbericht werden gespeichert. Auf Wunsch erstellt die Anwendung einen `.eml`-Entwurf für das vorhandene Mailprogramm. Die Nachricht wird nicht automatisch versendet.
+
+## Welche Daten kann die Anwendung aus der PDF lesen?
+
+Bei digital erzeugten PDFs versucht EInvoiceSender, bereits vorhandenen PDF-Text lokal auszulesen und das Formular damit vorauszufüllen.
+
+Derzeit werden unter anderem erkannt:
 
 - Rechnungsnummer
-- Rechnungs-, Leistungs- und Fälligkeitsdatum
+- Rechnungsdatum
+- Leistungsdatum
+- Fälligkeitsdatum
 - Währung
-- Käuferangaben aus dem Adressblock, Verkäuferangaben über die gespeicherte
-  Firmenvorlage
+- Käuferangaben aus dem Adressblock
+- Verkäuferangaben mithilfe der gespeicherten Firmenvorlage
 - IBAN und BIC
-- Netto, Umsatzsteuer, Brutto, Zahlbetrag und die Steuersätze
+- Nettobetrag
+- Umsatzsteuer
+- Bruttobetrag
+- Zahlbetrag
+- Steuersätze
 
-**Rechnungspositionen werden noch nicht aus Tabellen übernommen** und müssen
-von Hand erfasst werden.
+Jeder erkannte Wert bleibt überprüfbar und kann geändert werden. Unsichere Werte werden entsprechend gekennzeichnet oder nicht automatisch übernommen.
 
-Jeder Vorschlag ist gekennzeichnet und lässt sich überschreiben; unsichere
-Werte werden gar nicht erst eingetragen. Es findet keine Texterkennung an
-Bildern statt, und die Bestätigung durch Sie bleibt in jedem Fall
-erforderlich.
+**Rechnungspositionen werden derzeit noch nicht zuverlässig aus Tabellen übernommen und müssen gegebenenfalls von Hand erfasst werden.**
 
-Alles läuft örtlich auf Ihrem Rechner. Es werden keine Rechnungsdaten,
-PDF-Dateien, E-Mail-Adressen oder Bankverbindungen an fremde Rechner
-übertragen.
+Es findet aktuell keine OCR-Texterkennung für reine Scan-PDFs statt.
+
+## Eigene Firmendaten speichern
+
+Wiederkehrende Angaben können einmalig in den Einstellungen hinterlegt werden, zum Beispiel:
+
+- Firmenname und Anschrift
+- USt-IdNr. oder Steuernummer
+- E-Mail-Adresse
+- Kontoinhaber, IBAN und BIC
+- Standardwährung
+- Zahlungsbedingungen
+- Standard-E-Mail-Text
+- Ausgabeverzeichnis
+
+Sensible gespeicherte Daten wie die IBAN werden unter Windows geschützt abgelegt.
+
+## Datenschutz
+
+Die Verarbeitung erfolgt lokal.
+
+EInvoiceSender:
+
+- lädt keine Rechnung zu einem Webdienst hoch,
+- verwendet keine Cloud-KI für Rechnungsinhalte,
+- überträgt keine Bankverbindungen oder Empfängeradressen,
+- verändert niemals die Original-PDF,
+- versendet keine E-Mail ohne Zutun des Benutzers.
+
+## Prüfbericht
+
+Zu jeder erzeugten E-Rechnung kann ein Prüfbericht erstellt werden. Darin stehen unter anderem:
+
+- Rechnungsnummer und Beteiligte
+- erzeugte Datei
+- Dateigröße
+- SHA-256-Prüfsumme
+- festgestellte Fehler und Warnungen
+- tatsächlich verwendete Prüfwerkzeuge
+
+Die installierte Anwendung führt ihre eingebauten Prüfungen aus. Externe Referenzvalidatoren gehören zur Entwicklungs- und Releaseprüfung und werden nicht mit dem normalen Installer ausgeliefert. Der Prüfbericht macht ausdrücklich kenntlich, wenn keine externe Referenzprüfung stattgefunden hat.
+
+## Bekannte Grenzen
+
+- **Aktuell lässt sich nicht jede PDF direkt verwenden.** Geeignete PDFs werden nach PDF/A-3 aufgewertet. Problematisch sind insbesondere Dokumente mit nicht eingebetteten Schriften, beschädigte oder geschützte PDFs sowie digital signierte Dateien. An einer lokalen Fallback-Lösung für weitere PDF-Typen kann weitergearbeitet werden.
+- **Rechnungspositionen müssen derzeit häufig noch von Hand erfasst werden.**
+- **Keine Steuerberatung.** Die Anwendung kann technische und formale Prüfungen durchführen, aber nicht beurteilen, ob eine Rechnung steuerlich oder inhaltlich richtig ist.
+
+Ausführlicher: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md)
 
 ## Bildschirmfotos
 
-<!-- Platzhalter: Bildschirmfotos der fünf Schritte ergänzen. -->
+<!-- Bildschirmfotos der fünf Schritte ergänzen, sobald die Oberfläche für die erste Veröffentlichung eingefroren ist. -->
 
 | Schritt | Bild |
 |---|---|
-| 1 – PDF auswählen | _(noch nicht erfasst)_ |
-| 2 – Rechnungsdaten | _(noch nicht erfasst)_ |
-| 3 – Kontrollansicht | _(noch nicht erfasst)_ |
-| 4 – Erzeugen | _(noch nicht erfasst)_ |
-| 5 – Ergebnis | _(noch nicht erfasst)_ |
+| 1 – PDF auswählen | _(folgt)_ |
+| 2 – Rechnungsdaten | _(folgt)_ |
+| 3 – Kontrollansicht | _(folgt)_ |
+| 4 – Erzeugen | _(folgt)_ |
+| 5 – Ergebnis | _(folgt)_ |
 
-## Voraussetzungen
+---
 
-### Zum Benutzen der Anwendung
+# Für Entwickler
 
-- Windows 10 oder 11, 64 Bit
+## Ziel des Projekts
 
-Mehr nicht. Die ausgelieferte Fassung bringt die .NET-Laufzeit mit. **Eine
-Java-Laufzeit wird nicht benötigt**, und das Installationspaket installiert
-auch keine.
+Das Projekt soll ein kleines, nachvollziehbares Windows-Werkzeug bleiben und ausdrücklich **kein ERP-, Buchhaltungs- oder CRM-System** werden.
 
-### Zum Entwickeln
+Die Lösung besteht im Wesentlichen aus:
+
+```text
+EInvoiceSender.sln
+
+src/
+├── EInvoiceSender.App
+└── EInvoiceSender.Core
+
+tests/
+├── EInvoiceSender.Core.Tests
+└── EInvoiceSender.IntegrationTests
+
+installer/
+└── EInvoiceSender.Setup
+```
+
+`EInvoiceSender.App` enthält WPF-Oberfläche und Windows-spezifische Bedienlogik.  
+`EInvoiceSender.Core` enthält Rechnungsmodelle, Berechnung, Validierung, CII-/ZUGFeRD-Erzeugung, PDF-Verarbeitung, Speicherung und E-Mail-Entwurf.
+
+Die Architektur soll bewusst einfach bleiben. Zusätzliche Projekte, Interfaces oder Frameworks sollten nur eingeführt werden, wenn sie einen konkreten Nutzen für Wartbarkeit, Testbarkeit oder Plattformtrennung haben.
+
+## Entwicklungsumgebung
+
+Empfohlen:
 
 - .NET SDK 10
-- Visual Studio 2026 (oder 2022 ab 17.14) mit der Arbeitslast
-  **.NET-Desktopentwicklung**
+- Visual Studio 2026
+- Arbeitslast **.NET-Desktopentwicklung**
+- Windows x64
 
-## Referenzprüfung in Entwicklung und Release
-
-Für die zusätzliche Referenzprüfung während Entwicklung und Release wird
-Java 17 oder neuer benötigt. **Die installierte Anwendung benötigt kein Java.**
-
-Geprüft wird damit gegen Mustangproject, das offizielle CEN-Schematron und
-veraPDF – das ist der Nachweis, dass diese Anwendung normgerechte Dateien
-erzeugt. Diese Werkzeuge gehören in die Werkstatt, nicht auf den Rechner des
-Anwenders: Sie werden mit `build/fetch-validators.sh` beschafft, laufen in der
-Pipeline und über `build/Validate-Reference.ps1`, und sie sind kein Bestandteil
-des Installationspakets.
-
-Der Bericht zu einer erzeugten Rechnung sagt jeweils, was geprüft wurde. Ohne
-eingerichteten Referenzvalidator steht dort ausdrücklich, dass keiner
-eingerichtet war – die Anwendung behauptet nie, eine externe Prüfung habe
-stattgefunden. Näheres in `docs/TESTING.md`.
+Die normale Anwendung benötigt kein Java.
 
 ## In Visual Studio starten
 
 1. Repository klonen
 2. `EInvoiceSender.sln` öffnen
-3. `EInvoiceSender.App` ist als Startprojekt eingestellt
+3. `EInvoiceSender.App` als Startprojekt verwenden
 4. **F5**
 
-Der Test-Explorer findet alle Tests ohne weitere Einrichtung.
+Die Tests erscheinen im Visual-Studio-Test-Explorer.
 
-## Bauen, testen, veröffentlichen
+## Bauen und testen
+
+Die alltägliche Entwicklung kann vollständig aus Visual Studio erfolgen.
+
+Zusätzlich stehen PowerShell-Skripte zur Verfügung:
 
 ```powershell
-.\build\Build.ps1                       # Wiederherstellen und Release-Build
-.\build\Test.ps1                        # alle Tests
-.\build\Test.ps1 -RequireExternalValidators   # wie in der Pipeline
-.\build\Publish.ps1                     # eigenständige win-x64-Fassung
-.\build\Build-Installer.ps1             # MSI, tragbares ZIP und Prüfsummen
-.\build\Validate-Reference.ps1          # Gegenprüfung mit Schematron und veraPDF
+.\build\Build.ps1
+.\build\Test.ps1
+.\build\Publish.ps1
+.\build\Build-Installer.ps1
 ```
 
-Ohne Skripte geht es genauso:
+Entsprechend direkt mit dem .NET-SDK:
 
 ```powershell
 dotnet build EInvoiceSender.sln -c Release
-dotnet test  EInvoiceSender.sln -c Release
+dotnet test EInvoiceSender.sln -c Release
 dotnet format EInvoiceSender.sln --verify-no-changes
 ```
 
-## Installer
+## Self-contained Publish
 
-`Build-Installer.ps1` erzeugt ein MSI. Vorgegeben ist die Installation
-**nur für Sie** – ohne Administratorrechte, nach
-`%LOCALAPPDATA%\Programs\EInvoiceSender Projekt\EInvoiceSender`. Dasselbe
-Paket kann auch für alle Benutzer installiert werden; das verlangt dann die
-übliche Rückfrage von Windows:
+`Publish.ps1` erzeugt eine eigenständige `win-x64`-Fassung. Die .NET-Laufzeit wird mit veröffentlicht; auf dem Zielrechner muss daher kein separates .NET Runtime-Paket installiert werden.
+
+## Installer bauen
+
+Unter Windows mit PowerShell 7:
 
 ```powershell
-msiexec /i EInvoiceSender-Setup.msi MSIINSTALLPERUSER=""
+.\build\Build-Installer.ps1
 ```
 
-Der Installer legt einen Startmenüeintrag an, auf Wunsch eine
-Desktopverknüpfung, unterstützt Upgrades, wehrt Downgrades mit einer
-verständlichen Meldung ab und lässt Ihre Daten bei der Deinstallation
-unangetastet – sie liegen unter `%LOCALAPPDATA%\EInvoiceSender` und damit
-außerhalb des Installationsordners. WiX erzeugt MSI-Dateien nur unter
-Windows.
+Das Skript veröffentlicht die Anwendung und erzeugt anschließend:
 
-## Einschränkungen in Kürze
+- MSI-Installationspaket
+- portable ZIP-Fassung
+- SHA-256-Prüfsummen
 
-- **Nicht jede PDF lässt sich verwenden.** Es gibt keine frei verwendbare
-  .NET-Bibliothek, die beliebige PDFs nach PDF/A-3 wandelt. Die Anwendung
-  wertet geeignete Dateien auf und lehnt ungeeignete mit einer Begründung ab –
-  vor allem PDFs ohne eingebettete Schriften und digital signierte PDFs.
-- **Die eigene Regelprüfung ist kein Konformitätsnachweis.** Die Freigabe
-  erteilen die externen Referenzvalidatoren.
-- **Keine Steuerberatung.** Geprüft wird das Format, nicht die inhaltliche
-  oder steuerliche Richtigkeit.
+Die Standardinstallation des MSI ist eine Installation für den aktuellen Benutzer ohne UAC-Rückfrage. Das gleiche Paket kann bei Bedarf auch für alle Benutzer installiert werden.
 
-Ausführlich: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md)
+WiX wird nur zum **Bauen** des Installers benötigt, nicht auf dem Zielrechner.
+
+## Externe Referenzprüfung
+
+Die Anwendung besitzt eigene Prüfungen. Für Entwicklung, Regressionstests und Releasefreigaben werden zusätzlich unabhängige Referenzwerkzeuge verwendet:
+
+- Mustangproject
+- CEN-Schematron für EN 16931
+- veraPDF für PDF/A
+
+Für diese zusätzliche Referenzprüfung wird Java 17 oder neuer benötigt.
+
+**Das betrifft ausschließlich Entwicklung und Releaseprüfung. Die installierte Anwendung benötigt kein Java.**
+
+Die Gegenprüfung kann über die vorhandenen Build-/Testskripte ausgeführt werden. Details stehen in [`docs/TESTING.md`](docs/TESTING.md).
+
+## Grundsätze für Änderungen
+
+Das Projekt orientiert sich an einer einfachen, wartbaren Struktur. Besonders wichtig sind:
+
+- KISS und DRY
+- kleine, klar benannte Verantwortlichkeiten
+- Single Responsibility und Separation of Concerns
+- verständliche Integrationsmethoden auf einem einheitlichen Abstraktionsniveau
+- Root-Cause-Fixes statt Symptombehandlung
+- Regressionstests für gefundene Fehler
+- echte deutsche Umlaute in deutschsprachigen Texten
+- keine unnötigen neuen Abhängigkeiten
+
+Fachlich kritische Änderungen an CII/XML, PDF/A, Einbettung, Summen oder Steuerlogik müssen zusätzlich gegen die vorhandenen Golden Master und externen Referenzvalidatoren geprüft werden.
 
 ## Weitere Unterlagen
 
 | Datei | Inhalt |
 |---|---|
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Aufbau der Projektmappe und der Ablauf |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Aufbau der Projektmappe und Ablauf |
 | [`docs/BUILD.md`](docs/BUILD.md) | Bauen mit Visual Studio und PowerShell |
 | [`docs/E-INVOICE-STANDARD.md`](docs/E-INVOICE-STANDARD.md) | Norm, Profil und verwendete Fassungen |
 | [`docs/TESTING.md`](docs/TESTING.md) | Testebenen und Referenzvalidatoren |
@@ -150,5 +274,4 @@ Ausführlich: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md)
 | [`docs/BACKLOG.md`](docs/BACKLOG.md) | Offene Punkte |
 | [`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) | Fremdkomponenten und Lizenzen |
 
-`docs/legacy/` enthält die ausführlichen Unterlagen aus der Entstehungszeit.
-Sie sind aufgehoben, aber nicht mehr maßgeblich.
+`docs/legacy/` enthält Unterlagen aus der Entstehungszeit. Sie bleiben als Historie erhalten, sind für die aktuelle Entwicklung aber nicht mehr maßgeblich.
