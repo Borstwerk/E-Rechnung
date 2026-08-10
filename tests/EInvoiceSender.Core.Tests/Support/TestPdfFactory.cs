@@ -146,6 +146,97 @@ public static class TestPdfFactory
             (595, 842, 0, "Seite mit aktivem Inhalt"));
 
     /// <summary>
+    /// Baut eine eingescannte Rechnung: eine Seite, die ausschließlich aus einem
+    /// Bild besteht – und die trotzdem eine Schriftressource führt, die nichts
+    /// zeichnet.
+    ///
+    /// **Das ist keine ausgedachte Bosheit.** Genau so sehen die Dateien vieler
+    /// Scanner und Ausgabetreiber aus: <c>/Resources /Font /F1</c> steht in der
+    /// Seite, der Inhaltsstrom setzt die Schrift sogar mit <c>Tf</c> – und
+    /// zeichnet dann kein einziges Zeichen damit, sondern nur das Bild. Wer nur
+    /// die Ressourcenliste ansieht, lehnt eine solche Datei wegen einer Schrift
+    /// ab, die im Dokument nirgends erscheint.
+    ///
+    /// Das Bild ist ein grober Grauverlauf mit ein paar dunklen Balken; es soll
+    /// nach etwas aussehen, ohne dass daraus Text zu lesen wäre. Text wird
+    /// hier bewusst nicht angedeutet – es gibt keine Texterkennung.
+    /// </summary>
+    public static byte[] CreateScanOnlyPdf()
+        => BuildPages(
+            catalogExtra: null,
+            image: ScanPage(240, 340),
+            pages: [(595, 842, 0, null)]);
+
+    /// <summary>Ein Graustufenbild für eine eingescannte Seite.</summary>
+    private sealed record ScanImage(int Width, int Height, byte[] Pixels);
+
+    /// <summary>
+    /// Baut eine gemischte PDF: Seite 1 ist eingescannt, Seite 2 trägt echten
+    /// Text in einer nicht eingebetteten Schrift.
+    ///
+    /// **Die Gegenprobe zur eingescannten Seite.** Wäre die Regel „irgendwo ein
+    /// Bild, also Schriftprüfung aus“, ginge diese Datei durch – und im Ergebnis
+    /// stünde Text in einer Schrift, die der Empfänger vielleicht nicht hat.
+    /// Genau davor schützt die Frage nach der tatsächlichen Verwendung.
+    /// </summary>
+    public static byte[] CreateMixedScanAndTextPdf()
+    {
+        var image = ScanPage(120, 170);
+
+        return BuildPages(
+            catalogExtra: null,
+            image: image,
+            pages: [(595, 842, 0, null), (595, 842, 0, "Rechnungsbetrag 1.190,00 EUR")]);
+    }
+
+    /// <summary>
+    /// Baut eine PDF, deren Text in einem Form-XObject steckt – der Seiteninhalt
+    /// selbst ruft nur das Formular auf.
+    ///
+    /// **So bauen viele Erzeuger ihre Seiten.** Wer nur den Inhaltsstrom der
+    /// Seite liest, sieht hier ein einziges <c>Do</c> und keinen einzigen
+    /// Buchstaben – und ließe eine nicht eingebettete Schrift durchgehen, die
+    /// die ganze Rechnung setzt.
+    ///
+    /// Das Formular hat bewusst keine eigenen <c>/Resources</c>: Dann gelten die
+    /// der Seite, und auch das muss die Prüfung wissen.
+    /// </summary>
+    public static byte[] CreatePdfWithTextInFormXObject()
+    {
+        byte[] formContent = Ascii("BT /F1 14 Tf 20 40 Td (Rechnung 2026-0815) Tj ET");
+        byte[] pageContent = Ascii("q 1 0 0 1 40 700 cm /Fm1 Do Q\n2 w 20 20 555 802 re S");
+
+        return Assemble(
+        [
+            Ascii("<< /Type /Catalog /Pages 2 0 R >>"),
+            Ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            Ascii(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                + "/Resources << /Font << /F1 5 0 R >> /XObject << /Fm1 6 0 R >> >> "
+                + "/Contents 4 0 R >>"),
+            Stream(string.Empty, pageContent),
+            Ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"),
+            Stream("/Type /XObject /Subtype /Form /BBox [0 0 400 80]", formContent),
+        ]);
+    }
+
+    private static ScanImage ScanPage(int width, int height)
+    {
+        byte[] pixels = new byte[width * height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                bool balken = y % 24 < 6 && x > 20 && x < width - 40;
+                pixels[(y * width) + x] = (byte)(balken ? 60 : 245);
+            }
+        }
+
+        return new ScanImage(width, height, pixels);
+    }
+
+    /// <summary>
     /// Baut eine PDF mit Besitzerkennwort und eingeschränkten Rechten.
     ///
     /// **Der Fall, der die Lücke aufdeckt.** Ein solches Dokument öffnet sich
@@ -209,7 +300,7 @@ public static class TestPdfFactory
     /// ablesen, ob etwas beschnitten wurde.
     /// </summary>
     private static byte[] BuildPages(params (int Width, int Height, int Rotate, string Text)[] pages)
-        => BuildPages(catalogExtra: null, pages);
+        => BuildPages(catalogExtra: null, image: null, pages: [.. pages.Select(p => (p.Width, p.Height, p.Rotate, (string?)p.Text))]);
 
     /// <summary>
     /// Wie oben, ergänzt aber den Dokumentkatalog um weitere Einträge –
@@ -217,9 +308,22 @@ public static class TestPdfFactory
     /// </summary>
     private static byte[] BuildPages(
         string? catalogExtra, params (int Width, int Height, int Rotate, string Text)[] pages)
+        => BuildPages(catalogExtra, image: null,
+                      pages: [.. pages.Select(p => (p.Width, p.Height, p.Rotate, (string?)p.Text))]);
+
+    /// <summary>
+    /// Die vollständige Fassung. Ein Seitentext von <c>null</c> heißt: Die
+    /// Schrift wird zwar gesetzt, aber es wird nichts mit ihr gezeichnet – der
+    /// Fall der eingescannten Seite. Ist ein Bild angegeben, füllt es die Seite.
+    /// </summary>
+    private static byte[] BuildPages(
+        string? catalogExtra,
+        ScanImage? image,
+        (int Width, int Height, int Rotate, string? Text)[] pages)
     {
         var objects = new List<byte[]>();
         int fontObject = 3 + (pages.Length * 2);
+        int imageObject = fontObject + 1;
 
         string kids = string.Join(
             " ", Enumerable.Range(0, pages.Length).Select(i => $"{3 + (i * 2)} 0 R"));
@@ -230,17 +334,27 @@ public static class TestPdfFactory
             + " >>"));
         objects.Add(Ascii($"<< /Type /Pages /Kids [{kids}] /Count {pages.Length} >>"));
 
+        string imageResource = image is null
+            ? string.Empty
+            : $" /XObject << /Im1 {imageObject} 0 R >>";
+
         for (int i = 0; i < pages.Length; i++)
         {
-            (int width, int height, int rotate, string text) = pages[i];
+            (int width, int height, int rotate, string? text) = pages[i];
 
             objects.Add(Ascii(
                 $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {width} {height}] /Rotate {rotate} "
-                + $"/Resources << /Font << /F1 {fontObject} 0 R >> >> /Contents {4 + (i * 2)} 0 R >>"));
+                + $"/Resources << /Font << /F1 {fontObject} 0 R >>{imageResource} >> "
+                + $"/Contents {4 + (i * 2)} 0 R >>"));
 
-            byte[] content = Ascii(
-                $"BT /F1 24 Tf 40 {height - 80} Td ({text}) Tj ET\n"
-                + $"2 w 20 20 {width - 40} {height - 40} re S");
+            // Die Schrift wird immer gesetzt. Gezeichnet wird mit ihr nur, wenn
+            // es einen Text gibt – sonst bleibt es bei der reinen Ressource.
+            string body = text is null
+                ? "BT /F1 12 Tf ET\n"
+                  + $"q {width - 80} 0 0 {height - 120} 40 60 cm /Im1 Do Q\n"
+                : $"BT /F1 24 Tf 40 {height - 80} Td ({text}) Tj ET\n";
+
+            byte[] content = Ascii(body + $"2 w 20 20 {width - 40} {height - 40} re S");
 
             objects.Add(
             [
@@ -253,6 +367,29 @@ public static class TestPdfFactory
         objects.Add(Ascii(
             "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"));
 
+        if (image is not null)
+        {
+            objects.Add(
+            [
+                .. Ascii(
+                    "<< /Type /XObject /Subtype /Image "
+                    + $"/Width {image.Width} /Height {image.Height} "
+                    + $"/ColorSpace /DeviceGray /BitsPerComponent 8 "
+                    + $"/Length {image.Pixels.Length} >>\nstream\n"),
+                .. image.Pixels,
+                .. Ascii("\nendstream"),
+            ]);
+        }
+
+        return Assemble(objects);
+    }
+
+    /// <summary>
+    /// Schreibt nummerierte Objekte samt Querverweistabelle und Trailer in eine
+    /// gültige PDF-Datei. Objekt 1 ist der Katalog.
+    /// </summary>
+    private static byte[] Assemble(List<byte[]> objects)
+    {
         var file = new MemoryStream();
         var offsets = new List<int>(objects.Count);
 
@@ -280,6 +417,15 @@ public static class TestPdfFactory
 
         return file.ToArray();
     }
+
+    /// <summary>Ein Datenstromobjekt mit passender Längenangabe.</summary>
+    private static byte[] Stream(string dictionary, byte[] content)
+        =>
+        [
+            .. Ascii($"<< {dictionary} /Length {content.Length} >>\nstream\n"),
+            .. content,
+            .. Ascii("\nendstream"),
+        ];
 
     private static byte[] Ascii(string text) => System.Text.Encoding.ASCII.GetBytes(text);
 

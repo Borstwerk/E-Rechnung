@@ -188,7 +188,18 @@ Zum Rechteschutz: PDFsharp meldet für eine Datei mit Besitzerkennwort
 `IsEncrypted == false` und öffnet sie anstandslos. Der Eintrag `/Encrypt` steht
 im Trailer, den PDFsharp nicht offenlegt. `PdfAnalyzer` befragt deshalb
 zusätzlich PdfPig – ohnehin für die Textauswertung vorhanden – und unterscheidet
-so Öffnungskennwort, Rechteeinschränkung und ungeschützt.
+so Öffnungskennwort, Rechteeinschränkung und ungeschützt. Kann PdfPig die Frage
+nicht beantworten, wird sie so gestellt, wie der Ablauf sie braucht: Lässt sich
+die Datei mit `PdfDocumentOpenMode.Modify` öffnen? Bleibt die Frage offen, gilt
+sie als offen und nicht als „ungeschützt“.
+
+Zur Schrifteinbettung: Geprüft wird, ob eine nicht eingebettete Schrift
+tatsächlich Text zeichnet, nicht ob sie unter `/Resources /Font` steht.
+`PdfAnalyzer` liest dazu den Inhaltsstrom (`ContentReader`), führt den
+Grafikzustand über `q`/`Q` mit und steigt in aufgerufene Form-XObjects ab –
+viele Erzeuger legen den gesamten sichtbaren Inhalt dorthin. Lässt sich ein
+Inhaltsstrom nicht lesen, gilt für ihn wieder die strengere alte Regel: Dann
+zählt jede erklärte Schrift als verwendet.
 
 ## Abhängigkeiten
 

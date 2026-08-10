@@ -52,14 +52,25 @@ sonst nicht an.
 - **Digital signierte PDFs.** Eine Signatur bezieht sich auf den unveränderten
   Inhalt. Das Einbetten der Rechnungsdaten würde sie ungültig machen. Solche
   Dateien werden deutlich abgelehnt, nicht stillschweigend verändert.
-- **PDFs mit Öffnungskennwort.** Ohne Kennwort gibt es nichts zu lesen.
-- **PDFs mit Besitzerkennwort.** Sie lassen sich zwar öffnen, schränken aber
-  ein, was mit ihnen geschehen darf. Über diese Festlegung setzt sich die
-  Anwendung nicht hinweg.
+- **PDFs mit Öffnungskennwort.** Ohne Kennwort gibt es nichts zu lesen. Die
+  Anwendung fragt bewusst **nicht** nach dem Kennwort und verwaltet keines.
+- **PDFs mit Besitzerkennwort.** Sie lassen sich anzeigen, aber nicht ändern –
+  der Rechteinhaber hat festgelegt, was mit ihnen geschehen darf. Über diese
+  Festlegung setzt sich die Anwendung nicht hinweg. Solche Dateien sind
+  **nicht beschädigt**, und die Meldung sagt das auch: Sie nennt die
+  Berechtigungseinschränkung und rät zu einer ungeschützten Fassung.
 - **PDFs mit aktiven Inhalten** (JavaScript, startende Aktionen). Dass sie
   beim Rastern verschwänden, ist kein Grund, sie zu übergehen.
 
 ### Eingescannte Rechnungen
+
+Geprüft wird, ob eine nicht eingebettete Schrift **tatsächlich Text zeichnet**,
+nicht ob sie irgendwo als Ressource eingetragen ist. Sehr viele Scanner und
+Ausgabetreiber schreiben eine Schriftressource in jede Seite, auch wenn darauf
+nur ein Bild liegt; eine eingescannte Rechnung wurde deshalb früher wegen einer
+Schrift abgelehnt, die im Dokument nirgends erscheint. Enthält eine Datei
+dagegen Bildseiten **und** echten Text mit fehlender Einbettung, bleibt es beim
+Hindernis – die Lockerung gilt der Verwendung, nicht dem Dateityp.
 
 Eine PDF, aus der sich kein Text lesen lässt, ist verarbeitbar – die
 Datenerkennung findet dann aber nichts, sagt das geradeheraus, und die

@@ -53,7 +53,22 @@ public sealed partial class PdfPreviewService(ILogger<PdfPreviewService> logger)
                 },
                 cancellationToken).ConfigureAwait(true);
         }
-        catch (Exception exception) when (exception is IOException or InvalidOperationException or NotSupportedException)
+        // **Die Vorschau darf niemals werfen.** Die Zusage steht oben in der
+        // Schnittstelle, die Liste darunter hielt sie nicht: PDFium meldet eine
+        // kennwortgeschützte Datei mit einer eigenen Ausnahme, und die stand
+        // nicht darin. Sie lief bis zum letzten Auffangnetz der Anwendung durch,
+        // das dem Anwender pflichtschuldig „Password required or incorrect
+        // password.“ als Störungsmeldung zeigte – auf Englisch, aus einer
+        // Bibliothek, und direkt neben dem verständlichen deutschen Befund, den
+        // die Eingangsprüfung längst geschrieben hatte.
+        //
+        // Eine Aufzählung erwarteter Ausnahmen ist hier das falsche Werkzeug:
+        // Was eine fremde PDF in einer nativen Bibliothek auslöst, lässt sich
+        // nicht aufzählen. Gefangen wird deshalb alles, was kein Abbruch und
+        // kein Zustand ist, in dem Weiterarbeiten ohnehin sinnlos wäre.
+        catch (Exception exception) when (exception is not OperationCanceledException
+                                             and not OutOfMemoryException
+                                             and not StackOverflowException)
         {
             string reason = exception.GetType().Name;
             LogPreviewFailed(reason);

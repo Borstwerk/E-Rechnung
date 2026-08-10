@@ -225,14 +225,15 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                 case PdfUpgradeBlocker.RightsRestricted:
                     findings.Error(
                         "APP-PRE-015",
-                        "Die PDF-Datei ist mit einem Besitzerkennwort versehen; sie schränkt "
-                        + "ein, was mit ihr geschehen darf. Über diese Festlegung setzt sich "
-                        + "BorstWerk E-Rechnung nicht hinweg. Speichern Sie die Rechnung in "
-                        + "Ihrem Programm ohne Berechtigungseinschränkungen erneut.",
+                        "Diese PDF enthält Berechtigungseinschränkungen. Sie kann angezeigt, "
+                        + "aber nicht für die E-Rechnung verändert werden. Bitte verwenden Sie "
+                        + "eine ungeschützte Fassung der Rechnung – in Ihrem Programm heißt die "
+                        + "Einstellung meist \"Berechtigungskennwort\" oder \"Dokument schützen\".",
                         "File",
-                        "Der Trailer enthält ein /Encrypt-Wörterbuch, obwohl sich die Datei "
-                        + "ohne Kennwort öffnen lässt. Verschlüsselte Dokumente sind nach "
-                        + "PDF/A ohnehin nicht zulässig.");
+                        "Die Datei trägt ein /Encrypt-Wörterbuch mit Besitzerkennwort. Sie lässt "
+                        + "sich ohne Kennwort öffnen, aber nicht ändern. Verschlüsselte "
+                        + "Dokumente sind nach PDF/A ohnehin nicht zulässig. "
+                        + "Die Datei ist nicht beschädigt.");
                     break;
 
                 case PdfUpgradeBlocker.Encrypted:

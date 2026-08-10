@@ -214,6 +214,58 @@ public sealed class EndToEndConformanceTests : IDisposable
     }
 
     /// <summary>
+    /// Eine eingescannte Seite mit unbenutzter Schriftressource geht den
+    /// direkten Weg – und das ist hier **gemessen und nicht angenommen**.
+    ///
+    /// Die Frage lautet nicht „ist der Font unbenutzt?“, sondern „akzeptiert
+    /// veraPDF die daraus erzeugte Datei?“. Die erste Frage beantwortet der
+    /// eigene Analysator, und der kann irren; die zweite beantwortet das
+    /// Freigabegate. Beantwortete es sie mit Nein, gehörte diese Fixture auf den
+    /// Rasterweg – und diese Prüfung wäre rot, statt die Annahme zu decken.
+    /// </summary>
+    [Fact]
+    public async Task EineEingescannteSeiteMitUnbenutzterSchriftBestehtDenDirektenWeg()
+    {
+        IExternalDocumentValidator validator = _fixture.RequireValidator();
+
+        InvoiceScenario scenario = InvoiceScenarios.ByKey("01-dienstleistung-19");
+        InvoiceTotals totals = InvoiceCalculator.Calculate(scenario.Invoice);
+        byte[] xml = _writer.Write(scenario.Invoice, totals);
+
+        string sourcePdfPath = Temp(TestPdfFactory.CreateScanOnlyPdf());
+
+        // Der Analysator sieht kein Hindernis: Die Schriftressource zeichnet
+        // nichts.
+        PdfAnalysisResult vorher = await _analyzer.AnalyzeAsync(
+            sourcePdfPath, TestContext.Current.CancellationToken);
+        Assert.Empty(vorher.UpgradeBlockers);
+
+        CompositionResult composition = await _composer.ComposeAsync(
+            new PdfACompositionRequest(
+                SourcePdfPath: sourcePdfPath,
+                InvoiceXml: xml,
+                Title: $"Rechnung {scenario.Invoice.InvoiceNumber}",
+                Author: scenario.Invoice.Seller.Name,
+                Subject: $"Rechnung {scenario.Invoice.InvoiceNumber}",
+                CreationDate: new DateTimeOffset(2026, 3, 15, 12, 0, 0, TimeSpan.FromHours(1)),
+                Attachment: _writer.Attachment),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(composition.Succeeded, Describe(composition.Report));
+
+        string resultPath = Temp(composition.PdfBytes!, ".pdf");
+        ValidationReport report = await validator.ValidateAsync(
+            resultPath, TestContext.Current.CancellationToken);
+
+        AssertPassed(
+            report,
+            "veraPDF und Schematron auf der eingescannten Seite mit unbenutzter Schrift. "
+            + "Schlägt dies fehl, ist die unbenutzte Schriftressource für PDF/A doch "
+            + "erheblich – dann gehört diese Datei auf den Rasterweg und nicht auf den "
+            + "direkten");
+    }
+
+    /// <summary>
     /// Ein Bericht, der keine einzige Aussage enthält, darf nicht als bestanden
     /// gelten. Dieser Test sichert genau diese Eigenschaft des Adapters ab.
     /// </summary>

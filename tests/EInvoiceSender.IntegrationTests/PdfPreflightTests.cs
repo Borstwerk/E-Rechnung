@@ -129,6 +129,67 @@ public sealed class PdfPreflightTests : IDisposable
     }
 
     /// <summary>
+    /// Eine eingescannte Seite wird nicht wegen einer Schrift abgelehnt, die
+    /// kein Zeichen zeichnet.
+    ///
+    /// **Der Befund aus dem Windows-Testlauf.** Sehr viele Scanner und
+    /// Ausgabetreiber schreiben eine Schriftressource in jede Seite, auch wenn
+    /// darauf nur ein Bild liegt. Die Datei bekam dafür APP-PRE-011 – „nicht
+    /// alle Schriftarten eingebettet“ – und der Anwender sollte etwas umstellen,
+    /// das mit seiner Rechnung nichts zu tun hatte.
+    ///
+    /// Dass der direkte Weg für eine solche Datei wirklich zulässig ist, sagt
+    /// nicht dieser Test, sondern veraPDF: siehe
+    /// <c>EndToEndConformanceTests.EineEingescannteSeiteMitUnbenutzterSchriftBestehtDenDirektenWeg</c>.
+    /// </summary>
+    [Fact]
+    public async Task EineEingescannteSeiteGehtDenDirektenWeg()
+    {
+        string path = Temp(TestPdfFactory.CreateScanOnlyPdf());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(PdfProcessingRoute.Direct, report.Route);
+        Assert.Equal(PreflightVerdict.Suitable, report.Verdict);
+        Assert.True(report.AllFontsEmbedded);
+        Assert.False(report.Findings.HasErrors);
+    }
+
+    /// <summary>
+    /// Die Gegenprobe: Sobald eine nicht eingebettete Schrift wirklich Text
+    /// zeichnet, bleibt es beim Hindernis – auch wenn daneben eine Bildseite
+    /// steht.
+    ///
+    /// Ohne diesen Fall wäre die Lockerung oben eine Hintertür: „irgendwo ein
+    /// Bild, also Schriftprüfung aus“.
+    /// </summary>
+    [Fact]
+    public async Task GemischtesDokumentBleibtAmSchrifthindernisHängen()
+    {
+        string path = Temp(TestPdfFactory.CreateMixedScanAndTextPdf());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.False(report.AllFontsEmbedded);
+        Assert.Equal(PdfProcessingRoute.RasterFallback, report.Route);
+    }
+
+    /// <summary>
+    /// Text in einem Form-XObject zählt genauso. Der Seiteninhalt selbst
+    /// enthält hier keinen einzigen Buchstaben – nur den Aufruf des Formulars.
+    /// </summary>
+    [Fact]
+    public async Task TextInEinemFormularZähltAlsVerwendeteSchrift()
+    {
+        string path = Temp(TestPdfFactory.CreatePdfWithTextInFormXObject());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.False(report.AllFontsEmbedded);
+        Assert.Equal(PdfProcessingRoute.RasterFallback, report.Route);
+    }
+
+    /// <summary>
     /// Ein Besitzerkennwort ist kein Öffnungskennwort: Die Datei lässt sich
     /// lesen und darstellen. PDFsharp meldet sie deshalb als unverschlüsselt.
     /// Trotzdem wird sie nicht stillschweigend gerastert – der Rechteinhaber hat
@@ -146,8 +207,54 @@ public sealed class PdfPreflightTests : IDisposable
         Assert.True(report.IsEncrypted);
 
         ValidationFinding finding = FindError(report, "APP-PRE-015");
-        Assert.Contains("Besitzerkennwort", finding.Message, StringComparison.Ordinal);
+
         Assert.Contains("Berechtigungseinschränkungen", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("angezeigt", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Besitzerkennwort", finding.TechnicalDetail!, StringComparison.Ordinal);
+
+        // Die Datei ist nicht kaputt, und das darf ihr niemand nachsagen.
+        Assert.DoesNotContain("beschädigt", finding.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(report.IsDamaged);
+    }
+
+    /// <summary>
+    /// Auch die Erzeugung selbst nennt eine rechtebeschränkte Datei nicht
+    /// „beschädigt“.
+    ///
+    /// **Der Befund aus dem Windows-Testlauf.** Die Datei kam bis in Schritt 4
+    /// und scheiterte dort an PDFsharp: „owner password is required to modify
+    /// the document“. Übersetzt bekam der Anwender „Sie ist vermutlich
+    /// beschädigt“ – und machte sich auf die Suche nach einer heilen Datei, die
+    /// er längst hatte. Die Eingangsprüfung fängt den Fall inzwischen vorher ab;
+    /// dass auch die Erzeugung die Wahrheit sagt, steht hier.
+    /// </summary>
+    [Fact]
+    public async Task DieErzeugungNenntEineRechtebeschränkteDateiNichtBeschädigt()
+    {
+        string path = Temp(TestPdfFactory.CreatePdfWithOwnerPassword());
+
+        InvoiceScenario scenario = InvoiceScenarios.ByKey("01-dienstleistung-19");
+        var totals = InvoiceCalculator.Calculate(scenario.Invoice);
+
+        CompositionResult composed = await _composer.ComposeAsync(
+            new PdfACompositionRequest(
+                path,
+                _writer.Write(scenario.Invoice, totals),
+                "Rechnung",
+                scenario.Invoice.Seller.Name,
+                "Rechnung",
+                DateTimeOffset.UnixEpoch,
+                _writer.Attachment),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(composed.Succeeded);
+
+        ValidationFinding finding = Assert.Single(
+            composed.Report.Findings, f => f.Severity == FindingSeverity.Error);
+
+        Assert.Equal("APP-PDF-006", finding.RuleId);
+        Assert.Contains("Berechtigungseinschränkungen", finding.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("beschädigt", finding.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

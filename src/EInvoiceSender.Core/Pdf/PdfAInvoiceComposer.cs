@@ -90,10 +90,22 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
         }
         catch (PdfReaderException ex)
         {
-            report.Error(
-                "APP-PDF-030",
-                "Die PDF-Datei konnte nicht verarbeitet werden. Sie ist vermutlich beschädigt.",
-                technicalDetail: ex.Message);
+            // **„Vermutlich beschädigt“ war hier jahrelang zu bequem.** Eine
+            // rechtebeschränkte PDF lässt sich lesen und anzeigen, aber nicht
+            // ändern; PDFsharp sagt das beim Öffnen im Änderungsmodus deutlich.
+            // Sie dem Anwender als kaputt zu melden, schickt ihn los, eine
+            // heile Datei zu suchen, die er längst hat.
+            //
+            // Die Eingangsprüfung fängt diesen Fall inzwischen vorher ab. Diese
+            // Stelle bleibt trotzdem ehrlich: Sie ist die letzte, an der noch
+            // etwas durchkommen kann, und eine falsche Auskunft ist auch dann
+            // eine falsche Auskunft.
+            report.Add(ex.Message.Contains("owner password", StringComparison.OrdinalIgnoreCase)
+                ? DescribeBlocker(PdfUpgradeBlocker.RightsRestricted) with { TechnicalDetail = ex.Message }
+                : ValidationFinding.Error(
+                    "APP-PDF-030",
+                    "Die PDF-Datei konnte nicht verarbeitet werden. Sie ist vermutlich beschädigt.",
+                    technicalDetail: ex.Message));
 
             return CompositionResult.Failed(report.Build());
         }
@@ -168,10 +180,11 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
 
         PdfUpgradeBlocker.RightsRestricted => ValidationFinding.Error(
             "APP-PDF-006",
-            "Die PDF-Datei ist mit einem Besitzerkennwort versehen und schränkt ein, "
-            + "was mit ihr geschehen darf. Bitte speichern Sie die Rechnung ohne "
-            + "Berechtigungseinschränkungen und wählen Sie sie erneut aus.",
-            technicalDetail: "Der Trailer enthält ein /Encrypt-Wörterbuch."),
+            "Diese PDF enthält Berechtigungseinschränkungen. Sie kann angezeigt, aber "
+            + "nicht für die E-Rechnung verändert werden. Bitte verwenden Sie eine "
+            + "ungeschützte Fassung der Rechnung.",
+            technicalDetail: "Die Datei trägt ein /Encrypt-Wörterbuch mit Besitzerkennwort. "
+                             + "Sie ist nicht beschädigt."),
 
         PdfUpgradeBlocker.DigitallySigned => ValidationFinding.Error(
             "APP-PDF-005",

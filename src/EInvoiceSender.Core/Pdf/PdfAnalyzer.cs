@@ -3,6 +3,8 @@ using EInvoiceSender.Core.Services;
 using Microsoft.Extensions.Logging;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.Advanced;
+using PdfSharp.Pdf.Content;
+using PdfSharp.Pdf.Content.Objects;
 using PdfSharp.Pdf.IO;
 using UglyToad.PdfPig.Exceptions;
 
@@ -118,7 +120,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
                 blockers.Add(PdfUpgradeBlocker.DigitallySigned);
             }
 
-            if (!AllFontsEmbedded(document))
+            if (!AllUsedFontsEmbedded(document))
             {
                 blockers.Add(PdfUpgradeBlocker.FontsNotEmbedded);
             }
@@ -149,20 +151,27 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
             // Eine beschädigte Datei ist ein erwarteter Betriebsfall, kein Programmfehler.
             // Ein Kennwortschutz meldet sich als Lesefehler. Er ist fachlich
             // etwas anderes als eine kaputte Datei und bekommt eine eigene,
-            // für den Anwender brauchbare Erklärung.
-            bool looksPasswordProtected =
-                ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase)
-                || ex.Message.Contains("encrypt", StringComparison.OrdinalIgnoreCase);
+            // für den Anwender brauchbare Erklärung – und zwar getrennt nach
+            // Öffnungs- und Besitzerkennwort.
+            PdfProtection fromMessage = ClassifyProtectionMessage(ex.Message);
 
             LogAnalysisFailed(_logger, ex.GetType().Name);
 
-            blockers.Add(looksPasswordProtected
-                ? PdfUpgradeBlocker.Encrypted
-                : PdfUpgradeBlocker.Damaged);
+            PdfUpgradeBlocker blocker = fromMessage switch
+            {
+                PdfProtection.PasswordRequired => PdfUpgradeBlocker.Encrypted,
+                PdfProtection.RightsRestricted => PdfUpgradeBlocker.RightsRestricted,
+                _ => PdfUpgradeBlocker.Damaged,
+            };
+
+            if (!blockers.Contains(blocker))
+            {
+                blockers.Add(blocker);
+            }
 
             return Unreadable(
                 blockers,
-                isEncrypted: looksPasswordProtected || protection != PdfProtection.None);
+                isEncrypted: fromMessage != PdfProtection.None || protection != PdfProtection.None);
         }
     }
 
@@ -226,9 +235,6 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         {
             return PdfProtection.PasswordRequired;
         }
-        // Eine beschädigte Datei wird hier nicht beurteilt: Das ist die Aufgabe
-        // des Hauptwegs, der dafür die verständliche Meldung hat. Hier gilt nur,
-        // was sicher festgestellt wurde.
         catch (Exception ex) when (ex is not OperationCanceledException
                                       and not OutOfMemoryException
                                       and not StackOverflowException)
@@ -236,34 +242,336 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
             string reason = ex.GetType().Name;
             LogProtectionUnknown(_logger, reason);
 
-            return PdfProtection.None;
+            // Hier ist die Frage offen, nicht beantwortet. „Offen“ als
+            // „ungeschützt“ zu lesen wäre genau der Fehler, der eine
+            // rechtebeschränkte Datei bis in die Erzeugung durchwinkt, wo sie
+            // dann mit einer falschen Begründung scheitert.
+            return DetectProtectionByModifiability(filePath);
         }
     }
 
     /// <summary>
-    /// Prüft alle Seiten auf Schriften ohne eingebettete Schriftdatei.
-    /// Nicht eingebettete Schriften sind der häufigste Grund, warum ein PDF
-    /// nicht PDF/A-fähig ist.
+    /// Zweiter Weg zur selben Frage, wenn der erste keine Antwort gab: Lässt
+    /// sich die Datei zum Ändern öffnen?
+    ///
+    /// Das ist genau die Fähigkeit, die der weitere Ablauf braucht – die
+    /// Rechnungsdaten werden schließlich eingebettet. PDFsharp beantwortet sie
+    /// eindeutig, wenn man sie so stellt: Beim Öffnen im Änderungsmodus verlangt
+    /// eine rechtebeschränkte Datei das Besitzerkennwort.
+    ///
+    /// Der Modus wird nur hier verwendet und nicht für die reguläre Analyse: Er
+    /// löst die Objektströme vollständig auf und kostet dadurch mehr, als eine
+    /// bloße Untersuchung braucht.
     /// </summary>
-    private static bool AllFontsEmbedded(PdfDocument document)
+    private static PdfProtection DetectProtectionByModifiability(string filePath)
+    {
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using PdfDocument document = PdfReader.Open(stream, PdfDocumentOpenMode.Modify);
+
+            return document.SecuritySettings.IsEncrypted
+                ? PdfProtection.RightsRestricted
+                : PdfProtection.None;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException
+                                      and not OutOfMemoryException
+                                      and not StackOverflowException)
+        {
+            return ClassifyProtectionMessage(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Ordnet die Meldung eines fehlgeschlagenen Öffnens ein.
+    ///
+    /// Die beiden Fälle sind fachlich weit auseinander und lesen sich fast
+    /// gleich: „a password is required to open“ heißt, es gibt nichts zu sehen;
+    /// „the owner password is required to modify“ heißt, man darf sehen, aber
+    /// nicht ändern. Wer sie zusammenwirft, erzählt dem Anwender in einem der
+    /// beiden Fälle etwas Falsches.
+    ///
+    /// Alles andere bleibt unbeantwortet – über eine beschädigte Datei
+    /// entscheidet der Hauptweg.
+    /// </summary>
+    private static PdfProtection ClassifyProtectionMessage(string message)
+    {
+        bool ownerPassword = message.Contains("owner password", StringComparison.OrdinalIgnoreCase);
+
+        if (ownerPassword)
+        {
+            return PdfProtection.RightsRestricted;
+        }
+
+        return message.Contains("password", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("encrypt", StringComparison.OrdinalIgnoreCase)
+            ? PdfProtection.PasswordRequired
+            : PdfProtection.None;
+    }
+
+    /// <summary>
+    /// Prüft, ob jede Schrift, mit der tatsächlich Text dargestellt wird, in der
+    /// Datei steckt. Nicht eingebettete Schriften sind der häufigste Grund,
+    /// warum ein PDF nicht PDF/A-fähig ist.
+    ///
+    /// **Warum die Frage nach der Verwendung nötig ist.** Früher stand hier
+    /// „gibt es unter <c>/Resources /Font</c> irgendeinen Eintrag ohne
+    /// Schriftdatei?“. Das klingt gleichbedeutend, ist es aber nicht: Sehr viele
+    /// Erzeuger schreiben eine Schriftressource in jede Seite, auch wenn auf ihr
+    /// nur ein Bild liegt. Eine eingescannte Rechnung wurde deshalb wegen einer
+    /// Schrift abgelehnt, die kein einziges Zeichen zeichnet.
+    ///
+    /// Die Norm meint die Verwendung. ISO 19005 verlangt die Einbettung für
+    /// Schriften, die zur Darstellung benutzt werden – eine unbenutzte Ressource
+    /// stellt nichts dar.
+    ///
+    /// **Nicht** geschieht hier das Naheliegende und Falsche: Bild-PDF pauschal
+    /// von der Prüfung auszunehmen. Eine Datei kann Bildseiten *und* echten Text
+    /// mit fehlender Einbettung enthalten; dann bleibt es beim Hindernis.
+    /// </summary>
+    private bool AllUsedFontsEmbedded(PdfDocument document)
     {
         foreach (PdfPage page in document.Pages)
         {
-            PdfDictionary? resources = page.Elements.GetDictionary("/Resources");
-            PdfDictionary? fonts = resources?.Elements.GetDictionary("/Font");
+            var visited = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
 
-            if (fonts is null)
+            if (!ScopeUsesOnlyEmbeddedFonts(
+                    page.Elements.GetDictionary("/Resources"),
+                    () => ContentReader.ReadContent(page),
+                    visited,
+                    depth: 0))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Prüft einen Inhaltsbereich – eine Seite oder ein Form-XObject – samt der
+    /// darin aufgerufenen Formulare.
+    ///
+    /// Gelingt das Lesen des Inhalts nicht, gilt wieder die alte, strengere
+    /// Regel: Dann zählt jede Schriftressource als verwendet. Eine unlesbare
+    /// Seite darf nicht zum Freibrief werden.
+    /// </summary>
+    private bool ScopeUsesOnlyEmbeddedFonts(
+        PdfDictionary? resources,
+        Func<CSequence> readContent,
+        HashSet<PdfDictionary> visited,
+        int depth)
+    {
+        PdfDictionary? fonts = resources?.Elements.GetDictionary("/Font");
+        PdfDictionary? xObjects = resources?.Elements.GetDictionary("/XObject");
+
+        // Ohne Schriften und ohne Formulare gibt es hier nichts zu entscheiden.
+        if (fonts is null && xObjects is null)
+        {
+            return true;
+        }
+
+        CSequence content;
+
+        try
+        {
+            content = readContent();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException
+                                      and not OutOfMemoryException
+                                      and not StackOverflowException)
+        {
+            string reason = ex.GetType().Name;
+            LogContentUnreadable(_logger, reason);
+
+            return AllDeclaredFontsEmbedded(fonts);
+        }
+
+        (IReadOnlySet<string> usedFonts, bool textWithoutFont, IReadOnlySet<string> invokedForms) =
+            ReadUsage(content);
+
+        // Text ohne vorher gesetzte Schrift ist fehlerhafter Inhalt. Was dann
+        // gezeichnet wird, ist nicht zu bestimmen – also gilt wieder alles.
+        if (textWithoutFont && !AllDeclaredFontsEmbedded(fonts))
+        {
+            return false;
+        }
+
+        foreach (string name in usedFonts)
+        {
+            if (fonts?.Elements.GetDictionary(name) is { } font && !IsFontEmbedded(font))
+            {
+                return false;
+            }
+        }
+
+        return depth >= MaxFormDepth
+               || InvokedFormsUseOnlyEmbeddedFonts(xObjects, invokedForms, resources, visited, depth);
+    }
+
+    /// <summary>
+    /// Steigt in die aufgerufenen Form-XObjects ab.
+    ///
+    /// Viele Erzeuger legen den gesamten sichtbaren Seiteninhalt in ein solches
+    /// Formular. Bliebe der Abstieg aus, sähe die Prüfung bei ihnen eine leere
+    /// Seite und ließe jede fehlende Einbettung durchgehen.
+    ///
+    /// Ein Formular ohne eigene <c>/Resources</c> benutzt die der Seite.
+    /// </summary>
+    private bool InvokedFormsUseOnlyEmbeddedFonts(
+        PdfDictionary? xObjects,
+        IReadOnlySet<string> invokedForms,
+        PdfDictionary? parentResources,
+        HashSet<PdfDictionary> visited,
+        int depth)
+    {
+        if (xObjects is null)
+        {
+            return true;
+        }
+
+        foreach (string name in invokedForms)
+        {
+            if (xObjects.Elements.GetDictionary(name) is not { } form
+                || form.Elements.GetName("/Subtype") != "/Form"
+                || form.Stream is null
+                || !visited.Add(form))
             {
                 continue;
             }
 
-            foreach (string key in fonts.Elements.Keys)
+            byte[] stream = form.Stream.UnfilteredValue;
+
+            if (!ScopeUsesOnlyEmbeddedFonts(
+                    form.Elements.GetDictionary("/Resources") ?? parentResources,
+                    () => ContentReader.ReadContent(stream),
+                    visited,
+                    depth + 1))
             {
-                PdfDictionary? font = fonts.Elements.GetDictionary(key);
-                if (font is not null && !IsFontEmbedded(font))
-                {
-                    return false;
-                }
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Grenze für ineinander verschachtelte Formulare. Kein Rechnungsdokument
+    /// braucht mehr; die Zahl schützt vor einer Datei, die es darauf anlegt.
+    /// </summary>
+    private const int MaxFormDepth = 8;
+
+    /// <summary>
+    /// Liest aus einem Inhaltsstrom, welche Schriften Text zeichnen und welche
+    /// Formulare aufgerufen werden.
+    ///
+    /// Die Schrift gehört zum Grafikzustand: <c>Tf</c> setzt sie, <c>q</c> und
+    /// <c>Q</c> legen sie ab und holen sie zurück. Ohne diesen Stapel würde eine
+    /// nach <c>Q</c> gezeichnete Zeile der falschen Schrift zugerechnet.
+    /// <c>BT</c> und <c>ET</c> setzen sie dagegen nicht zurück.
+    /// </summary>
+    private static (IReadOnlySet<string> UsedFonts, bool TextWithoutFont, IReadOnlySet<string> InvokedForms)
+        ReadUsage(CSequence content)
+    {
+        var usedFonts = new HashSet<string>(StringComparer.Ordinal);
+        var invokedForms = new HashSet<string>(StringComparer.Ordinal);
+        var savedFonts = new Stack<string?>();
+
+        string? currentFont = null;
+        bool textWithoutFont = false;
+
+        foreach (COperator op in Operators(content))
+        {
+            switch (op.OpCode.Name)
+            {
+                case "q":
+                    savedFonts.Push(currentFont);
+                    break;
+
+                case "Q":
+                    currentFont = savedFonts.Count > 0 ? savedFonts.Pop() : null;
+                    break;
+
+                case "Tf":
+                    currentFont = FirstName(op);
+                    break;
+
+                // Die vier Anweisungen, die Zeichen auf das Blatt bringen.
+                case "Tj":
+                case "TJ":
+                case "'":
+                case "\"":
+                    if (currentFont is null)
+                    {
+                        textWithoutFont = true;
+                    }
+                    else
+                    {
+                        usedFonts.Add(currentFont);
+                    }
+
+                    break;
+
+                case "Do":
+                    if (FirstName(op) is { } form)
+                    {
+                        invokedForms.Add(form);
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        return (usedFonts, textWithoutFont, invokedForms);
+    }
+
+    /// <summary>
+    /// Läuft die Inhaltsfolge ab, auch über verschachtelte Folgen hinweg.
+    /// </summary>
+    private static IEnumerable<COperator> Operators(CSequence content)
+    {
+        foreach (CObject item in content)
+        {
+            switch (item)
+            {
+                case COperator op:
+                    yield return op;
+                    break;
+
+                case CSequence nested:
+                    foreach (COperator inner in Operators(nested))
+                    {
+                        yield return inner;
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    /// <summary>Der erste Name unter den Operanden, z. B. <c>/F1</c>.</summary>
+    private static string? FirstName(COperator op)
+        => op.Operands.OfType<CName>().FirstOrDefault()?.Name;
+
+    /// <summary>Die alte, strengere Regel: jede erklärte Schrift zählt.</summary>
+    private static bool AllDeclaredFontsEmbedded(PdfDictionary? fonts)
+    {
+        if (fonts is null)
+        {
+            return true;
+        }
+
+        foreach (string key in fonts.Elements.Keys)
+        {
+            if (fonts.Elements.GetDictionary(key) is { } font && !IsFontEmbedded(font))
+            {
+                return false;
             }
         }
 
@@ -546,6 +854,11 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         EventId = 2010, Level = LogLevel.Warning,
         Message = "PDF konnte nicht analysiert werden ({Reason}). Datei wird als beschädigt gemeldet.")]
     private static partial void LogAnalysisFailed(ILogger logger, string reason);
+
+    [LoggerMessage(
+        EventId = 2012, Level = LogLevel.Information,
+        Message = "Inhaltsstrom nicht lesbar ({Reason}). Jede erklärte Schrift gilt als verwendet.")]
+    private static partial void LogContentUnreadable(ILogger logger, string reason);
 
     [LoggerMessage(
         EventId = 2011, Level = LogLevel.Information,

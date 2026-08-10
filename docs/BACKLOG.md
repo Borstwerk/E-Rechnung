@@ -63,13 +63,19 @@ hierher, sondern in die Commit-Historie.
      Original.
   10. `04_Mehrseitig_gemischte_Orientierung.pdf` – Seitenzahl und
       Seitenausrichtung bleiben erhalten, auch bei gedrehten Seiten.
-  11. `05_Scan_only_kein_PDF_Text.pdf` – die Erkennung meldet, dass sie nichts
-      gefunden hat, und erfindet nichts. Die Datei bleibt verarbeitbar.
+  11. `05_Scan_only_kein_PDF_Text.pdf` – **kein** Befund zur Schrifteinbettung:
+      Die Seite trägt eine Schriftressource, zeichnet damit aber nichts. Die
+      Datei geht den direkten Weg. Die Erkennung meldet, dass sie keinen Text
+      gefunden hat, und erfindet nichts.
   12. `06_Dicht_10_Seiten.pdf` – Dauer und Dateigröße notieren.
-  13. `07_Besitzerkennwort_Rechte_eingeschraenkt.pdf` – wird abgelehnt, nicht
-      stillschweigend gerastert. Die Meldung nennt das Besitzerkennwort.
+  13. `07_Besitzerkennwort_Rechte_eingeschraenkt.pdf` – wird **schon in
+      Schritt 1** abgelehnt, nicht erst beim Erzeugen und nicht stillschweigend
+      gerastert. Die Meldung nennt die Berechtigungseinschränkung und
+      bezeichnet die Datei **nicht** als beschädigt.
   14. `08_Oeffnungspasswort_test123.pdf` – wird ohne Kennwortabfrage sauber
-      abgelehnt.
+      abgelehnt. Es erscheint **kein** zusätzliches Störungsfenster mit
+      englischem Bibliothekstext; der deutsche Befund in Schritt 1 steht
+      allein.
   15. Nach jedem Durchlauf: **Original-PDF unverändert** (Dateigröße und
       Änderungsdatum, im Zweifel die Prüfsumme).
 
