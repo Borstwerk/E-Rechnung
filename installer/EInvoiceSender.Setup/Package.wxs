@@ -36,9 +36,22 @@
     das Paket mit MSIINSTALLPERUSER="" auf und bestätigt die Rückfrage von
     Windows.
 
-  * Die Verknüpfungen liegen unter HKMU statt HKCU. WiX übersetzt das je nach
-    Installationsart nach HKCU oder HKLM. Ein festes HKCU wäre bei einer
-    Installation für alle Benutzer die falsche Stelle.
+  * Der Schlüsselpfad der beiden Verknüpfungskomponenten liegt unter HKCU.
+
+    Vorher stand dort HKMU, und das beanstandet ICE57: „has both per-user
+    data and a keypath that can be either per-user or per-machine.“ HKMU ist
+    genau das – ein Pfad, der erst zur Installationszeit zu HKCU oder HKLM
+    wird. Eine Verknüpfung im Startmenü ist aber immer benutzerbezogene
+    Angabe; ihr Schlüsselpfad muss deshalb eindeutig benutzerbezogen sein.
+    Zugleich verlangt ICE38 für alles, was in ein Benutzerprofil
+    installiert, ohnehin einen Schlüsselpfad unter HKCU.
+
+    Was das bei einer Installation für alle Benutzer bedeutet: Der
+    Schlüsselwert wird unter HKCU desjenigen abgelegt, der installiert. Ein
+    anderer Benutzer hat ihn nicht, und eine Reparatur legt die Verknüpfung
+    für ihn erneut an. Das ist unschädlich – die Verknüpfung wird dabei
+    genau dort erzeugt, wo sie hingehört – und es ist der übliche Weg für
+    ein Paket, das beide Installationsarten beherrscht.
 
   * UpgradeCode bleibt über alle Versionen unverändert. Nur so erkennt
     Windows eine spätere Fassung als Aktualisierung statt als zweite
@@ -79,8 +92,22 @@
           SourceFile="..\..\src\EInvoiceSender.App\Assets\BorstWerkEInvoice.ico" />
     <Property Id="ARPPRODUCTICON" Value="BorstWerkEInvoice.ico" />
 
+    <!--
+      Eine neuere Fassung ersetzt die alte; eine ältere wird mit
+      verständlicher Meldung abgelehnt.
+
+      **Ohne AllowSameVersionUpgrades.** Diese Einstellung nimmt die eigene
+      Fassung in den Bereich der zu ersetzenden Fassungen mit auf – die
+      Obergrenze ist dann nicht mehr kleiner als die eigene Version, und
+      genau das beanstandet ICE61: „This product should remove only older
+      versions of itself.“ Ein Paket, das sich selbst als Vorgänger ansieht,
+      kann sich bei einer Neuinstallation im ungünstigen Fall selbst wieder
+      entfernen.
+
+      Für eine Testinstallation derselben Fassung ist die vorhandene
+      Installation vorher zu deinstallieren; das steht in docs/BUILD.md.
+    -->
     <MajorUpgrade
-      AllowSameVersionUpgrades="yes"
       DowngradeErrorMessage="Es ist bereits eine neuere Fassung von $(ProductName) installiert. Bitte deinstallieren Sie diese zuerst, wenn Sie eine ältere Fassung einsetzen möchten." />
 
     <MediaTemplate EmbedCab="yes" />
@@ -127,7 +154,7 @@
                 WorkingDirectory="INSTALLFOLDER"
                 Icon="BorstWerkEInvoice.ico" />
       <RemoveFolder Id="StartmenuOrdnerEntfernen" Directory="StartmenuOrdner" On="uninstall" />
-      <RegistryValue Root="HKMU" Key="Software\$(ProductManufacturer)\$(ProductName)"
+      <RegistryValue Root="HKCU" Key="Software\$(ProductManufacturer)\$(ProductName)"
                      Name="Startmenu" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
@@ -138,7 +165,7 @@
                 Target="[INSTALLFOLDER]EInvoiceSender.exe"
                 WorkingDirectory="INSTALLFOLDER"
                 Icon="BorstWerkEInvoice.ico" />
-      <RegistryValue Root="HKMU" Key="Software\$(ProductManufacturer)\$(ProductName)"
+      <RegistryValue Root="HKCU" Key="Software\$(ProductManufacturer)\$(ProductName)"
                      Name="Desktop" Type="integer" Value="1" KeyPath="yes" />
     </Component>
   </Package>

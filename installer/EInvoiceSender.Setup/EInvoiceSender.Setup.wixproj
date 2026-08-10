@@ -45,7 +45,18 @@
     -->
     <ProductName>BorstWerk E-Rechnung</ProductName>
     <ProductManufacturer>BorstWerk</ProductManufacturer>
-    <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.0</ProductVersion>
+    <!--
+      Die Fassungsnummer steht in Directory.Build.props als VersionPrefix und
+      sonst nirgends. Diese Datei liegt im Wurzelverzeichnis und gilt auch
+      für dieses Projekt, also lässt sich die Angabe von dort übernehmen,
+      statt sie ein zweites Mal zu pflegen – zwei Zahlen laufen früher oder
+      später auseinander, und dann trägt die MSI eine andere Fassung als die
+      Programmdatei darin.
+
+      Ein Aufruf mit -p:ProductVersion=... hat weiterhin Vorrang; die CI
+      setzt für eine Vorabfassung eine eigene Nummer.
+    -->
+    <ProductVersion Condition="'$(ProductVersion)' == ''">$(VersionPrefix)</ProductVersion>
 
     <!-- Verzeichnis der zuvor veröffentlichten Anwendung -->
     <PublishDir Condition="'$(PublishDir)' == ''">..\..\artifacts\publish\win-x64\</PublishDir>

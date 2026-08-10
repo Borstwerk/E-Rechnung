@@ -83,9 +83,28 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StepTitle))]
+    [NotifyPropertyChangedFor(nameof(IsFinished))]
+    [NotifyPropertyChangedFor(nameof(ShowsForwardButton))]
     [NotifyCanExecuteChangedFor(nameof(GoBackCommand))]
     [NotifyCanExecuteChangedFor(nameof(GoForwardCommand))]
     private WizardStep _currentStep = WizardStep.SelectPdf;
+
+    /// <summary>Steht der Vorgang am Ende?</summary>
+    public bool IsFinished => CurrentStep == WizardStep.Finish;
+
+    /// <summary>
+    /// Wird „Weiter“ überhaupt angezeigt?
+    ///
+    /// Im letzten Schritt nicht. Dort gibt es nichts mehr, wohin es führen
+    /// könnte, und eine abgeblendete Schaltfläche sagt genau das nicht: Sie
+    /// sieht aus, als fehle noch eine Angabe oder als halte eine Prüfung den
+    /// Anwender auf. Das war der Befund aus dem manuellen Testlauf – der
+    /// Vorgang war fertig, und das Fenster wirkte, als sei er es nicht.
+    ///
+    /// „Zurück“ bleibt dagegen stehen: Wer nach dem Erzeugen noch etwas
+    /// ändern will, muss zurückgehen können.
+    /// </summary>
+    public bool ShowsForwardButton => !IsFinished;
 
     /// <summary>
     /// Läuft gerade eine längere Arbeit?

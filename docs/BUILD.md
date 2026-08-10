@@ -69,7 +69,14 @@ eine tragbare ZIP-Fassung an und schreibt `SHA256SUMS.txt` nach
 unter Linux bricht das Skript mit einer entsprechenden Meldung ab.
 
 Die Versionsnummer steht zentral in `Directory.Build.props` (`VersionPrefix`)
-und wird von Anwendung und Installer gemeinsam verwendet.
+und wird von Anwendung und Installer gemeinsam verwendet. Das WiX-Projekt
+liest sie von dort; ein Aufruf mit `-p:ProductVersion=...` hat Vorrang.
+
+**Testinstallation derselben Fassung:** Das Paket ersetzt nur *ältere*
+Fassungen seiner selbst. Wer dieselbe Fassung erneut installieren will, muss
+die vorhandene vorher deinstallieren. Das ist Absicht – ein Paket, das sich
+selbst als Vorgänger ansieht, verstößt gegen ICE61 und kann sich bei einer
+Neuinstallation im ungünstigen Fall selbst wieder entfernen.
 
 ## Linux und macOS
 

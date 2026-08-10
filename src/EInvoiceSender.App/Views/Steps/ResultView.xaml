@@ -10,7 +10,33 @@
 
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel>
-      <TextBlock Style="{StaticResource Abschnitt}" Text="Erzeugte Datei" />
+
+      <!--
+        Der Abschluss muss als solcher zu erkennen sein.
+
+        Ohne diese Zeile endete der Ablauf wortlos: Der Anwender sah eine
+        Dateiliste und eine abgeblendete Schaltfläche „Weiter“ und musste
+        raten, ob noch etwas fehlt. Hier steht, dass es fertig ist.
+
+        Zeichen, Wort und Farbe – in dieser Reihenfolge. Fiele die Farbe weg,
+        bliebe die Aussage vollständig lesbar.
+      -->
+      <Border Style="{StaticResource BorstWerk.Status.Success}" Margin="0,0,0,16"
+              AutomationProperties.Name="Fertig. Die E-Rechnung wurde erzeugt und geprüft."
+              AutomationProperties.LiveSetting="Polite">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="✓" FontWeight="Bold" MinWidth="16" TextAlignment="Center"
+                     VerticalAlignment="Top" Margin="0,0,8,0"
+                     Foreground="{StaticResource BorstWerk.Brush.Status.Success}" />
+          <TextBlock Text="Fertig" FontWeight="SemiBold" VerticalAlignment="Top"
+                     Margin="0,0,8,0"
+                     Foreground="{StaticResource BorstWerk.Brush.Status.Success}" />
+          <TextBlock Text="Die E-Rechnung wurde erzeugt und geprüft."
+                     TextWrapping="Wrap" VerticalAlignment="Top" />
+        </StackPanel>
+      </Border>
+
+      <TextBlock Style="{StaticResource Abschnitt}" Text="Erzeugte Datei" Margin="0,0,0,4" />
       <UniformGrid Columns="2">
         <TextBlock Text="Dateiname" />
         <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextWrapping="Wrap" />

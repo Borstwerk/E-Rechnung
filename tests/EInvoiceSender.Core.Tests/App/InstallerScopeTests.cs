@@ -20,6 +20,11 @@ namespace EInvoiceSender.Core.Tests.App;
 /// zu unterdrücken hieße nur, die Prüfung zum Schweigen zu bringen. Die
 /// Lösung liegt beim Ziel, nicht bei den Dateien.
 ///
+/// **Zwei weitere Befunde aus dem Windows-Bau** stecken ebenfalls hier:
+/// ICE57 am Schlüsselpfad der Verknüpfungen und ICE61 an der
+/// Aktualisierungsregel. Beide sind an der Ursache behoben, keiner ist
+/// unterdrückt.
+///
 /// **Warum als Quelltextprüfung:** Ein MSI entsteht nur unter Windows;
 /// <c>wix.exe</c> bricht auf jeder anderen Plattform sofort ab. Dieser Test
 /// hält deshalb die Merkmale fest, an denen die Entscheidung hängt.
@@ -87,11 +92,21 @@ public sealed class InstallerScopeTests
     }
 
     /// <summary>
-    /// HKCU wäre bei einer Installation für alle Benutzer die falsche Stelle.
-    /// HKMU übersetzt WiX je nach Installationsart.
+    /// Der Schlüsselpfad der Verknüpfungskomponenten ist eindeutig
+    /// benutzerbezogen.
+    ///
+    /// **Der Fehler:** Vorher stand dort HKMU – ein Pfad, der erst zur
+    /// Installationszeit zu HKCU oder HKLM wird. ICE57 beanstandet genau
+    /// das: „has both per-user data and a keypath that can be either
+    /// per-user or per-machine.“ Eine Verknüpfung im Startmenü ist immer
+    /// benutzerbezogene Angabe; ihr Schlüsselpfad darf deshalb nicht offen
+    /// lassen, für wen er gilt.
+    ///
+    /// HKCU erfüllt zugleich ICE38, das für alles, was in ein Benutzerprofil
+    /// installiert, einen Schlüsselpfad unter HKCU verlangt.
     /// </summary>
     [Fact]
-    public void DieVerknüpfungenSchreibenInDieKontextabhängigeRegistrierung()
+    public void DerSchlüsselpfadDerVerknüpfungenIstEindeutigBenutzerbezogen()
     {
         string[] wurzeln =
         [
@@ -101,7 +116,95 @@ public sealed class InstallerScopeTests
         ];
 
         Assert.NotEmpty(wurzeln);
-        Assert.All(wurzeln, root => Assert.Equal("HKMU", root));
+        Assert.All(wurzeln, root => Assert.Equal("HKCU", root));
+    }
+
+    /// <summary>
+    /// Das Paket ersetzt nur ältere Fassungen seiner selbst.
+    ///
+    /// <c>AllowSameVersionUpgrades</c> nimmt die eigene Fassung in den
+    /// Bereich der zu ersetzenden Fassungen auf. Die Obergrenze ist dann
+    /// nicht mehr kleiner als die eigene Version – ICE61 meldet „This
+    /// product should remove only older versions of itself“. Ein Paket, das
+    /// sich selbst für seinen Vorgänger hält, kann sich bei einer
+    /// Neuinstallation selbst wieder entfernen.
+    /// </summary>
+    [Fact]
+    public void DasPaketErsetztNurÄltereFassungen()
+    {
+        XElement upgrade = Assert.Single(Package().Elements(Wxs + "MajorUpgrade"));
+
+        Assert.Null(upgrade.Attribute("AllowSameVersionUpgrades"));
+        Assert.NotNull(upgrade.Attribute("DowngradeErrorMessage"));
+    }
+
+    /// <summary>
+    /// Der UpgradeCode ist die Kennung, an der Windows eine spätere Fassung
+    /// als Aktualisierung erkennt. Ändert er sich, steht die neue Fassung
+    /// neben der alten statt an ihrer Stelle – und der Anwender hat die
+    /// Anwendung zweimal installiert.
+    /// </summary>
+    [Fact]
+    public void DerUpgradeCodeBleibtUnverändert()
+        => Assert.Equal(
+            "7f3c1d92-4b6a-4d21-9d0e-2a5c8b1e7f40",
+            Package().Attribute("UpgradeCode")?.Value,
+            ignoreCase: true);
+
+    /// <summary>
+    /// Der Startmenüeintrag gehört zur Hauptfunktion, die Desktopverknüpfung
+    /// zu einer eigenen Funktion mit <c>Level="2"</c> – damit ist sie
+    /// abwählbar. Läge sie in der Hauptfunktion, bekäme sie jeder.
+    /// </summary>
+    [Fact]
+    public void DerStartmenüeintragIstFestUndDerDesktopeintragWählbar()
+    {
+        XElement[] features = [.. Package().Elements(Wxs + "Feature")];
+
+        XElement haupt = Assert.Single(features, f => f.Attribute("Level")?.Value == "1");
+        XElement desktop = Assert.Single(features, f => f.Attribute("Level")?.Value == "2");
+
+        // Gesucht wird über den Zielordner, nicht über die Kennung: Welche
+        // Verknüpfung wohin gehört, ist die Aussage – wie die Komponente
+        // heißt, ist Nebensache und darf sich ändern.
+        Assert.Contains(KomponentenIn(haupt), id => id == KomponenteFür("StartmenuOrdner"));
+        Assert.Contains(KomponentenIn(desktop), id => id == KomponenteFür("DesktopFolder"));
+    }
+
+    /// <summary>Kennung der Komponente, die in diesen Ordner installiert.</summary>
+    private static string KomponenteFür(string ordner)
+        => Assert.Single(
+            Package().Elements(Wxs + "Component"),
+            c => c.Attribute("Directory")?.Value == ordner)
+            .Attribute("Id")!.Value;
+
+    private static IEnumerable<string> KomponentenIn(XElement feature)
+        => feature.Elements(Wxs + "ComponentRef")
+            .Select(r => r.Attribute("Id")?.Value ?? string.Empty);
+
+    /// <summary>
+    /// Beide Verknüpfungen tragen das BorstWerk-Symbol, und die Symboldatei
+    /// ist im Paket angemeldet. Fehlte der Eintrag, zeigte „Apps und
+    /// Features“ das Ersatzsymbol von Windows.
+    /// </summary>
+    [Fact]
+    public void DieVerknüpfungenTragenDasBorstWerkSymbol()
+    {
+        XElement icon = Assert.Single(Package().Elements(Wxs + "Icon"));
+        string id = icon.Attribute("Id")?.Value ?? string.Empty;
+
+        Assert.Contains("BorstWerk", icon.Attribute("SourceFile")?.Value ?? string.Empty,
+                        StringComparison.Ordinal);
+
+        Assert.Contains(
+            Package().Elements(Wxs + "Property"),
+            p => p.Attribute("Id")?.Value == "ARPPRODUCTICON"
+                 && p.Attribute("Value")?.Value == id);
+
+        XElement[] verknüpfungen = [.. Package().Descendants(Wxs + "Shortcut")];
+
+        Assert.Equal(2, verknüpfungen.Length);
+        Assert.All(verknüpfungen, s => Assert.Equal(id, s.Attribute("Icon")?.Value));
     }
 
     /// <summary>

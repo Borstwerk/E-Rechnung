@@ -122,16 +122,38 @@
     <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
       <Button Content="_Einstellungen ..." Click="OnSettingsClicked" TabIndex="90"
               AutomationProperties.HelpText="Öffnet die Firmenvorlage und die Standardwerte." />
+      <!--
+        Während des Ablaufs verwirft „Neue Rechnung“ den Stand – eine
+        Nebenhandlung. Im letzten Schritt ist es die naheliegende nächste
+        Handlung und steht deshalb weiter unten als Primäraktion. Zwei
+        Schaltflächen statt einer umgefärbten: So behält jede ihr richtiges
+        Verhalten beim Überfahren mit der Maus, und es ist immer nur eine
+        davon sichtbar.
+      -->
       <Button Content="Neue _Rechnung" Command="{Binding StartOverCommand}" TabIndex="91"
+              Visibility="{Binding ShowsForwardButton, Converter={StaticResource BoolToVisibility}}"
               AutomationProperties.HelpText="Verwirft den aktuellen Stand und beginnt von vorn." />
       <Separator Width="16" Visibility="Hidden" />
+
+      <!-- „Zurück“ bleibt auch im letzten Schritt: Korrigieren muss möglich sein. -->
       <Button Content="_Zurück" Command="{Binding GoBackCommand}" TabIndex="92" />
+
       <!--
-        Die einzige Primäraktion des Fensters. Sie trägt die Produktfarbe;
-        alles andere daneben bleibt neutral, sonst hebt sich nichts mehr ab.
+        Die Primäraktion des Fensters. Sie trägt die Produktfarbe; alles
+        daneben bleibt neutral, sonst hebt sich nichts mehr ab.
+
+        Im letzten Schritt wird „Weiter“ **ausgeblendet** statt abgeblendet.
+        Eine abgeblendete Schaltfläche liest sich als „hier fehlt noch
+        etwas“ – im Abschlussschritt ist aber alles erledigt.
       -->
       <Button Content="_Weiter" Command="{Binding GoForwardCommand}" TabIndex="93" IsDefault="True"
-              Style="{StaticResource BorstWerk.Button.Primary}" Margin="0" />
+              Style="{StaticResource BorstWerk.Button.Primary}" Margin="0"
+              Visibility="{Binding ShowsForwardButton, Converter={StaticResource BoolToVisibility}}" />
+
+      <Button Content="Neue _Rechnung" Command="{Binding StartOverCommand}" TabIndex="94"
+              Style="{StaticResource BorstWerk.Button.Primary}" Margin="0"
+              Visibility="{Binding IsFinished, Converter={StaticResource BoolToVisibility}}"
+              AutomationProperties.HelpText="Beginnt einen neuen Vorgang mit einer anderen PDF-Rechnung." />
     </StackPanel>
   </Grid>
 </Window>
