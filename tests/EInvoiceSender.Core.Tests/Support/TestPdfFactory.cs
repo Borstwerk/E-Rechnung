@@ -105,6 +105,106 @@ public static class TestPdfFactory
     }
 
     /// <summary>
+    /// Baut eine PDF mit drei verschieden geformten Seiten: A4 hoch, A4 quer
+    /// und eine A4-Hochformatseite mit <c>/Rotate 90</c>.
+    ///
+    /// Der dritte Fall ist der lehrreiche: Die Seite ist im Datenmodell hoch
+    /// und wird nur angezeigt wie ein Querformat. Ein Weg, der die
+    /// MediaBox-Angabe für bare Münze nimmt, dreht die Seite still zurück.
+    ///
+    /// Die Schrift ist auch hier nicht eingebettet – eine solche Datei geht
+    /// den direkten Weg ohnehin nicht.
+    /// </summary>
+    public static byte[] CreateMixedPageSizesPdf() => BuildPages(
+        (595, 842, 0, "Seite 1 - A4 hoch"),
+        (842, 595, 0, "Seite 2 - A4 quer"),
+        (595, 842, 90, "Seite 3 - hoch, um 90 Grad gedreht"));
+
+    /// <summary>
+    /// Baut eine mehrseitige PDF mit der angegebenen Seitenzahl, jede Seite
+    /// A4 hoch und erkennbar beschriftet.
+    /// </summary>
+    public static byte[] CreateMultiPagePdf(int pageCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageCount, 1);
+
+        return BuildPages(
+            [.. Enumerable.Range(1, pageCount).Select(i => (595, 842, 0, $"Seite {i} von {pageCount}"))]);
+    }
+
+    /// <summary>
+    /// Setzt von Hand eine PDF aus den beschriebenen Seiten zusammen.
+    ///
+    /// Von Hand, weil PdfSharp für Text eine Schriftdatei bräuchte und weil
+    /// genau die nicht eingebettete Standardschrift gewünscht ist. Jede Seite
+    /// bekommt zusätzlich einen Rahmen: An ihm lässt sich im Sichtvergleich
+    /// ablesen, ob etwas beschnitten wurde.
+    /// </summary>
+    private static byte[] BuildPages(params (int Width, int Height, int Rotate, string Text)[] pages)
+    {
+        var objects = new List<byte[]>();
+        int fontObject = 3 + (pages.Length * 2);
+
+        string kids = string.Join(
+            " ", Enumerable.Range(0, pages.Length).Select(i => $"{3 + (i * 2)} 0 R"));
+
+        objects.Add(Ascii("<< /Type /Catalog /Pages 2 0 R >>"));
+        objects.Add(Ascii($"<< /Type /Pages /Kids [{kids}] /Count {pages.Length} >>"));
+
+        for (int i = 0; i < pages.Length; i++)
+        {
+            (int width, int height, int rotate, string text) = pages[i];
+
+            objects.Add(Ascii(
+                $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {width} {height}] /Rotate {rotate} "
+                + $"/Resources << /Font << /F1 {fontObject} 0 R >> >> /Contents {4 + (i * 2)} 0 R >>"));
+
+            byte[] content = Ascii(
+                $"BT /F1 24 Tf 40 {height - 80} Td ({text}) Tj ET\n"
+                + $"2 w 20 20 {width - 40} {height - 40} re S");
+
+            objects.Add(
+            [
+                .. Ascii($"<< /Length {content.Length} >>\nstream\n"),
+                .. content,
+                .. Ascii("\nendstream"),
+            ]);
+        }
+
+        objects.Add(Ascii(
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"));
+
+        var file = new MemoryStream();
+        var offsets = new List<int>(objects.Count);
+
+        file.Write(Ascii("%PDF-1.4\n"));
+
+        for (int i = 0; i < objects.Count; i++)
+        {
+            offsets.Add((int)file.Length);
+            file.Write(Ascii($"{i + 1} 0 obj\n"));
+            file.Write(objects[i]);
+            file.Write(Ascii("\nendobj\n"));
+        }
+
+        int xref = (int)file.Length;
+
+        file.Write(Ascii($"xref\n0 {objects.Count + 1}\n0000000000 65535 f \n"));
+
+        foreach (int offset in offsets)
+        {
+            file.Write(Ascii($"{offset:D10} 00000 n \n"));
+        }
+
+        file.Write(Ascii(
+            $"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"));
+
+        return file.ToArray();
+    }
+
+    private static byte[] Ascii(string text) => System.Text.Encoding.ASCII.GetBytes(text);
+
+    /// <summary>
     /// Liefert Bytes, die zwar wie ein PDF beginnen, aber keine gültige
     /// Struktur haben. Muss als beschädigt erkannt werden.
     /// </summary>

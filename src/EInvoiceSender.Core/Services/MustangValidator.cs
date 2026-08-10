@@ -18,7 +18,7 @@ namespace EInvoiceSender.Core.Services;
 /// nach <c>tools/mustang/*.jar</c> suchte. Das war für den Entwicklerrechner
 /// gedacht, lief aber auch in der installierten Anwendung – die dabei im
 /// schlechtesten Fall eine fremde JAR irgendwo oberhalb ihres
-/// Installationsordners aufgriff. Wer den Validator einsetzt, weiss, wo sein
+/// Installationsordners aufgriff. Wer den Validator einsetzt, weiß, wo sein
 /// Werkzeug liegt.
 /// </summary>
 /// <param name="JavaExecutable">Pfad oder Name der Java-Laufzeit.</param>

@@ -19,6 +19,12 @@
     <PackageReference Include="MimeKit" />
     <PackageReference Include="PdfSharp" />
     <PackageReference Include="PdfPig" />
+    <!--
+      PDFium für den Rasterweg (RasterizedPdfBuilder). Dieselbe Abhängigkeit,
+      die die Oberfläche schon für die Seitenvorschau einsetzt – kein neuer
+      Baustein und keine neue Lizenz.
+    -->
+    <PackageReference Include="PDFtoImage" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>

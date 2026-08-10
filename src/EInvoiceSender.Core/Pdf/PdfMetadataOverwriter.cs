@@ -112,7 +112,7 @@ public static partial class PdfMetadataOverwriter
         {
             throw new InvalidOperationException(
                 "Die Datei enthält keinen klassischen Trailer. "
-                + "Querverweisstroeme werden hier nicht unterstützt.");
+                + "Querverweisströme werden hier nicht unterstützt.");
         }
 
         int start = text.IndexOf("<<", index, StringComparison.Ordinal);

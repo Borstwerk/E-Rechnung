@@ -47,10 +47,40 @@ public sealed class GermanSpellingTests
         "haeufig", "gaengig", "aehnlich", "erhaelt", "laeuft", "ausloes",
         "aufloes", "hoech", "noetig", "uebernahme", "uebernimmt",
         "veroeffent", "verknuepf",
+
+        // Nachgetragen beim Rasterversuch: Diese beiden standen noch im aktiven
+        // Quelltext, weil kein Stamm sie traf. „hiess“ war erfasst, „heiss“
+        // nicht – ein Buchstabe Unterschied, zwei übersehene Stellen.
+        "heiss", "stroem",
     ];
 
     /// <summary>
-    /// Werte von <c>Id</c>-Attributen. Im Installationspaket heissen zwei
+    /// Was hier bewusst **nicht** steht – und warum das keine Nachlässigkeit ist.
+    ///
+    /// „weiss“ wäre der nächstliegende Eintrag, und er ist nicht brauchbar:
+    /// Der Testname <c>JederHerkunftshinweisStehtBeiSeinemEingabefeld</c>
+    /// enthält die Folge in <c>…hinweisSteht…</c>, ohne dass ein falsch
+    /// geschriebenes Wort im Spiel wäre. Ein Wächter, der berechtigten Text
+    /// anmahnt, wird abgeschaltet – und dann meldet er auch die echten Fälle
+    /// nicht mehr.
+    ///
+    /// Dasselbe gilt für „gross“: Es ist zugleich der englische Name der
+    /// Bruttosumme (siehe oben).
+    /// </summary>
+    private static readonly string[] NotUsable = ["weiss", "gross"];
+
+    /// <summary>
+    /// Hält die Begründung oben fest: Wer eines dieser Muster nachträgt, macht
+    /// den Wächter unbrauchbar, und der Test sagt ihm, warum.
+    /// </summary>
+    [Fact]
+    public void DieUnbrauchbarenMusterBleibenDraußen()
+        => Assert.All(
+            NotUsable,
+            marker => Assert.DoesNotContain(marker, Transliterations, StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Werte von <c>Id</c>-Attributen. Im Installationspaket heißen zwei
     /// Bestandteile <c>StartmenuVerknuepfung</c> und
     /// <c>DesktopVerknuepfung</c>. Das sind Kennungen: Sie stehen in der
     /// MSI-Datenbank, werden innerhalb der Datei gegenseitig referenziert und

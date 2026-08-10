@@ -5,7 +5,7 @@ namespace EInvoiceSender.Core.Tests.Support;
 ///
 /// Mehrere Prüfungen lesen den Quelltext als Text – die Schreibweise deutscher
 /// Wörter, die Verweise auf Dokumentation. Alle brauchen dieselbe Antwort auf
-/// die Frage, was „aktiv“ heisst; sie steht deshalb an einer Stelle.
+/// die Frage, was „aktiv“ heißt; sie steht deshalb an einer Stelle.
 /// </summary>
 public static class ProjectFiles
 {
