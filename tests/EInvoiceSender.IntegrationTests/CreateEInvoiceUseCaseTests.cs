@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf;
 using EInvoiceSender.Core.Services;
@@ -21,6 +22,12 @@ namespace EInvoiceSender.IntegrationTests;
 /// das **Original unverändert** bleibt. Eine halb fertige Datei wäre schlimmer
 /// als gar keine, weil der Anwender sie für gültig halten könnte.
 /// </summary>
+// Die Kette schließt den Rasterweg ein, und der braucht PDFium. Die
+// Angabe hält den Prüfer davon ab, Zielsysteme anzunehmen, auf denen
+// diese Anwendung nie läuft.
+[SupportedOSPlatform("windows")]
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("macos")]
 public sealed class CreateEInvoiceUseCaseTests : IDisposable
 {
     private readonly List<string> _temporaryPaths = [];
@@ -129,8 +136,19 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.Equal(PipelineStep.ValidateInvoiceData, failed.Step);
     }
 
+    /// <summary>
+    /// Eine nicht eingebettete Schrift hält den Vorgang weiterhin an – aber aus
+    /// einem anderen Grund als früher: Es fehlt nicht der Weg, es fehlt die
+    /// Zustimmung zu ihm.
+    ///
+    /// **Diese Sperre sitzt bewusst hier und nicht in der Oberfläche.** Wer den
+    /// Kern unmittelbar aufruft, umgeht sonst genau die Entscheidung, um die es
+    /// geht. Der Auftrag lässt sich als Datensatz zusammenstellen; die
+    /// Zustimmung ist ein Feld darin, und ein nicht gesetztes Feld ist keine
+    /// Zustimmung.
+    /// </summary>
     [Fact]
-    public async Task NichtEingebetteteSchriftFührtZumAbbruchImPreflight()
+    public async Task NichtEingebetteteSchriftBrauchtDieZustimmungZurSichtbarenKopie()
     {
         string source = TempPdf(TestPdfFactory.CreatePdfWithNonEmbeddedFont());
 
@@ -139,7 +157,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
         Assert.False(result.Succeeded);
         Assert.Null(result.OutputFile);
-        Assert.Contains(result.Report.Findings, f => f.RuleId == "APP-PRE-011");
+        Assert.Contains(result.Report.Findings, f => f.RuleId == "APP-USE-003");
 
         PipelineProgress failed = Assert.Single(
             result.CompletedSteps, s => s.State == StepState.Failed);
@@ -328,11 +346,12 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
     private EInvoiceService BuildUseCase(params IExternalDocumentValidator[] validators)
         => new(
-            new PdfPreflightService(_analyzer, NullLogger<PdfPreflightService>.Instance),
+            PipelineParts.Preflight(_analyzer),
             new En16931RuleValidator(new FixedClock(FixedNow)),
             _writer,
             _reader,
             new PdfAInvoiceComposer(_analyzer, NullLogger<PdfAInvoiceComposer>.Instance),
+            PipelineParts.RasterComposer(),
             _analyzer,
             new FileStorage(NullLogger<FileStorage>.Instance),
             new TemporaryWorkspaceFactory(),

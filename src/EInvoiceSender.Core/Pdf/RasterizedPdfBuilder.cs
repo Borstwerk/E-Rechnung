@@ -47,11 +47,10 @@ public sealed partial class RasterizedPdfBuilder(ILogger<RasterizedPdfBuilder> l
     private readonly ILogger<RasterizedPdfBuilder> _logger = logger;
 
     /// <summary>
-    /// Die vorgesehene Auflösung. 300 dpi ist der übliche Wert für Druckbilder
-    /// mit kleiner Schrift; belegt ist er durch die Messreihe im Spike-Bericht,
-    /// nicht durch Gewohnheit.
+    /// Die vorgesehene Auflösung. Sie steht in
+    /// <see cref="RasterFallback.Dpi"/>, weil auch der Prüfbericht sie nennt.
     /// </summary>
-    public const int DefaultDpi = 300;
+    public const int DefaultDpi = RasterFallback.Dpi;
 
     /// <summary>
     /// PDFium ist nicht threadsicher. Das Rendern läuft deshalb serialisiert –

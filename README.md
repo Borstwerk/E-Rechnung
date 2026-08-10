@@ -124,7 +124,7 @@ Die installierte Anwendung führt ihre eingebauten Prüfungen aus. Externe Refer
 
 ## Bekannte Grenzen
 
-- **Aktuell lässt sich nicht jede PDF direkt verwenden.** Geeignete PDFs werden nach PDF/A-3 aufgewertet. Problematisch sind insbesondere Dokumente mit nicht eingebetteten Schriften, beschädigte oder geschützte PDFs sowie digital signierte Dateien. An einer lokalen Fallback-Lösung für weitere PDF-Typen kann weitergearbeitet werden.
+- **Nicht jede PDF lässt sich direkt verwenden.** Geeignete PDFs werden nach PDF/A-3 aufgewertet, und dieser Weg hat immer Vorrang. Fehlt einer Datei nur die Schrifteinbettung, bietet die Anwendung stattdessen eine **sichtbare Kopie** an: Sie stellt die Seiten örtlich dar und baut daraus ein neues Dokument. Das kostet den durchsuchbaren Text, lässt die Rechnungsdaten in der eingebetteten XML aber vollständig maschinenlesbar – und geschieht nur nach ausdrücklicher Zustimmung. Beschädigte, kennwortgeschützte, rechtebeschränkte, digital signierte PDFs und solche mit aktiven Inhalten werden weiterhin abgelehnt.
 - **Rechnungspositionen müssen derzeit häufig noch von Hand erfasst werden.**
 - **Keine Steuerberatung.** Die Anwendung kann technische und formale Prüfungen durchführen, aber nicht beurteilen, ob eine Rechnung steuerlich oder inhaltlich richtig ist.
 

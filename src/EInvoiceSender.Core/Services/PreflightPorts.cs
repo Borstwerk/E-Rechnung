@@ -4,6 +4,14 @@ namespace EInvoiceSender.Core.Services;
 
 /// <summary>
 /// Gesamturteil der Eingangsprüfung.
+///
+/// Das Urteil sagt, **wie gut** es um die Datei steht. Auf welchem Weg sie
+/// verarbeitet werden kann, steht getrennt davon in
+/// <see cref="PdfProcessingRoute"/>, und ob der Benutzer den nötigen Weg
+/// gutgeheißen hat, steht noch einmal getrennt am Erzeugungsauftrag. Die drei
+/// Fragen absichtlich auseinanderzuhalten ist der Kern dieser Erweiterung:
+/// Wären sie ein Wert, ließe sich „technisch möglich“ nicht mehr von
+/// „vom Benutzer gewollt“ unterscheiden.
 /// </summary>
 public enum PreflightVerdict
 {
@@ -33,6 +41,11 @@ public enum PreflightVerdict
 /// nicht geht.
 /// </summary>
 /// <param name="Verdict">Gesamturteil.</param>
+/// <param name="Route">
+/// Auf welchem Weg diese Datei verarbeitet werden kann. Beim Rasterweg ist die
+/// Verarbeitung damit noch nicht beschlossen – dazu gehört die ausdrückliche
+/// Zustimmung des Benutzers.
+/// </param>
 /// <param name="FilePath">Geprüftes Original. Wird nie verändert.</param>
 /// <param name="FileName">Dateiname zur Anzeige.</param>
 /// <param name="FileSizeInBytes">Dateigröße.</param>
@@ -55,6 +68,7 @@ public enum PreflightVerdict
 /// <param name="Findings">Einzelbefunde mit verständlichen Erklärungen.</param>
 public sealed record PdfPreflightReport(
     PreflightVerdict Verdict,
+    PdfProcessingRoute Route,
     string FilePath,
     string FileName,
     long FileSizeInBytes,
@@ -72,8 +86,18 @@ public sealed record PdfPreflightReport(
     string? DeclaredPdfALevel,
     ValidationReport Findings)
 {
-    /// <summary>Kann mit dieser Datei weitergearbeitet werden?</summary>
-    public bool CanProceed => Verdict != PreflightVerdict.NotSuitable;
+    /// <summary>
+    /// Gibt es überhaupt einen Weg? Beim Rasterweg heißt das noch nicht, dass
+    /// er beschritten werden darf – siehe <see cref="RequiresRasterFallback"/>.
+    /// </summary>
+    public bool CanProceed => Route != PdfProcessingRoute.Rejected;
+
+    /// <summary>
+    /// Führt der einzige verbleibende Weg über eine sichtbare Kopie? Dann muss
+    /// der Benutzer dem Qualitätsverlust ausdrücklich zustimmen, bevor es
+    /// weitergeht.
+    /// </summary>
+    public bool RequiresRasterFallback => Route == PdfProcessingRoute.RasterFallback;
 
     /// <summary>Enthält die Datei bereits eine Rechnungs-XML?</summary>
     public bool HasExistingInvoice => ExistingInvoiceProfile is not null;

@@ -24,7 +24,7 @@ automatisiert prüfen – auch auf einem Build-Agenten ohne Bildschirm.
 | `Validation` | Befunde und Prüfberichte |
 | `Validation/Rules` | die EN-16931-Regeln, nach Dokument, Parteien, Positionen, Umsatzsteuer, Summen und Zahlung gruppiert |
 | `Zugferd` | CII-XML erzeugen und zurücklesen |
-| `Pdf` | PDF-Analyse, Eingangsprüfung, PDF/A-3-Aufwertung, XMP, ICC-Profil, Einbettung |
+| `Pdf` | PDF-Analyse, Eingangsprüfung, PDF/A-3-Aufwertung, sichtbare Kopie (Rasterweg), XMP, ICC-Profil, Einbettung |
 | `Pdf/Detection` | örtliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefüllung und Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
 | `Storage` | atomare Dateiausgabe, sichere Dateinamen, temporäre Arbeitsverzeichnisse |
@@ -152,6 +152,43 @@ Drei Eigenschaften sind dabei bindend:
 - **Keine halb fertige Ausgabedatei.** Gespeichert wird erst, wenn alle
   verpflichtenden Prüfungen bestanden sind.
 - **Das Original bleibt unverändert.** Es wird ausschließlich gelesen.
+
+### Die zwei Wege zur fertigen Datei
+
+Die Eingangsprüfung beantwortet drei Fragen, und sie bleiben getrennt:
+
+| Frage | Wo sie beantwortet wird |
+|---|---|
+| Ist die direkte Aufwertung möglich? | `PdfAnalysisResult.CanBeUpgraded` |
+| Ist die sichtbare Kopie technisch möglich? | `PdfPreflightReport.Route` |
+| Hat der Anwender dem Qualitätsverlust zugestimmt? | `CreateEInvoiceRequest.RasterFallbackConfirmed` |
+
+Zusammengefasst wären sie nicht mehr auseinanderzuhalten – „technisch möglich“
+sähe aus wie „gewollt“.
+
+`PdfProcessingRoute` kennt drei Werte:
+
+- **`Direct`** – die Seiten des Originals werden unverändert übernommen.
+  `PdfAInvoiceComposer`, unverändert.
+- **`RasterFallback`** – ausschließlich für Dateien, deren **einziges**
+  Hindernis die fehlende Schrifteinbettung ist **und** deren Seiten sich
+  nachweislich darstellen lassen (`IPdfRenderProbe` stellt jede Seite
+  probeweise bei 72 dpi dar). `RasterFallbackComposer` über
+  `RasterizedPdfBuilder`, fest 300 dpi.
+- **`Rejected`** – alles andere.
+
+Es gibt bewusst **keine** Regel der Art „PDFium kann rendern, also ist alles
+erlaubt“. Jedes Hindernis ist einzeln beurteilt; die Begründungen stehen im
+Kommentar von `PdfPreflightService.ChooseRouteAsync`.
+
+Beide Wege enden in denselben PDF/A-3-Bestandteilen (`PdfAInvoiceParts`) und
+durchlaufen dieselbe Ergebnisprüfung. Der gegangene Weg steht im Prüfbericht.
+
+Zum Rechteschutz: PDFsharp meldet für eine Datei mit Besitzerkennwort
+`IsEncrypted == false` und öffnet sie anstandslos. Der Eintrag `/Encrypt` steht
+im Trailer, den PDFsharp nicht offenlegt. `PdfAnalyzer` befragt deshalb
+zusätzlich PdfPig – ohnehin für die Textauswertung vorhanden – und unterscheidet
+so Öffnungskennwort, Rechteeinschränkung und ungeschützt.
 
 ## Abhängigkeiten
 

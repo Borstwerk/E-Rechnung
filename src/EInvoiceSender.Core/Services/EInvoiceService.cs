@@ -36,6 +36,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
     private readonly IInvoiceXmlWriter _xmlWriter;
     private readonly IInvoiceXmlReader _xmlReader;
     private readonly IPdfAInvoiceComposer _composer;
+    private readonly IPdfARasterFallbackComposer _rasterComposer;
     private readonly IPdfAnalyzer _analyzer;
     private readonly IFileStorage _fileStorage;
     private readonly ITemporaryWorkspaceFactory _workspaceFactory;
@@ -51,6 +52,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
         IInvoiceXmlWriter xmlWriter,
         IInvoiceXmlReader xmlReader,
         IPdfAInvoiceComposer composer,
+        IPdfARasterFallbackComposer rasterComposer,
         IPdfAnalyzer analyzer,
         IFileStorage fileStorage,
         ITemporaryWorkspaceFactory workspaceFactory,
@@ -63,6 +65,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
         _xmlWriter = xmlWriter ?? throw new ArgumentNullException(nameof(xmlWriter));
         _xmlReader = xmlReader ?? throw new ArgumentNullException(nameof(xmlReader));
         _composer = composer ?? throw new ArgumentNullException(nameof(composer));
+        _rasterComposer = rasterComposer ?? throw new ArgumentNullException(nameof(rasterComposer));
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
         _fileStorage = fileStorage ?? throw new ArgumentNullException(nameof(fileStorage));
         _workspaceFactory = workspaceFactory ?? throw new ArgumentNullException(nameof(workspaceFactory));
@@ -192,11 +195,38 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
         context.Report.AddRange(preflight.Findings);
 
-        if (!preflight.CanProceed)
+        // Die Prüfung läuft hier ein zweites Mal, und das bleibt so. Zwischen
+        // der Auswahl in Schritt 1 und dem Erzeugen liegt Zeit, in der die Datei
+        // ausgetauscht worden sein kann. Was die Oberfläche vor einer Minute
+        // gesehen hat, ist kein Nachweis über die Datei von jetzt.
+        switch (preflight.Route)
         {
-            context.Fail(PipelineStep.Preflight, 1, "Die PDF-Datei ist nicht geeignet");
+            case PdfProcessingRoute.Rejected:
+                context.Fail(PipelineStep.Preflight, 1, "Die PDF-Datei ist nicht geeignet");
 
-            return false;
+                return false;
+
+            // Der Rasterweg ohne Zustimmung ist kein Sonderfall, den die
+            // Oberfläche schon abfangen wird – hier ist die Sperre.
+            case PdfProcessingRoute.RasterFallback when !context.Request.RasterFallbackConfirmed:
+                context.Report.Error(
+                    "APP-USE-003",
+                    "Die gewählte PDF-Datei lässt sich nur über eine sichtbare Kopie "
+                    + "verarbeiten. Bestätigen Sie ausdrücklich, dass die sichtbare Kopie "
+                    + "verwendet werden soll, oder wählen Sie eine PDF-Datei mit "
+                    + "eingebetteten Schriftarten.",
+                    "SourcePdfPath",
+                    "Zustimmung zum Rasterweg fehlt.");
+
+                context.Fail(PipelineStep.Preflight, 1, "Zustimmung zur sichtbaren Kopie fehlt");
+
+                return false;
+
+            case PdfProcessingRoute.RasterFallback:
+            case PdfProcessingRoute.Direct:
+            default:
+                context.Route = preflight.Route;
+                break;
         }
 
         // Eine bereits eingebettete Rechnung wird nie stillschweigend ersetzt.
@@ -289,7 +319,15 @@ public sealed partial class EInvoiceService : IEInvoiceService
             CreationDate: context.StartedAt,
             Attachment: _xmlWriter.Attachment);
 
-        CompositionResult composition = await _composer
+        // Der Weg steht seit der Eingangsprüfung fest und wird hier nur noch
+        // befolgt. Direkt heißt: Seiten übernehmen. Raster heißt: Seiten neu
+        // aufbauen. Beide enden in denselben PDF/A-Bestandteilen und derselben
+        // Ergebnisprüfung.
+        IPdfAInvoiceComposer composer = context.Route == PdfProcessingRoute.RasterFallback
+            ? _rasterComposer
+            : _composer;
+
+        CompositionResult composition = await composer
             .ComposeAsync(compositionRequest, context.CancellationToken).ConfigureAwait(false);
 
         context.Report.AddRange(composition.Report);
@@ -302,7 +340,11 @@ public sealed partial class EInvoiceService : IEInvoiceService
         }
 
         context.ResultPdf = composition.PdfBytes;
-        context.Succeed(PipelineStep.ComposePdfA, 5, "E-Rechnung erzeugt");
+        context.Succeed(
+            PipelineStep.ComposePdfA, 5,
+            context.Route == PdfProcessingRoute.RasterFallback
+                ? "E-Rechnung als sichtbare Kopie erzeugt"
+                : "E-Rechnung erzeugt");
 
         return true;
     }
@@ -397,7 +439,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             (jsonFile, textFile) = await WriteReportsAsync(
                     request, stored, context.Checksum!, finalReport, context.StartedAt,
-                    context.Validators, context.CancellationToken)
+                    context.Validators, context.Route, context.CancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -443,6 +485,14 @@ public sealed partial class EInvoiceService : IEInvoiceService
         public List<PipelineProgress> Steps { get; } = [];
 
         public List<ValidatorInfo> Validators { get; } = [];
+
+        /// <summary>
+        /// Der Weg, den die Eingangsprüfung freigegeben hat. Er steht bewusst
+        /// hier und nicht als lokale Variable in einer Methode: Erzeugung und
+        /// Bericht müssen denselben Wert lesen, sonst könnte der Bericht einen
+        /// anderen Weg ausweisen als den gegangenen.
+        /// </summary>
+        public PdfProcessingRoute Route { get; set; } = PdfProcessingRoute.Direct;
 
         public ITemporaryWorkspace? Workspace { get; set; }
 
@@ -667,17 +717,18 @@ public sealed partial class EInvoiceService : IEInvoiceService
         ValidationReport report,
         DateTimeOffset createdAt,
         IReadOnlyList<ValidatorInfo> validators,
+        PdfProcessingRoute route,
         CancellationToken cancellationToken)
     {
         string stem = Path.GetFileNameWithoutExtension(stored.FullPath);
 
         byte[] json = ValidationReportWriter.ToJson(
             request, stored, checksum, report, createdAt,
-            _xmlWriter.FormatDescription, _xmlWriter.ProfileId, validators);
+            _xmlWriter.FormatDescription, _xmlWriter.ProfileId, validators, route);
 
         byte[] text = ValidationReportWriter.ToText(
             request, stored, checksum, report, createdAt,
-            _xmlWriter.FormatDescription, _xmlWriter.ProfileId, validators);
+            _xmlWriter.FormatDescription, _xmlWriter.ProfileId, validators, route);
 
         StoredFile jsonFile = await _fileStorage.WriteAsync(
             request.OutputDirectory, $"{stem}-Prüfbericht.json", json,

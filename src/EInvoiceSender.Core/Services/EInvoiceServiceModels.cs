@@ -94,6 +94,19 @@ public sealed record PipelineProgress(
 /// Sollen der maschinenlesbare und der menschenlesbare Bericht als Dateien
 /// abgelegt werden?
 /// </param>
+/// <param name="RasterFallbackConfirmed">
+/// Bestätigung, dass anstelle des Originals eine sichtbare Kopie aus
+/// dargestellten Seiten verwendet werden darf.
+///
+/// **Die Vorgabe ist falsch, und sie muss falsch bleiben.** Der Rasterweg
+/// kostet den durchsuchbaren Text; das ist eine Entscheidung des Benutzers und
+/// keine, die die Anwendung ihm abnimmt. Ist der Weg nötig und die Bestätigung
+/// nicht erteilt, bricht der Anwendungsfall ab – die Sperre sitzt im Kern und
+/// nicht in der Oberfläche, damit sie sich nicht umgehen lässt.
+///
+/// Die Bestätigung gilt für diesen einen Vorgang. Sie wird nirgends als
+/// Einstellung aufbewahrt.
+/// </param>
 public sealed record CreateEInvoiceRequest(
     string SourcePdfPath,
     Invoice Invoice,
@@ -102,7 +115,8 @@ public sealed record CreateEInvoiceRequest(
     string? OutputFileName = null,
     OverwriteBehavior OverwriteBehavior = OverwriteBehavior.CreateNumberedCopy,
     bool ExistingInvoiceReplacementConfirmed = false,
-    bool WriteReportFiles = true);
+    bool WriteReportFiles = true,
+    bool RasterFallbackConfirmed = false);
 
 /// <summary>
 /// Angaben zu einem beteiligten Prüfwerkzeug, für den Bericht.

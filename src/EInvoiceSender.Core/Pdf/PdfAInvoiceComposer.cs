@@ -166,6 +166,13 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
             + "Sie ist vermutlich beschädigt. Bitte erzeugen Sie die Rechnung neu.",
             technicalDetail: "Der PDF-Parser konnte die Struktur nicht auflösen."),
 
+        PdfUpgradeBlocker.RightsRestricted => ValidationFinding.Error(
+            "APP-PDF-006",
+            "Die PDF-Datei ist mit einem Besitzerkennwort versehen und schränkt ein, "
+            + "was mit ihr geschehen darf. Bitte speichern Sie die Rechnung ohne "
+            + "Berechtigungseinschränkungen und wählen Sie sie erneut aus.",
+            technicalDetail: "Der Trailer enthält ein /Encrypt-Wörterbuch."),
+
         PdfUpgradeBlocker.DigitallySigned => ValidationFinding.Error(
             "APP-PDF-005",
             "Die PDF-Datei ist digital signiert. Durch das Einbetten der Rechnungsdaten "

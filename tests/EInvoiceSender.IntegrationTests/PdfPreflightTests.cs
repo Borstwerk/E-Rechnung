@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf;
@@ -19,6 +20,12 @@ namespace EInvoiceSender.IntegrationTests;
 ///    die der Anwender in seinem Programm ändern kann. Eine Ablehnung ohne
 ///    Handlungsanweisung wäre für ihn wertlos.
 /// </summary>
+// Die Kette schließt den Rasterweg ein, und der braucht PDFium. Die
+// Angabe hält den Prüfer davon ab, Zielsysteme anzunehmen, auf denen
+// diese Anwendung nie läuft.
+[SupportedOSPlatform("windows")]
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("macos")]
 public sealed class PdfPreflightTests : IDisposable
 {
     private readonly List<string> _temporaryFiles = [];
@@ -30,7 +37,7 @@ public sealed class PdfPreflightTests : IDisposable
     {
         var analyzer = new PdfAnalyzer(new CiiInvoiceReader(), NullLogger<PdfAnalyzer>.Instance);
 
-        _preflight = new PdfPreflightService(analyzer, NullLogger<PdfPreflightService>.Instance);
+        _preflight = PipelineParts.Preflight(analyzer);
         _composer = new PdfAInvoiceComposer(analyzer, NullLogger<PdfAInvoiceComposer>.Instance);
     }
 
@@ -57,23 +64,108 @@ public sealed class PdfPreflightTests : IDisposable
         Assert.False(report.Findings.HasErrors);
     }
 
+    /// <summary>
+    /// Eine nicht eingebettete Schrift versperrt den direkten Weg – aber nicht
+    /// jeden. Sie führt deshalb nicht mehr zu einer Ablehnung, sondern zu einem
+    /// Angebot.
+    ///
+    /// **Der Unterschied ist nicht kosmetisch.** Vorher stand dort ein roter
+    /// Fehler mit dem Rat, die Datei im Ausgangsprogramm anders zu exportieren.
+    /// Wer dieses Programm nicht mehr hat – ein Steuerberaterbeleg, eine
+    /// Fremdrechnung –, war damit am Ende. Jetzt gibt es einen Weg, und der Satz
+    /// beschreibt ihn, statt nur zu bedauern.
+    /// </summary>
     [Fact]
-    public async Task PdfMitNichtEingebetteterSchriftIstNichtGeeignetUndNenntDieEinstellung()
+    public async Task PdfMitNichtEingebetteterSchriftBekommtDenRasterwegAngeboten()
     {
         string path = Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFont());
 
         PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
 
-        Assert.Equal(PreflightVerdict.NotSuitable, report.Verdict);
-        Assert.False(report.CanProceed);
+        Assert.Equal(PdfProcessingRoute.RasterFallback, report.Route);
+        Assert.Equal(PreflightVerdict.SuitableWithWarnings, report.Verdict);
+        Assert.True(report.CanProceed);
+        Assert.True(report.RequiresRasterFallback);
         Assert.False(report.AllFontsEmbedded);
 
-        ValidationFinding finding = FindError(report, "APP-PRE-011");
+        // Kein Fehler mehr – der Weg steht ja offen.
+        Assert.False(report.Findings.HasErrors);
 
-        // Die Meldung muss dem Anwender sagen, was er umstellen soll.
-        Assert.Contains("Schriftarten einbetten", finding.Message, StringComparison.Ordinal);
-        Assert.Contains("PDF/A", finding.Message, StringComparison.Ordinal);
-        Assert.NotNull(finding.TechnicalDetail);
+        ValidationFinding offer = Assert.Single(
+            report.Findings.Findings,
+            f => f.RuleId == "APP-PRE-011" && f.Severity == FindingSeverity.Warning);
+
+        Assert.Contains("sichtbare PDF/A-Kopie", offer.Message, StringComparison.Ordinal);
+        Assert.Contains("Original bleibt unverändert", offer.Message, StringComparison.Ordinal);
+
+        // Was der Weg kostet, steht daneben – vor der Zustimmung, nicht danach.
+        ValidationFinding cost = Assert.Single(
+            report.Findings.Findings, f => f.RuleId == "APP-PRE-016");
+
+        Assert.Contains("durchsuchbar", cost.Message, StringComparison.Ordinal);
+        Assert.Contains("maschinenlesbar", cost.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Kommt zur fehlenden Schrifteinbettung ein zweites Hindernis hinzu, gilt
+    /// das strengere. Sonst wäre der Rasterweg eine Hintertür, durch die alles
+    /// andere mit hindurchginge.
+    /// </summary>
+    [Fact]
+    public async Task EinZweitesHindernisNimmtDemRasterwegDieGrundlage()
+    {
+        string path = Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFontAndJavaScript());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(PdfProcessingRoute.Rejected, report.Route);
+        Assert.Equal(PreflightVerdict.NotSuitable, report.Verdict);
+        Assert.False(report.CanProceed);
+        Assert.True(report.HasActiveContent);
+
+        // Und die Schrift ist hier wieder ein Fehler, kein Angebot.
+        FindError(report, "APP-PRE-011");
+        FindError(report, "APP-PRE-012");
+    }
+
+    /// <summary>
+    /// Ein Besitzerkennwort ist kein Öffnungskennwort: Die Datei lässt sich
+    /// lesen und darstellen. PDFsharp meldet sie deshalb als unverschlüsselt.
+    /// Trotzdem wird sie nicht stillschweigend gerastert – der Rechteinhaber hat
+    /// festgelegt, was mit ihr geschehen darf.
+    /// </summary>
+    [Fact]
+    public async Task PdfMitBesitzerkennwortWirdNichtStillGerastert()
+    {
+        string path = Temp(TestPdfFactory.CreatePdfWithOwnerPassword());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(PdfProcessingRoute.Rejected, report.Route);
+        Assert.False(report.CanProceed);
+        Assert.True(report.IsEncrypted);
+
+        ValidationFinding finding = FindError(report, "APP-PRE-015");
+        Assert.Contains("Besitzerkennwort", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Berechtigungseinschränkungen", finding.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Verlangt die Datei zum Öffnen ein Kennwort, gibt es nichts darzustellen.
+    /// Der Rasterweg kommt gar nicht erst in Betracht.
+    /// </summary>
+    [Fact]
+    public async Task PdfMitÖffnungskennwortWirdSauberAbgelehnt()
+    {
+        string path = Temp(TestPdfFactory.CreatePdfWithUserPassword());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(PdfProcessingRoute.Rejected, report.Route);
+        Assert.False(report.CanProceed);
+        Assert.True(report.IsEncrypted);
+
+        FindError(report, "APP-PRE-010");
     }
 
     [Fact]
@@ -128,9 +220,8 @@ public sealed class PdfPreflightTests : IDisposable
     [Fact]
     public async Task ZuGroßeDateiWirdAbgelehntUndNenntEinenAusweg()
     {
-        var analyzer = new PdfAnalyzer(new CiiInvoiceReader(), NullLogger<PdfAnalyzer>.Instance);
-        var strict = new PdfPreflightService(
-            analyzer, NullLogger<PdfPreflightService>.Instance, maxFileSizeMegabytes: 1);
+        PdfPreflightService strict = PipelineParts.Preflight(
+            PipelineParts.Analyzer(), maxFileSizeMegabytes: 1);
 
         // Eine Datei knapp über der Grenze.
         byte[] large = new byte[(1024 * 1024) + 1];
@@ -203,9 +294,11 @@ public sealed class PdfPreflightTests : IDisposable
         // Alle Ablehnungswege durchlaufen und die Meldungsqualität prüfen.
         string[] paths =
         [
-            Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFont()),
+            Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFontAndJavaScript()),
             Temp(TestPdfFactory.CreateDamagedPdf()),
             Temp(TestPdfFactory.CreateNonPdf()),
+            Temp(TestPdfFactory.CreatePdfWithOwnerPassword()),
+            Temp(TestPdfFactory.CreatePdfWithUserPassword()),
         ];
 
         foreach (string path in paths)

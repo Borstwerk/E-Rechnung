@@ -35,6 +35,51 @@ public enum PdfUpgradeBlocker
 
     /// <summary>Die Datei enthält eine digitale Signatur, die durch die Änderung ungültig würde.</summary>
     DigitallySigned,
+
+    /// <summary>
+    /// Die Datei lässt sich zwar ohne Kennwort öffnen, trägt aber ein
+    /// Verschlüsselungswörterbuch mit Rechteeinschränkungen – ein
+    /// Besitzerkennwort.
+    ///
+    /// Das ist ausdrücklich etwas anderes als <see cref="Encrypted"/>: Zum Lesen
+    /// wird kein Kennwort verlangt, weshalb PDFsharp das Dokument anstandslos
+    /// öffnet und nichts meldet. Der Rechteinhaber hat aber festgelegt, was mit
+    /// dem Dokument geschehen darf, und daran ändert die Anwendung nichts
+    /// stillschweigend.
+    /// </summary>
+    RightsRestricted,
+}
+
+/// <summary>
+/// Der Weg, auf dem aus der Ausgangsdatei eine E-Rechnung entsteht.
+///
+/// Der Wert beantwortet genau eine Frage: **Wie** kann diese Datei verarbeitet
+/// werden? Er sagt nichts darüber, ob der Benutzer den gewählten Weg
+/// gutgeheißen hat – das steht getrennt in der Zustimmung am
+/// Erzeugungsauftrag.
+/// </summary>
+public enum PdfProcessingRoute
+{
+    /// <summary>
+    /// Die Seiten des Originals werden unverändert übernommen und um die
+    /// fehlenden PDF/A-3-Bestandteile ergänzt. Der bevorzugte Weg: Er erhält
+    /// den Text der Rechnung als Text.
+    /// </summary>
+    Direct,
+
+    /// <summary>
+    /// Der direkte Weg ist versperrt, aber die Seiten lassen sich darstellen.
+    /// Dann kann die Anwendung örtlich eine sichtbare Kopie aus den gerenderten
+    /// Seiten aufbauen. Das kostet den durchsuchbaren Text und setzt deshalb
+    /// die ausdrückliche Zustimmung des Benutzers voraus.
+    /// </summary>
+    RasterFallback,
+
+    /// <summary>
+    /// Es gibt keinen Weg. Der Bericht nennt den Grund und was der Benutzer
+    /// tun kann.
+    /// </summary>
+    Rejected,
 }
 
 /// <summary>
@@ -89,6 +134,58 @@ public interface IPdfAnalyzer
 }
 
 /// <summary>
+/// Die festen Kenngrößen des Rasterwegs.
+///
+/// Sie stehen hier und nicht beim Erzeuger, weil auch der Prüfbericht sie nennt.
+/// Zwei Stellen mit derselben Zahl wären zwei Stellen, die auseinanderlaufen
+/// können – und ein Bericht, der eine andere Auflösung ausweist als die
+/// verwendete, wäre schlimmer als gar keine Angabe.
+/// </summary>
+public static class RasterFallback
+{
+    /// <summary>
+    /// Die Auflösung des Rasterwegs. 300 dpi ist der übliche Wert für
+    /// Druckbilder mit kleiner Schrift; belegt ist er durch die Messreihe in
+    /// docs/SPIKE-RASTER-FALLBACK.md. Bewusst fest und nicht einstellbar.
+    /// </summary>
+    public const int Dpi = 300;
+}
+
+/// <summary>
+/// Ergebnis der Darstellbarkeitsprüfung.
+/// </summary>
+/// <param name="CanRender">Ließen sich alle Seiten darstellen?</param>
+/// <param name="PageCount">Anzahl der geprüften Seiten.</param>
+/// <param name="Reason">
+/// Warum es nicht ging, in technischer Form für den Bericht. Nur gesetzt,
+/// wenn <paramref name="CanRender"/> falsch ist.
+/// </param>
+public sealed record PdfRenderProbeResult(bool CanRender, int PageCount, string? Reason)
+{
+    /// <summary>Alle Seiten ließen sich darstellen.</summary>
+    public static PdfRenderProbeResult Renderable(int pageCount) => new(true, pageCount, null);
+
+    /// <summary>Die Darstellung schlug fehl.</summary>
+    public static PdfRenderProbeResult NotRenderable(string reason) => new(false, 0, reason);
+}
+
+/// <summary>
+/// Stellt fest, ob sich die Seiten einer PDF-Datei überhaupt darstellen lassen.
+///
+/// Das ist die Voraussetzung des Rasterwegs, und sie wird nachgewiesen und nicht
+/// vermutet: Die Prüfung stellt jede Seite tatsächlich dar, nur in grober
+/// Auflösung. Ein Dokument, dessen fünfte Seite den Renderer stolpern lässt,
+/// darf nicht als „geht schon“ angeboten werden.
+///
+/// Die Datei wird ausschließlich gelesen.
+/// </summary>
+public interface IPdfRenderProbe
+{
+    /// <summary>Stellt alle Seiten probeweise dar.</summary>
+    Task<PdfRenderProbeResult> ProbeAsync(string filePath, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
 /// Auftrag zur Erzeugung der ZUGFeRD-Datei.
 /// </summary>
 /// <param name="SourcePdfPath">Pfad der unveränderten Original-PDF.</param>
@@ -125,6 +222,18 @@ public interface IPdfAInvoiceComposer
         PdfACompositionRequest request,
         CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Erzeugt dasselbe Ergebnis wie <see cref="IPdfAInvoiceComposer"/>, nur auf dem
+/// Rasterweg: Die sichtbaren Seiten werden neu aus den dargestellten
+/// Seitenbildern aufgebaut.
+///
+/// Bewusst ein eigener Anschluss statt eines Schalters am vorhandenen: Der
+/// direkte Weg bleibt damit unangetastet, und wer die Erzeugung liest, sieht an
+/// der Typangabe, welcher Weg gemeint ist. Eine Auswahlhierarchie mit Fabrik und
+/// Strategie wäre für zwei Wege zu viel Gerüst.
+/// </summary>
+public interface IPdfARasterFallbackComposer : IPdfAInvoiceComposer;
 
 /// <summary>Ergebnis der PDF/A-3-Erzeugung.</summary>
 /// <param name="Succeeded">Konnte die Datei erzeugt werden?</param>

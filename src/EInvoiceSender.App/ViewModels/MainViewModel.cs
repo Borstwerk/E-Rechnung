@@ -373,7 +373,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 Invoice: invoice,
                 ContentMatchConfirmed: Review.ContentMatchConfirmed,
                 OutputDirectory: Review.OutputDirectory,
-                ExistingInvoiceReplacementConfirmed: Review.ExistingInvoiceReplacementConfirmed);
+                ExistingInvoiceReplacementConfirmed: Review.ExistingInvoiceReplacementConfirmed,
+                RasterFallbackConfirmed: PdfSelection.RasterFallbackConfirmed);
 
             CreateEInvoiceResult result = await Generation.RunAsync(request).ConfigureAwait(true);
 

@@ -18,6 +18,7 @@ namespace EInvoiceSender.Core.Pdf;
 public sealed partial class PdfPreflightService : IPdfPreflightService
 {
     private readonly IPdfAnalyzer _analyzer;
+    private readonly IPdfRenderProbe _renderProbe;
     private readonly ILogger<PdfPreflightService> _logger;
     private readonly long _maxFileSizeInBytes;
 
@@ -26,10 +27,12 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
 
     public PdfPreflightService(
         IPdfAnalyzer analyzer,
+        IPdfRenderProbe renderProbe,
         ILogger<PdfPreflightService> logger,
         int maxFileSizeMegabytes = DefaultMaxFileSizeMegabytes)
     {
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
+        _renderProbe = renderProbe ?? throw new ArgumentNullException(nameof(renderProbe));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         ArgumentOutOfRangeException.ThrowIfLessThan(maxFileSizeMegabytes, 1);
@@ -111,19 +114,27 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
         bool activeContent = analysis.UpgradeBlockers.Contains(PdfUpgradeBlocker.ActiveContent);
         bool fontsEmbedded = !analysis.UpgradeBlockers.Contains(PdfUpgradeBlocker.FontsNotEmbedded);
 
-        AddBlockerFindings(analysis, findings);
+        // Erst der Weg, dann die Meldungen: Wie ein Hindernis zu benennen ist,
+        // hängt davon ab, ob es den Vorgang beendet oder nur den bequemen Weg
+        // versperrt. Dieselbe fehlende Schrifteinbettung ist einmal ein Fehler
+        // und einmal ein Hinweis.
+        (PdfProcessingRoute route, string? renderRefusal) =
+            await ChooseRouteAsync(analysis, filePath, cancellationToken).ConfigureAwait(false);
+
+        AddBlockerFindings(analysis, findings, route, renderRefusal);
         AddInformationalFindings(analysis, findings);
 
-        PreflightVerdict verdict = analysis.CanBeUpgraded
-            ? findings.HasWarnings()
+        PreflightVerdict verdict = route == PdfProcessingRoute.Rejected
+            ? PreflightVerdict.NotSuitable
+            : findings.HasWarnings()
                 ? PreflightVerdict.SuitableWithWarnings
-                : PreflightVerdict.Suitable
-            : PreflightVerdict.NotSuitable;
+                : PreflightVerdict.Suitable;
 
-        LogPreflight(_logger, fileName, verdict, analysis.UpgradeBlockers.Count);
+        LogPreflight(_logger, fileName, verdict, route, analysis.UpgradeBlockers.Count);
 
         return new PdfPreflightReport(
             Verdict: verdict,
+            Route: route,
             FilePath: filePath,
             FileName: fileName,
             FileSizeInBytes: info.Length,
@@ -144,16 +155,86 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     }
 
     /// <summary>
+    /// Entscheidet, auf welchem Weg diese Datei verarbeitet werden kann.
+    ///
+    /// **Die Regel ist eng gefasst, und das mit Absicht.** Es gibt keinen Satz
+    /// „PDFium kann rendern, also ist alles erlaubt“. Jedes Hindernis ist
+    /// einzeln beurteilt:
+    ///
+    /// * <b>Nicht eingebettete Schriften</b> sind ein Darstellungsproblem. Wird
+    ///   die Seite als Bild neu aufgebaut, ist es weg – die Schrift kommt im
+    ///   Ergebnis nicht mehr vor. Das ist der eine Fall, für den der Rasterweg
+    ///   gedacht ist, und auch er nur mit nachgewiesener Darstellbarkeit.
+    /// * <b>Beschädigt</b> heißt: Was auf dem Bild landet, ist ungewiss. Eine
+    ///   Rechnung, deren Inhalt man raten muss, wird nicht erzeugt.
+    /// * <b>Öffnungskennwort</b> heißt: Es gibt gar nichts zu rendern.
+    /// * <b>Digital signiert</b> heißt: Der Unterzeichner hat für ein bestimmtes
+    ///   Dokument gebürgt. Ein Abbild davon ist nicht dasselbe Dokument.
+    /// * <b>Rechteeinschränkung</b> heißt: Der Rechteinhaber hat festgelegt,
+    ///   was mit dem Dokument geschehen darf. Darüber setzt sich die Anwendung
+    ///   nicht stillschweigend hinweg.
+    /// * <b>Aktive Inhalte</b> gehören nicht in eine Rechnung. Dass sie beim
+    ///   Rastern verschwänden, ist kein Grund, sie zu übergehen – erst müsste
+    ///   geklärt sein, ob das Sichtbare ohne sie überhaupt vollständig ist.
+    ///
+    /// Kommen mehrere Hindernisse zusammen, zählt das strengste.
+    /// </summary>
+    private async Task<(PdfProcessingRoute Route, string? RenderRefusal)> ChooseRouteAsync(
+        PdfAnalysisResult analysis, string filePath, CancellationToken cancellationToken)
+    {
+        if (analysis.CanBeUpgraded)
+        {
+            return (PdfProcessingRoute.Direct, null);
+        }
+
+        bool onlyFontsMissing = analysis.UpgradeBlockers
+            .All(blocker => blocker == PdfUpgradeBlocker.FontsNotEmbedded);
+
+        if (!onlyFontsMissing)
+        {
+            return (PdfProcessingRoute.Rejected, null);
+        }
+
+        PdfRenderProbeResult probe = await _renderProbe
+            .ProbeAsync(filePath, cancellationToken).ConfigureAwait(false);
+
+        return probe.CanRender
+            ? (PdfProcessingRoute.RasterFallback, null)
+            : (PdfProcessingRoute.Rejected, probe.Reason);
+    }
+
+    /// <summary>
     /// Übersetzt die Hindernisse in Meldungen, die eine konkrete Handlung
     /// nennen. Jede Meldung beantwortet: Was ist das Problem, und was soll ich
     /// jetzt tun?
     /// </summary>
-    private static void AddBlockerFindings(PdfAnalysisResult analysis, ValidationReportBuilder findings)
+    private static void AddBlockerFindings(
+        PdfAnalysisResult analysis,
+        ValidationReportBuilder findings,
+        PdfProcessingRoute route,
+        string? renderRefusal)
     {
         foreach (PdfUpgradeBlocker blocker in analysis.UpgradeBlockers)
         {
             switch (blocker)
             {
+                case PdfUpgradeBlocker.FontsNotEmbedded when route == PdfProcessingRoute.RasterFallback:
+                    AddRasterFallbackOffer(findings);
+                    break;
+
+                case PdfUpgradeBlocker.RightsRestricted:
+                    findings.Error(
+                        "APP-PRE-015",
+                        "Die PDF-Datei ist mit einem Besitzerkennwort versehen; sie schränkt "
+                        + "ein, was mit ihr geschehen darf. Über diese Festlegung setzt sich "
+                        + "BorstWerk E-Rechnung nicht hinweg. Speichern Sie die Rechnung in "
+                        + "Ihrem Programm ohne Berechtigungseinschränkungen erneut.",
+                        "File",
+                        "Der Trailer enthält ein /Encrypt-Wörterbuch, obwohl sich die Datei "
+                        + "ohne Kennwort öffnen lässt. Verschlüsselte Dokumente sind nach "
+                        + "PDF/A ohnehin nicht zulässig.");
+                    break;
+
                 case PdfUpgradeBlocker.Encrypted:
                     findings.Error(
                         "APP-PRE-010",
@@ -174,7 +255,10 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                         + "zu exportieren; dann ist die Einstellung automatisch gesetzt.",
                         "File",
                         "Mindestens ein Font-Objekt hat keinen FontFile-Eintrag im FontDescriptor. "
-                        + "Betroffen sind auch die 14 Standardschriften wie Helvetica oder Arial.");
+                        + "Betroffen sind auch die 14 Standardschriften wie Helvetica oder Arial."
+                        + (renderRefusal is null
+                            ? string.Empty
+                            : " Eine sichtbare Kopie kam nicht in Frage: " + renderRefusal));
                     break;
 
                 case PdfUpgradeBlocker.ActiveContent:
@@ -218,6 +302,39 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Beschreibt den angebotenen Rasterweg – als Warnung, nicht als Fehler.
+    ///
+    /// Ein roter Fehler wäre hier schlicht unwahr: Es gibt einen erprobten Weg,
+    /// und er führt zu einer vollständig geprüften E-Rechnung. Was der Benutzer
+    /// wissen muss, ist nicht „geht nicht“, sondern was er dabei aufgibt – und
+    /// zwar bevor er zustimmt und nicht danach.
+    ///
+    /// Zwei Meldungen, weil sie zwei Fragen beantworten: was geschieht und was
+    /// es kostet.
+    /// </summary>
+    private static void AddRasterFallbackOffer(ValidationReportBuilder findings)
+    {
+        findings.Warning(
+            "APP-PRE-011",
+            "Diese PDF kann nicht direkt übernommen werden, weil nicht alle Schriftarten "
+            + "eingebettet sind. BorstWerk E-Rechnung kann stattdessen örtlich eine "
+            + "sichtbare PDF/A-Kopie erzeugen. Das Original bleibt unverändert.",
+            "File",
+            "Mindestens ein Font-Objekt hat keinen FontFile-Eintrag im FontDescriptor. "
+            + "Betroffen sind auch die 14 Standardschriften wie Helvetica oder Arial. "
+            + "Alle Seiten ließen sich probeweise darstellen.");
+
+        findings.Information(
+            "APP-PRE-016",
+            "Was die sichtbare Kopie kostet: Der Text der Seiten ist danach nicht mehr "
+            + "markierbar und in der Anzeige nicht mehr durchsuchbar. Verknüpfungen und "
+            + "Formularfunktionen gehen verloren. Die Datei kann größer werden. Die "
+            + "Rechnungsdaten selbst bleiben maschinenlesbar – sie stecken in der "
+            + "eingebetteten XML und sind von der Darstellung unabhängig.",
+            "File");
     }
 
     /// <summary>
@@ -282,6 +399,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
         string filePath, string fileName, long size, ValidationReportBuilder findings)
         => new(
             Verdict: PreflightVerdict.NotSuitable,
+            Route: PdfProcessingRoute.Rejected,
             FilePath: filePath,
             FileName: fileName,
             FileSizeInBytes: size,
@@ -304,7 +422,11 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
 
     [LoggerMessage(
         EventId = 2020, Level = LogLevel.Information,
-        Message = "Eingangsprüfung {FileName}: {Verdict}, {BlockerCount} Hindernis(se)")]
+        Message = "Eingangsprüfung {FileName}: {Verdict}, Weg {Route}, {BlockerCount} Hindernisse")]
     private static partial void LogPreflight(
-        ILogger logger, string fileName, PreflightVerdict verdict, int blockerCount);
+        ILogger logger,
+        string fileName,
+        PreflightVerdict verdict,
+        PdfProcessingRoute route,
+        int blockerCount);
 }

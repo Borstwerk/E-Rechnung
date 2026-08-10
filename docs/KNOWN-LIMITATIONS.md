@@ -9,16 +9,64 @@ nach PDF/A-3 wandelt. Die Anwendung wertet deshalb geeignete Dateien auf und
 lehnt ungeeignete ab – mit einer Begründung und einem Hinweis, was zu tun
 ist. Sie erzeugt nie eine Datei, die nur *vermutlich* normgerecht ist.
 
-Häufigste Ablehnungsgründe:
+Es gibt genau zwei Wege, und der direkte hat immer Vorrang.
 
-- **Nicht eingebettete Schriftarten.** PDF/A verlangt, dass jede verwendete
-  Schrift in der Datei steckt. Betroffen sind unter anderem alle PDFs, die
-  sich auf die 14 Standardschriften verlassen. Abhilfe: beim Erzeugen der PDF
-  die Schrifteinbettung einschalten.
+### Der direkte Weg
+
+Die Seiten des Originals werden unverändert übernommen und um die fehlenden
+PDF/A-3-Bestandteile ergänzt. Der Text der Rechnung bleibt dabei Text.
+
+### Die sichtbare Kopie
+
+Fehlt der Datei **nur** die Schrifteinbettung, gibt es einen zweiten Weg: Die
+Anwendung stellt jede Seite örtlich dar und baut aus den Seitenbildern ein
+neues Dokument. Die nicht eingebettete Schrift verschwindet dabei nicht durch
+einen Kniff, sondern weil es sie im Ergebnis nicht mehr gibt – es steht kein
+Text mehr im sichtbaren Teil, nur noch ein Bild davon.
+
+Das kostet etwas, und die Anwendung sagt es vor der Entscheidung:
+
+- Der Text ist danach nicht mehr markierbar und in der Anzeige nicht mehr
+  durchsuchbar.
+- Verknüpfungen und Formularfunktionen gehen verloren.
+- Die Datei kann größer werden.
+- Die **Rechnungsdaten** bleiben vollständig maschinenlesbar. Sie stecken in
+  der eingebetteten XML und sind von der Darstellung unabhängig – für den
+  Empfänger einer E-Rechnung ist das der Teil, der zählt.
+
+Dieser Weg wird **nie automatisch und nie stillschweigend** gewählt. Er wird
+angeboten, und erst die ausdrückliche Zustimmung öffnet ihn. Die Zustimmung
+gilt für den einen Vorgang und wird nirgends gespeichert. Das Original bleibt
+unverändert; gelesen wird es, mehr nicht.
+
+Auch die sichtbare Kopie durchläuft die vollständige Ergebnisprüfung –
+erneutes Öffnen, byteweiser Vergleich der eingebetteten XML, PDF/A-Kennung,
+Prüfsumme und, wo eingerichtet, die externen Referenzvalidatoren. Der
+Prüfbericht hält den gegangenen Weg fest; man sieht ihn der fertigen Datei
+sonst nicht an.
+
+### Was weiterhin abgelehnt wird
+
+- **Beschädigte PDFs.** Was auf dem Seitenbild landete, wäre ungewiss. Eine
+  Rechnung, deren Inhalt man raten muss, wird nicht erzeugt.
 - **Digital signierte PDFs.** Eine Signatur bezieht sich auf den unveränderten
   Inhalt. Das Einbetten der Rechnungsdaten würde sie ungültig machen. Solche
   Dateien werden deutlich abgelehnt, nicht stillschweigend verändert.
-- **Verschlüsselte PDFs** und Dateien mit aktiven Inhalten.
+- **PDFs mit Öffnungskennwort.** Ohne Kennwort gibt es nichts zu lesen.
+- **PDFs mit Besitzerkennwort.** Sie lassen sich zwar öffnen, schränken aber
+  ein, was mit ihnen geschehen darf. Über diese Festlegung setzt sich die
+  Anwendung nicht hinweg.
+- **PDFs mit aktiven Inhalten** (JavaScript, startende Aktionen). Dass sie
+  beim Rastern verschwänden, ist kein Grund, sie zu übergehen.
+
+### Eingescannte Rechnungen
+
+Eine PDF, aus der sich kein Text lesen lässt, ist verarbeitbar – die
+Datenerkennung findet dann aber nichts, sagt das geradeheraus, und die
+Rechnungsdaten werden von Hand erfasst. **Eine Texterkennung gibt es nicht.**
+Ein Werkzeug, das aus einem Bild Beträge errät und ins Formular schreibt, wäre
+schlimmer als eines, das schweigt: Am Ende bestätigen Sie, dass die erfassten
+Daten mit der sichtbaren Rechnung übereinstimmen.
 
 ## Bereits vorhandene Rechnungsdaten
 

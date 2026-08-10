@@ -38,7 +38,8 @@ public static class ValidationReportWriter
         DateTimeOffset createdAt,
         string standardDescription,
         string profileId,
-        IReadOnlyList<ValidatorInfo> validators)
+        IReadOnlyList<ValidatorInfo> validators,
+        PdfProcessingRoute route = PdfProcessingRoute.Direct)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(stored);
@@ -63,6 +64,7 @@ public static class ValidationReportWriter
             {
                 datei = Path.GetFileName(request.SourcePdfPath),
                 hinweis = "Die Originaldatei wurde ausschließlich gelesen und nicht verändert.",
+                verarbeitungsweg = DescribeRoute(route),
             },
             ergebnis = new
             {
@@ -106,7 +108,8 @@ public static class ValidationReportWriter
         DateTimeOffset createdAt,
         string standardDescription,
         string profileId,
-        IReadOnlyList<ValidatorInfo> validators)
+        IReadOnlyList<ValidatorInfo> validators,
+        PdfProcessingRoute route = PdfProcessingRoute.Direct)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(stored);
@@ -137,6 +140,7 @@ public static class ValidationReportWriter
         text.AppendLine("-------");
         text.Append("Ausgangsdatei:     ").AppendLine(Path.GetFileName(request.SourcePdfPath));
         text.AppendLine("                   (unverändert, nur gelesen)");
+        text.Append("Verarbeitungsweg:  ").AppendLine(DescribeRoute(route));
         text.Append("Ergebnisdatei:     ").AppendLine(Path.GetFileName(stored.FullPath));
         text.Append("Größe:           ")
             .AppendLine(stored.SizeInBytes.ToString("N0", german) + " Bytes");
@@ -189,6 +193,21 @@ public static class ValidationReportWriter
 
         return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(text.ToString());
     }
+
+    /// <summary>
+    /// Benennt den gegangenen Weg.
+    ///
+    /// Steht in beiden Fassungen des Berichts, weil sich die Frage später sonst
+    /// nicht mehr beantworten ließe: Ob der sichtbare Inhalt einer archivierten
+    /// Datei aus dem Original stammt oder aus einem Abbild davon, sieht man ihr
+    /// nicht an.
+    /// </summary>
+    private static string DescribeRoute(PdfProcessingRoute route) => route switch
+    {
+        PdfProcessingRoute.RasterFallback =>
+            $"Sichtbare PDF/A-Kopie (Raster-Fallback, {RasterFallback.Dpi} dpi)",
+        _ => "Direkte Übernahme der Originalseiten",
+    };
 
     private static void AppendFindings(
         StringBuilder text, ValidationReport report, FindingSeverity severity, string heading)

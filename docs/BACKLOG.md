@@ -38,6 +38,41 @@ hierher, sondern in die Commit-Historie.
 
 ## Nur auf einem Windows-Rechner prüfbar
 
+- **Abnahme der sichtbaren Kopie mit dem Windows-Testkoffer.** Der Weg ist
+  automatisiert geprüft, bis hin zu veraPDF und dem CEN-Schematron auf der
+  gerasterten Datei. Was sich hier nicht prüfen lässt, ist, wie das Ergebnis
+  **aussieht** – und darum geht es bei einer sichtbaren Kopie.
+
+  1. `01_Kontrolle_eingebettete_Schriften.pdf` – geht wie bisher den direkten
+     Weg, ohne Angebot einer Kopie. Der Prüfbericht nennt „Direkte Übernahme
+     der Originalseiten“.
+  2. `02_Nicht_eingebettete_Schrift.pdf` – „Weiter“ ist zunächst gesperrt, das
+     Angebot erscheint als Warnung und nicht als Fehler.
+  3. Ohne Zustimmung lässt sich Schritt 1 nicht verlassen.
+  4. Nach „Mit visueller Kopie fortfahren“ steht dort „Visuelle Kopie wird
+     verwendet“, und „Weiter“ ist frei.
+  5. Die Datenerkennung hat vorher auf dem **Original** gelaufen: Die
+     Erkennungsübersicht zeigt Werte, obwohl die Kopie später keinen Text mehr
+     enthält.
+  6. Die erzeugte Datei öffnen und die Seiten mit dem Original vergleichen:
+     nichts beschnitten, nichts verschoben, Schrift bei 100 % lesbar.
+  7. Im Ergebnis lässt sich kein Text markieren – das ist der erwartete Preis.
+  8. Der Prüfbericht nennt „Sichtbare PDF/A-Kopie (Raster-Fallback, 300 dpi)“.
+  9. `03_QR_Code_300dpi_Kandidat.pdf` – den QR-Code im **Ergebnis** mit einem
+     Mobiltelefon einlesen. Er muss denselben Inhalt liefern wie der im
+     Original.
+  10. `04_Mehrseitig_gemischte_Orientierung.pdf` – Seitenzahl und
+      Seitenausrichtung bleiben erhalten, auch bei gedrehten Seiten.
+  11. `05_Scan_only_kein_PDF_Text.pdf` – die Erkennung meldet, dass sie nichts
+      gefunden hat, und erfindet nichts. Die Datei bleibt verarbeitbar.
+  12. `06_Dicht_10_Seiten.pdf` – Dauer und Dateigröße notieren.
+  13. `07_Besitzerkennwort_Rechte_eingeschraenkt.pdf` – wird abgelehnt, nicht
+      stillschweigend gerastert. Die Meldung nennt das Besitzerkennwort.
+  14. `08_Oeffnungspasswort_test123.pdf` – wird ohne Kennwortabfrage sauber
+      abgelehnt.
+  15. Nach jedem Durchlauf: **Original-PDF unverändert** (Dateigröße und
+      Änderungsdatum, im Zweifel die Prüfsumme).
+
 - **Durchlauf durch alle fünf Schritte** mit einer echten PDF: Dateidialog,
   Drag-and-drop, PDF-Vorschau, Erkennungsübersicht, Feldkennzeichnung,
   Summenabgleich.

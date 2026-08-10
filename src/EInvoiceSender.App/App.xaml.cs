@@ -70,8 +70,15 @@ public partial class App : Application
         services.AddSingleton<IInvoiceXmlReader, CiiInvoiceReader>();
         services.AddSingleton<IBusinessRuleValidator, En16931RuleValidator>();
         services.AddSingleton<IPdfAnalyzer, PdfAnalyzer>();
+        services.AddSingleton<IPdfRenderProbe, PdfiumRenderProbe>();
         services.AddSingleton<IPdfPreflightService, PdfPreflightService>();
         services.AddSingleton<IPdfAInvoiceComposer, PdfAInvoiceComposer>();
+
+        // Der Rasterweg für PDF-Dateien ohne eingebettete Schriften. Er wird nur
+        // beschritten, wenn die Eingangsprüfung ihn freigibt **und** der
+        // Benutzer ihm ausdrücklich zugestimmt hat; beides prüft der Kern.
+        services.AddSingleton<RasterizedPdfBuilder>();
+        services.AddSingleton<IPdfARasterFallbackComposer, RasterFallbackComposer>();
         services.AddSingleton<IEmailDraftService, EmlDraftService>();
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<IEInvoiceService, EInvoiceService>();

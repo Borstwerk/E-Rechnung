@@ -91,6 +91,22 @@ public sealed class GermanSpellingTests
         new("\\bId=\"[^\"]*\"", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>
+    /// Dateinamen, die in Markdown als Code ausgezeichnet sind.
+    ///
+    /// Der Windows-Testkoffer enthält eine Datei namens
+    /// <c>08_Oeffnungspasswort_test123.pdf</c>. Der Name ist eine Kennung –
+    /// er steht so auf der Platte, und ein Ablaufplan, der ihn stillschweigend
+    /// zu <c>08_Öffnungspasswort…</c> verbessert, schickt den Prüfer zu einer
+    /// Datei, die es nicht gibt.
+    ///
+    /// Das Muster ist eng gefasst: Es greift nur zwischen Rückwärtsakzenten,
+    /// nur ohne Leerzeichen und nur mit einer kurzen Endung. Fließtext bleibt
+    /// vollständig geprüft, auch in derselben Zeile.
+    /// </summary>
+    private static readonly System.Text.RegularExpressions.Regex FileNameInCode =
+        new("`[^`\\s]+\\.[A-Za-z0-9]{2,4}`", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>
     /// Was geprüft wird.
     ///
     /// Nachgetragen: <c>.wixproj</c>, <c>.editorconfig</c> und
@@ -115,7 +131,8 @@ public sealed class GermanSpellingTests
         string[] funde =
         [
             .. from path in ActiveFiles()
-               let text = IdAttribute.Replace(File.ReadAllText(path), string.Empty)
+               let roh = File.ReadAllText(path)
+               let text = FileNameInCode.Replace(IdAttribute.Replace(roh, string.Empty), string.Empty)
                from marker in Transliterations
                where text.Contains(marker, StringComparison.OrdinalIgnoreCase)
                select $"{Relative(path)}: {marker}",

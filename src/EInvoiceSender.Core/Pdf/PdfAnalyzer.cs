@@ -4,6 +4,11 @@ using Microsoft.Extensions.Logging;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.Advanced;
 using PdfSharp.Pdf.IO;
+using UglyToad.PdfPig.Exceptions;
+
+// PdfPig führt denselben Typnamen wie PDFsharp. Hier wird PDFsharp gelesen,
+// PdfPig nur für die Frage nach dem Verschlüsselungswörterbuch befragt.
+using PigDocument = UglyToad.PdfPig.PdfDocument;
 
 namespace EInvoiceSender.Core.Pdf;
 
@@ -71,15 +76,32 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     private PdfAnalysisResult Analyze(string filePath)
     {
         var blockers = new List<PdfUpgradeBlocker>();
+        PdfProtection protection = DetectProtection(filePath);
+
+        if (protection == PdfProtection.PasswordRequired)
+        {
+            // Ohne Kennwort ist hier Schluss; PDFsharp käme über das Öffnen
+            // ohnehin nicht hinaus.
+            blockers.Add(PdfUpgradeBlocker.Encrypted);
+
+            return Unreadable(blockers, isEncrypted: true);
+        }
+
+        if (protection == PdfProtection.RightsRestricted)
+        {
+            blockers.Add(PdfUpgradeBlocker.RightsRestricted);
+        }
 
         try
         {
             using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using PdfDocument document = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
 
-            bool isEncrypted = document.SecuritySettings.IsEncrypted;
+            bool isEncrypted = protection != PdfProtection.None
+                               || document.SecuritySettings.IsEncrypted;
 
-            if (isEncrypted)
+            if (document.SecuritySettings.IsEncrypted
+                && !blockers.Contains(PdfUpgradeBlocker.Encrypted))
             {
                 blockers.Add(PdfUpgradeBlocker.Encrypted);
             }
@@ -138,16 +160,83 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
                 ? PdfUpgradeBlocker.Encrypted
                 : PdfUpgradeBlocker.Damaged);
 
-            return new PdfAnalysisResult(
-                PageCount: 0,
-                PdfVersion: "unbekannt",
-                IsEncrypted: false,
-                DeclaredPdfAPart: null,
-                DeclaredPdfAConformance: null,
-                EmbeddedFiles: [],
-                ExistingInvoiceXml: null,
-                ExistingInvoiceProfile: null,
-                UpgradeBlockers: blockers);
+            return Unreadable(
+                blockers,
+                isEncrypted: looksPasswordProtected || protection != PdfProtection.None);
+        }
+    }
+
+    /// <summary>Ein Ergebnis für eine Datei, aus der nichts zu lesen war.</summary>
+    private static PdfAnalysisResult Unreadable(
+        IReadOnlyList<PdfUpgradeBlocker> blockers, bool isEncrypted)
+        => new(
+            PageCount: 0,
+            PdfVersion: "unbekannt",
+            IsEncrypted: isEncrypted,
+            DeclaredPdfAPart: null,
+            DeclaredPdfAConformance: null,
+            EmbeddedFiles: [],
+            ExistingInvoiceXml: null,
+            ExistingInvoiceProfile: null,
+            UpgradeBlockers: blockers);
+
+    /// <summary>Wie eine Datei geschützt ist.</summary>
+    private enum PdfProtection
+    {
+        /// <summary>Kein Verschlüsselungswörterbuch.</summary>
+        None,
+
+        /// <summary>
+        /// Die Datei öffnet sich ohne Kennwort, trägt aber ein
+        /// Verschlüsselungswörterbuch – ein Besitzerkennwort mit
+        /// Rechteeinschränkungen.
+        /// </summary>
+        RightsRestricted,
+
+        /// <summary>Zum Öffnen wird ein Kennwort verlangt.</summary>
+        PasswordRequired,
+    }
+
+    /// <summary>
+    /// Stellt fest, ob die Datei ein Verschlüsselungswörterbuch trägt.
+    ///
+    /// **Warum dafür eine zweite Bibliothek befragt wird.** PDFsharp beantwortet
+    /// die Frage nicht verlässlich: Eine Datei mit Besitzerkennwort öffnet es
+    /// anstandslos, und <c>SecuritySettings.IsEncrypted</c> meldet dabei
+    /// <c>false</c>. Das ist nachgemessen und kein Verdacht. Der Eintrag
+    /// <c>/Encrypt</c> steht im Trailer, und den legt PDFsharp nicht offen.
+    ///
+    /// PdfPig – im Kern ohnehin für die Textauswertung vorhanden – liest den
+    /// Trailer und meldet den Fund über <c>IsEncrypted</c>. Wird zum Öffnen ein
+    /// Kennwort verlangt, wirft es eine eigene Ausnahme; das ist der andere,
+    /// fachlich deutlich verschiedene Fall.
+    ///
+    /// Das Öffnen kostet wenig: gemessen unter 20 ms selbst bei einer Datei von
+    /// zwei Megabyte, weil nur die Struktur gelesen wird und nicht der Inhalt.
+    /// </summary>
+    private PdfProtection DetectProtection(string filePath)
+    {
+        try
+        {
+            using PigDocument document = PigDocument.Open(filePath);
+
+            return document.IsEncrypted ? PdfProtection.RightsRestricted : PdfProtection.None;
+        }
+        catch (PdfDocumentEncryptedException)
+        {
+            return PdfProtection.PasswordRequired;
+        }
+        // Eine beschädigte Datei wird hier nicht beurteilt: Das ist die Aufgabe
+        // des Hauptwegs, der dafür die verständliche Meldung hat. Hier gilt nur,
+        // was sicher festgestellt wurde.
+        catch (Exception ex) when (ex is not OperationCanceledException
+                                      and not OutOfMemoryException
+                                      and not StackOverflowException)
+        {
+            string reason = ex.GetType().Name;
+            LogProtectionUnknown(_logger, reason);
+
+            return PdfProtection.None;
         }
     }
 
@@ -457,6 +546,11 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         EventId = 2010, Level = LogLevel.Warning,
         Message = "PDF konnte nicht analysiert werden ({Reason}). Datei wird als beschädigt gemeldet.")]
     private static partial void LogAnalysisFailed(ILogger logger, string reason);
+
+    [LoggerMessage(
+        EventId = 2011, Level = LogLevel.Information,
+        Message = "Schutzzustand nicht feststellbar ({Reason}). Die Hauptanalyse entscheidet.")]
+    private static partial void LogProtectionUnknown(ILogger logger, string reason);
 
     /// <summary>Wandelt die interne Versionszahl (z. B. 17) in "1.7".</summary>
     private static string FormatVersion(int version)

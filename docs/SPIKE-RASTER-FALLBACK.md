@@ -11,6 +11,15 @@ der Seiten in eine gültige PDF/A-3b-ZUGFeRD-Datei überführen?
 Es wurde nichts ausgeliefert, keine Ablehnungsregel entfernt und kein
 Produktversprechen geändert. Der direkte Weg verhält sich unverändert.
 
+> **Nachtrag:** Der hier untersuchte Weg ist inzwischen im Produkt – als
+> **sichtbare Kopie**, angeboten und nur nach ausdrücklicher Zustimmung
+> beschritten. Was daraus geworden ist, steht in
+> [`docs/KNOWN-LIMITATIONS.md`](KNOWN-LIMITATIONS.md) und, für den Aufbau, in
+> [`docs/ARCHITECTURE.md`](ARCHITECTURE.md), Abschnitt „Die zwei Wege zur
+> fertigen Datei“. Dieser Bericht bleibt als Beleg der Messungen stehen und
+> wird nicht fortgeschrieben; die Punkte in Abschnitt 13 sind teils erledigt,
+> teils in `docs/BACKLOG.md` übergegangen.
+
 ---
 
 ## 1. Ergebnis

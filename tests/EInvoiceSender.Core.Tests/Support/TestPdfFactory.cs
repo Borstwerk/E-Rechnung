@@ -133,6 +133,74 @@ public static class TestPdfFactory
     }
 
     /// <summary>
+    /// Baut eine PDF, in der zwei Hindernisse zusammentreffen: eine nicht
+    /// eingebettete Schrift und eine beim Öffnen startende Aktion.
+    ///
+    /// Der Fall belegt, dass der Rasterweg keine Sammelfreigabe ist. Die
+    /// fehlende Schrift allein wäre sein Anlass; kommt etwas hinzu, das aus
+    /// anderen Gründen nicht in eine Rechnung gehört, bleibt es dabei.
+    /// </summary>
+    public static byte[] CreatePdfWithNonEmbeddedFontAndJavaScript()
+        => BuildPages(
+            "/OpenAction << /Type /Action /S /JavaScript /JS (app.alert\\(1\\);) >>",
+            (595, 842, 0, "Seite mit aktivem Inhalt"));
+
+    /// <summary>
+    /// Baut eine PDF mit Besitzerkennwort und eingeschränkten Rechten.
+    ///
+    /// **Der Fall, der die Lücke aufdeckt.** Ein solches Dokument öffnet sich
+    /// ohne Kennwort; PDFsharp meldet dafür <c>IsEncrypted == false</c>. Wer
+    /// sich darauf verlässt, hält die Datei für ungeschützt – dabei steht im
+    /// Trailer ein <c>/Encrypt</c>-Wörterbuch, und der Rechteinhaber hat
+    /// festgelegt, was mit ihr geschehen darf.
+    ///
+    /// Das Kennwort ist eine erfundene Zeichenkette für diese eine, im Test
+    /// erzeugte Datei.
+    /// </summary>
+    public static byte[] CreatePdfWithOwnerPassword()
+        => CreateProtectedPdf(ownerPassword: "besitzer-testwert", userPassword: null);
+
+    /// <summary>
+    /// Baut eine PDF, die zum Öffnen ein Kennwort verlangt. Ohne das Kennwort
+    /// gibt es nichts zu lesen und nichts darzustellen.
+    /// </summary>
+    public static byte[] CreatePdfWithUserPassword()
+        => CreateProtectedPdf(ownerPassword: "besitzer-testwert", userPassword: "öffnen-testwert");
+
+    private static byte[] CreateProtectedPdf(string ownerPassword, string? userPassword)
+    {
+        using var document = new PdfDocument();
+        document.Info.Title = "Geschützte Testrechnung";
+
+        PdfPage page = document.AddPage();
+        page.Width = XUnit.FromMillimeter(210);
+        page.Height = XUnit.FromMillimeter(297);
+
+        using (XGraphics gfx = XGraphics.FromPdfPage(page))
+        {
+            gfx.DrawRectangle(XBrushes.LightGray, new XRect(40, 40, 300, 60));
+            gfx.DrawLine(XPens.Black, 40, 120, 500, 120);
+        }
+
+        PdfSharp.Pdf.Security.PdfSecuritySettings security = document.SecuritySettings;
+        security.OwnerPassword = ownerPassword;
+
+        if (userPassword is not null)
+        {
+            security.UserPassword = userPassword;
+        }
+
+        security.PermitPrint = false;
+        security.PermitExtractContent = false;
+        security.PermitModifyDocument = false;
+
+        using var stream = new MemoryStream();
+        document.Save(stream, closeStream: false);
+
+        return stream.ToArray();
+    }
+
+    /// <summary>
     /// Setzt von Hand eine PDF aus den beschriebenen Seiten zusammen.
     ///
     /// Von Hand, weil PdfSharp für Text eine Schriftdatei bräuchte und weil
@@ -141,6 +209,14 @@ public static class TestPdfFactory
     /// ablesen, ob etwas beschnitten wurde.
     /// </summary>
     private static byte[] BuildPages(params (int Width, int Height, int Rotate, string Text)[] pages)
+        => BuildPages(catalogExtra: null, pages);
+
+    /// <summary>
+    /// Wie oben, ergänzt aber den Dokumentkatalog um weitere Einträge –
+    /// für Dateien, deren Besonderheit nicht auf einer Seite steht.
+    /// </summary>
+    private static byte[] BuildPages(
+        string? catalogExtra, params (int Width, int Height, int Rotate, string Text)[] pages)
     {
         var objects = new List<byte[]>();
         int fontObject = 3 + (pages.Length * 2);
@@ -148,7 +224,10 @@ public static class TestPdfFactory
         string kids = string.Join(
             " ", Enumerable.Range(0, pages.Length).Select(i => $"{3 + (i * 2)} 0 R"));
 
-        objects.Add(Ascii("<< /Type /Catalog /Pages 2 0 R >>"));
+        objects.Add(Ascii(
+            "<< /Type /Catalog /Pages 2 0 R"
+            + (catalogExtra is null ? string.Empty : " " + catalogExtra)
+            + " >>"));
         objects.Add(Ascii($"<< /Type /Pages /Kids [{kids}] /Count {pages.Length} >>"));
 
         for (int i = 0; i < pages.Length; i++)

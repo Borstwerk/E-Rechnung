@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using System.Text;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
@@ -29,6 +30,10 @@ namespace EInvoiceSender.IntegrationTests;
 /// wäre die Aussage "normkonform" eine bloße Behauptung.
 /// </summary>
 [Collection(ExternalValidatorTestGroup.Name)]
+// Der Rasterweg in dieser Klasse braucht PDFium.
+[SupportedOSPlatform("windows")]
+[SupportedOSPlatform("linux")]
+[SupportedOSPlatform("macos")]
 public sealed class EndToEndConformanceTests : IDisposable
 {
     private readonly ExternalValidatorFixture _fixture;
@@ -132,6 +137,80 @@ public sealed class EndToEndConformanceTests : IDisposable
         Assert.Equal(totals.TaxTotal, echo.TaxTotal);
         Assert.Equal(totals.GrandTotal, echo.GrandTotal);
         Assert.Equal(totals.DuePayableAmount, echo.DuePayableAmount);
+    }
+
+    /// <summary>
+    /// Dieselbe Kette, aber über den Rasterweg.
+    ///
+    /// **Das ist der Punkt, an dem sich entscheidet, ob der Rasterweg ein Weg
+    /// ist oder eine Ausrede.** Eine sichtbare Kopie, die die Referenzwerkzeuge
+    /// nicht bestehen würde, wäre kein Ausweg für den Anwender, sondern ein
+    /// Versprechen, das erst beim Empfänger platzt. Deshalb läuft hier
+    /// dasselbe Freigabegate wie über dem direkten Weg: veraPDF für PDF/A-3b,
+    /// das CEN-Schematron für die Rechnungsdaten – auf der fertigen Datei und
+    /// noch einmal auf der aus ihr herausgeholten XML.
+    ///
+    /// Die Ausgangsdatei ist eine, die den direkten Weg nicht gehen kann: ihre
+    /// Schrift ist nicht eingebettet.
+    /// </summary>
+    [Fact]
+    public async Task DerRasterwegBestehtDasselbeFreigabegate()
+    {
+        IExternalDocumentValidator validator = _fixture.RequireValidator();
+
+        InvoiceScenario scenario = InvoiceScenarios.ByKey("01-dienstleistung-19");
+        InvoiceTotals totals = InvoiceCalculator.Calculate(scenario.Invoice);
+        byte[] xml = _writer.Write(scenario.Invoice, totals);
+
+        byte[] originalBytes = TestPdfFactory.CreatePdfWithNonEmbeddedFont();
+        string sourcePdfPath = Temp(originalBytes);
+
+        // Der direkte Weg lehnt diese Datei ab – das ist die Voraussetzung
+        // dafür, dass der folgende Nachweis überhaupt etwas aussagt.
+        PdfAnalysisResult vorher = await _analyzer.AnalyzeAsync(
+            sourcePdfPath, TestContext.Current.CancellationToken);
+        Assert.Contains(PdfUpgradeBlocker.FontsNotEmbedded, vorher.UpgradeBlockers);
+
+        var request = new PdfACompositionRequest(
+            SourcePdfPath: sourcePdfPath,
+            InvoiceXml: xml,
+            Title: $"Rechnung {scenario.Invoice.InvoiceNumber}",
+            Author: scenario.Invoice.Seller.Name,
+            Subject: $"Rechnung {scenario.Invoice.InvoiceNumber}",
+            CreationDate: new DateTimeOffset(2026, 3, 15, 12, 0, 0, TimeSpan.FromHours(1)),
+            Attachment: _writer.Attachment);
+
+        CompositionResult composition = await PipelineParts.RasterComposer()
+            .ComposeAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.True(composition.Succeeded, Describe(composition.Report));
+        Assert.NotNull(composition.PdfBytes);
+
+        // Das Original bleibt byteweise unberührt.
+        Assert.Equal(
+            originalBytes,
+            await File.ReadAllBytesAsync(sourcePdfPath, TestContext.Current.CancellationToken));
+
+        string resultPath = Temp(composition.PdfBytes, ".pdf");
+        ValidationReport pdfReport = await validator.ValidateAsync(
+            resultPath, TestContext.Current.CancellationToken);
+        AssertPassed(pdfReport, "veraPDF und Schematron auf der gerasterten PDF");
+
+        PdfAnalysisResult reopened = await _analyzer.AnalyzeAsync(
+            resultPath, TestContext.Current.CancellationToken);
+
+        // Das Hindernis ist verschwunden, weil es die Schrift nicht mehr gibt.
+        Assert.Empty(reopened.UpgradeBlockers);
+        Assert.Equal(xml, reopened.ExistingInvoiceXml);
+        Assert.Equal("3", reopened.DeclaredPdfAPart);
+        Assert.Equal("B", reopened.DeclaredPdfAConformance);
+
+        string extractedPath = Temp(reopened.ExistingInvoiceXml!, ".xml");
+        ValidationReport extractedReport = await validator.ValidateAsync(
+            extractedPath, TestContext.Current.CancellationToken);
+        AssertPassed(extractedReport, "Schematron auf der aus der Rasterdatei geholten XML");
+
+        AssertXmpContents(composition.PdfBytes);
     }
 
     /// <summary>

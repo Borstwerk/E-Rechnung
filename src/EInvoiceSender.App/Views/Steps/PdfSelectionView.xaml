@@ -35,6 +35,62 @@
     <!-- Befunde der Eingangsprüfung -->
     <ScrollViewer Grid.Row="3" Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,12,12,0">
       <StackPanel>
+
+        <!--
+          Das Angebot der sichtbaren Kopie.
+
+          Kein roter Fehlerzustand: Es gibt einen erprobten Weg, er führt zu
+          einer vollständig geprüften E-Rechnung, und der Benutzer muss ihn nur
+          wählen. Ein Fehler wäre hier schlicht die falsche Auskunft.
+
+          Was er dabei aufgibt, steht vor der Schaltfläche und nicht danach.
+          Kein vorbelegtes Kästchen, keine stille Annahme – die Zustimmung ist
+          ein eigener Klick, und ohne sie bleibt „Weiter“ gesperrt.
+        -->
+        <Border Style="{StaticResource BorstWerk.Status.Warning}" Margin="0,0,0,12"
+                AutomationProperties.Name="Sichtbare Kopie erforderlich"
+                AutomationProperties.LiveSetting="Polite"
+                Visibility="{Binding ShowsRasterFallbackOffer, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="⚠" FontWeight="Bold" MinWidth="16" TextAlignment="Center"
+                         VerticalAlignment="Top" Margin="0,0,8,0"
+                         Foreground="{StaticResource BorstWerk.Brush.Status.Warning}" />
+              <TextBlock Text="Sichtbare Kopie erforderlich" FontWeight="SemiBold"
+                         VerticalAlignment="Top" />
+            </StackPanel>
+            <TextBlock TextWrapping="Wrap" Margin="24,6,0,0"
+                       Text="Diese PDF kann nicht direkt übernommen werden, weil nicht alle Schriftarten eingebettet sind. BorstWerk E-Rechnung kann stattdessen örtlich eine sichtbare PDF/A-Kopie erzeugen. Das Original bleibt unverändert." />
+            <TextBlock TextWrapping="Wrap" Margin="24,6,0,0"
+                       Text="Der Text der Seiten ist danach nicht mehr markierbar und in der Anzeige nicht mehr durchsuchbar. Verknüpfungen und Formularfunktionen gehen verloren, die Datei kann größer werden. Die Rechnungsdaten selbst bleiben maschinenlesbar – sie stecken in der eingebetteten XML." />
+            <StackPanel Orientation="Horizontal" Margin="24,10,0,0">
+              <Button Content="Mit visueller _Kopie fortfahren"
+                      Style="{StaticResource BorstWerk.Button.Primary}"
+                      Command="{Binding ConfirmRasterFallbackCommand}" TabIndex="2"
+                      AutomationProperties.HelpText="Erzeugt die E-Rechnung aus einer sichtbaren Kopie der Seiten. Das Original bleibt unverändert." />
+              <!-- Zugriffstaste P: _W gehört „Weiter“, _A der Auswahl darüber. -->
+              <Button Content="Andere _PDF wählen ..." Click="OnSelectClicked" TabIndex="3"
+                      AutomationProperties.HelpText="Öffnet einen Dateidialog zur Auswahl einer anderen PDF-Rechnung." />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- Nach der Zustimmung: kurz, sachlich, sichtbar. -->
+        <Border Style="{StaticResource BorstWerk.Status.Info}" Margin="0,0,0,12"
+                AutomationProperties.Name="Die sichtbare Kopie wird verwendet."
+                AutomationProperties.LiveSetting="Polite"
+                Visibility="{Binding RasterFallbackAccepted, Converter={StaticResource BoolToVisibility}}">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="✓" FontWeight="Bold" MinWidth="16" TextAlignment="Center"
+                       VerticalAlignment="Top" Margin="0,0,8,0"
+                       Foreground="{StaticResource BorstWerk.Brush.Status.Info}" />
+            <TextBlock Text="Visuelle Kopie wird verwendet" FontWeight="SemiBold"
+                       VerticalAlignment="Top" Margin="0,0,8,0" />
+            <TextBlock TextWrapping="Wrap" VerticalAlignment="Top"
+                       Text="Die Rechnungsdaten werden weiterhin aus dem Original gelesen." />
+          </StackPanel>
+        </Border>
+
         <TextBlock Style="{StaticResource Abschnitt}" Text="Ergebnis der Prüfung"
                    Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
         <ItemsControl ItemsSource="{Binding Findings}"
