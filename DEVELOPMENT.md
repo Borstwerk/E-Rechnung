@@ -200,10 +200,15 @@ für die aktuelle Entwicklung aber nicht mehr maßgeblich.
 
 ## Lizenz
 
-Die verwendeten Fremdkomponenten und ihre Lizenzen sind in
-[`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) einzeln aufgeführt und an der
-Primärquelle geprüft. Die Lizenztexte werden mit dem Installer ausgeliefert.
+Der eigene Quelltext von BorstWerk E-Rechnung steht unter der **MIT-Lizenz**; der Wortlaut liegt
+in [`LICENSE`](LICENSE).
 
-**Für das Projekt selbst liegt derzeit keine Lizenzdatei im Repository.** Vor der ersten
-Veröffentlichung gehört eine hierher – ohne sie ist der Quelltext trotz öffentlicher Ablage nicht
-frei verwendbar.
+Davon getrennt zu betrachten sind die **Fremdkomponenten**. Ihre Lizenzen sind in
+[`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) einzeln aufgeführt und an der
+Primärquelle geprüft; einige stehen unter anderen Bedingungen als MIT, etwa PDFium unter
+BSD-3-Clause und das WiX Toolset unter der Microsoft Reciprocal License. Die Lizenztexte der
+Fremdkomponenten werden mit dem Installer ausgeliefert
+(`installer/EInvoiceSender.Setup/Lizenzhinweise.rtf`).
+
+Die MIT-Lizenz in `LICENSE` gilt also für diesen Quelltext, nicht für alles, was mit ihm
+ausgeliefert wird.
