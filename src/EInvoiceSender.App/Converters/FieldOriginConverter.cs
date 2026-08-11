@@ -38,6 +38,7 @@ public sealed class FieldOriginConverter : IValueConverter
             FieldOrigin.DetectedReliably => "✓ aus PDF erkannt",
             FieldOrigin.DetectedUncertain => "? aus PDF erkannt – bitte prüfen",
             FieldOrigin.Template => "✓ aus gespeicherter Vorlage",
+            FieldOrigin.TemplateDefault => "✓ aus gespeicherter Vorlage",
             _ => string.Empty,
         };
     }

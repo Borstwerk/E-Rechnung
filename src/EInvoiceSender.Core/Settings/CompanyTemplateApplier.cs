@@ -6,18 +6,19 @@ namespace EInvoiceSender.Core.Settings;
 /// <summary>
 /// Trägt die gespeicherte Firmenvorlage in das Formular ein.
 ///
-/// **Was übernommen wird:** ausschließlich die Angaben, die aus der Vorlage
-/// stammen – eigene Firma, Anschrift, Land, Steuernummern, E-Mail,
-/// Bankverbindung sowie die bewusst hinterlegten Vorgaben für Währung,
-/// Zahlungsbedingungen und Zahlungsziel. Rechnungsnummer, Käufer, Positionen,
-/// Mengen und Preise gehören zur einzelnen Rechnung und werden nie angefasst.
+/// **Was übernommen wird:** eigene Firma, Anschrift, Land, Steuernummern,
+/// E-Mail und Bankverbindung als Stammdaten sowie die bewusst hinterlegten
+/// Vorgaben für Währung, Zahlungsbedingungen und Zahlungsziel als
+/// Komfort-Defaults. Rechnungsnummer, Käufer, Positionen, Mengen und Preise
+/// gehören zur einzelnen Rechnung und werden nie angefasst.
+///
+/// **Vorrang:** Stammdaten aus der Vorlage stehen über der PDF-Erkennung.
+/// Komfort-Defaults dagegen weichen einer brauchbaren PDF-Erkennung, weil die
+/// einzelne Rechnung für Währung und Fälligkeit maßgeblich ist.
 ///
 /// **Was geschützt bleibt:** jedes Feld, das der Anwender selbst geändert hat.
 /// Die Herkunft entscheidet – dieselbe Regel wie bei der PDF-Erkennung, siehe
-/// <see cref="FieldOriginRules.CanReplace"/>. Übernommene Werte werden als
-/// <see cref="FieldOrigin.Template"/> vermerkt; vorher galten sie als
-/// Benutzereingabe, was schlicht nicht stimmte und die spätere Übernahme
-/// geänderter Einstellungen unmöglich machte.
+/// <see cref="FieldOriginRules.CanReplace"/>.
 /// </summary>
 public static class CompanyTemplateApplier
 {
@@ -46,8 +47,8 @@ public static class CompanyTemplateApplier
             Set(d, changed, nameof(d.BankIban), template.BankIban, v => d.BankIban = v);
             Set(d, changed, nameof(d.BankBic), template.BankBic, v => d.BankBic = v);
 
-            Set(d, changed, nameof(d.PaymentTerms), template.DefaultPaymentTerms, v => d.PaymentTerms = v);
-            Set(d, changed, nameof(d.Currency), template.DefaultCurrency, v => d.Currency = v);
+            SetDefault(d, changed, nameof(d.PaymentTerms), template.DefaultPaymentTerms, v => d.PaymentTerms = v);
+            SetDefault(d, changed, nameof(d.Currency), template.DefaultCurrency, v => d.Currency = v);
 
             ApplyPaymentTerm(d, changed, template);
         });
@@ -56,9 +57,10 @@ public static class CompanyTemplateApplier
     }
 
     /// <summary>
-    /// Das Zahlungsziel ist kein eigener Wert, sondern eine Frist: Aus
-    /// Rechnungsdatum plus Tagen ergibt sich das Fälligkeitsdatum. Hat der
-    /// Anwender ein Datum von Hand gesetzt, bleibt es stehen.
+    /// Das Zahlungsziel ist kein eigener Rechnungswert, sondern eine
+    /// Komfortvorgabe: Aus Rechnungsdatum plus Tagen ergibt sich ein
+    /// Fälligkeitsdatum. Ein erkanntes oder von Hand gesetztes Datum steht
+    /// darüber und bleibt deshalb unangetastet.
     /// </summary>
     private static void ApplyPaymentTerm(
         InvoiceDraft draft, List<string> changed, CompanyTemplate template)
@@ -68,40 +70,59 @@ public static class CompanyTemplateApplier
             return;
         }
 
-        if (!CanReplace(draft, nameof(draft.DueDate)))
+        if (!FieldOriginRules.CanReplace(
+                draft.OriginOf(nameof(draft.DueDate)), FieldOrigin.TemplateDefault))
         {
             return;
         }
 
         DateOnly due = issue.AddDays(template.DefaultPaymentTermDays);
 
-        if (draft.DueDate == due)
+        if (draft.DueDate == due
+            && draft.OriginOf(nameof(draft.DueDate)) == FieldOrigin.TemplateDefault)
         {
             return;
         }
 
         draft.DueDate = due;
-        draft.MarkOrigin(nameof(draft.DueDate), FieldOrigin.Template);
+        draft.MarkOrigin(nameof(draft.DueDate), FieldOrigin.TemplateDefault);
         changed.Add(nameof(draft.DueDate));
     }
 
+    /// <summary>Übernimmt einen echten Stammdatenwert aus der Firmenvorlage.</summary>
     private static void Set(
         InvoiceDraft draft,
         List<string> changed,
         string property,
         string? value,
         Action<string> assign)
+        => Set(draft, changed, property, value, FieldOrigin.Template, assign);
+
+    /// <summary>Übernimmt eine gespeicherte Komfortvorgabe.</summary>
+    private static void SetDefault(
+        InvoiceDraft draft,
+        List<string> changed,
+        string property,
+        string? value,
+        Action<string> assign)
+        => Set(draft, changed, property, value, FieldOrigin.TemplateDefault, assign);
+
+    private static void Set(
+        InvoiceDraft draft,
+        List<string> changed,
+        string property,
+        string? value,
+        FieldOrigin proposedOrigin,
+        Action<string> assign)
     {
-        if (string.IsNullOrWhiteSpace(value) || !CanReplace(draft, property))
+        if (string.IsNullOrWhiteSpace(value)
+            || !FieldOriginRules.CanReplace(draft.OriginOf(property), proposedOrigin))
         {
             return;
         }
 
         assign(value);
-        draft.MarkOrigin(property, FieldOrigin.Template);
+        draft.MarkOrigin(property, proposedOrigin);
         changed.Add(property);
     }
-
-    private static bool CanReplace(InvoiceDraft draft, string property)
-        => FieldOriginRules.CanReplace(draft.OriginOf(property), FieldOrigin.Template);
 }

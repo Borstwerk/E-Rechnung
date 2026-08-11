@@ -83,6 +83,11 @@ public sealed partial class ReviewViewModel : StepViewModel
         ? string.Empty
         : Invoice.IssueDate.ToString("d", CultureInfo.CurrentCulture);
 
+    /// <summary>Fälligkeitsdatum.</summary>
+    public string DueDateText => Invoice?.DueDate is { } dueDate
+        ? dueDate.ToString("d", CultureInfo.CurrentCulture)
+        : string.Empty;
+
     /// <summary>Nettobetrag.</summary>
     public string NetText => Money(Totals?.TaxBasisTotal);
 
@@ -107,6 +112,7 @@ public sealed partial class ReviewViewModel : StepViewModel
         OnPropertyChanged(nameof(BuyerText));
         OnPropertyChanged(nameof(InvoiceNumberText));
         OnPropertyChanged(nameof(IssueDateText));
+        OnPropertyChanged(nameof(DueDateText));
         OnPropertyChanged(nameof(NetText));
         OnPropertyChanged(nameof(TaxText));
         OnPropertyChanged(nameof(GrossText));

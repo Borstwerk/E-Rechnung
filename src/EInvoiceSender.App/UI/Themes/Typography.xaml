@@ -156,7 +156,7 @@
          BasedOn="{StaticResource BorstWerk.Text.Body}">
     <Setter Property="TextAlignment" Value="Right" />
     <Setter Property="MinWidth" Value="110" />
-    <Setter Property="Margin" Value="0,2,0,2" />
+    <Setter Property="Margin" Value="0,2,24,2" />
   </Style>
 
   <Style x:Key="Betragsbeschriftung" TargetType="TextBlock"

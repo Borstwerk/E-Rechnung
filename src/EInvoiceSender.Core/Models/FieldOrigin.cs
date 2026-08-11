@@ -19,23 +19,34 @@ public enum FieldOrigin
     Default = 0,
 
     /// <summary>
+    /// Aus einer gespeicherten Komfortvorgabe übernommen, etwa Standardwährung,
+    /// Zahlungsbedingungen oder ein daraus berechnetes Fälligkeitsdatum.
+    ///
+    /// Diese Werte helfen beim Ausfüllen, sind aber keine Stammdaten der Firma
+    /// und keine Aussage über die einzelne Rechnung. Eine brauchbare
+    /// PDF-Erkennung darf sie deshalb ersetzen.
+    /// </summary>
+    TemplateDefault = 1,
+
+    /// <summary>
     /// Aus dem PDF-Text gelesen, Zuordnung aber nicht eindeutig.
     /// Wird sichtbar zur Prüfung gekennzeichnet.
     /// </summary>
-    DetectedUncertain = 1,
+    DetectedUncertain = 2,
 
     /// <summary>Aus dem PDF-Text gelesen, Zuordnung eindeutig.</summary>
-    DetectedReliably = 2,
+    DetectedReliably = 3,
 
     /// <summary>
     /// Aus der gespeicherten Firmenvorlage.
     ///
-    /// Steht über der PDF-Erkennung: Der Anwender hat diese Werte einmal
-    /// bewusst hinterlegt. Weicht die PDF davon ab, ist eine Fehlerkennung
+    /// Eigene Stammdaten wie Firmenname, Anschrift oder Bankverbindung stehen
+    /// über der PDF-Erkennung: Der Anwender hat diese Werte einmal bewusst
+    /// hinterlegt. Weicht die PDF davon ab, ist eine Fehlerkennung
     /// wahrscheinlicher als eine Korrektur – und die eigenen Stammdaten
     /// stillschweigend zu ändern wäre überraschend.
     /// </summary>
-    Template = 3,
+    Template = 4,
 
     /// <summary>
     /// Vom Anwender eingegeben oder geändert.
@@ -43,7 +54,7 @@ public enum FieldOrigin
     /// Wird **nie** automatisch ersetzt. Was durch die Hand des Menschen
     /// gegangen ist, bleibt so stehen.
     /// </summary>
-    Manual = 4,
+    Manual = 5,
 }
 
 /// <summary>

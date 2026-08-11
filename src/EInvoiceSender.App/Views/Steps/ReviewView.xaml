@@ -42,6 +42,8 @@
           <TextBlock Text="{Binding InvoiceNumberText}" FontWeight="SemiBold" />
           <TextBlock Text="Rechnungsdatum" />
           <TextBlock Text="{Binding IssueDateText}" FontWeight="SemiBold" />
+          <TextBlock Text="Fällig am" />
+          <TextBlock Text="{Binding DueDateText}" FontWeight="SemiBold" />
           <TextBlock Text="Netto" />
           <TextBlock Text="{Binding NetText}" FontWeight="SemiBold" />
           <TextBlock Text="Steuer" />
