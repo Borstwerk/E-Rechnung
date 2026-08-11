@@ -152,5 +152,5 @@ jobs:
       - name: Artefakte bereitstellen
         uses: actions/upload-artifact@v4
         with:
-          name: einvoicesender-win-x64
+          name: borstwerk-e-rechnung-win-x64
           path: artifacts/release/
