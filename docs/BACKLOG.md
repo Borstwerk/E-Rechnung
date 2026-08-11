@@ -3,6 +3,19 @@
 Nur echte, noch nicht erledigte Aufgaben. Abgeschlossenes gehört nicht
 hierher, sondern in die Commit-Historie.
 
+## Version 0.2.0
+
+- **Lokales Diagnoselogging für die Fehleranalyse.** Fehlerberichte sollen sich
+  besser nachvollziehen lassen, ohne Rechnungs- oder Kundendaten zu sammeln.
+  Das Logging bleibt vollständig lokal und wird standardmäßig in einem
+  begrenzten, rotierenden Satz von Logdateien abgelegt. Erfasst werden dürfen
+  insbesondere Programmversion, Workflow-Schritt, gewählter PDF-Verarbeitungsweg,
+  technische Prüfresultate, Dauer relevanter Verarbeitungsschritte und
+  Ausnahmeinformationen. Rechnungsinhalte, Namen und Anschriften der Beteiligten,
+  Rechnungsnummern, IBAN/BIC, E-Mail-Adressen sowie eingebettete XML- oder
+  PDF-Inhalte gehören ausdrücklich **nicht** ins Log. Die Oberfläche soll einen
+  einfachen Weg anbieten, den Logordner für einen Fehlerbericht zu öffnen.
+
 ## Funktion
 
 - **Positionserkennung aus Tabellen.** Die PDF-Erkennung liest Kopfdaten,
