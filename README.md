@@ -62,7 +62,7 @@ Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
 
 **PDF auswählen und analysieren**
 
-![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-pdf-auswaehlen.png)
+![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-pdf-auswahl.png)
 
 **Rechnungsdaten prüfen und ergänzen**
 
