@@ -179,6 +179,14 @@ Einen Fehler gefunden oder eine Idee für BorstWerk E-Rechnung?
 Bitte **keine echten Rechnungen oder andere Dateien mit vertraulichen, personenbezogenen oder
 Bankdaten hochladen**. Verwenden Sie nach Möglichkeit anonymisierte oder künstliche Beispieldaten.
 
+## Entwicklung und Transparenz
+
+**KI-gestützte Entwicklung:** Bei der Entwicklung von BorstWerk E-Rechnung
+werden generative KI-Werkzeuge unterstützend eingesetzt. Anforderungen,
+Architekturentscheidungen, Code, Tests, Validierung und Releases werden durch
+den Projektverantwortlichen geprüft. Die Verantwortung für die veröffentlichten
+Versionen liegt beim Projektverantwortlichen.
+
 ## BorstWerk
 
 BorstWerk ist eine Familie kleiner, eigenständiger Werkzeuge für kleine Unternehmen,
