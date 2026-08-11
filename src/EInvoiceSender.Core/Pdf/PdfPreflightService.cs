@@ -118,11 +118,13 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
         // hängt davon ab, ob es den Vorgang beendet oder nur den bequemen Weg
         // versperrt. Dieselbe fehlende Schrifteinbettung ist einmal ein Fehler
         // und einmal ein Hinweis.
-        (PdfProcessingRoute route, string? renderRefusal) =
-            await ChooseRouteAsync(analysis, filePath, cancellationToken).ConfigureAwait(false);
+        RouteDecision decision = await ChooseRouteAsync(analysis, filePath, cancellationToken)
+            .ConfigureAwait(false);
 
-        AddBlockerFindings(analysis, findings, route, renderRefusal);
-        AddInformationalFindings(analysis, findings);
+        AddBlockerFindings(analysis, findings, decision);
+        AddInformationalFindings(analysis, findings, decision.Route);
+
+        PdfProcessingRoute route = decision.Route;
 
         PreflightVerdict verdict = route == PdfProcessingRoute.Rejected
             ? PreflightVerdict.NotSuitable
@@ -179,12 +181,12 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     ///
     /// Kommen mehrere Hindernisse zusammen, zählt das strengste.
     /// </summary>
-    private async Task<(PdfProcessingRoute Route, string? RenderRefusal)> ChooseRouteAsync(
+    private async Task<RouteDecision> ChooseRouteAsync(
         PdfAnalysisResult analysis, string filePath, CancellationToken cancellationToken)
     {
         if (analysis.CanBeUpgraded)
         {
-            return (PdfProcessingRoute.Direct, null);
+            return new RouteDecision(PdfProcessingRoute.Direct);
         }
 
         bool onlyFontsMissing = analysis.UpgradeBlockers
@@ -192,16 +194,41 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
 
         if (!onlyFontsMissing)
         {
-            return (PdfProcessingRoute.Rejected, null);
+            return new RouteDecision(PdfProcessingRoute.Rejected);
+        }
+
+        // Fremde Anhänge überleben den Rasterweg nicht: Er baut ein neues
+        // Dokument, und was nicht ausdrücklich hineingelegt wird, ist weg.
+        if (ForeignAttachments(analysis).Count > 0)
+        {
+            return new RouteDecision(PdfProcessingRoute.Rejected, AttachmentsBlockRaster: true);
         }
 
         PdfRenderProbeResult probe = await _renderProbe
             .ProbeAsync(filePath, cancellationToken).ConfigureAwait(false);
 
         return probe.CanRender
-            ? (PdfProcessingRoute.RasterFallback, null)
-            : (PdfProcessingRoute.Rejected, probe.Reason);
+            ? new RouteDecision(PdfProcessingRoute.RasterFallback)
+            : new RouteDecision(PdfProcessingRoute.Rejected, RenderRefusal: probe.Reason);
     }
+
+    /// <summary>
+    /// Das Ergebnis der Wegwahl samt Begründung, falls der Rasterweg
+    /// ausscheidet. Die Begründung wird gebraucht, weil dieselbe Ablehnung dem
+    /// Anwender sehr verschiedene Dinge sagen muss.
+    /// </summary>
+    private sealed record RouteDecision(
+        PdfProcessingRoute Route,
+        string? RenderRefusal = null,
+        bool AttachmentsBlockRaster = false);
+
+    /// <summary>
+    /// Anhänge, die nicht die Rechnungs-XML sind – Lieferscheine, Stundenzettel,
+    /// Fotos. Sie gehören dem Anwender und nicht der Anwendung.
+    /// </summary>
+    private static List<EmbeddedFileInfo> ForeignAttachments(PdfAnalysisResult analysis)
+        => [.. analysis.EmbeddedFiles
+            .Where(file => !InvoiceAttachmentDescriptor.LooksLikeInvoiceFile(file.FileName))];
 
     /// <summary>
     /// Übersetzt die Hindernisse in Meldungen, die eine konkrete Handlung
@@ -211,14 +238,19 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     private static void AddBlockerFindings(
         PdfAnalysisResult analysis,
         ValidationReportBuilder findings,
-        PdfProcessingRoute route,
-        string? renderRefusal)
+        RouteDecision decision)
     {
+        if (decision.AttachmentsBlockRaster)
+        {
+            AddAttachmentsBlockRasterFinding(findings, ForeignAttachments(analysis));
+        }
+
         foreach (PdfUpgradeBlocker blocker in analysis.UpgradeBlockers)
         {
             switch (blocker)
             {
-                case PdfUpgradeBlocker.FontsNotEmbedded when route == PdfProcessingRoute.RasterFallback:
+                case PdfUpgradeBlocker.FontsNotEmbedded
+                    when decision.Route == PdfProcessingRoute.RasterFallback:
                     AddRasterFallbackOffer(findings);
                     break;
 
@@ -257,9 +289,9 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                         "File",
                         "Mindestens ein Font-Objekt hat keinen FontFile-Eintrag im FontDescriptor. "
                         + "Betroffen sind auch die 14 Standardschriften wie Helvetica oder Arial."
-                        + (renderRefusal is null
+                        + (decision.RenderRefusal is null
                             ? string.Empty
-                            : " Eine sichtbare Kopie kam nicht in Frage: " + renderRefusal));
+                            : " Eine sichtbare Kopie kam nicht in Frage: " + decision.RenderRefusal));
                     break;
 
                 case PdfUpgradeBlocker.ActiveContent:
@@ -339,10 +371,37 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     }
 
     /// <summary>
+    /// Erklärt, warum es hier keine sichtbare Kopie gibt.
+    ///
+    /// **Der Rasterweg baut ein neues Dokument.** Er setzt die Seiten aus
+    /// gerenderten Bildern zusammen und legt die Rechnungs-XML dazu. Was sonst
+    /// noch an der Vorlage hing – ein Lieferschein, ein Stundenzettel, ein Foto –
+    /// ist danach nicht mehr da.
+    ///
+    /// Zwei Sätze weiter oben verspricht die Eingangsprüfung zu jedem solchen
+    /// Anhang „Er bleibt erhalten.“ Auf dem direkten Weg stimmt das. Den
+    /// Rasterweg trotzdem anzubieten hieße, dieses Versprechen zu brechen, und
+    /// zwar unbemerkt: Dem Ergebnis sieht niemand an, dass etwas fehlt, das
+    /// vorher da war. Lieber kein Angebot als ein stiller Verlust.
+    /// </summary>
+    private static void AddAttachmentsBlockRasterFinding(
+        ValidationReportBuilder findings, List<EmbeddedFileInfo> attachments)
+        => findings.Error(
+            "APP-PRE-017",
+            $"Für diese Datei wird keine sichtbare Kopie angeboten: Sie enthält "
+            + $"{(attachments.Count == 1 ? "einen weiteren Anhang" : $"{attachments.Count} weitere Anhänge")} "
+            + $"({string.Join(", ", attachments.Select(a => a.FileName))}). Eine sichtbare "
+            + "Kopie wird als neues Dokument aufgebaut; diese Anhänge wären darin nicht "
+            + "mehr enthalten. Verwenden Sie eine PDF-Datei mit eingebetteten Schriftarten, "
+            + "damit die Anhänge erhalten bleiben.",
+            "File",
+            "Der Rasterweg übernimmt nur die dargestellten Seiten und die Rechnungs-XML.");
+
+    /// <summary>
     /// Ergänzt Hinweise und Warnungen, die eine Verarbeitung nicht verhindern.
     /// </summary>
     private static void AddInformationalFindings(
-        PdfAnalysisResult analysis, ValidationReportBuilder findings)
+        PdfAnalysisResult analysis, ValidationReportBuilder findings, PdfProcessingRoute route)
     {
         if (analysis.HasExistingInvoiceXml)
         {
@@ -358,16 +417,16 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                 $"Gefundenes Profil: {analysis.ExistingInvoiceProfile ?? "unbekannt"}");
         }
 
-        foreach (EmbeddedFileInfo file in analysis.EmbeddedFiles)
+        // „Er bleibt erhalten“ gilt nur für den direkten Weg – dort werden die
+        // Seiten des Originals samt allem, was daran hängt, übernommen. Auf
+        // jedem anderen Weg wäre der Satz eine Zusage, die niemand einhält;
+        // dann steht hier nur, was gefunden wurde.
+        foreach (EmbeddedFileInfo file in ForeignAttachments(analysis))
         {
-            if (InvoiceAttachmentDescriptor.LooksLikeInvoiceFile(file.FileName))
-            {
-                continue;
-            }
-
             findings.Information(
                 "APP-PRE-021",
-                $"Die Datei enthält den Anhang '{file.FileName}'. Er bleibt erhalten.",
+                $"Die Datei enthält den Anhang '{file.FileName}'."
+                + (route == PdfProcessingRoute.Direct ? " Er bleibt erhalten." : string.Empty),
                 "File",
                 $"{file.SizeInBytes} Bytes, Typ {file.MimeType ?? "unbekannt"}");
         }

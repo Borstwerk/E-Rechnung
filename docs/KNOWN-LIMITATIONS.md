@@ -34,6 +34,13 @@ Das kostet etwas, und die Anwendung sagt es vor der Entscheidung:
   der eingebetteten XML und sind von der Darstellung unabhängig – für den
   Empfänger einer E-Rechnung ist das der Teil, der zählt.
 
+**Nicht angeboten wird er, wenn an der Datei weitere Anhänge hängen** – ein
+Lieferschein, ein Stundenzettel, ein Foto. Die sichtbare Kopie ist ein neues
+Dokument; was nicht ausdrücklich hineingelegt wird, ist darin nicht mehr da.
+Die Eingangsprüfung verspricht zu jedem solchen Anhang „Er bleibt erhalten“ –
+auf dem direkten Weg gilt das, auf dem Rasterweg nicht. Lieber kein Angebot als
+ein Verlust, den niemand bemerkt.
+
 Dieser Weg wird **nie automatisch und nie stillschweigend** gewählt. Er wird
 angeboten, und erst die ausdrückliche Zustimmung öffnet ihn. Die Zustimmung
 gilt für den einen Vorgang und wird nirgends gespeichert. Das Original bleibt

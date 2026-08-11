@@ -327,24 +327,71 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.True(File.Exists(first.OutputFile.FullPath));
     }
 
+    /// <summary>
+    /// Nach einem gescheiterten Lauf bleibt kein Arbeitsverzeichnis zurück.
+    ///
+    /// **Warum hier nicht gezählt wird.** Vorher zählte dieser Test alle
+    /// <c>EInvoiceSender-*</c>-Verzeichnisse unter dem temporären Verzeichnis
+    /// des Systems, vor und nach dem Lauf. Das war eine Aussage über den ganzen
+    /// Rechner, nicht über diesen Vorgang: Jede andere Prüfklasse, die
+    /// gleichzeitig lief, legte ihr eigenes – völlig berechtigtes –
+    /// Arbeitsverzeichnis an und ließ die Zahlen auseinandergehen. Unter Windows
+    /// fiel das zuerst auf, weil dort mehr parallel läuft.
+    ///
+    /// Die Frage lautet nicht „wie viele gibt es?“, sondern „ist **dieses**
+    /// gelöscht?“. Also wird genau das verfolgt: Die Fabrik merkt sich, was sie
+    /// ausgegeben hat, und danach wird dieser eine Pfad geprüft. Das ist
+    /// unabhängig von allem, was sonst auf dem Rechner geschieht – und braucht
+    /// weder eine Wartezeit noch das Abschalten der Parallelität.
+    /// </summary>
     [Fact]
     public async Task TemporäreDateienWerdenAuchImFehlerfallEntfernt()
     {
         string source = TempPdf(TestPdfFactory.CreateSimplePdf());
+        var factory = new RecordingWorkspaceFactory();
 
-        string[] before = Directory.GetDirectories(Path.GetTempPath(), "EInvoiceSender-*");
-
-        await BuildUseCase(new StubValidator("Testvalidator", StubBehavior.ReportsError))
+        CreateEInvoiceResult result = await BuildUseCase(
+                factory, new StubValidator("Testvalidator", StubBehavior.ReportsError))
             .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
 
-        string[] after = Directory.GetDirectories(Path.GetTempPath(), "EInvoiceSender-*");
+        Assert.False(result.Succeeded);
 
-        Assert.Equal(before.Length, after.Length);
+        // Ohne diese Zusicherung wäre der Rest wertlos: Wurde gar kein
+        // Arbeitsverzeichnis angelegt, ist auch keines übrig geblieben.
+        string workspace = Assert.Single(factory.Created);
+
+        Assert.False(
+            Directory.Exists(workspace),
+            $"Das Arbeitsverzeichnis {workspace} ist nach dem gescheiterten Lauf noch da.");
+    }
+
+    /// <summary>
+    /// Auch der geglückte Lauf lässt nichts zurück. Der Fehlerfall allein
+    /// belegt das nicht – beim Speichern kommen weitere Zwischendateien hinzu.
+    /// </summary>
+    [Fact]
+    public async Task TemporäreDateienWerdenAuchNachErfolgEntfernt()
+    {
+        string source = TempPdf(TestPdfFactory.CreateSimplePdf());
+        var factory = new RecordingWorkspaceFactory();
+
+        CreateEInvoiceResult result = await BuildUseCase(factory)
+            .CreateAsync(Request(source), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.Succeeded, Describe(result));
+
+        string workspace = Assert.Single(factory.Created);
+
+        Assert.False(Directory.Exists(workspace));
     }
 
     // ------------------------------------------------------------------ Aufbau
 
     private EInvoiceService BuildUseCase(params IExternalDocumentValidator[] validators)
+        => BuildUseCase(new TemporaryWorkspaceFactory(), validators);
+
+    private EInvoiceService BuildUseCase(
+        ITemporaryWorkspaceFactory workspaceFactory, params IExternalDocumentValidator[] validators)
         => new(
             PipelineParts.Preflight(_analyzer),
             new En16931RuleValidator(new FixedClock(FixedNow)),
@@ -354,7 +401,7 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             PipelineParts.RasterComposer(),
             _analyzer,
             new FileStorage(NullLogger<FileStorage>.Instance),
-            new TemporaryWorkspaceFactory(),
+            workspaceFactory,
             new StubClock(FixedNow),
             validators,
             NullLogger<EInvoiceService>.Instance);
@@ -411,6 +458,50 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 internal sealed class StubClock(DateTimeOffset now) : IClock
 {
     public DateTimeOffset Now => now;
+}
+
+/// <summary>
+/// Reicht echte Arbeitsverzeichnisse durch und schreibt mit, welche das waren.
+///
+/// Damit lässt sich nach dem Lauf die einzig richtige Frage stellen: Ist
+/// **dieses** Verzeichnis verschwunden? Eine Zählung aller Verzeichnisse im
+/// temporären Verzeichnis des Systems beantwortet sie nicht – sie beantwortet
+/// eine Frage über den ganzen Rechner, und die hat mit dem Vorgang nichts zu
+/// tun.
+///
+/// Das Verhalten bleibt unverändert: Es wird das echte
+/// <see cref="TemporaryWorkspace"/> verwendet, nur eben beobachtet. Eine
+/// Attrappe prüfte am Ende die Attrappe.
+/// </summary>
+internal sealed class RecordingWorkspaceFactory : ITemporaryWorkspaceFactory
+{
+    private readonly TemporaryWorkspaceFactory _inner = new();
+    private readonly List<string> _created = [];
+    private readonly Lock _gate = new();
+
+    /// <summary>Die Pfade aller ausgegebenen Arbeitsverzeichnisse.</summary>
+    public IReadOnlyList<string> Created
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _created];
+            }
+        }
+    }
+
+    public ITemporaryWorkspace Create()
+    {
+        ITemporaryWorkspace workspace = _inner.Create();
+
+        lock (_gate)
+        {
+            _created.Add(workspace.Path);
+        }
+
+        return workspace;
+    }
 }
 
 /// <summary>Zeitquelle mit festem Wert für den Regelvalidator.</summary>

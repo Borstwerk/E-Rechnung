@@ -44,7 +44,7 @@ public partial class PdfSelectionView : UserControl
         {
             MessageBox.Show(
                 "Die Datei konnte nicht geprüft werden.\n\nTechnische Angabe:\n" + exception.Message,
-                "EInvoiceSender", MessageBoxButton.OK, MessageBoxImage.Warning);
+                "BorstWerk E-Rechnung", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }

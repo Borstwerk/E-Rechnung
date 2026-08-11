@@ -220,6 +220,121 @@ public static class TestPdfFactory
         ]);
     }
 
+    /// <summary>
+    /// Baut eine PDF mit nicht eingebetteter Schrift **und** einem fremden
+    /// Anhang – etwa einem Lieferschein, den jemand an die Rechnung geheftet
+    /// hat.
+    ///
+    /// Der Fall entscheidet zwischen zwei Zusagen, die sich widersprechen: Die
+    /// Eingangsprüfung verspricht zu jedem Anhang „Er bleibt erhalten“, und der
+    /// Rasterweg baut ein neues Dokument, in dem er nicht mehr steckt.
+    /// </summary>
+    public static byte[] CreatePdfWithNonEmbeddedFontAndAttachment()
+    {
+        byte[] anhang = System.Text.Encoding.UTF8.GetBytes(
+            "Lieferschein 2026-0815\nPosition 1: Beratung, 8 Stunden\n");
+
+        byte[] content = Ascii("BT /F1 24 Tf 72 700 Td (Testrechnung) Tj ET");
+
+        return Assemble(
+        [
+            Ascii(
+                "<< /Type /Catalog /Pages 2 0 R "
+                + "/Names << /EmbeddedFiles << /Names [(lieferschein.txt) 6 0 R] >> >> >>"),
+            Ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            Ascii(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                + "/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>"),
+            Stream(string.Empty, content),
+            Ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),
+            Ascii(
+                "<< /Type /Filespec /F (lieferschein.txt) /UF (lieferschein.txt) "
+                + "/AFRelationship /Supplement /EF << /F 7 0 R >> >>"),
+            Stream("/Type /EmbeddedFile /Subtype /text#2Fplain", anhang),
+        ]);
+    }
+
+    /// <summary>
+    /// Dieselbe Datei mit fremdem Anhang, aber ohne Schrift – und damit für den
+    /// direkten Weg geeignet. Dort bleibt der Anhang erhalten.
+    /// </summary>
+    public static byte[] CreateSimplePdfWithAttachment()
+    {
+        byte[] anhang = System.Text.Encoding.UTF8.GetBytes(
+            "Lieferschein 2026-0815\nPosition 1: Beratung, 8 Stunden\n");
+
+        byte[] content = Ascii("2 w 20 20 555 802 re S");
+
+        return Assemble(
+        [
+            Ascii(
+                "<< /Type /Catalog /Pages 2 0 R "
+                + "/Names << /EmbeddedFiles << /Names [(lieferschein.txt) 5 0 R] >> >> >>"),
+            Ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            Ascii(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                + "/Resources << >> /Contents 4 0 R >>"),
+            Stream(string.Empty, content),
+            Ascii(
+                "<< /Type /Filespec /F (lieferschein.txt) /UF (lieferschein.txt) "
+                + "/AFRelationship /Supplement /EF << /F 6 0 R >> >>"),
+            Stream("/Type /EmbeddedFile /Subtype /text#2Fplain", anhang),
+        ]);
+    }
+
+    /// <summary>
+    /// Baut eine PDF, deren Seiteninhalt über eine Kette ineinander
+    /// geschachtelter Formulare läuft. Am Ende der Kette steht Text in einer
+    /// nicht eingebetteten Schrift.
+    ///
+    /// **Wofür das gut ist.** Die Schriftprüfung steigt in Formulare ab, aber
+    /// nicht unbegrenzt – irgendwo muss eine Grenze sein, sonst legt es eine
+    /// Datei genau darauf an. Die Frage ist, was an der Grenze geschieht.
+    /// „Zu tief, also in Ordnung“ wäre eine Einladung: Wer sein Dokument tief
+    /// genug schachtelt, käme an der Prüfung vorbei.
+    /// </summary>
+    /// <param name="depth">Anzahl der ineinander liegenden Formulare.</param>
+    public static byte[] CreateDeeplyNestedFormPdf(int depth)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(depth, 1);
+
+        // Objekt 1 Katalog, 2 Seitenbaum, 3 Seite, 4 Seiteninhalt, 5 Schrift,
+        // danach die Formulare 6 … 6+depth-1.
+        const int firstForm = 6;
+
+        var objects = new List<byte[]>
+        {
+            Ascii("<< /Type /Catalog /Pages 2 0 R >>"),
+            Ascii("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+            Ascii(
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                + $"/Resources << /Font << /F1 5 0 R >> /XObject << /Fm0 {firstForm} 0 R >> >> "
+                + "/Contents 4 0 R >>"),
+            Stream(string.Empty, Ascii("q 1 0 0 1 40 700 cm /Fm0 Do Q")),
+            Ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"),
+        };
+
+        for (int level = 0; level < depth; level++)
+        {
+            bool last = level == depth - 1;
+
+            // Das innerste Formular zeichnet, die übrigen reichen weiter.
+            byte[] content = last
+                ? Ascii("BT /F1 14 Tf 10 10 Td (Rechnung 2026-0815) Tj ET")
+                : Ascii($"q /Fm{level + 1} Do Q");
+
+            string resources = last
+                ? string.Empty
+                : $"/Resources << /XObject << /Fm{level + 1} {firstForm + level + 1} 0 R >> >> ";
+
+            objects.Add(Stream(
+                $"/Type /XObject /Subtype /Form /BBox [0 0 400 80] {resources}".TrimEnd(),
+                content));
+        }
+
+        return Assemble(objects);
+    }
+
     private static ScanImage ScanPage(int width, int height)
     {
         byte[] pixels = new byte[width * height];

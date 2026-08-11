@@ -124,7 +124,7 @@ public partial class App : Application
         MessageBox.Show(
             "Es ist eine unerwartete Störung aufgetreten. Die bisher erzeugten Dateien "
             + "bleiben erhalten.\n\nTechnische Angabe:\n" + e.Exception.Message,
-            "EInvoiceSender",
+            "BorstWerk E-Rechnung",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
 

@@ -337,6 +337,7 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
 
             if (!ScopeUsesOnlyEmbeddedFonts(
                     page.Elements.GetDictionary("/Resources"),
+                    inheritedFonts: null,
                     () => ContentReader.ReadContent(page),
                     visited,
                     depth: 0))
@@ -355,14 +356,22 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     /// Gelingt das Lesen des Inhalts nicht, gilt wieder die alte, strengere
     /// Regel: Dann zählt jede Schriftressource als verwendet. Eine unlesbare
     /// Seite darf nicht zum Freibrief werden.
+    ///
+    /// **Zu <paramref name="inheritedFonts"/>:** Ein Formular ohne eigene
+    /// Schriftliste greift auf die der umgebenden Ebene zurück. Die Regel ist
+    /// alt und in neueren Fassungen der Norm abgekündigt, aber verbreitet – und
+    /// wer sie nicht kennt, sieht in einem verschachtelten Formular ein
+    /// <c>Tf /F1</c>, findet kein <c>/F1</c> und hält die Sache für erledigt.
+    /// Genau dort verstecken sich nicht eingebettete Schriften.
     /// </summary>
     private bool ScopeUsesOnlyEmbeddedFonts(
         PdfDictionary? resources,
+        PdfDictionary? inheritedFonts,
         Func<CSequence> readContent,
         HashSet<PdfDictionary> visited,
         int depth)
     {
-        PdfDictionary? fonts = resources?.Elements.GetDictionary("/Font");
+        PdfDictionary? fonts = resources?.Elements.GetDictionary("/Font") ?? inheritedFonts;
         PdfDictionary? xObjects = resources?.Elements.GetDictionary("/XObject");
 
         // Ohne Schriften und ohne Formulare gibt es hier nichts zu entscheiden.
@@ -405,8 +414,54 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
             }
         }
 
-        return depth >= MaxFormDepth
-               || InvokedFormsUseOnlyEmbeddedFonts(xObjects, invokedForms, resources, visited, depth);
+        List<PdfDictionary> pending = PendingForms(xObjects, invokedForms, visited);
+
+        if (pending.Count == 0)
+        {
+            return true;
+        }
+
+        // **Die Grenze darf nicht nach außen öffnen.** Vorher hieß „zu tief“
+        // schlicht „in Ordnung“ – und damit wäre eine Datei, die es genau darauf
+        // anlegt, an der Prüfung vorbei. Wer tiefer schachtelt, als hier
+        // nachgesehen wird, bekommt kein Urteil über den Inhalt, sondern das
+        // vorsichtige: nicht bestätigt. Der Weg über die sichtbare Kopie bleibt
+        // ihm; er führt zu einer gültigen Datei.
+        if (depth >= MaxFormDepth)
+        {
+            LogFormDepthExceeded(_logger, MaxFormDepth);
+
+            return false;
+        }
+
+        return FormsUseOnlyEmbeddedFonts(pending, fonts, visited, depth);
+    }
+
+    /// <summary>
+    /// Die Formulare, die noch zu untersuchen sind.
+    ///
+    /// Aussortiert wird alles, was kein Formular ist: <c>Do</c> zeichnet auch
+    /// Bilder, und ein Bild hat keinen Inhaltsstrom zum Nachsehen. Ohne diese
+    /// Trennung schlüge die Tiefengrenze bei jeder eingescannten Seite an.
+    /// </summary>
+    private static List<PdfDictionary> PendingForms(
+        PdfDictionary? xObjects, IReadOnlySet<string> invokedForms, HashSet<PdfDictionary> visited)
+    {
+        if (xObjects is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. from name in invokedForms
+               let form = xObjects.Elements.GetDictionary(name)
+               where form is not null
+                     && form.Elements.GetName("/Subtype") == "/Form"
+                     && form.Stream is not null
+                     && !visited.Contains(form)
+               select form,
+        ];
     }
 
     /// <summary>
@@ -416,34 +471,27 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
     /// Formular. Bliebe der Abstieg aus, sähe die Prüfung bei ihnen eine leere
     /// Seite und ließe jede fehlende Einbettung durchgehen.
     ///
-    /// Ein Formular ohne eigene <c>/Resources</c> benutzt die der Seite.
+    /// Die Schriftliste der umgebenden Ebene wird mitgegeben: Ein Formular ohne
+    /// eigene greift auf sie zurück.
     /// </summary>
-    private bool InvokedFormsUseOnlyEmbeddedFonts(
-        PdfDictionary? xObjects,
-        IReadOnlySet<string> invokedForms,
-        PdfDictionary? parentResources,
+    private bool FormsUseOnlyEmbeddedFonts(
+        List<PdfDictionary> forms,
+        PdfDictionary? parentFonts,
         HashSet<PdfDictionary> visited,
         int depth)
     {
-        if (xObjects is null)
+        foreach (PdfDictionary form in forms)
         {
-            return true;
-        }
-
-        foreach (string name in invokedForms)
-        {
-            if (xObjects.Elements.GetDictionary(name) is not { } form
-                || form.Elements.GetName("/Subtype") != "/Form"
-                || form.Stream is null
-                || !visited.Add(form))
+            if (!visited.Add(form))
             {
                 continue;
             }
 
-            byte[] stream = form.Stream.UnfilteredValue;
+            byte[] stream = form.Stream!.UnfilteredValue;
 
             if (!ScopeUsesOnlyEmbeddedFonts(
-                    form.Elements.GetDictionary("/Resources") ?? parentResources,
+                    form.Elements.GetDictionary("/Resources"),
+                    parentFonts,
                     () => ContentReader.ReadContent(stream),
                     visited,
                     depth + 1))
@@ -859,6 +907,12 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         EventId = 2012, Level = LogLevel.Information,
         Message = "Inhaltsstrom nicht lesbar ({Reason}). Jede erklärte Schrift gilt als verwendet.")]
     private static partial void LogContentUnreadable(ILogger logger, string reason);
+
+    [LoggerMessage(
+        EventId = 2013, Level = LogLevel.Information,
+        Message = "Formulare tiefer als {MaxDepth} verschachtelt. Die Schrifteinbettung "
+                  + "gilt als nicht bestätigt.")]
+    private static partial void LogFormDepthExceeded(ILogger logger, int maxDepth);
 
     [LoggerMessage(
         EventId = 2011, Level = LogLevel.Information,

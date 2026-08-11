@@ -190,6 +190,97 @@ public sealed class PdfPreflightTests : IDisposable
     }
 
     /// <summary>
+    /// Hängt ein fremder Anhang an der Datei, gibt es keine sichtbare Kopie.
+    ///
+    /// **Zwei Zusagen widersprachen sich.** Die Eingangsprüfung verspricht zu
+    /// jedem Anhang „Er bleibt erhalten“; der Rasterweg baut ein neues Dokument
+    /// und übernimmt ihn nicht. Wäre beides gleichzeitig in Kraft, verlöre der
+    /// Anwender den Lieferschein, ohne dass ihm das jemand sagt – dem Ergebnis
+    /// sieht man nicht an, was vorher daran hing.
+    ///
+    /// Für die erste Fassung fällt die Entscheidung zugunsten der Anhänge: kein
+    /// Angebot statt stillem Verlust.
+    /// </summary>
+    [Fact]
+    public async Task MitFremdemAnhangGibtEsKeineSichtbareKopie()
+    {
+        string path = Temp(TestPdfFactory.CreatePdfWithNonEmbeddedFontAndAttachment());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(PdfProcessingRoute.Rejected, report.Route);
+        Assert.False(report.CanProceed);
+
+        ValidationFinding finding = FindError(report, "APP-PRE-017");
+        Assert.Contains("lieferschein.txt", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("keine sichtbare Kopie", finding.Message, StringComparison.Ordinal);
+
+        // Und die Zusage, der Anhang bleibe erhalten, steht hier nicht mehr:
+        // Sie gilt nur, wo sie auch eingehalten wird.
+        ValidationFinding anhang = Assert.Single(
+            report.Findings.Findings, f => f.RuleId == "APP-PRE-021");
+
+        Assert.DoesNotContain("bleibt erhalten", anhang.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Auf dem direkten Weg bleibt die Zusage bestehen – dort werden die Seiten
+    /// des Originals samt allem, was daran hängt, übernommen.
+    /// </summary>
+    [Fact]
+    public async Task AufDemDirektenWegBleibtDieZusageZumAnhangBestehen()
+    {
+        // Eine geeignete Datei mit Anhang: die fertige E-Rechnung von oben
+        // trägt die Rechnungs-XML, die hier nicht zählt – deshalb eine Datei,
+        // deren Anhang ein fremder ist und deren Schriften eingebettet sind.
+        string path = Temp(TestPdfFactory.CreateSimplePdfWithAttachment());
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.Equal(PdfProcessingRoute.Direct, report.Route);
+
+        ValidationFinding anhang = Assert.Single(
+            report.Findings.Findings, f => f.RuleId == "APP-PRE-021");
+
+        Assert.Contains("bleibt erhalten", anhang.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Zu tief verschachtelte Formulare gelten als nicht bestätigt, nicht als
+    /// in Ordnung.
+    ///
+    /// Die Tiefengrenze schützt vor einer Datei, die es darauf anlegt. Öffnete
+    /// sie nach außen – „zu tief, also Schriften in Ordnung“ –, wäre sie selbst
+    /// der Weg daran vorbei.
+    /// </summary>
+    [Fact]
+    public async Task ZuTiefVerschachtelteFormulareGeltenAlsNichtBestätigt()
+    {
+        string path = Temp(TestPdfFactory.CreateDeeplyNestedFormPdf(depth: 12));
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        Assert.False(report.AllFontsEmbedded);
+    }
+
+    /// <summary>
+    /// Bis zur Grenze wird tatsächlich nachgesehen. Ohne diese Gegenprobe wäre
+    /// der Test darüber wertlos: Er liefe auch dann grün, wenn der Abstieg gar
+    /// nicht stattfände.
+    /// </summary>
+    [Fact]
+    public async Task InnerhalbDerGrenzeWirdWirklichNachgesehen()
+    {
+        string path = Temp(TestPdfFactory.CreateDeeplyNestedFormPdf(depth: 3));
+
+        PdfPreflightReport report = await _preflight.InspectAsync(path, TestContext.Current.CancellationToken);
+
+        // Gefunden wird die Schrift am Ende der Kette – nicht die Tiefe.
+        Assert.False(report.AllFontsEmbedded);
+        Assert.Equal(PdfProcessingRoute.RasterFallback, report.Route);
+    }
+
+    /// <summary>
     /// Ein Besitzerkennwort ist kein Öffnungskennwort: Die Datei lässt sich
     /// lesen und darstellen. PDFsharp meldet sie deshalb als unverschlüsselt.
     /// Trotzdem wird sie nicht stillschweigend gerastert – der Rechteinhaber hat

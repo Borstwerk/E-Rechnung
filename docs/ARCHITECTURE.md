@@ -171,10 +171,13 @@ sähe aus wie „gewollt“.
 - **`Direct`** – die Seiten des Originals werden unverändert übernommen.
   `PdfAInvoiceComposer`, unverändert.
 - **`RasterFallback`** – ausschließlich für Dateien, deren **einziges**
-  Hindernis die fehlende Schrifteinbettung ist **und** deren Seiten sich
-  nachweislich darstellen lassen (`IPdfRenderProbe` stellt jede Seite
-  probeweise bei 72 dpi dar). `RasterFallbackComposer` über
-  `RasterizedPdfBuilder`, fest 300 dpi.
+  Hindernis die fehlende Schrifteinbettung ist, die **keine fremden Anhänge**
+  tragen und deren Seiten sich nachweislich darstellen lassen
+  (`IPdfRenderProbe` stellt jede Seite probeweise bei 72 dpi dar).
+  `RasterFallbackComposer` über `RasterizedPdfBuilder`, fest 300 dpi.
+  Die Anhangsbedingung ist keine Vorsicht auf Verdacht: Der Rasterweg baut ein
+  neues Dokument und übernimmt nur Seiten und Rechnungs-XML. Für alles andere,
+  was an der Vorlage hing, wäre das ein unbemerkter Verlust.
 - **`Rejected`** – alles andere.
 
 Es gibt bewusst **keine** Regel der Art „PDFium kann rendern, also ist alles
@@ -197,9 +200,16 @@ Zur Schrifteinbettung: Geprüft wird, ob eine nicht eingebettete Schrift
 tatsächlich Text zeichnet, nicht ob sie unter `/Resources /Font` steht.
 `PdfAnalyzer` liest dazu den Inhaltsstrom (`ContentReader`), führt den
 Grafikzustand über `q`/`Q` mit und steigt in aufgerufene Form-XObjects ab –
-viele Erzeuger legen den gesamten sichtbaren Inhalt dorthin. Lässt sich ein
-Inhaltsstrom nicht lesen, gilt für ihn wieder die strengere alte Regel: Dann
-zählt jede erklärte Schrift als verwendet.
+viele Erzeuger legen den gesamten sichtbaren Inhalt dorthin. Ein Formular ohne
+eigene Schriftliste greift auf die der umgebenden Ebene zurück; auch das wird
+mitgeführt, weil sich dort sonst eine nicht eingebettete Schrift verstecken
+ließe.
+
+Zwei Stellen bleiben bewusst streng: Lässt sich ein Inhaltsstrom nicht lesen,
+zählt für ihn wieder jede erklärte Schrift als verwendet. Und sind Formulare
+tiefer verschachtelt als `MaxFormDepth`, gilt die Einbettung als **nicht
+bestätigt** – nicht als in Ordnung. Eine Tiefengrenze, die nach außen öffnet,
+wäre selbst der Weg an der Prüfung vorbei.
 
 ## Abhängigkeiten
 

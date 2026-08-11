@@ -57,8 +57,10 @@
     Windows eine spätere Fassung als Aktualisierung statt als zweite
     Installation.
 
-  * MajorUpgrade mit AllowSameVersionUpgrades: eine neuere Fassung ersetzt die
-    alte, eine ältere wird mit verständlicher Meldung abgelehnt.
+  * MajorUpgrade ohne AllowSameVersionUpgrades: eine neuere Fassung ersetzt die
+    alte, eine ältere wird mit verständlicher Meldung abgelehnt. Dieselbe
+    Fassung erneut zu installieren ist nicht vorgesehen – dafür ist die
+    vorhandene Installation zuerst zu entfernen.
 
   * Die Id-Attribute bleiben in ASCII geschrieben. Sie sind Kennungen,
     keine angezeigten Texte, und werden in dieser Datei gegenseitig
