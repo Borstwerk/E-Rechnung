@@ -16,8 +16,8 @@ Gedacht ist sie für den Fall, dass die Rechnung schon fertig ist – geschriebe
 LibreOffice, einer Branchenlösung oder sonst einem Programm – und daraus jetzt eine E-Rechnung
 werden soll.
 
-> **Status:** Die erste Veröffentlichung wird derzeit abschließend unter Windows geprüft. Sobald
-> die Abnahme abgeschlossen ist, erscheint hier eine herunterladbare Fassung.
+> **Status:** Die Windows-Abnahme für Version 0.1.0 ist abgeschlossen. Die erste Veröffentlichung
+> wird vorbereitet.
 
 ## Was die Anwendung kann
 
@@ -57,6 +57,20 @@ Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
    die PDF/A-3-Datei eingebettet.
 5. **Speichern und E-Mail vorbereiten.** Die fertige Datei und der Prüfbericht werden abgelegt,
    auf Wunsch dazu ein `.eml`-Entwurf.
+
+## Screenshots
+
+**PDF auswählen und analysieren**
+
+![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-pdf-auswaehlen.png)
+
+**Rechnungsdaten prüfen und ergänzen**
+
+![Schritt 2 – Rechnungsdaten erfassen und prüfen](docs/images/02-rechnungsdaten.png)
+
+**E-Rechnung speichern und E-Mail-Entwurf vorbereiten**
+
+![Schritt 5 – E-Rechnung speichern und E-Mail-Entwurf vorbereiten](docs/images/03-speichern-und-versenden.png)
 
 ## Welche Daten aus der PDF gelesen werden
 
