@@ -1,0 +1,130 @@
+name: Fehler melden
+description: Einen reproduzierbaren Fehler in BorstWerk E-Rechnung melden
+title: "[Fehler] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für die Meldung.
+
+        **Bitte keine echten Rechnungen mit Kunden-, Bank- oder anderen vertraulichen Daten hochladen.** Verwende nach Möglichkeit eine anonymisierte oder künstliche Beispieldatei.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Welche Version von BorstWerk E-Rechnung verwendest du?
+      placeholder: z. B. 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: distribution
+    attributes:
+      label: Variante
+      options:
+        - MSI-Installation
+        - Portable ZIP
+        - Selbst gebaut
+        - Weiß ich nicht
+    validations:
+      required: true
+
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows-Version
+      options:
+        - Windows 11
+        - Windows 10
+        - Andere / unbekannt
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Was ist passiert?
+      description: Beschreibe den Fehler möglichst konkret.
+      placeholder: Was hast du gesehen und an welcher Stelle im Ablauf ist es passiert?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Nachstellen
+      description: Welche Schritte führen möglichst zuverlässig zu dem Fehler?
+      placeholder: |
+        1. PDF auswählen
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+      description: Was hätte stattdessen passieren sollen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Tatsächliches Verhalten
+      description: Was ist stattdessen passiert?
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_message
+    attributes:
+      label: Fehlermeldung
+      description: Falls eine Meldung angezeigt wurde, bitte hier möglichst vollständig einfügen.
+      render: text
+
+  - type: dropdown
+    id: pdf_type
+    attributes:
+      label: Art der betroffenen PDF
+      description: Soweit bekannt.
+      options:
+        - Digital erzeugte PDF mit auswählbarem Text
+        - Reine Scan-/Bild-PDF
+        - Gemischte PDF aus Bild und Text
+        - Mehrseitige PDF / gemischte Seitenausrichtung
+        - Kennwortgeschützte oder rechtebeschränkte PDF
+        - Weiß ich nicht
+        - Trifft nicht zu
+    validations:
+      required: true
+
+  - type: textarea
+    id: anonymized_test
+    attributes:
+      label: Anonymisierte Testdatei
+      description: Tritt der Fehler auch mit einer anonymisierten oder künstlichen PDF auf? Falls ja, beschreibe das hier. Eine solche Datei kann bei Bedarf angehängt werden.
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Weitere Hinweise
+      description: Screenshots, Besonderheiten der Rechnung oder andere Informationen, die beim Nachstellen helfen können.
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Datenschutz
+      options:
+        - label: Falls ich Dateien oder Screenshots anhänge, habe ich geprüft, dass sie keine vertraulichen, personenbezogenen oder echten Rechnungsdaten enthalten.
+          required: true
+
+  - type: checkboxes
+    id: duplicate_check
+    attributes:
+      label: Vorhandene Meldungen
+      options:
+        - label: Ich habe kurz geprüft, ob derselbe Fehler bereits als Issue gemeldet wurde.
+          required: true
