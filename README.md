@@ -2,7 +2,7 @@
 
 **Kostenlose Werkzeuge für kleine Unternehmen.**
 
-BorstWerk E-Rechnung ist ein Werkzeug der [BorstWerk-Werkzeugfamilie](https://github.com/Borstwerk).
+BorstWerk E-Rechnung ist ein Werkzeug der [BorstWerk-Werkzeugfamilie](https://github.com/BorstWerk).
 
 Die Anwendung nimmt eine **bereits vorhandene PDF-Rechnung** und erzeugt daraus eine
 **ZUGFeRD-/Factur-X-Rechnung** im Profil EN 16931. Sie läuft als Windows-Programm auf dem
@@ -16,8 +16,8 @@ Gedacht ist sie für den Fall, dass die Rechnung schon fertig ist – geschriebe
 LibreOffice, einer Branchenlösung oder sonst einem Programm – und daraus jetzt eine E-Rechnung
 werden soll.
 
-> **Status:** Die Windows-Abnahme für Version 0.1.0 ist abgeschlossen. Die erste Veröffentlichung
-> wird vorbereitet.
+> **Status:** Version 0.1.0 ist veröffentlicht.
+> [Release 0.1.0 herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.1.0)
 
 ## Was die Anwendung kann
 
@@ -191,7 +191,7 @@ Derzeit gehören dazu:
 - **BorstWerk E-Rechnung** – dieses Werkzeug
 - **BorstWerk GoBD-Doku**
 
-Übersicht: [github.com/Borstwerk](https://github.com/Borstwerk)
+Übersicht: [github.com/BorstWerk](https://github.com/BorstWerk)
 
 ---
 
