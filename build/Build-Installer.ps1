@@ -42,7 +42,7 @@ $target = Join-Path $releaseDirectory $msi.Name
 Copy-Item $msi.FullName $target -Force
 
 # Tragbare Fassung als ZIP, für Anwender ohne Installationsrechte.
-$zip = Join-Path $releaseDirectory 'EInvoiceSender-portable-win-x64.zip'
+$zip = Join-Path $releaseDirectory 'BorstWerk-E-Rechnung-portable-win-x64.zip'
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $publishDirectory '*') -DestinationPath $zip
 

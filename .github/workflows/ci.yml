@@ -129,15 +129,24 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
           Compress-Archive -Path artifacts/publish/win-x64/* `
-            -DestinationPath artifacts/release/EInvoiceSender-portable-win-x64.zip -Force
+            -DestinationPath artifacts/release/BorstWerk-E-Rechnung-portable-win-x64.zip -Force
 
+      # Die Namen stehen nirgends hier: Es wird über den Ordner gelaufen, also
+      # tragen die Prüfsummen von selbst die tatsächlichen Dateinamen.
+      #
+      # Die Liste wird vorher vollständig eingesammelt und SHA256SUMS.txt
+      # ausgenommen. Sonst kann die Aufzählung die Datei erwischen, die
+      # währenddessen im selben Ordner entsteht – und in den Prüfsummen stünde
+      # eine Zeile über die Prüfsummendatei, die niemand nachrechnen kann.
       - name: Prüfsummen erzeugen
         shell: pwsh
         run: |
-          Get-ChildItem artifacts/release -File | ForEach-Object {
+          $dateien = @(Get-ChildItem artifacts/release -File |
+            Where-Object { $_.Name -ne 'SHA256SUMS.txt' })
+          $dateien | ForEach-Object {
             $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
-            "$hash  $($_.Name)" | Out-File -Append -Encoding utf8 artifacts/release/SHA256SUMS.txt
-          }
+            "$hash  $($_.Name)"
+          } | Set-Content -Path artifacts/release/SHA256SUMS.txt -Encoding utf8
           Get-Content artifacts/release/SHA256SUMS.txt
 
       - name: Artefakte bereitstellen

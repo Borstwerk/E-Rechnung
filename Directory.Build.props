@@ -23,11 +23,24 @@
     <!-- Windows-Ziele auch auf Linux/macOS übersetzbar (CI-Kompilierprüfung) -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
-    <!-- Produkt-/Herstellerangaben zentral (auch vom Installer verwendet) -->
-    <Product>EInvoiceSender</Product>
-    <Company>EInvoiceSender Projekt</Company>
-    <Authors>EInvoiceSender Projekt</Authors>
-    <Copyright>Copyright (c) 2026</Copyright>
+    <!--
+      Produkt-/Herstellerangaben zentral (auch vom Installer verwendet).
+
+      Diese vier Werte landen in den Dateieigenschaften der gebauten
+      Programmdatei – das ist, was Windows im Reiter „Details“ zeigt und was
+      in „Apps und Features“ neben dem Eintrag steht. Sie tragen deshalb den
+      Produktnamen und nicht den Projektnamen.
+
+      **Bewusst nicht umbenannt** werden `AssemblyName`, die Namensräume, der
+      Datenordner unter %LOCALAPPDATA%\EInvoiceSender und alle inneren
+      Bezeichner. Sie sind Kennungen: Am Namen des Datenordners hängt die
+      Firmenvorlage jedes vorhandenen Anwenders, und eine Umbenennung würde sie
+      beim nächsten Start still verschwinden lassen.
+    -->
+    <Product>BorstWerk E-Rechnung</Product>
+    <Company>BorstWerk</Company>
+    <Authors>BorstWerk</Authors>
+    <Copyright>Copyright (c) 2026 BorstWerk</Copyright>
     <VersionPrefix>0.1.0</VersionPrefix>
     <NeutralLanguage>de-DE</NeutralLanguage>
 

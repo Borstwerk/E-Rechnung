@@ -138,7 +138,7 @@ hierher, sondern in die Commit-Historie.
      Eintrag unter „Apps und Features“.
 
 - **Installer, Installation für alle Benutzer** (der zweite Weg desselben
-  Pakets): `msiexec /i EInvoiceSender-Setup.msi MSIINSTALLPERUSER=""` – hier
+  Pakets): `msiexec /i BorstWerk-E-Rechnung-Setup.msi MSIINSTALLPERUSER=""` – hier
   ist die Rückfrage von Windows erwartet, und die Dateien landen unter
   `C:\Program Files`.
 

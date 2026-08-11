@@ -14,7 +14,15 @@
   -->
 
   <PropertyGroup>
-    <OutputName>EInvoiceSender-Setup</OutputName>
+    <!--
+      Der Dateiname der MSI. Er ist das, was der Anwender herunterlädt und im
+      Downloadordner wiederfindet, und heißt deshalb wie das Produkt.
+
+      Der Projektname der Installerdatei bleibt davon unberührt: Er ist eine
+      Kennung, und Pfade darauf stehen in der CI, in Build-Installer.ps1 und in
+      den Prüfungen.
+    -->
+    <OutputName>BorstWerk-E-Rechnung-Setup</OutputName>
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
 
