@@ -1,301 +1,175 @@
 # BorstWerk E-Rechnung
 
-BorstWerk E-Rechnung ist eine Windows-Desktopanwendung, die aus einer **bereits vorhandenen PDF-Rechnung** eine **ZUGFeRD-/Factur-X-Rechnung** im Profil EN 16931 erzeugt.
+**Kostenlose Werkzeuge für kleine Unternehmen.**
 
-Die Anwendung ist bewusst **kein Rechnungsprogramm**. Sie schreibt keine Rechnungen, vergibt keine Rechnungsnummern, führt keine Buchhaltung und versendet keine E-Mails selbst. Sie nimmt die Rechnung, die bereits vorhanden ist, ergänzt die benötigten strukturierten Rechnungsdaten und erzeugt daraus eine elektronische Rechnung.
+BorstWerk E-Rechnung ist ein Werkzeug der [BorstWerk-Werkzeugfamilie](https://github.com/Borstwerk).
 
-Alles läuft **lokal auf dem eigenen Rechner**. Rechnungen, Adressen, Bankverbindungen und E-Mail-Daten werden nicht an externe Dienste übertragen.
+Die Anwendung nimmt eine **bereits vorhandene PDF-Rechnung** und erzeugt daraus eine
+**ZUGFeRD-/Factur-X-Rechnung** im Profil EN 16931. Sie läuft als Windows-Programm auf dem
+eigenen Rechner.
 
-Die Anwendung gehört zur Werkzeugfamilie **BorstWerk** und ist eigenständig installier- und nutzbar.
+Sie ist ausdrücklich **kein Rechnungsprogramm**. Sie schreibt keine Rechnung, vergibt keine
+Rechnungsnummer, führt keine Buchhaltung, verwaltet keine Kunden, erstellt keine Mahnungen und
+versendet keine E-Mail von sich aus.
 
----
+Gedacht ist sie für den Fall, dass die Rechnung schon fertig ist – geschrieben mit Word, Excel,
+LibreOffice, einer Branchenlösung oder sonst einem Programm – und daraus jetzt eine E-Rechnung
+werden soll.
 
-# Für Anwender
+> **Status:** Die erste Veröffentlichung wird derzeit abschließend unter Windows geprüft. Sobald
+> die Abnahme abgeschlossen ist, erscheint hier eine herunterladbare Fassung.
 
-## Was brauche ich?
+## Was die Anwendung kann
+
+- eine vorhandene PDF-Rechnung auswählen und örtlich prüfen
+- vorhandenen PDF-Text auslesen und das Formular damit vorbelegen
+- die erkannten Angaben kontrollieren, korrigieren und ergänzen
+- wiederkehrende eigene Firmendaten einmalig hinterlegen
+- eine ZUGFeRD-/Factur-X-Rechnung im Profil EN 16931 erzeugen
+- die strukturierten Rechnungsdaten als XML in eine PDF/A-3-Datei einbetten
+- das Ergebnis erneut öffnen und gegenprüfen
+- einen Prüfbericht mit SHA-256-Prüfsumme schreiben
+- einen E-Mail-Entwurf als `.eml`-Datei für das vorhandene Mailprogramm vorbereiten
+
+Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
+
+## Was die Anwendung bewusst nicht kann
+
+- kein Rechnungsprogramm: Sie schreibt keine Rechnungen und vergibt keine Rechnungsnummern
+- keine Buchhaltung, keine Kundenverwaltung, kein Mahnwesen
+- kein automatischer E-Mail-Versand – der Entwurf wird vorbereitet, abgeschickt wird er von Hand
+- keine Texterkennung (OCR) für eingescannte Rechnungen
+- keine zuverlässige automatische Übernahme von Rechnungspositionen aus beliebigen Tabellen
+- keine Steuer- oder Rechtsberatung: Ob eine Rechnung inhaltlich und steuerlich richtig ist,
+  kann die Anwendung nicht beurteilen
+- keine Zusicherung, dass sich jede beliebige PDF verarbeiten lässt
+- keine Verarbeitung kennwortgeschützter oder rechtebeschränkter PDFs
+- keine Veränderung digital signierter PDFs
+
+## So läuft es ab
+
+1. **PDF auswählen und prüfen.** Die vorhandene Rechnung wird geprüft und als Vorschau angezeigt.
+2. **Rechnungsdaten prüfen und ergänzen.** Erkannte Angaben stehen im Formular; fehlende oder
+   unsichere werden ergänzt.
+3. **Sichtbare Rechnung und strukturierte Daten vergleichen.** Vor der Erzeugung ist ausdrücklich
+   zu bestätigen, dass beides übereinstimmt.
+4. **E-Rechnung erzeugen und prüfen.** Die strukturierte XML wird erstellt, gegengeprüft und in
+   die PDF/A-3-Datei eingebettet.
+5. **Speichern und E-Mail vorbereiten.** Die fertige Datei und der Prüfbericht werden abgelegt,
+   auf Wunsch dazu ein `.eml`-Entwurf.
+
+## Welche Daten aus der PDF gelesen werden
+
+Bei digital erzeugten PDFs liest die Anwendung den bereits vorhandenen Text örtlich aus und füllt
+das Formular damit vor. Erkannt werden unter anderem Rechnungsnummer, Rechnungs-, Leistungs- und
+Fälligkeitsdatum, Währung, die Käuferangaben aus dem Adressblock, die eigenen Angaben aus der
+gespeicherten Firmenvorlage, IBAN und BIC sowie Netto-, Steuer-, Brutto- und Zahlbetrag samt
+Steuersätzen.
+
+Jeder erkannte Wert bleibt sichtbar und änderbar. Unsichere Werte werden gekennzeichnet oder gar
+nicht erst übernommen. **Rechnungspositionen werden derzeit noch nicht zuverlässig aus Tabellen
+übernommen** und müssen häufig von Hand erfasst werden.
+
+## Welche PDFs sich verwenden lassen
+
+**Der direkte Weg.** Geeignete PDFs werden unverändert übernommen und um die fehlenden
+PDF/A-3-Bestandteile ergänzt. Der Text der Rechnung bleibt dabei Text. Dieser Weg hat immer
+Vorrang.
+
+**Die sichtbare Kopie.** Fehlt einer Datei nur die Einbettung der verwendeten Schriftarten und
+lassen sich ihre Seiten zuverlässig darstellen, kann die Anwendung stattdessen eine sichtbare
+Kopie erzeugen: Sie stellt jede Seite örtlich dar und baut daraus ein neues Dokument. Das
+geschieht **nie automatisch** – Sie müssen ausdrücklich zustimmen, und vorher steht dort, was es
+kostet:
+
+- Das Original bleibt unverändert.
+- Der sichtbare Seiteninhalt bleibt erhalten.
+- Der Text der neuen Datei ist danach nicht mehr markierbar und in der Anzeige nicht mehr
+  durchsuchbar.
+- Verknüpfungen und Formularfunktionen gehen verloren.
+- Die Datei kann größer werden.
+- Die Rechnungsdaten selbst bleiben über die eingebettete XML vollständig maschinenlesbar – für
+  den Empfänger einer E-Rechnung ist das der Teil, der zählt.
+
+**Was abgelehnt wird.** Die sichtbare Kopie ist kein Rettungsanker für jede problematische Datei.
+Abgelehnt werden weiterhin beschädigte PDFs, solche mit Öffnungs- oder Besitzerkennwort, digital
+signierte, solche mit aktiven Inhalten wie JavaScript – und solche, an denen weitere Anhänge
+hängen, die in einer sichtbaren Kopie verloren gingen. In jedem Fall nennt die Anwendung den
+Grund und, wo möglich, was sich im Ausgangsprogramm umstellen lässt.
+
+**Eingescannte Rechnungen.** Eine reine Bild-PDF lässt sich verarbeiten, sofern sie sonst geeignet
+ist. Ihre Rechnungsdaten werden dabei aber **nicht** aus dem Bild gelesen – eine Texterkennung
+gibt es nicht. Die Anwendung sagt das geradeheraus und erfindet nichts; die Angaben sind von Hand
+zu erfassen.
+
+## Was mit Ihren Daten geschieht
+
+Die gesamte Verarbeitung läuft auf Ihrem Rechner.
+
+- Rechnungsdaten bleiben örtlich.
+- Keine Cloud-Verarbeitung, kein Webdienst, keine Cloud-KI.
+- Kein Benutzerkonto, keine Anmeldung.
+- Keine Telemetrie, keine Werbung.
+- Rechnungen, Anschriften und Bankverbindungen werden nicht übertragen.
+- Die Original-PDF wird nur gelesen.
+- Eine E-Mail wird nie ohne Ihr Zutun versendet.
+
+## Eigene Firmendaten
+
+Wiederkehrende Angaben lassen sich einmalig hinterlegen: Firmenname und Anschrift, USt-IdNr. oder
+Steuernummer, E-Mail-Adresse, Kontoinhaber mit IBAN und BIC, Standardwährung,
+Zahlungsbedingungen, ein Standardtext für die E-Mail und das Ausgabeverzeichnis. Sensible Angaben
+wie die IBAN werden unter Windows geschützt abgelegt.
+
+## Der Prüfbericht
+
+Zu jeder erzeugten E-Rechnung entsteht ein Prüfbericht. Er hält fest:
+
+- die erzeugte Datei mit Größe und SHA-256-Prüfsumme
+- Rechnungsnummer, Beteiligte und Standardangaben
+- die festgestellten Fehler und Warnungen
+- welche Prüfungen tatsächlich gelaufen sind
+- auf welchem Weg die PDF verarbeitet wurde – direkt übernommen oder als sichtbare Kopie
+
+Die installierte Anwendung führt ihre eingebauten Prüfungen aus. Unabhängige Referenzwerkzeuge
+gehören zur Entwicklung und zur Freigabe und werden **nicht** mitinstalliert. Hat keine externe
+Prüfung stattgefunden, schreibt der Bericht genau das – eine nicht durchgeführte Prüfung wird nie
+als bestandene dargestellt.
+
+## Installation
 
 - Windows 10 oder Windows 11, 64 Bit
 - eine vorhandene PDF-Rechnung
 
-Mehr nicht.
+Mehr wird nicht gebraucht. Die Anwendung bringt alles Nötige mit; weder .NET noch Java müssen
+nachinstalliert werden.
 
-Die ausgelieferte Anwendung bringt die benötigte .NET-Laufzeit mit. **Java wird für die installierte Anwendung nicht benötigt** und vom Installer auch nicht eingerichtet.
-
-## Installation
-
-Für die normale Nutzung ist das MSI-Installationspaket vorgesehen.
-
-Die Standardinstallation erfolgt **nur für den aktuellen Benutzer** und benötigt keine Administratorrechte. Die Anwendung wird dabei unter dem persönlichen Windows-Programmverzeichnis installiert.
-
-Der Installer:
-
-- legt einen Eintrag im Startmenü an,
-- kann optional eine Desktopverknüpfung erstellen,
-- unterstützt spätere Updates,
-- verhindert versehentliche Downgrades,
-- lässt persönliche Einstellungen bei der Deinstallation unangetastet.
-
-Alternativ kann eine portable ZIP-Fassung verwendet werden.
-
-## So funktioniert es
-
-Die Anwendung führt in fünf Schritten durch den Vorgang:
-
-1. **PDF auswählen**  
-   Die vorhandene Rechnung wird geprüft und als Vorschau angezeigt. Die Originaldatei wird nur gelesen und niemals verändert.
-
-2. **Rechnungsdaten prüfen und ergänzen**  
-   Erkannte Angaben werden in das Formular übernommen. Fehlende oder unsichere Angaben können ergänzt beziehungsweise korrigiert werden.
-
-3. **PDF und strukturierte Daten vergleichen**  
-   Vor der Erzeugung muss ausdrücklich bestätigt werden, dass die erfassten Rechnungsdaten mit der sichtbaren PDF übereinstimmen.
-
-4. **E-Rechnung erzeugen**  
-   Die strukturierte XML wird erstellt, geprüft und in die PDF/A-3-Datei eingebettet.
-
-5. **Ergebnis speichern und E-Mail vorbereiten**  
-   Die fertige Datei und ein Prüfbericht werden gespeichert. Auf Wunsch erstellt die Anwendung einen `.eml`-Entwurf für das vorhandene Mailprogramm. Die Nachricht wird nicht automatisch versendet.
-
-## Welche Daten kann die Anwendung aus der PDF lesen?
-
-Bei digital erzeugten PDFs versucht die Anwendung, bereits vorhandenen PDF-Text lokal auszulesen und das Formular damit vorauszufüllen.
-
-Derzeit werden unter anderem erkannt:
-
-- Rechnungsnummer
-- Rechnungsdatum
-- Leistungsdatum
-- Fälligkeitsdatum
-- Währung
-- Käuferangaben aus dem Adressblock
-- Verkäuferangaben mithilfe der gespeicherten Firmenvorlage
-- IBAN und BIC
-- Nettobetrag
-- Umsatzsteuer
-- Bruttobetrag
-- Zahlbetrag
-- Steuersätze
-
-Jeder erkannte Wert bleibt überprüfbar und kann geändert werden. Unsichere Werte werden entsprechend gekennzeichnet oder nicht automatisch übernommen.
-
-**Rechnungspositionen werden derzeit noch nicht zuverlässig aus Tabellen übernommen und müssen gegebenenfalls von Hand erfasst werden.**
-
-Es findet aktuell keine OCR-Texterkennung für reine Scan-PDFs statt.
-
-## Eigene Firmendaten speichern
-
-Wiederkehrende Angaben können einmalig in den Einstellungen hinterlegt werden, zum Beispiel:
-
-- Firmenname und Anschrift
-- USt-IdNr. oder Steuernummer
-- E-Mail-Adresse
-- Kontoinhaber, IBAN und BIC
-- Standardwährung
-- Zahlungsbedingungen
-- Standard-E-Mail-Text
-- Ausgabeverzeichnis
-
-Sensible gespeicherte Daten wie die IBAN werden unter Windows geschützt abgelegt.
-
-## Datenschutz
-
-Die Verarbeitung erfolgt lokal.
-
-Die Anwendung:
-
-- lädt keine Rechnung zu einem Webdienst hoch,
-- verwendet keine Cloud-KI für Rechnungsinhalte,
-- überträgt keine Bankverbindungen oder Empfängeradressen,
-- verändert niemals die Original-PDF,
-- versendet keine E-Mail ohne Zutun des Benutzers.
-
-## Prüfbericht
-
-Zu jeder erzeugten E-Rechnung kann ein Prüfbericht erstellt werden. Darin stehen unter anderem:
-
-- Rechnungsnummer und Beteiligte
-- erzeugte Datei
-- Dateigröße
-- SHA-256-Prüfsumme
-- festgestellte Fehler und Warnungen
-- tatsächlich verwendete Prüfwerkzeuge
-
-Die installierte Anwendung führt ihre eingebauten Prüfungen aus. Externe Referenzvalidatoren gehören zur Entwicklungs- und Releaseprüfung und werden nicht mit dem normalen Installer ausgeliefert. Der Prüfbericht macht ausdrücklich kenntlich, wenn keine externe Referenzprüfung stattgefunden hat.
+Für die normale Nutzung ist das MSI-Installationspaket vorgesehen. Es installiert
+standardmäßig **nur für den aktuellen Benutzer** und kommt ohne Administratorrechte aus. Es legt
+einen Eintrag im Startmenü an, auf Wunsch zusätzlich eine Desktopverknüpfung, und lässt
+persönliche Einstellungen bei der Deinstallation unangetastet. Alternativ gibt es eine portable
+ZIP-Fassung, die sich ohne Installation starten lässt.
 
 ## Bekannte Grenzen
 
-- **Nicht jede PDF lässt sich direkt verwenden.** Geeignete PDFs werden nach PDF/A-3 aufgewertet, und dieser Weg hat immer Vorrang. Fehlt einer Datei nur die Schrifteinbettung, bietet die Anwendung stattdessen eine **sichtbare Kopie** an: Sie stellt die Seiten örtlich dar und baut daraus ein neues Dokument. Das kostet den durchsuchbaren Text, lässt die Rechnungsdaten in der eingebetteten XML aber vollständig maschinenlesbar – und geschieht nur nach ausdrücklicher Zustimmung. Beschädigte, kennwortgeschützte, rechtebeschränkte, digital signierte PDFs und solche mit aktiven Inhalten werden weiterhin abgelehnt.
-- **Rechnungspositionen müssen derzeit häufig noch von Hand erfasst werden.**
-- **Keine Steuerberatung.** Die Anwendung kann technische und formale Prüfungen durchführen, aber nicht beurteilen, ob eine Rechnung steuerlich oder inhaltlich richtig ist.
+Die wichtigsten stehen oben unter „Was die Anwendung bewusst nicht kann“ und „Welche PDFs sich
+verwenden lassen“. Ausführlich: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md).
 
-Ausführlicher: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md)
+## BorstWerk
 
-## Bildschirmfotos
+BorstWerk ist eine Familie kleiner, eigenständiger Werkzeuge für kleine Unternehmen,
+Selbstständige und Vereine. Die Werkzeuge verarbeiten Geschäftsdaten standardmäßig örtlich,
+brauchen kein Benutzerkonto, enthalten keine Werbung und keine Telemetrie – und jedes lässt sich
+unabhängig von den anderen installieren und benutzen.
 
-<!-- Bildschirmfotos der fünf Schritte ergänzen, sobald die Oberfläche für die erste Veröffentlichung eingefroren ist. -->
+Derzeit gehören dazu:
 
-| Schritt | Bild |
-|---|---|
-| 1 – PDF auswählen | _(folgt)_ |
-| 2 – Rechnungsdaten | _(folgt)_ |
-| 3 – Kontrollansicht | _(folgt)_ |
-| 4 – Erzeugen | _(folgt)_ |
-| 5 – Ergebnis | _(folgt)_ |
+- **BorstWerk E-Rechnung** – dieses Werkzeug
+- **BorstWerk GoBD-Doku**
+
+Übersicht: [github.com/Borstwerk](https://github.com/Borstwerk)
 
 ---
 
-# Für Entwickler
-
-## Ziel des Projekts
-
-Das Projekt soll ein kleines, nachvollziehbares Windows-Werkzeug bleiben und ausdrücklich **kein ERP-, Buchhaltungs- oder CRM-System** werden.
-
-Die Lösung besteht im Wesentlichen aus:
-
-```text
-EInvoiceSender.sln
-
-src/
-├── EInvoiceSender.App
-└── EInvoiceSender.Core
-
-tests/
-├── EInvoiceSender.Core.Tests
-└── EInvoiceSender.IntegrationTests
-
-installer/
-└── EInvoiceSender.Setup
-```
-
-`EInvoiceSender.App` enthält WPF-Oberfläche und Windows-spezifische Bedienlogik.  
-`EInvoiceSender.Core` enthält Rechnungsmodelle, Berechnung, Validierung, CII-/ZUGFeRD-Erzeugung, PDF-Verarbeitung, Speicherung und E-Mail-Entwurf.
-
-Die Architektur soll bewusst einfach bleiben. Zusätzliche Projekte, Interfaces oder Frameworks sollten nur eingeführt werden, wenn sie einen konkreten Nutzen für Wartbarkeit, Testbarkeit oder Plattformtrennung haben.
-
-## Entwicklungsumgebung
-
-Empfohlen:
-
-- .NET SDK 10
-- Visual Studio 2026
-- Arbeitslast **.NET-Desktopentwicklung**
-- Windows x64
-
-Die normale Anwendung benötigt kein Java.
-
-## In Visual Studio starten
-
-1. Repository klonen
-2. `EInvoiceSender.sln` öffnen
-3. `EInvoiceSender.App` als Startprojekt verwenden
-4. **F5**
-
-Die Tests erscheinen im Visual-Studio-Test-Explorer.
-
-## Bauen und testen
-
-Die alltägliche Entwicklung kann vollständig aus Visual Studio erfolgen.
-
-Zusätzlich stehen PowerShell-Skripte zur Verfügung:
-
-```powershell
-.\build\Build.ps1
-.\build\Test.ps1
-.\build\Publish.ps1
-.\build\Build-Installer.ps1
-```
-
-Entsprechend direkt mit dem .NET-SDK:
-
-```powershell
-dotnet build EInvoiceSender.sln -c Release
-dotnet test EInvoiceSender.sln -c Release
-dotnet format EInvoiceSender.sln --verify-no-changes
-```
-
-## Self-contained Publish
-
-`Publish.ps1` erzeugt eine eigenständige `win-x64`-Fassung. Die .NET-Laufzeit wird mit veröffentlicht; auf dem Zielrechner muss daher kein separates .NET Runtime-Paket installiert werden.
-
-## Installer bauen
-
-Unter Windows mit PowerShell 7:
-
-```powershell
-.\build\Build-Installer.ps1
-```
-
-Das Skript veröffentlicht die Anwendung und erzeugt anschließend:
-
-- MSI-Installationspaket
-- portable ZIP-Fassung
-- SHA-256-Prüfsummen
-
-Die Standardinstallation des MSI ist eine Installation für den aktuellen Benutzer ohne UAC-Rückfrage. Das gleiche Paket kann bei Bedarf auch für alle Benutzer installiert werden.
-
-WiX wird nur zum **Bauen** des Installers benötigt, nicht auf dem Zielrechner.
-
-## Externe Referenzprüfung
-
-Die Anwendung besitzt eigene Prüfungen. Für Entwicklung, Regressionstests und Releasefreigaben werden zusätzlich unabhängige Referenzwerkzeuge verwendet:
-
-- Mustangproject
-- CEN-Schematron für EN 16931
-- veraPDF für PDF/A
-
-Für diese zusätzliche Referenzprüfung wird Java 17 oder neuer benötigt.
-
-**Das betrifft ausschließlich Entwicklung und Releaseprüfung. Die installierte Anwendung benötigt kein Java.**
-
-Die Gegenprüfung kann über die vorhandenen Build-/Testskripte ausgeführt werden. Details stehen in [`docs/TESTING.md`](docs/TESTING.md).
-
-## Grundsätze für Änderungen
-
-Das Projekt orientiert sich an einer einfachen, wartbaren Struktur. Besonders wichtig sind:
-
-- KISS und DRY
-- kleine, klar benannte Verantwortlichkeiten
-- Single Responsibility und Separation of Concerns
-- verständliche Integrationsmethoden auf einem einheitlichen Abstraktionsniveau
-- Root-Cause-Fixes statt Symptombehandlung
-- Regressionstests für gefundene Fehler
-- echte deutsche Umlaute in deutschsprachigen Texten
-- keine unnötigen neuen Abhängigkeiten
-
-Fachlich kritische Änderungen an CII/XML, PDF/A, Einbettung, Summen oder Steuerlogik müssen zusätzlich gegen die vorhandenen Golden Master und externen Referenzvalidatoren geprüft werden.
-
-## Oberfläche und Symbole
-
-Farben, Schriftgrößen, Abstände und Bedienelemente stehen unter
-`src/EInvoiceSender.App/UI/Themes/`. In den Ansichten steht kein Farbwert –
-wer eine Farbe ändern will, ändert sie dort.
-
-Das BorstWerk-Zeichen und die Windows-Symboldatei entstehen aus einer
-gemeinsamen Geometrie:
-
-```powershell
-dotnet run --project build/icon
-```
-
-Das schreibt `src/EInvoiceSender.App/Assets/BorstWerkEInvoice.ico` und die
-Vorschau unter `docs/images/`. Die Pfaddaten stehen in
-`build/icon/BorstWerkMark.cs` und noch einmal in
-`UI/Themes/BorstWerkLogo.xaml`; ein Test vergleicht beide, damit die
-Vektorzeichnung in der Oberfläche und das Symbol nicht auseinanderlaufen.
-
-Das Werkzeug ist nicht Teil der Projektmappe und läuft nicht im Bau mit –
-das Ergebnis ist eingecheckt.
-
-## Weitere Unterlagen
-
-| Datei | Inhalt |
-|---|---|
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Aufbau der Projektmappe und Ablauf |
-| [`docs/BUILD.md`](docs/BUILD.md) | Bauen mit Visual Studio und PowerShell |
-| [`docs/E-INVOICE-STANDARD.md`](docs/E-INVOICE-STANDARD.md) | Norm, Profil und verwendete Fassungen |
-| [`docs/TESTING.md`](docs/TESTING.md) | Testebenen und Referenzvalidatoren |
-| [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md) | Bekannte Grenzen |
-| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Offene Punkte |
-| [`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) | Fremdkomponenten und Lizenzen |
-
-`docs/legacy/` enthält Unterlagen aus der Entstehungszeit. Sie bleiben als Historie erhalten, sind für die aktuelle Entwicklung aber nicht mehr maßgeblich.
+Entwicklerinnen, Entwickler und Mitwirkende finden Hinweise zu Aufbau, Bauen und Tests in
+[`DEVELOPMENT.md`](DEVELOPMENT.md).
