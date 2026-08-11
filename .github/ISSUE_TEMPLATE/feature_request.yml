@@ -1,0 +1,84 @@
+name: Verbesserung vorschlagen
+description: Eine Idee oder Verbesserung für BorstWerk E-Rechnung vorschlagen
+title: "[Idee] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für den Vorschlag.
+
+        BorstWerk E-Rechnung bleibt bewusst ein kleines Werkzeug für den Weg **von einer bereits vorhandenen PDF-Rechnung zur E-Rechnung**. Es soll kein Rechnungsprogramm, keine Buchhaltung und kein CRM werden.
+
+        Am hilfreichsten ist deshalb zuerst das Problem: **Was möchtest du erreichen, das heute unnötig umständlich ist?**
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem möchtest du lösen?
+      description: Beschreibe die konkrete Situation und was dabei heute stört oder fehlt.
+      placeholder: Bei welchem Schritt rund um das Erzeugen oder Prüfen einer E-Rechnung entsteht das Problem?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_solution
+    attributes:
+      label: Wie löst du das heute?
+      description: Gibt es einen Workaround oder musst du dafür ein anderes Programm verwenden?
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Wie häufig tritt dieser Bedarf auf?
+      options:
+        - Bei fast jeder Rechnung
+        - Regelmäßig
+        - Selten
+        - Einmalig / Sonderfall
+        - Weiß ich nicht
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired_solution
+    attributes:
+      label: Welche Lösung stellst du dir vor?
+      description: Eine grobe Idee reicht. Es muss kein technischer Lösungsvorschlag sein.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativen oder Workarounds
+      description: Gibt es andere Wege, die du schon ausprobiert hast oder die ebenfalls funktionieren würden?
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Weitere Hinweise
+      description: Optional können anonymisierte Beispiele oder Screenshots ergänzt werden.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Produktscope
+      options:
+        - label: Mir ist bewusst, dass BorstWerk E-Rechnung aus vorhandenen PDF-Rechnungen E-Rechnungen erzeugt und kein Rechnungsprogramm, CRM oder Buchhaltungssystem werden soll.
+          required: true
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Datenschutz
+      options:
+        - label: Falls ich Dateien oder Screenshots anhänge, habe ich geprüft, dass sie keine vertraulichen, personenbezogenen oder echten Rechnungsdaten enthalten.
+          required: true
+
+  - type: checkboxes
+    id: duplicate_check
+    attributes:
+      label: Vorhandene Vorschläge
+      options:
+        - label: Ich habe kurz geprüft, ob dieselbe Idee bereits als Issue vorgeschlagen wurde.
+          required: true
