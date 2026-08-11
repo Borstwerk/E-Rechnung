@@ -155,6 +155,16 @@ ZIP-Fassung, die sich ohne Installation starten lässt.
 Die wichtigsten stehen oben unter „Was die Anwendung bewusst nicht kann“ und „Welche PDFs sich
 verwenden lassen“. Ausführlich: [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md).
 
+## Fehler und Verbesserungsvorschläge
+
+Einen Fehler gefunden oder eine Idee für BorstWerk E-Rechnung?
+
+- [Fehler melden](https://github.com/Borstwerk/E-Rechnung/issues/new?template=bug_report.yml)
+- [Verbesserung vorschlagen](https://github.com/Borstwerk/E-Rechnung/issues/new?template=feature_request.yml)
+
+Bitte **keine echten Rechnungen oder andere Dateien mit vertraulichen, personenbezogenen oder
+Bankdaten hochladen**. Verwenden Sie nach Möglichkeit anonymisierte oder künstliche Beispieldaten.
+
 ## BorstWerk
 
 BorstWerk ist eine Familie kleiner, eigenständiger Werkzeuge für kleine Unternehmen,
