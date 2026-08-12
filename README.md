@@ -85,7 +85,7 @@ Die Firmendaten werden lokal gespeichert und können jederzeit geändert werden.
 
 **PDF auswählen und analysieren**
 
-![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-n-pdf-auswahl.png)
+![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-pdf-auswahl.png)
 
 **Rechnungsdaten prüfen und ergänzen**
 
