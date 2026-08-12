@@ -72,11 +72,11 @@ Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
 
 **PDF auswählen und analysieren**
 
-![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-pdf-auswahl.png)
+![Schritt 1 – PDF-Rechnung auswählen und analysieren](docs/images/01-n-pdf-auswahl.png)
 
 **Rechnungsdaten prüfen und ergänzen**
 
-![Schritt 2 – Rechnungsdaten erfassen und prüfen](docs/images/02-rechnungsdaten.png)
+![Schritt 2 – Rechnungsdaten erfassen und prüfen](docs/images/02-n-rechnungsdaten.png)
 
 **E-Rechnung speichern und E-Mail-Entwurf vorbereiten**
 
