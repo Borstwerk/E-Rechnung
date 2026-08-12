@@ -29,6 +29,15 @@
     <SatelliteResourceLanguages>de;en</SatelliteResourceLanguages>
   </PropertyGroup>
 
+  <!--
+    Die produktiv ausgelieferte self-contained Windows-Laufzeit wird bewusst
+    zusammen mit ihren geprüften Lizenz-/Notice-Unterlagen aktualisiert. Die
+    Produktversion bleibt davon unabhängig allein in VersionPrefix.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And '$(RuntimeIdentifier)' == 'win-x64' And '$(SelfContained)' == 'true'">
+    <RuntimeFrameworkVersion>10.0.11</RuntimeFrameworkVersion>
+  </PropertyGroup>
+
   <ItemGroup>
     <!--
       Zusätzlich als Ressource eingebettet: ApplicationIcon setzt nur das

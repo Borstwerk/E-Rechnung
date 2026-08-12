@@ -159,7 +159,14 @@ demselben zentralen `VersionPrefix` stammen. Geprüft werden insbesondere:
 - die Dual-Purpose-Eigenschaften `ALLUSERS=2` und `MSIINSTALLPERUSER=1`,
 - Upgrade- und Downgradezeilen ohne Same-Version-Major-Upgrade,
 - die Reihenfolge von `FindRelatedProducts`, `MigrateFeatureStates`,
-  `RemoveExistingProducts` und `InstallInitialize`.
+  `RemoveExistingProducts` und `InstallInitialize`,
+- den Paketbestand des gebauten `EInvoiceSender.deps.json` gegen die
+  Runtimetabelle in `docs/THIRD-PARTY-NOTICES.md`,
+- die beiden self-contained Runtimepacks und ihre Fassungen,
+- `Drittanbieterhinweise.md` sowie die vorgesehenen vollständigen Lizenz- und
+  Notice-Texte in der MSI-Dateitabelle,
+- den tatsächlichen RTF-Inhalt des Installer-Lizenzdialogs einschließlich
+  Produktname und Pflichtkomponenten.
 
 Das belegt die Paketmetadaten, ersetzt aber nicht die Windows-Abnahme eines
 echten Upgrades. Installationskontext, Apps-&-Features-Einträge, Verknüpfungen
@@ -170,3 +177,25 @@ Plattformneutrale Quelltextprüfungen sichern zusätzlich ab, dass
 und Buildskripte keinen ProductVersion-Override einführen, jede veröffentlichte
 Version genau einen gültigen ProductCode besitzt und die Über-Anzeige ihre
 Fassung aus der gebauten Assembly liest.
+
+## Drittanbieterhinweise
+
+`ThirdPartyNoticeTests` sichert die dokumentarische Seite auch auf Linux ab:
+
+- jedes direkte produktive Paket steht mit der zentralen Fassung in der
+  technischen Hauptquelle,
+- die Anwender-Markdown-Datei und die RTF enthalten die vorgesehenen
+  Runtimefamilien,
+- veraltete Laufzeitangaben werden abgewiesen,
+- der sichtbare Produktname lautet `BorstWerk E-Rechnung`,
+- `Files.wxs` nimmt die Anwenderübersicht und die Lizenztexte unabhängig vom
+  Publish-Verzeichnis in das MSI auf,
+- die CI legt dem portablen Publish dieselben Texte bei.
+
+Die Prüfregeln besitzen eigene Negativtests: Ein neues undokumentiertes Paket,
+ein entferntes, aber weiter behauptetes Paket, fehlendes PdfPig und eine erneut
+eingetragene veraltete Runtimeangabe müssen jeweils einen Fehler erzeugen. Die
+Prüfung erzeugt keine Lizenzzuordnung aus NuGet-Metadaten. Die fachliche
+Zuordnung bleibt in `docs/THIRD-PARTY-NOTICES.md`; der Test verhindert nur,
+dass sie unbemerkt vom technischen Bestand oder den Anwenderdarstellungen
+abweicht.

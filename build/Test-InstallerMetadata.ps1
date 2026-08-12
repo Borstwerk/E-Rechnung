@@ -25,8 +25,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $projectPath = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'EInvoiceSender.Setup.wixproj'
+$applicationProjectPath = Join-Path $root 'src' 'EInvoiceSender.App' 'EInvoiceSender.App.csproj'
 $packagePath = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'Package.wxs'
 $buildPropsPath = Join-Path $root 'Directory.Build.props'
+$thirdPartyDocumentPath = Join-Path $root 'docs' 'THIRD-PARTY-NOTICES.md'
+$thirdPartySourcePath = Join-Path $root 'installer' 'Drittanbieterhinweise'
+$licenseRtfPath = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'Lizenzhinweise.rtf'
 
 if (-not $IsWindows) {
     throw 'MSI-Metadaten lassen sich mit der Windows-Installer-API nur unter Windows prüfen.'
@@ -69,6 +73,104 @@ function Assert-Equal {
     if (-not [string]::Equals($Actual, $Expected, [StringComparison]::OrdinalIgnoreCase)) {
         throw "$Name ist '$Actual'; erwartet wird '$Expected'."
     }
+}
+
+function Assert-SetEqual {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string[]]$Actual,
+
+        [Parameter(Mandatory)]
+        [string[]]$Expected
+    )
+
+    $missing = @($Expected | Where-Object { $_ -notin $Actual } | Sort-Object)
+    $unexpected = @($Actual | Where-Object { $_ -notin $Expected } | Sort-Object)
+    if ($missing.Count -ne 0 -or $unexpected.Count -ne 0) {
+        throw "$Name weicht ab. Fehlt: $($missing -join ', '); unerwartet: $($unexpected -join ', ')."
+    }
+}
+
+function Get-MarkedMarkdownTable {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content,
+
+        [Parameter(Mandatory)]
+        [string]$Marker
+    )
+
+    $start = "<!-- ${Marker}:start -->"
+    $end = "<!-- ${Marker}:end -->"
+    $startIndex = $Content.IndexOf($start, [StringComparison]::Ordinal)
+    $endIndex = $Content.IndexOf($end, [StringComparison]::Ordinal)
+    if ($startIndex -lt 0 -or $endIndex -le $startIndex) {
+        throw "Die Tabellenmarker $start und $end fehlen oder stehen in falscher Reihenfolge."
+    }
+
+    return $Content.Substring($startIndex + $start.Length, $endIndex - $startIndex - $start.Length)
+}
+
+function Get-DocumentedRuntimePackages {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $table = Get-MarkedMarkdownTable -Content $Content -Marker 'runtime-packages'
+    return @(
+        $table -split "`r?`n" |
+            Where-Object { $_.TrimStart().StartsWith('| `', [StringComparison]::Ordinal) } |
+            ForEach-Object {
+                $cells = @($_.Trim().Trim('|').Split('|') | ForEach-Object { $_.Trim() })
+                if ($cells.Count -ne 5) {
+                    throw "Ungültige Runtimepaket-Zeile in THIRD-PARTY-NOTICES.md: $_"
+                }
+
+                [pscustomobject]@{
+                    Id = $cells[0].Trim('`')
+                    Version = $cells[2]
+                    InDepsJson = $cells[4] -eq 'ja'
+                }
+            }
+    )
+}
+
+function Get-DocumentedRuntimePacks {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $table = Get-MarkedMarkdownTable -Content $Content -Marker 'runtime-packs'
+    return @(
+        $table -split "`r?`n" |
+            Where-Object { $_.TrimStart().StartsWith('| `', [StringComparison]::Ordinal) } |
+            ForEach-Object {
+                $cells = @($_.Trim().Trim('|').Split('|') | ForEach-Object { $_.Trim() })
+                if ($cells.Count -ne 4) {
+                    throw "Ungültige Runtimepack-Zeile in THIRD-PARTY-NOTICES.md: $_"
+                }
+
+                [pscustomobject]@{
+                    Id = $cells[0].Trim('`')
+                    Version = $cells[1]
+                }
+            }
+    )
+}
+
+function Get-LongMsiFileName {
+    param(
+        [Parameter(Mandatory)]
+        [string]$FileName
+    )
+
+    $parts = $FileName.Split('|', 2)
+    return $parts[$parts.Length - 1]
 }
 
 function Get-MsiRows {
@@ -124,10 +226,16 @@ function Get-MsiRows {
 [xml]$project = Get-Content -LiteralPath $projectPath -Raw
 [xml]$package = Get-Content -LiteralPath $packagePath -Raw
 [xml]$buildProps = Get-Content -LiteralPath $buildPropsPath -Raw
+[xml]$applicationProject = Get-Content -LiteralPath $applicationProjectPath -Raw
 
 $expectedVersion = Get-SingleXmlValue -Document $buildProps -LocalName 'VersionPrefix'
+$expectedRuntimeFrameworkVersion = Get-SingleXmlValue `
+    -Document $applicationProject -LocalName 'RuntimeFrameworkVersion'
 if ($expectedVersion -notmatch '^\d+\.\d+\.\d+$') {
     throw "VersionPrefix '$expectedVersion' ist keine dreiteilige numerische Produktversion."
+}
+if ($expectedRuntimeFrameworkVersion -notmatch '^\d+\.\d+\.\d+$') {
+    throw "RuntimeFrameworkVersion '$expectedRuntimeFrameworkVersion' ist keine dreiteilige numerische Runtimeversion."
 }
 
 $conditionPrefix = "'`$(VersionPrefix)' == '"
@@ -182,6 +290,45 @@ if (-not (Test-Path -LiteralPath $managedAssemblyPath -PathType Leaf)) {
     throw "Die verwaltete Anwendungsassembly fehlt: $managedAssemblyPath"
 }
 
+$depsPath = [IO.Path]::ChangeExtension($resolvedApplicationPath, '.deps.json')
+if (-not (Test-Path -LiteralPath $depsPath -PathType Leaf)) {
+    throw "Die Abhängigkeitsbeschreibung der Anwendung fehlt: $depsPath"
+}
+
+$thirdPartyDocument = Get-Content -LiteralPath $thirdPartyDocumentPath -Raw
+$documentedPackages = @(Get-DocumentedRuntimePackages -Content $thirdPartyDocument)
+$documentedDepsPackages = @($documentedPackages | Where-Object InDepsJson)
+$documentedRuntimePacks = @(Get-DocumentedRuntimePacks -Content $thirdPartyDocument)
+$deps = Get-Content -LiteralPath $depsPath -Raw | ConvertFrom-Json -AsHashtable
+$actualDepsPackages = @(
+    $deps.libraries.GetEnumerator() |
+        Where-Object { $_.Value.type -eq 'package' } |
+        ForEach-Object { $_.Key }
+)
+$actualRuntimePacks = @(
+    $deps.libraries.GetEnumerator() |
+        Where-Object { $_.Value.type -eq 'runtimepack' } |
+        ForEach-Object { $_.Key }
+)
+$expectedDepsPackages = @($documentedDepsPackages | ForEach-Object { "$($_.Id)/$($_.Version)" })
+$expectedRuntimePacks = @($documentedRuntimePacks | ForEach-Object { "$($_.Id)/$($_.Version)" })
+
+foreach ($runtimePack in $documentedRuntimePacks) {
+    Assert-Equal -Name "Dokumentierte Runtimepack-Fassung $($runtimePack.Id)" `
+        -Actual $runtimePack.Version -Expected $expectedRuntimeFrameworkVersion
+}
+
+Assert-SetEqual -Name 'NuGet-Laufzeitpakete im deps.json' `
+    -Actual $actualDepsPackages -Expected $expectedDepsPackages
+Assert-SetEqual -Name 'Self-contained Runtimepacks im deps.json' `
+    -Actual $actualRuntimePacks -Expected $expectedRuntimePacks
+
+foreach ($obsolete in @('Serilog', 'Microsoft.Extensions.Hosting')) {
+    if ($actualDepsPackages | Where-Object { $_.StartsWith($obsolete, [StringComparison]::OrdinalIgnoreCase) }) {
+        throw "Der nicht vorgesehene Runtimebestandteil $obsolete ist im gebauten deps.json enthalten."
+    }
+}
+
 $expectedBinaryVersion = "$expectedVersion.0"
 $applicationFileInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($resolvedApplicationPath)
 $assemblyFileInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($managedAssemblyPath)
@@ -217,6 +364,66 @@ try {
     Assert-Equal -Name 'UpgradeCode' -Actual $properties.UpgradeCode -Expected "{$expectedUpgradeCode}"
     Assert-Equal -Name 'ALLUSERS' -Actual $properties.ALLUSERS -Expected '2'
     Assert-Equal -Name 'MSIINSTALLPERUSER' -Actual $properties.MSIINSTALLPERUSER -Expected '1'
+
+    $msiFiles = @(
+        Get-MsiRows -Database $database -Query 'SELECT `File`,`Component_`,`FileName` FROM `File`' -FieldCount 3 |
+            ForEach-Object {
+                [pscustomobject]@{
+                    Id = $_[0]
+                    Component = $_[1]
+                    Name = Get-LongMsiFileName -FileName $_[2]
+                }
+            }
+    )
+    $mainNotice = @($msiFiles | Where-Object Id -eq 'DrittanbieterhinweisDatei')
+    if ($mainNotice.Count -ne 1) {
+        throw "Die MSI-Dateitabelle enthält den expliziten Drittanbieterhinweis $($mainNotice.Count)-mal statt genau einmal."
+    }
+    Assert-Equal -Name 'MSI-Hinweisdatei' -Actual $mainNotice[0].Name -Expected 'Drittanbieterhinweise.md'
+    $mainNoticeDirectory = @(
+        Get-MsiRows -Database $database `
+            -Query "SELECT ``Directory_`` FROM ``Component`` WHERE ``Component``='$($mainNotice[0].Component)'" `
+            -FieldCount 1
+    )
+    if ($mainNoticeDirectory.Count -ne 1) {
+        throw "Die Komponente der MSI-Hinweisdatei besitzt $($mainNoticeDirectory.Count) statt genau eines Zielordners."
+    }
+    Assert-Equal -Name 'Zielordner der MSI-Hinweisdatei' `
+        -Actual $mainNoticeDirectory[0][0] -Expected 'INSTALLFOLDER'
+
+    $expectedLicenseNames = @(
+        Get-ChildItem -LiteralPath (Join-Path $thirdPartySourcePath 'Lizenzen') -Recurse -File |
+            ForEach-Object Name |
+            Sort-Object -Unique
+    )
+    $actualMsiFileNames = @($msiFiles | ForEach-Object Name | Sort-Object -Unique)
+    $missingLicenseNames = @($expectedLicenseNames | Where-Object { $_ -notin $actualMsiFileNames })
+    if ($missingLicenseNames.Count -ne 0) {
+        throw "Im MSI fehlen vorgesehene Lizenz-/Notice-Dateien: $($missingLicenseNames -join ', ')."
+    }
+
+    $licenseRows = @(
+        Get-MsiRows -Database $database `
+            -Query "SELECT ``Text`` FROM ``Control`` WHERE ``Dialog_``='LicenseAgreementDlg' AND ``Control``='LicenseText'" `
+            -FieldCount 1
+    )
+    if ($licenseRows.Count -ne 1) {
+        throw "Der MSI-Lizenzdialog enthält $($licenseRows.Count) statt genau eines Lizenztexts."
+    }
+
+    $expectedLicenseRtf = (Get-Content -LiteralPath $licenseRtfPath -Raw).Trim()
+    $actualLicenseRtf = $licenseRows[0][0].Trim()
+    Assert-Equal -Name 'RTF im MSI-Lizenzdialog' -Actual $actualLicenseRtf -Expected $expectedLicenseRtf
+    foreach ($requiredText in @('BorstWerk E-Rechnung', 'PdfPig', 'BouncyCastle.Cryptography', 'Microsoft.NETCore.App')) {
+        if (-not $actualLicenseRtf.Contains($requiredText, [StringComparison]::Ordinal)) {
+            throw "Der RTF-Text im MSI enthält die Pflichtangabe '$requiredText' nicht."
+        }
+    }
+    foreach ($obsolete in @('Serilog', 'Microsoft.Extensions.Hosting')) {
+        if ($actualLicenseRtf.Contains($obsolete, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Der RTF-Text im MSI behauptet den veralteten Runtimebestandteil '$obsolete'."
+        }
+    }
 
     $summary = $database.GetType().InvokeMember(
         'SummaryInformation',
@@ -293,6 +500,11 @@ try {
     Write-Host "  ProductCode:    $($properties.ProductCode)"
     Write-Host "  UpgradeCode:    $($properties.UpgradeCode)"
     Write-Host "  PackageCode:    $packageCode"
+    Write-Host "  Runtimepakete:  $($actualDepsPackages.Count)"
+    Write-Host "  Runtimepacks:   $($actualRuntimePacks.Count)"
+    Write-Host "  Runtimepatch:   $expectedRuntimeFrameworkVersion"
+    Write-Host "  Hinweisdatei:   $($mainNotice[0].Name)"
+    Write-Host "  Lizenzdateien:  $($expectedLicenseNames.Count) vorgesehen und im MSI gefunden"
 }
 finally {
     foreach ($comObject in @($summary, $database, $installer)) {

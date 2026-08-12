@@ -260,7 +260,9 @@ public sealed class InstallerScopeTests
     public void DieDateienWerdenWeiterhinEingelesen()
     {
         XElement files = Assert.Single(
-            Document("Files.wxs").Descendants(Wxs + "Files"));
+            Document("Files.wxs").Descendants(Wxs + "Files"),
+            element => (element.Attribute("Include")?.Value ?? string.Empty)
+                .Contains("$(PublishDir)", StringComparison.Ordinal));
 
         Assert.Contains("$(PublishDir)", files.Attribute("Include")?.Value ?? string.Empty, StringComparison.Ordinal);
     }

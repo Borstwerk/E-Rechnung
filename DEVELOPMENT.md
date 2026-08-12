@@ -227,10 +227,11 @@ in [`LICENSE`](LICENSE).
 
 Davon getrennt zu betrachten sind die **Fremdkomponenten**. Ihre Lizenzen sind in
 [`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) einzeln aufgeführt und an der
-Primärquelle geprüft; einige stehen unter anderen Bedingungen als MIT, etwa PDFium unter
-BSD-3-Clause und das WiX Toolset unter der Microsoft Reciprocal License. Die Lizenztexte der
-Fremdkomponenten werden mit dem Installer ausgeliefert
-(`installer/EInvoiceSender.Setup/Lizenzhinweise.rtf`).
+Primärquelle geprüft; einige stehen unter anderen Bedingungen als MIT, etwa PdfPig unter
+Apache-2.0 und das WiX Toolset unter der Microsoft Reciprocal License. Die vollständigen,
+geprüften Lizenz- und Notice-Texte der ausgelieferten Bestandteile liegen unter
+`installer/Drittanbieterhinweise/Lizenzen`. Die RTF-Datei des Installers ist lediglich eine
+kurze, sichtbare Zusammenfassung und verweist auf diese installierten Texte.
 
 Die MIT-Lizenz in `LICENSE` gilt also für diesen Quelltext, nicht für alles, was mit ihm
 ausgeliefert wird.

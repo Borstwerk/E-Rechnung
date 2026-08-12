@@ -142,4 +142,57 @@ Versionsframework oder eine neue Abhängigkeit ist nicht nötig.
 - Eine automatisierte Prüfung vergleicht die gebaute Anwendung und das MSI mit
   demselben `VersionPrefix`.
 
+## DEC-003 – Technische Hauptquelle für Drittanbieterhinweise
+
+**Status:** gültig
+
+**Bezug:** ER-020-LIC-01
+
+### Kontext
+
+Die technische Dokumentation, die mit der portablen Fassung ausgelieferte
+Markdown-Datei und die RTF-Anzeige des Installers wurden unabhängig gepflegt.
+Dadurch nannten die Anwenderdarstellungen entfernte Pakete und ließen direkte,
+transitive sowie native Laufzeitbestandteile aus. Eine vollständig generierte
+Lizenzdatenbank wäre für das kleine Projekt unverhältnismäßig und könnte eine
+fachliche Lizenzprüfung ohnehin nicht ersetzen.
+
+### Entscheidung
+
+`docs/THIRD-PARTY-NOTICES.md` ist die fachlich-technische Hauptquelle. Sie
+ordnet direkte Pakete, transitive und native Laufzeitbestandteile,
+self-contained Runtimepacks, Entwicklungswerkzeuge sowie externe Prüfwerkzeuge
+getrennt zu und nennt die geprüften Primärquellen.
+
+`installer/Drittanbieterhinweise/README.md` und
+`installer/EInvoiceSender.Setup/Lizenzhinweise.rtf` bleiben handgeschriebene,
+zielgruppengerechte Anwenderdarstellungen. Sie enthalten keine unnötig
+duplizierten Paketfassungen. Quelltext- und Artefaktprüfungen gleichen ihre
+Pflichtangaben mit der Hauptquelle und dem tatsächlichen `deps.json` ab.
+
+Vollständige Lizenz- und Notice-Texte werden unverändert unter
+`installer/Drittanbieterhinweise/Lizenzen` abgelegt. Das MSI bezieht Übersicht
+und Texte unmittelbar aus diesem Verzeichnis; der portable CI-Bau kopiert
+dieselben Dateien. Die RTF bleibt eine kurze Zusammenfassung und wird nicht als
+vollständiger Lizenztext bezeichnet.
+
+### Grund
+
+Diese Aufteilung hält fachliche Zuordnung, tatsächlich ausgelieferte Dateien
+und lesbare Anwenderinformation auseinander, ohne eine Generatorarchitektur
+einzuführen. Gleichzeitig machen die Prüfungen jede neue oder entfernte
+Runtimeabhängigkeit sichtbar, bevor ein Artefakt freigegeben wird.
+
+### Konsequenzen
+
+- Änderungen produktiver Pakete erfordern eine bewusste Aktualisierung der
+  technischen Hauptquelle.
+- Änderungen transitiver Pakete werden spätestens am frischen Publish rot.
+- Lizenzangaben werden an Paketdateien oder Primärquellen geprüft und nicht aus
+  Paketnamen abgeleitet.
+- Das MSI muss `Drittanbieterhinweise.md` und die vorgesehenen Lizenztexte als
+  installierte Dateien enthalten.
+- Die Vereinheitlichung des örtlichen und des CI-Releasewegs bleibt davon
+  getrennt und gehört zu ER-020-REL-01.
+
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

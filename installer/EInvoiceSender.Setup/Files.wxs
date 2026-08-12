@@ -11,6 +11,22 @@
   <Fragment>
     <ComponentGroup Id="AnwendungsDateien" Directory="INSTALLFOLDER">
       <Files Include="$(PublishDir)**" />
+
+      <!--
+        Die Anwenderübersicht kommt absichtlich unmittelbar aus dem
+        Repository und nicht aus dem Publish-Verzeichnis. Der Installer wird
+        in der CI gebaut, bevor die portable Fassung ihre Hinweise erhält;
+        eine Kopie im Publish wäre deshalb keine verlässliche MSI-Quelle.
+      -->
+      <Component Id="Drittanbieterhinweis" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="DrittanbieterhinweisDatei"
+              Source="..\Drittanbieterhinweise\README.md"
+              Name="Drittanbieterhinweise.md" />
+      </Component>
+
+      <!-- Vollständige, an den Primärquellen geprüfte Lizenz-/Notice-Texte. -->
+      <Files Include="..\Drittanbieterhinweise\Lizenzen\**"
+             Directory="DrittanbieterLizenzordner" />
     </ComponentGroup>
   </Fragment>
 </Wix>

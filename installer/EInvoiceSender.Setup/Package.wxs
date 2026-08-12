@@ -141,7 +141,11 @@
     -->
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="HerstellerOrdner" Name="$(ProductManufacturer)">
-        <Directory Id="INSTALLFOLDER" Name="$(ProductName)" />
+        <Directory Id="INSTALLFOLDER" Name="$(ProductName)">
+          <Directory Id="DrittanbieterHinweisordner" Name="Drittanbieterhinweise">
+            <Directory Id="DrittanbieterLizenzordner" Name="Lizenzen" />
+          </Directory>
+        </Directory>
       </Directory>
     </StandardDirectory>
 

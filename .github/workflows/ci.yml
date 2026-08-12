@@ -132,6 +132,10 @@ jobs:
         run: |
           Copy-Item installer/Drittanbieterhinweise/README.md `
             artifacts/publish/win-x64/Drittanbieterhinweise.md -Force
+          New-Item -ItemType Directory -Force `
+            -Path artifacts/publish/win-x64/Drittanbieterhinweise | Out-Null
+          Copy-Item installer/Drittanbieterhinweise/Lizenzen `
+            artifacts/publish/win-x64/Drittanbieterhinweise/ -Recurse -Force
 
       - name: Portable ZIP erzeugen
         shell: pwsh
