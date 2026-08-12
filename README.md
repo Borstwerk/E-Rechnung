@@ -56,6 +56,19 @@ Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
 - keine Verarbeitung kennwortgeschützter oder rechtebeschränkter PDFs
 - keine Veränderung digital signierter PDFs
 
+## Vor der ersten Rechnung
+
+Bitte öffnen Sie nach dem ersten Start zunächst **Einstellungen** und hinterlegen Sie dort Ihre
+eigenen Firmendaten. Dazu gehören insbesondere Firmenname und Anschrift sowie – soweit vorhanden –
+USt-IdNr. oder Steuernummer, E-Mail-Adresse und Bankverbindung.
+
+Diese Angaben dienen nicht nur als Vorlage für wiederkehrende Felder. Sie helfen der Anwendung
+auch dabei, in einer PDF zuverlässig zu unterscheiden, **wer Rechnungsteller und wer
+Rechnungsempfänger ist**. Ohne gespeicherte Firmendaten kann der Rechnungsteller bei der ersten
+PDF deshalb bewusst leer bleiben und muss dann von Hand eingetragen werden.
+
+Die Firmendaten werden lokal gespeichert und können jederzeit geändert werden.
+
 ## So läuft es ab
 
 1. **PDF auswählen und prüfen.** Die vorhandene Rechnung wird geprüft und als Vorschau angezeigt.
