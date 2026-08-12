@@ -143,3 +143,22 @@ Unter Windows:
 - Der DPAPI-Schutz der IBAN, der nur unter Windows greift.
 
 Diese Punkte brauchen einen echten Windows-Rechner und einen Menschen davor.
+
+## Installer-Metadaten
+
+Der Windows-Bau führt nach dem Erzeugen des MSI automatisch
+`build/Test-InstallerMetadata.ps1` aus. Das Skript öffnet die MSI-Datenbank
+ausschließlich lesend und vergleicht das gebaute Paket mit den verbindlichen
+Projektangaben. Geprüft werden insbesondere:
+
+- ProductVersion und der feste ProductCode der Fassung,
+- der fassungsübergreifend stabile UpgradeCode,
+- ein gültiger PackageCode,
+- die Dual-Purpose-Eigenschaften `ALLUSERS=2` und `MSIINSTALLPERUSER=1`,
+- Upgrade- und Downgradezeilen ohne Same-Version-Major-Upgrade,
+- die Reihenfolge von `FindRelatedProducts`, `MigrateFeatureStates`,
+  `RemoveExistingProducts` und `InstallInitialize`.
+
+Das belegt die Paketmetadaten, ersetzt aber nicht die Windows-Abnahme eines
+echten Upgrades. Installationskontext, Apps-&-Features-Einträge, Verknüpfungen
+und erhaltene Benutzerdaten werden weiterhin praktisch geprüft.

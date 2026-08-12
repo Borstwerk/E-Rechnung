@@ -97,7 +97,7 @@ Das Paket ist ein Dual-Purpose-Paket (`Scope="perUserOrMachine"`): Die Standardi
 für den aktuellen Benutzer ohne UAC-Rückfrage, dieselbe Datei lässt sich bei Bedarf für alle
 Benutzer installieren. Der `UpgradeCode` bleibt über alle Fassungen unverändert.
 `AllowSameVersionUpgrades` ist bewusst nicht gesetzt – eine Testinstallation derselben Fassung ist
-vorher zu entfernen.
+über den festen ProductCode dasselbe Produkt und gelangt in den Windows-Installer-Wartungsmodus.
 
 WiX wird nur zum **Bauen** gebraucht, nicht auf dem Zielrechner. Die ICE-Prüfungen laufen ohne
 Unterdrückung; die Vorgeschichte zu ICE38, ICE57 und ICE61 steht in den Kommentaren von

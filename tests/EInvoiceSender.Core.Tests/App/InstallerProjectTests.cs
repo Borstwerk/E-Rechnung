@@ -59,6 +59,28 @@ public sealed class InstallerProjectTests
         Assert.Equal("portable", debugType);
     }
 
+    /// <summary>
+    /// Die Quelltextprüfungen allein belegen nicht, was WiX tatsächlich in
+    /// die MSI-Datenbank schreibt. Deshalb müssen sowohl der örtliche
+    /// Installerbau als auch der Windows-Job die gebaute Datei prüfen, bevor
+    /// sie als Release-Artefakt weitergereicht wird.
+    /// </summary>
+    [Fact]
+    public void JederInstallerbauPrüftDieGebautenMsiMetadaten()
+    {
+        string scriptName = "Test-InstallerMetadata.ps1";
+        string localBuild = File.ReadAllText(
+            Path.Combine(TestPaths.RepositoryRoot, "build", "Build-Installer.ps1"));
+        string continuousIntegration = File.ReadAllText(
+            Path.Combine(TestPaths.RepositoryRoot, ".github", "workflows", "ci.yml"));
+
+        Assert.Contains(scriptName, localBuild, StringComparison.Ordinal);
+        Assert.Contains(scriptName, continuousIntegration, StringComparison.Ordinal);
+        Assert.True(
+            File.Exists(Path.Combine(TestPaths.RepositoryRoot, "build", scriptName)),
+            $"build/{scriptName} fehlt.");
+    }
+
     private static string SetupProject { get; } = Path.Combine(
         TestPaths.RepositoryRoot, "installer", "EInvoiceSender.Setup", "EInvoiceSender.Setup.wixproj");
 

@@ -31,12 +31,14 @@ Write-Host "MSI wird gebaut ..." -ForegroundColor Cyan
 dotnet build $setupProject -c Release -p:PublishDir="$publishDirectory\"
 if ($LASTEXITCODE -ne 0) { throw "Der Installerbau ist fehlgeschlagen." }
 
-New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
-
 $msi = Get-ChildItem -Path (Join-Path $root 'installer') -Filter '*.msi' -Recurse |
        Sort-Object LastWriteTime -Descending |
        Select-Object -First 1
 if (-not $msi) { throw "Es wurde keine MSI-Datei gefunden." }
+
+& (Join-Path $PSScriptRoot 'Test-InstallerMetadata.ps1') -MsiPath $msi.FullName
+
+New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 
 $target = Join-Path $releaseDirectory $msi.Name
 Copy-Item $msi.FullName $target -Force

@@ -139,6 +139,28 @@ public sealed class InstallerScopeTests
     }
 
     /// <summary>
+    /// Der veröffentlichte ProductCode gehört zur Identität von Version 0.1.0.
+    /// Ohne festen Wert erzeugt WiX bei jedem Bau einen neuen Code. Da die
+    /// Upgrade-Tabelle gleiche Versionen absichtlich nicht erfasst, könnte
+    /// derselbe Quellstand dann erneut als zweites Produkt installiert werden.
+    /// </summary>
+    [Fact]
+    public void DerProductCodeDerVeröffentlichtenFassungBleibtStabil()
+    {
+        XElement project = Document("EInvoiceSender.Setup.wixproj").Root!;
+        string productCode = Assert.Single(
+            project.Descendants(), e => e.Name.LocalName == "ProductCode")
+            .Value
+            .Trim();
+
+        Assert.Equal(
+            "723d8a8e-cb3d-4ec0-81d2-3821a56be91d",
+            productCode,
+            ignoreCase: true);
+        Assert.Equal("$(ProductCode)", Package().Attribute("ProductCode")?.Value);
+    }
+
+    /// <summary>
     /// Der UpgradeCode ist die Kennung, an der Windows eine spätere Fassung
     /// als Aktualisierung erkennt. Ändert er sich, steht die neue Fassung
     /// neben der alten statt an ihrer Stelle – und der Anwender hat die
@@ -265,5 +287,6 @@ public sealed class InstallerScopeTests
         => Document("Package.wxs").Root!.Element(Wxs + "Package")!;
 
     private static XDocument Document(string file)
-        => XDocument.Load(ProjectFiles.With(".wxs").Single(p => Path.GetFileName(p) == file));
+        => XDocument.Load(
+            ProjectFiles.With(".wxs", ".wixproj").Single(p => Path.GetFileName(p) == file));
 }

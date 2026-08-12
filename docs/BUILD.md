@@ -73,10 +73,15 @@ und wird von Anwendung und Installer gemeinsam verwendet. Das WiX-Projekt
 liest sie von dort; ein Aufruf mit `-p:ProductVersion=...` hat Vorrang.
 
 **Testinstallation derselben Fassung:** Das Paket ersetzt nur *ältere*
-Fassungen seiner selbst. Wer dieselbe Fassung erneut installieren will, muss
-die vorhandene vorher deinstallieren. Das ist Absicht – ein Paket, das sich
-selbst als Vorgänger ansieht, verstößt gegen ICE61 und kann sich bei einer
-Neuinstallation im ungünstigen Fall selbst wieder entfernen.
+Fassungen seiner selbst. Innerhalb einer veröffentlichten Fassung bleibt der
+ProductCode fest; ein erneuter Start derselben Fassung öffnet deshalb den
+Windows-Installer-Wartungsmodus und erzeugt keine zweite Produktinstanz.
+`AllowSameVersionUpgrades` bleibt bewusst ausgeschaltet, damit Builds mit
+derselben dreiteiligen MSI-Version einander nicht als Major Upgrade behandeln.
+
+Nach dem Installerbau prüft `build/Test-InstallerMetadata.ps1` die Identität,
+Upgrade-Tabelle und Aktionsreihenfolge des tatsächlich erzeugten MSI, ohne es
+zu installieren.
 
 ## Linux und macOS
 

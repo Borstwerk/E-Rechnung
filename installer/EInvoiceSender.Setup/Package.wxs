@@ -57,10 +57,15 @@
     Windows eine spätere Fassung als Aktualisierung statt als zweite
     Installation.
 
+  * ProductCode bleibt innerhalb einer veröffentlichten Fassung unverändert
+    und wechselt erst mit der nächsten dreiteiligen Produktversion. Sonst
+    würden zwei Builds derselben Fassung als verschiedene Produkte gelten:
+    MajorUpgrade erfasst gleiche Versionen bewusst nicht.
+
   * MajorUpgrade ohne AllowSameVersionUpgrades: eine neuere Fassung ersetzt die
     alte, eine ältere wird mit verständlicher Meldung abgelehnt. Dieselbe
-    Fassung erneut zu installieren ist nicht vorgesehen – dafür ist die
-    vorhandene Installation zuerst zu entfernen.
+    Fassung geht über ihren festen ProductCode in den Wartungsmodus und kann
+    deshalb keine zweite Produktinstanz anlegen.
 
   * Die Id-Attribute bleiben in ASCII geschrieben. Sie sind Kennungen,
     keine angezeigten Texte, und werden in dieser Datei gegenseitig
@@ -78,6 +83,7 @@
 
   <Package Name="$(ProductName)"
            Manufacturer="$(ProductManufacturer)"
+           ProductCode="$(ProductCode)"
            Version="$(ProductVersion)"
            UpgradeCode="7f3c1d92-4b6a-4d21-9d0e-2a5c8b1e7f40"
            Scope="perUserOrMachine"
@@ -98,16 +104,14 @@
       Eine neuere Fassung ersetzt die alte; eine ältere wird mit
       verständlicher Meldung abgelehnt.
 
-      **Ohne AllowSameVersionUpgrades.** Diese Einstellung nimmt die eigene
-      Fassung in den Bereich der zu ersetzenden Fassungen mit auf – die
-      Obergrenze ist dann nicht mehr kleiner als die eigene Version, und
-      genau das beanstandet ICE61: „This product should remove only older
-      versions of itself.“ Ein Paket, das sich selbst als Vorgänger ansieht,
-      kann sich bei einer Neuinstallation im ungünstigen Fall selbst wieder
-      entfernen.
+      **Ohne AllowSameVersionUpgrades.** Diese Einstellung nähme gleiche
+      Fassungen in den Major-Upgrade-Bereich auf und erlaubte damit auch einen
+      Rückschritt zwischen Builds, deren für MSI maßgebliche dreiteilige
+      Versionsnummer identisch ist. Außerdem beanstandet ICE61 dann, dass das
+      Paket nicht nur ältere Fassungen entfernt.
 
-      Für eine Testinstallation derselben Fassung ist die vorhandene
-      Installation vorher zu deinstallieren; das steht in docs/BUILD.md.
+      Der feste ProductCode stellt stattdessen sicher, dass dieselbe Fassung
+      als dasselbe Produkt erkannt wird und in den Wartungsmodus gelangt.
     -->
     <MajorUpgrade
       DowngradeErrorMessage="Es ist bereits eine neuere Fassung von $(ProductName) installiert. Bitte deinstallieren Sie diese zuerst, wenn Sie eine ältere Fassung einsetzen möchten." />
