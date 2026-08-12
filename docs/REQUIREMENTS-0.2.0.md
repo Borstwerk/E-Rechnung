@@ -97,6 +97,75 @@ Version 0.2.0 soll aus einer zentralen maßgeblichen Versionsquelle abgeleitet w
 - automatisierter Build,
 - Versionsanzeige auf dem installierten Windows-Paket.
 
+## ER-020-LIC-01 – Drittanbieterhinweise konsistent halten
+
+### Problem / Grund
+
+Die aktuellen Entwicklungsunterlagen und Paketdefinitionen nennen die tatsächlich verwendeten Bibliotheken. Die ausgelieferten Drittanbieterhinweise sind dagegen nicht vollständig synchron: Sie nennen noch Serilog und `Microsoft.Extensions.Hosting`, obwohl diese nicht mehr Bestandteil der Anwendung sind, und lassen unter anderem PdfPig aus.
+
+Drittanbieterhinweise sind Bestandteil der Auslieferung und dürfen nicht von der tatsächlichen Release-Zusammenstellung abweichen.
+
+### Anforderung
+
+Die mit Installer und portabler Fassung ausgelieferten Drittanbieterhinweise müssen den tatsächlich enthaltenen Fremdkomponenten entsprechen und untereinander konsistent sein.
+
+### Akzeptanzkriterien
+
+- PdfPig wird in den ausgelieferten Hinweisen aufgeführt, solange es Bestandteil der Anwendung ist.
+- Nicht ausgelieferte Serilog-Komponenten werden nicht aufgeführt.
+- `Microsoft.Extensions.Hosting` wird nicht als ausgelieferte Abhängigkeit genannt, solange es nicht tatsächlich enthalten ist.
+- Die verwendeten `Microsoft.Extensions.*`-Pakete werden sachlich korrekt bezeichnet.
+- Markdown-Hinweise, Installerhinweise und RTF widersprechen sich nicht.
+- Die sichtbare Produktbezeichnung lautet BorstWerk E-Rechnung und nicht ein überholter interner Produktname.
+- Neue oder entfernte Laufzeitabhängigkeiten müssen zu einer nachvollziehbaren Aktualisierung der Drittanbieterhinweise führen.
+- Nach Möglichkeit gibt es eine maßgebliche Quelle oder eine automatisierte Konsistenzprüfung, statt mehrere dauerhaft manuell gepflegte Listen ohne Abgleich.
+- Ein vorgesehener Release darf nicht stillschweigend ohne die vorgesehenen Drittanbieterhinweise paketiert werden.
+
+### Nachweis
+
+Noch festzulegen:
+
+- Abgleich gegen Paketdefinitionen und veröffentlichte `deps.json`,
+- Prüfung der ausgelieferten Markdown-/RTF-Hinweise,
+- Prüfung von MSI und portabler ZIP,
+- automatisierte Konsistenzprüfung, sofern mit vertretbarem Aufwand möglich.
+
+## ER-020-REL-01 – Einheitlichen und reproduzierbaren Release-Paketbau herstellen
+
+### Problem / Grund
+
+Der lokale Installer-/Releaseweg und die GitHub-CI paketieren die portable Fassung derzeit nicht identisch. Die CI kopiert Drittanbieterhinweise vor dem ZIP-Bau in den Publish-Ordner, der lokale `Build-Installer.ps1` dagegen nicht.
+
+Zusätzlich wird das lokale Release-Ausgabeverzeichnis vor einem neuen Build nicht vollständig bereinigt. Dadurch können Artefakte älterer Builds im Ordner verbleiben und anschließend sogar in `SHA256SUMS.txt` aufgenommen werden.
+
+### Anforderung
+
+Lokaler Releasebau und CI müssen einen klar definierten, möglichst gemeinsamen Paketierungsweg verwenden und aus einem frischen Zustand ausschließlich die Artefakte des aktuellen Builds erzeugen.
+
+### Akzeptanzkriterien
+
+- Lokaler Releasebau und GitHub-CI verwenden denselben Paketierungsablauf oder nachweislich dieselben relevanten Schritte.
+- Das Release-Ausgabeverzeichnis enthält nach einem Build keine Altartefakte aus vorherigen Builds.
+- Die portable ZIP enthält die vorgesehenen Drittanbieterhinweise.
+- Das MSI enthält die vorgesehenen Drittanbieterhinweise.
+- Release-Artefakte werden erst nach erfolgreichem Build und vollständiger Paketierung als fertig betrachtet.
+- `SHA256SUMS.txt` wird nach Erzeugung aller endgültigen Artefakte frisch erstellt.
+- `SHA256SUMS.txt` enthält ausschließlich Dateien des aktuellen Release-Builds und niemals sich selbst.
+- Jede in `SHA256SUMS.txt` aufgeführte Datei existiert und ihre Prüfsumme lässt sich verifizieren.
+- Für den regulären 0.2.0-Release besteht der erwartete veröffentlichte Satz aus MSI, portabler ZIP und `SHA256SUMS.txt`, sofern der freigegebene Releaseplan keine weiteren Artefakte vorsieht.
+- Der Buildprozess scheitert verständlich, wenn ein verpflichtender Paketbestandteil fehlt, statt ein unvollständiges Release als erfolgreich zu melden.
+
+### Nachweis
+
+Noch festzulegen:
+
+- lokaler Releasebau aus sauberem Zustand,
+- zweiter lokaler Releasebau über vorhandenen Buildartefakten zur Prüfung auf Altlasten,
+- CI-Artefakte gegen lokalen Build vergleichen,
+- Inhalt der portablen ZIP prüfen,
+- MSI-Inhalt beziehungsweise installierte Drittanbieterhinweise prüfen,
+- `SHA256SUMS.txt` vollständig gegen die erzeugten Dateien verifizieren.
+
 ## ER-020-LOG-01 – Lokales Diagnoselogging
 
 ### Problem / Grund
@@ -374,6 +443,8 @@ Für sämtliche Anforderungen gelten:
 - ausgelieferte Anwendung benötigt weiterhin weder Java noch .NET SDK,
 - KISS bleibt verbindlich.
 
+Große Klassen oder Dateien allein sind kein Änderungsgrund. Refactorings brauchen einen konkreten Nutzen für Wartbarkeit, Testbarkeit oder Risikoreduktion und dürfen fachliche Änderungen nicht unnötig vergrößern.
+
 ## Release-Gate 0.2.0
 
 Version 0.2.0 darf erst veröffentlicht werden, wenn:
@@ -381,12 +452,13 @@ Version 0.2.0 darf erst veröffentlicht werden, wenn:
 - alle als Pflicht markierten Anforderungen erfüllt sind,
 - vollständige CI grün ist,
 - externe Referenzprüfungen bestanden sind,
-- Windows-Abnahme bestanden ist,
+- die für 0.2.0 relevanten Punkte aus [`RELEASE-CHECKLIST.md`](RELEASE-CHECKLIST.md) bestanden sind,
 - Upgrade 0.1.0 → 0.2.0 bestanden ist,
 - Same-Version-Test bestanden ist,
 - Downgrade-Verhalten geprüft ist,
 - Firmendaten nach Upgrade erhalten bleiben,
 - MSI und portable ZIP funktionieren,
+- Drittanbieterhinweise zu den tatsächlich ausgelieferten Komponenten passen,
 - `SHA256SUMS.txt` zu den tatsächlich veröffentlichten Artefakten passt,
 - README und weitere Dokumentation dem tatsächlichen Funktionsstand entsprechen.
 
@@ -398,10 +470,12 @@ Erst nach vollständiger Abnahme wird `v0.2.0` erzeugt.
 
 1. `ER-020-INS-01` – Installer-Upgrade
 2. `ER-020-VER-01` – zentrale Versionsführung
-3. `ER-020-LOG-01` – Diagnoselogging
-4. `ER-020-SET-01` – Firmendaten-Onboarding
-5. `ER-020-BUY-01` bis `ER-020-BUY-03` – Käufererkennung
-6. `ER-020-POS-01` – Positionserkennung
-7. `ER-020-SIGN-01` – Signing, sofern verfügbar
-8. vollständige Abnahme
-9. Dokumentation und Release
+3. `ER-020-LIC-01` – Drittanbieterhinweise
+4. `ER-020-REL-01` – einheitlicher Release- und Paketbau
+5. `ER-020-LOG-01` – Diagnoselogging
+6. `ER-020-SET-01` – Firmendaten-Onboarding
+7. `ER-020-BUY-01` bis `ER-020-BUY-03` – Käufererkennung
+8. `ER-020-POS-01` – Positionserkennung
+9. `ER-020-SIGN-01` – Signing, sofern verfügbar
+10. vollständige Release-Abnahme
+11. Dokumentation und Release
