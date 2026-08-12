@@ -156,8 +156,8 @@ Schriften: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Externe Referenzvalidatoren** als Freigabegate; mit `REQUIRE_EXTERNAL_VALIDATORS=1` scheitern
   die betroffenen Prüfungen, statt sich still zu überspringen – so läuft die CI
 - **Quelltextprüfungen** für alles, was nur in ViewModels oder XAML stehen kann
-- **Windows-Testkoffer**: eine Reihe absichtlich schwieriger PDFs, die von Hand durchgespielt
-  wird. Die Liste steht in [`docs/BACKLOG.md`](docs/BACKLOG.md)
+- **Windows-Testkoffer und Release-Abnahme**: wiederkehrende manuelle Prüfungen stehen in
+  [`docs/RELEASE-CHECKLIST.md`](docs/RELEASE-CHECKLIST.md)
 
 Ein neuer Wächter zählt erst, wenn er gegen absichtlich kaputte Eingabe rot wird. Ein Test, der
 immer grün ist, sichert nichts.
@@ -205,8 +205,9 @@ zusätzlich gegen die Golden Master und die externen Referenzvalidatoren zu prü
 | [`docs/BUILD.md`](docs/BUILD.md) | Bauen mit Visual Studio und PowerShell |
 | [`docs/E-INVOICE-STANDARD.md`](docs/E-INVOICE-STANDARD.md) | Norm, Profil und verwendete Fassungen |
 | [`docs/TESTING.md`](docs/TESTING.md) | Testebenen und Referenzvalidatoren |
+| [`docs/RELEASE-CHECKLIST.md`](docs/RELEASE-CHECKLIST.md) | Wiederkehrende manuelle Windows- und Release-Abnahme |
 | [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md) | Bekannte Grenzen |
-| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Offene Punkte, Windows-Abnahmelisten |
+| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Echte noch offene Arbeit außerhalb verbindlicher Versionsanforderungen |
 | [`docs/SPIKE-RASTER-FALLBACK.md`](docs/SPIKE-RASTER-FALLBACK.md) | Messungen zum Rasterweg |
 | [`docs/THIRD-PARTY-NOTICES.md`](docs/THIRD-PARTY-NOTICES.md) | Fremdkomponenten und Lizenzen |
 
