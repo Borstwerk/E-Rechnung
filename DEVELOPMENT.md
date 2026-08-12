@@ -3,6 +3,19 @@
 Diese Datei richtet sich an Mitwirkende. Was die Anwendung für Anwender tut, steht in
 [`README.md`](README.md).
 
+## Verbindlicher Entwicklungsprozess
+
+Dieses Projekt folgt dem zentralen [BorstWerk-Entwicklungsprozess](https://github.com/Borstwerk/.github/blob/main/DEVELOPMENT-PROCESS.md).
+
+Vor größeren Änderungen sind zuerst die für die Arbeit relevanten Unterlagen zu lesen:
+
+- die Anforderungen der Zielversion, aktuell [`docs/REQUIREMENTS-0.2.0.md`](docs/REQUIREMENTS-0.2.0.md),
+- [`docs/DECISIONS.md`](docs/DECISIONS.md),
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+- [`docs/TESTING.md`](docs/TESTING.md).
+
+Änderungen mit eigener Requirement-ID werden zunächst geplant und erst nach Freigabe des Plans umgesetzt. Bestehende Architekturentscheidungen dürfen dabei nicht stillschweigend ersetzt werden. Nach der Umsetzung ist für jedes Akzeptanzkriterium anzugeben, wodurch es nachgewiesen wird.
+
 ## Projektziel und Nicht-Ziele
 
 Ein kleines, nachvollziehbares Windows-Werkzeug: vorhandene PDF-Rechnung hinein, geprüfte
@@ -186,6 +199,8 @@ zusätzlich gegen die Golden Master und die externen Referenzvalidatoren zu prü
 
 | Datei | Inhalt |
 |---|---|
+| [`docs/REQUIREMENTS-0.2.0.md`](docs/REQUIREMENTS-0.2.0.md) | Verbindliche Anforderungen für Version 0.2.0 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Neue wichtige Architektur- und Produktentscheidungen samt Begründung |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Aufbau der Projektmappe, Ablauf, PDF-Wege |
 | [`docs/BUILD.md`](docs/BUILD.md) | Bauen mit Visual Studio und PowerShell |
 | [`docs/E-INVOICE-STANDARD.md`](docs/E-INVOICE-STANDARD.md) | Norm, Profil und verwendete Fassungen |
