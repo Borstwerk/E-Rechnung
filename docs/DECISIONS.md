@@ -70,6 +70,11 @@ ProductCode. Alle Builds derselben Fassung verwenden diesen Code. Mit einer
 neuen Produktversion wird einmalig ein neuer ProductCode vergeben. Der
 UpgradeCode bleibt dagegen über alle Fassungen stabil.
 
+Die festgelegten Zuordnungen lauten:
+
+- 0.1.0 → `{723D8A8E-CB3D-4EC0-81D2-3821A56BE91D}`
+- 0.2.0 → `{F69B7118-58E7-4BB9-B4FF-411056AA3776}`
+
 `AllowSameVersionUpgrades` bleibt ausgeschaltet. Dieselbe Fassung wird über den
 festen ProductCode als dasselbe Produkt erkannt und gelangt in den normalen
 Windows-Installer-Wartungsmodus.
@@ -94,5 +99,47 @@ nach alten Programmdateien oder Deinstallationsprogrammen.
   bei einem Major Upgrade nicht.
 - Eine automatisierte Prüfung liest ProductCode, UpgradeCode, ProductVersion
   und Upgrade-Tabelle aus dem tatsächlich gebauten MSI.
+
+## DEC-002 – Eine aktive Produktversionsquelle
+
+**Status:** gültig
+
+**Bezug:** ER-020-VER-01
+
+### Kontext
+
+Die .NET-Projekte bezogen ihre Version bereits aus `VersionPrefix` in
+`Directory.Build.props`. Der Windows-Job der CI übergab dem Installer jedoch
+zusätzlich eine fest eingetragene ProductVersion. Bei einer Versionsänderung
+konnten Anwendung und MSI dadurch auseinanderlaufen.
+
+### Entscheidung
+
+`VersionPrefix` in `Directory.Build.props` ist die einzige aktive
+Produktversionsquelle. Die .NET-Projekte verwenden die Standardableitungen des
+SDK für Version, AssemblyVersion, FileVersion und InformationalVersion. WiX
+erhält die MSI-ProductVersion unmittelbar aus `VersionPrefix`; lokale und
+CI-Buildaufrufe setzen keine eigene ProductVersion.
+
+Die ProductCode-Zuordnungen sind davon getrennte historische
+Installeridentitäten: `VersionPrefix` wählt genau einen festen Code aus. Fehlt
+eine Zuordnung, bricht der Installerbau verständlich vor WiX ab.
+
+### Grund
+
+Ein Releasewechsel ändert damit nur eine aktive Versionsangabe. Anwendung,
+Installer und Buildwege können nicht durch mehrere gepflegte Versionswerte
+auseinanderlaufen. Die SDK-Bordmittel reichen aus; ein eigenes
+Versionsframework oder eine neue Abhängigkeit ist nicht nötig.
+
+### Konsequenzen
+
+- Für eine neue veröffentlichte dreiteilige Version wird vor der Umschaltung
+  einmalig ein neuer ProductCode hinterlegt.
+- Unbekannte Produktversionen können kein installierbares Paket erzeugen.
+- Die InformationalVersion darf den Commit-Hash als Buildmetadatum tragen; die
+  sichtbare Über-Anzeige zeigt den Versionsanteil vor dem Pluszeichen.
+- Eine automatisierte Prüfung vergleicht die gebaute Anwendung und das MSI mit
+  demselben `VersionPrefix`.
 
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

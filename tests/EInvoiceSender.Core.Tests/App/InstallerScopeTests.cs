@@ -139,25 +139,48 @@ public sealed class InstallerScopeTests
     }
 
     /// <summary>
-    /// Der veröffentlichte ProductCode gehört zur Identität von Version 0.1.0.
-    /// Ohne festen Wert erzeugt WiX bei jedem Bau einen neuen Code. Da die
-    /// Upgrade-Tabelle gleiche Versionen absichtlich nicht erfasst, könnte
-    /// derselbe Quellstand dann erneut als zweites Produkt installiert werden.
+    /// Jede veröffentlichte Produktversion behält ihren festen ProductCode.
+    /// Der Code von 0.1.0 ist bereits veröffentlicht und deshalb unveränderlich;
+    /// 0.2.0 braucht einen anderen, ebenfalls festen Code.
     /// </summary>
     [Fact]
-    public void DerProductCodeDerVeröffentlichtenFassungBleibtStabil()
+    public void DieProductCodesDerVeröffentlichtenFassungenBleibenStabil()
     {
-        XElement project = Document("EInvoiceSender.Setup.wixproj").Root!;
-        string productCode = Assert.Single(
-            project.Descendants(), e => e.Name.LocalName == "ProductCode")
-            .Value
-            .Trim();
+        Dictionary<string, string> mappings = ProductCodeMappings();
 
+        Assert.Equal(2, mappings.Count);
         Assert.Equal(
             "723d8a8e-cb3d-4ec0-81d2-3821a56be91d",
-            productCode,
+            mappings["0.1.0"],
             ignoreCase: true);
+        Assert.Equal(
+            "f69b7118-58e7-4bb9-b4ff-411056aa3776",
+            mappings["0.2.0"],
+            ignoreCase: true);
+        Assert.False(
+            string.Equals(mappings["0.1.0"], mappings["0.2.0"], StringComparison.OrdinalIgnoreCase));
         Assert.Equal("$(ProductCode)", Package().Attribute("ProductCode")?.Value);
+    }
+
+    /// <summary>
+    /// Eine neue Produktversion ohne feste Zuordnung darf nicht mit einem von
+    /// WiX automatisch erzeugten ProductCode weitergebaut werden.
+    /// </summary>
+    [Fact]
+    public void UnbekannteProduktversionBrichtVorDemWixBauAb()
+    {
+        XElement project = Document("EInvoiceSender.Setup.wixproj").Root!;
+        XElement target = Assert.Single(
+            project.Elements(),
+            e => e.Name.LocalName == "Target"
+                 && e.Attribute("Name")?.Value == "ValidateProductIdentity");
+        XElement error = Assert.Single(target.Elements(), e => e.Name.LocalName == "Error");
+
+        Assert.Equal("CoreCompile", target.Attribute("BeforeTargets")?.Value);
+        Assert.Contains("$(ProductCode)", error.Attribute("Condition")?.Value ?? string.Empty,
+                        StringComparison.Ordinal);
+        Assert.Contains("$(VersionPrefix)", error.Attribute("Text")?.Value ?? string.Empty,
+                        StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -289,4 +312,34 @@ public sealed class InstallerScopeTests
     private static XDocument Document(string file)
         => XDocument.Load(
             ProjectFiles.With(".wxs", ".wixproj").Single(p => Path.GetFileName(p) == file));
+
+    private static Dictionary<string, string> ProductCodeMappings()
+    {
+        const string conditionPrefix = "'$(VersionPrefix)' == '";
+        var mappings = new Dictionary<string, string>(StringComparer.Ordinal);
+        XElement project = Document("EInvoiceSender.Setup.wixproj").Root!;
+
+        foreach (XElement element in project.Descendants().Where(e => e.Name.LocalName == "ProductCode"))
+        {
+            string condition = element.Attribute("Condition")?.Value ?? string.Empty;
+            string productCode = element.Value.Trim();
+
+            Assert.True(
+                condition.StartsWith(conditionPrefix, StringComparison.Ordinal)
+                && condition.EndsWith('\''),
+                $"ProductCode {productCode} besitzt keine eindeutige VersionPrefix-Zuordnung.");
+
+            string version = condition[conditionPrefix.Length..^1];
+
+            Assert.True(Version.TryParse(version, out _), $"'{version}' ist keine Version.");
+            Assert.True(Guid.TryParse(productCode, out _), $"'{productCode}' ist keine GUID.");
+            Assert.True(
+                mappings.TryAdd(version, productCode),
+                $"Version {version} ist mehr als einem ProductCode zugeordnet.");
+        }
+
+        Assert.Equal(mappings.Count, mappings.Values.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+
+        return mappings;
+    }
 }

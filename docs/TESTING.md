@@ -149,9 +149,11 @@ Diese Punkte brauchen einen echten Windows-Rechner und einen Menschen davor.
 Der Windows-Bau führt nach dem Erzeugen des MSI automatisch
 `build/Test-InstallerMetadata.ps1` aus. Das Skript öffnet die MSI-Datenbank
 ausschließlich lesend und vergleicht das gebaute Paket mit den verbindlichen
-Projektangaben. Geprüft werden insbesondere:
+Projektangaben. Zuvor prüft es an der veröffentlichten EXE und der verwalteten
+Anwendungsassembly, dass ProductVersion, FileVersion und AssemblyVersion von
+demselben zentralen `VersionPrefix` stammen. Geprüft werden insbesondere:
 
-- ProductVersion und der feste ProductCode der Fassung,
+- ProductVersion und der für diese Fassung fest zugeordnete ProductCode,
 - der fassungsübergreifend stabile UpgradeCode,
 - ein gültiger PackageCode,
 - die Dual-Purpose-Eigenschaften `ALLUSERS=2` und `MSIINSTALLPERUSER=1`,
@@ -162,3 +164,9 @@ Projektangaben. Geprüft werden insbesondere:
 Das belegt die Paketmetadaten, ersetzt aber nicht die Windows-Abnahme eines
 echten Upgrades. Installationskontext, Apps-&-Features-Einträge, Verknüpfungen
 und erhaltene Benutzerdaten werden weiterhin praktisch geprüft.
+
+Plattformneutrale Quelltextprüfungen sichern zusätzlich ab, dass
+`Directory.Build.props` die einzige aktive Produktversionsquelle bleibt, CI
+und Buildskripte keinen ProductVersion-Override einführen, jede veröffentlichte
+Version genau einen gültigen ProductCode besitzt und die Über-Anzeige ihre
+Fassung aus der gebauten Assembly liest.

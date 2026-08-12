@@ -41,7 +41,7 @@
     <Company>BorstWerk</Company>
     <Authors>BorstWerk</Authors>
     <Copyright>Copyright (c) 2026 Rainer Rohde (BorstWerk)</Copyright>
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionPrefix>0.2.0</VersionPrefix>
     <NeutralLanguage>de-DE</NeutralLanguage>
 
     <IsPackable>false</IsPackable>

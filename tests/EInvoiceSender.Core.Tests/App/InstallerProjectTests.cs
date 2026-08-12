@@ -76,6 +76,8 @@ public sealed class InstallerProjectTests
 
         Assert.Contains(scriptName, localBuild, StringComparison.Ordinal);
         Assert.Contains(scriptName, continuousIntegration, StringComparison.Ordinal);
+        Assert.Contains("-ApplicationPath", localBuild, StringComparison.Ordinal);
+        Assert.Contains("-ApplicationPath", continuousIntegration, StringComparison.Ordinal);
         Assert.True(
             File.Exists(Path.Combine(TestPaths.RepositoryRoot, "build", scriptName)),
             $"build/{scriptName} fehlt.");

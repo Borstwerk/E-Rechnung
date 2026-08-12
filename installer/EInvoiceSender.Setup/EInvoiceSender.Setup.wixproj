@@ -9,8 +9,7 @@
 
     Bauen:
       dotnet build installer/EInvoiceSender.Setup -c Release ^
-        -p:PublishDir=..\..\artifacts\publish\win-x64\ ^
-        -p:ProductVersion=0.1.0
+        -p:PublishDir=..\..\artifacts\publish\win-x64\
   -->
 
   <PropertyGroup>
@@ -54,31 +53,26 @@
     <ProductName>BorstWerk E-Rechnung</ProductName>
     <ProductManufacturer>BorstWerk</ProductManufacturer>
     <!--
-      Identität dieser veröffentlichten Produktfassung.
+      Identitäten der veröffentlichten Produktfassungen.
 
       Ohne einen festen Wert erzeugt WiX bei jedem Bau einen neuen ProductCode.
       Zwei Pakete mit derselben ProductVersion, aber verschiedenen ProductCodes
       gelten dann als zwei Produkte: MajorUpgrade erfasst gleiche Versionen
       bewusst nicht. Genau so konnte 0.1.0 mehrfach installiert werden.
 
-      Der Wert entspricht dem ProductCode des veröffentlichten 0.1.0-MSI.
-      Bei einer neuen dreiteiligen Produktversion wird einmalig ein neuer Wert
-      vergeben; alle Builds derselben Fassung behalten ihn. Der UpgradeCode in
-      Package.wxs bleibt dagegen über alle Fassungen stabil.
+      Die zentrale Version wählt genau einen festen Code aus. Der veröffentlichte
+      0.1.0-Code bleibt als historische Zuordnung bestehen; 0.2.0 erhält einen
+      neuen Code. Eine unbekannte Version wird vor dem WiX-Bau abgelehnt. Der
+      UpgradeCode in Package.wxs bleibt dagegen über alle Fassungen stabil.
     -->
-    <ProductCode>723d8a8e-cb3d-4ec0-81d2-3821a56be91d</ProductCode>
+    <ProductCode Condition="'$(VersionPrefix)' == '0.1.0'">723d8a8e-cb3d-4ec0-81d2-3821a56be91d</ProductCode>
+    <ProductCode Condition="'$(VersionPrefix)' == '0.2.0'">f69b7118-58e7-4bb9-b4ff-411056aa3776</ProductCode>
     <!--
       Die Fassungsnummer steht in Directory.Build.props als VersionPrefix und
-      sonst nirgends. Diese Datei liegt im Wurzelverzeichnis und gilt auch
-      für dieses Projekt, also lässt sich die Angabe von dort übernehmen,
-      statt sie ein zweites Mal zu pflegen – zwei Zahlen laufen früher oder
-      später auseinander, und dann trägt die MSI eine andere Fassung als die
-      Programmdatei darin.
-
-      Ein Aufruf mit -p:ProductVersion=... hat weiterhin Vorrang; die CI
-      setzt für eine Vorabfassung eine eigene Nummer.
+      wird ohne eigene ProductVersion-Eigenschaft an WiX weitergegeben. Diese
+      Datei liegt im Wurzelverzeichnis und gilt auch für dieses Projekt. Damit
+      tragen MSI und Programmdatei dieselbe Fassung, örtlich wie in der CI.
     -->
-    <ProductVersion Condition="'$(ProductVersion)' == ''">$(VersionPrefix)</ProductVersion>
 
     <!-- Verzeichnis der zuvor veröffentlichten Anwendung -->
     <PublishDir Condition="'$(PublishDir)' == ''">..\..\artifacts\publish\win-x64\</PublishDir>
@@ -87,10 +81,15 @@
       ProductName=$(ProductName);
       ProductManufacturer=$(ProductManufacturer);
       ProductCode=$(ProductCode);
-      ProductVersion=$(ProductVersion);
+      ProductVersion=$(VersionPrefix);
       PublishDir=$(PublishDir)
     </DefineConstants>
   </PropertyGroup>
+
+  <Target Name="ValidateProductIdentity" BeforeTargets="CoreCompile">
+    <Error Condition="'$(ProductCode)' == ''"
+           Text="Für die Produktversion $(VersionPrefix) ist kein fester ProductCode hinterlegt. Der Installerbau wird abgebrochen." />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="WixToolset.UI.wixext" />

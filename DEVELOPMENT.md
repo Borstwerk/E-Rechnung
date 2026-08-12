@@ -99,6 +99,12 @@ Benutzer installieren. Der `UpgradeCode` bleibt über alle Fassungen unveränder
 `AllowSameVersionUpgrades` ist bewusst nicht gesetzt – eine Testinstallation derselben Fassung ist
 über den festen ProductCode dasselbe Produkt und gelangt in den Windows-Installer-Wartungsmodus.
 
+Die Produktversion steht ausschließlich als `VersionPrefix` in `Directory.Build.props`. .NET-
+Anwendung, örtlicher Installerbau und CI übernehmen sie von dort; ein eigener ProductVersion-
+Override gehört in keinen Buildaufruf. Das WiX-Projekt ordnet jeder veröffentlichten dreiteiligen
+Version genau einen festen ProductCode zu. Fehlt diese Zuordnung, bricht der Installerbau vor WiX
+ab, statt eine neue Produktidentität zu erfinden.
+
 WiX wird nur zum **Bauen** gebraucht, nicht auf dem Zielrechner. Die ICE-Prüfungen laufen ohne
 Unterdrückung; die Vorgeschichte zu ICE38, ICE57 und ICE61 steht in den Kommentaren von
 `installer/EInvoiceSender.Setup/Package.wxs`. `wix.exe` bricht auf Nicht-Windows-Systemen ab, der

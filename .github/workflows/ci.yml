@@ -112,13 +112,13 @@ jobs:
           dotnet build installer/EInvoiceSender.Setup
           -c Release
           -p:PublishDir=${{ github.workspace }}\artifacts\publish\win-x64\
-          -p:ProductVersion=0.1.0
 
       - name: Installer-Metadaten prüfen
         shell: pwsh
         run: >
           ./build/Test-InstallerMetadata.ps1
           -MsiPath installer/EInvoiceSender.Setup/bin/Release/BorstWerk-E-Rechnung-Setup.msi
+          -ApplicationPath artifacts/publish/win-x64/EInvoiceSender.exe
 
       - name: Installer bereitstellen
         shell: pwsh

@@ -36,7 +36,9 @@ $msi = Get-ChildItem -Path (Join-Path $root 'installer') -Filter '*.msi' -Recurs
        Select-Object -First 1
 if (-not $msi) { throw "Es wurde keine MSI-Datei gefunden." }
 
-& (Join-Path $PSScriptRoot 'Test-InstallerMetadata.ps1') -MsiPath $msi.FullName
+& (Join-Path $PSScriptRoot 'Test-InstallerMetadata.ps1') `
+    -MsiPath $msi.FullName `
+    -ApplicationPath (Join-Path $publishDirectory 'EInvoiceSender.exe')
 
 New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 

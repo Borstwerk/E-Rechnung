@@ -69,8 +69,14 @@ eine tragbare ZIP-Fassung an und schreibt `SHA256SUMS.txt` nach
 unter Linux bricht das Skript mit einer entsprechenden Meldung ab.
 
 Die Versionsnummer steht zentral in `Directory.Build.props` (`VersionPrefix`)
-und wird von Anwendung und Installer gemeinsam verwendet. Das WiX-Projekt
-liest sie von dort; ein Aufruf mit `-p:ProductVersion=...` hat Vorrang.
+und wird von Anwendung, lokalem Installerbau und CI gemeinsam verwendet. Das
+WiX-Projekt gibt sie unmittelbar als MSI-ProductVersion weiter; Buildaufrufe
+setzen keine eigene ProductVersion.
+
+Für jede veröffentlichte dreiteilige Version enthält das WiX-Projekt genau
+einen festen ProductCode. Der Code von 0.1.0 bleibt erhalten, 0.2.0 besitzt
+einen neuen. Eine unbekannte Version ohne Zuordnung bricht vor dem WiX-Bau mit
+einer verständlichen Meldung ab.
 
 **Testinstallation derselben Fassung:** Das Paket ersetzt nur *ältere*
 Fassungen seiner selbst. Innerhalb einer veröffentlichten Fassung bleibt der
@@ -79,7 +85,8 @@ Windows-Installer-Wartungsmodus und erzeugt keine zweite Produktinstanz.
 `AllowSameVersionUpgrades` bleibt bewusst ausgeschaltet, damit Builds mit
 derselben dreiteiligen MSI-Version einander nicht als Major Upgrade behandeln.
 
-Nach dem Installerbau prüft `build/Test-InstallerMetadata.ps1` die Identität,
+Nach dem Installerbau prüft `build/Test-InstallerMetadata.ps1` Assembly-,
+Datei- und Produktversion der veröffentlichten Anwendung sowie Identität,
 Upgrade-Tabelle und Aktionsreihenfolge des tatsächlich erzeugten MSI, ohne es
 zu installieren.
 

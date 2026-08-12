@@ -1,12 +1,13 @@
 ﻿<#
 .SYNOPSIS
-    Prüft die Identität und Upgrade-Metadaten eines gebauten MSI-Pakets.
+    Prüft die gemeinsame Version der Anwendung und die Metadaten des MSI-Pakets.
 
 .DESCRIPTION
     Liest die Windows-Installer-Datenbank ausschließlich lesend. Erwartete
     ProductVersion, ProductCode und UpgradeCode werden aus den verbindlichen
-    Projektdateien ermittelt. Damit prüft dieses Skript nicht nur den WiX-
-    Quelltext, sondern das tatsächlich erzeugte Paket.
+    Projektdateien ermittelt. Zusätzlich werden Assembly-, Datei- und
+    Produktversion der veröffentlichten Anwendung geprüft. Damit prüft dieses
+    Skript nicht nur den Quelltext, sondern die tatsächlich erzeugten Dateien.
 
     Das Skript installiert oder deinstalliert nichts.
 #>
@@ -14,7 +15,11 @@
 param(
     [Parameter(Mandatory)]
     [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]
-    [string]$MsiPath
+    [string]$MsiPath,
+
+    [Parameter(Mandatory)]
+    [ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })]
+    [string]$ApplicationPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -120,12 +125,76 @@ function Get-MsiRows {
 [xml]$package = Get-Content -LiteralPath $packagePath -Raw
 [xml]$buildProps = Get-Content -LiteralPath $buildPropsPath -Raw
 
-$expectedProductCode = Get-SingleXmlValue -Document $project -LocalName 'ProductCode'
 $expectedVersion = Get-SingleXmlValue -Document $buildProps -LocalName 'VersionPrefix'
+if ($expectedVersion -notmatch '^\d+\.\d+\.\d+$') {
+    throw "VersionPrefix '$expectedVersion' ist keine dreiteilige numerische Produktversion."
+}
+
+$conditionPrefix = "'`$(VersionPrefix)' == '"
+$productCodeMappings = @(
+    $project.SelectNodes("//*[local-name()='ProductCode']") |
+        ForEach-Object {
+            $condition = $_.GetAttribute('Condition').Trim()
+            if (-not $condition.StartsWith($conditionPrefix, [StringComparison]::Ordinal) `
+                -or -not $condition.EndsWith("'", [StringComparison]::Ordinal)) {
+                throw "ProductCode '$($_.InnerText.Trim())' besitzt keine verständliche VersionPrefix-Zuordnung."
+            }
+
+            $mappedVersion = $condition.Substring(
+                $conditionPrefix.Length,
+                $condition.Length - $conditionPrefix.Length - 1)
+            $mappedProductCode = $_.InnerText.Trim()
+            $parsedProductCode = [Guid]::Empty
+            if (-not [Guid]::TryParse($mappedProductCode, [ref]$parsedProductCode)) {
+                throw "ProductCode '$mappedProductCode' für Version '$mappedVersion' ist keine gültige GUID."
+            }
+
+            [pscustomobject]@{
+                Version = $mappedVersion
+                ProductCode = $parsedProductCode.ToString('D')
+            }
+        }
+)
+
+$duplicateVersions = @($productCodeMappings | Group-Object Version | Where-Object Count -ne 1)
+if ($duplicateVersions.Count -ne 0) {
+    throw "ProductCode-Zuordnungen enthalten Versionen nicht genau einmal: $($duplicateVersions.Name -join ', ')."
+}
+
+$duplicateProductCodes = @($productCodeMappings | Group-Object ProductCode | Where-Object Count -ne 1)
+if ($duplicateProductCodes.Count -ne 0) {
+    throw "ProductCodes sind mehreren Versionen zugeordnet: $($duplicateProductCodes.Name -join ', ')."
+}
+
+$currentProductCode = @($productCodeMappings | Where-Object Version -eq $expectedVersion)
+if ($currentProductCode.Count -ne 1) {
+    throw "Für VersionPrefix '$expectedVersion' muss genau ein fester ProductCode hinterlegt sein; gefunden: $($currentProductCode.Count)."
+}
+
+$expectedProductCode = $currentProductCode[0].ProductCode
 $packageElement = $package.SelectSingleNode("/*[local-name()='Wix']/*[local-name()='Package']")
 $expectedUpgradeCode = $packageElement.GetAttribute('UpgradeCode')
 
 $resolvedMsiPath = (Resolve-Path -LiteralPath $MsiPath).Path
+$resolvedApplicationPath = (Resolve-Path -LiteralPath $ApplicationPath).Path
+$managedAssemblyPath = [IO.Path]::ChangeExtension($resolvedApplicationPath, '.dll')
+if (-not (Test-Path -LiteralPath $managedAssemblyPath -PathType Leaf)) {
+    throw "Die verwaltete Anwendungsassembly fehlt: $managedAssemblyPath"
+}
+
+$expectedBinaryVersion = "$expectedVersion.0"
+$applicationFileInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($resolvedApplicationPath)
+$assemblyFileInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($managedAssemblyPath)
+$assemblyVersion = [Reflection.AssemblyName]::GetAssemblyName($managedAssemblyPath).Version.ToString()
+$applicationProductVersion = ($applicationFileInfo.ProductVersion -split '\+', 2)[0]
+$assemblyProductVersion = ($assemblyFileInfo.ProductVersion -split '\+', 2)[0]
+
+Assert-Equal -Name 'Anwendung.FileVersion' -Actual $applicationFileInfo.FileVersion -Expected $expectedBinaryVersion
+Assert-Equal -Name 'Anwendung.ProductVersion' -Actual $applicationProductVersion -Expected $expectedVersion
+Assert-Equal -Name 'Assembly.Version' -Actual $assemblyVersion -Expected $expectedBinaryVersion
+Assert-Equal -Name 'Assembly.FileVersion' -Actual $assemblyFileInfo.FileVersion -Expected $expectedBinaryVersion
+Assert-Equal -Name 'Assembly.ProductVersion' -Actual $assemblyProductVersion -Expected $expectedVersion
+
 $installer = $null
 $database = $null
 $summary = $null
@@ -216,7 +285,10 @@ try {
         throw 'Die Reihenfolge der Aktionen für das Major Upgrade ist nicht wie erwartet.'
     }
 
-    Write-Host 'MSI-Metadaten erfolgreich geprüft.' -ForegroundColor Green
+    Write-Host 'Anwendungs- und MSI-Metadaten erfolgreich geprüft.' -ForegroundColor Green
+    Write-Host "  App ProductVersion: $($applicationFileInfo.ProductVersion)"
+    Write-Host "  App FileVersion:    $($applicationFileInfo.FileVersion)"
+    Write-Host "  AssemblyVersion:    $assemblyVersion"
     Write-Host "  ProductVersion: $($properties.ProductVersion)"
     Write-Host "  ProductCode:    $($properties.ProductCode)"
     Write-Host "  UpgradeCode:    $($properties.UpgradeCode)"
