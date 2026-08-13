@@ -73,6 +73,46 @@ Noch festzulegen:
 - Downgrade-Test,
 - Deinstallationstest.
 
+## ER-020-INS-02 – Desktopverknüpfung optional anbieten
+
+### Problem / Grund
+
+BorstWerk E-Rechnung legt bereits einen Startmenüeintrag an. Eine Desktopverknüpfung ist im Installer technisch vorbereitet, wird im normalen Installationsablauf jedoch nicht verständlich als Benutzeroption angeboten.
+
+Anwender sollen während der Installation selbst entscheiden können, ob zusätzlich eine Desktopverknüpfung angelegt wird.
+
+### Anforderung
+
+Der Installer soll eine verständliche Option „Desktop-Verknüpfung erstellen“ anbieten.
+
+Die Option soll standardmäßig aktiviert sein, aber vom Benutzer abgewählt werden können.
+
+### Akzeptanzkriterien
+
+- Die Installation legt immer den bestehenden Startmenüeintrag an.
+- Die Desktopverknüpfung ist eine getrennte Benutzeroption.
+- Die Option ist bei einer normalen Erstinstallation standardmäßig aktiviert.
+- Wird die Option abgewählt, wird keine Desktopverknüpfung angelegt.
+- Wird sie gewählt, verweist die Verknüpfung auf die installierte `EInvoiceSender.exe`.
+- Produktname und Programmsymbol entsprechen BorstWerk E-Rechnung.
+- Upgrade von 0.1.0 beziehungsweise bestehender 0.2.0-Testinstallation erzeugt keine doppelten Desktopverknüpfungen.
+- Repair erzeugt keine doppelten Desktopverknüpfungen.
+- Deinstallation entfernt eine vom Installer angelegte Desktopverknüpfung.
+- Benutzerdaten unter `%LOCALAPPDATA%\EInvoiceSender` bleiben davon unberührt.
+- Per-User- und Per-Machine-Installation dürfen durch die Änderung nicht beschädigt werden.
+- Es wird keine eigene Shortcut-Verwaltung in der Anwendung gebaut, wenn Windows Installer/WiX dies regulär lösen kann.
+
+### Nachweis
+
+Noch festzulegen:
+
+- automatisierte WiX-/Strukturprüfung,
+- Windows-Erstinstallation mit aktivierter Option,
+- Windows-Erstinstallation mit abgewählter Option,
+- Repair-Test,
+- Upgrade-Test,
+- Deinstallationstest.
+
 ## ER-020-VER-01 – Einheitliche Versionsführung
 
 ### Problem / Grund
