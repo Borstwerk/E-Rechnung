@@ -122,6 +122,47 @@ public sealed class DraftPrefillerTests
         Assert.Equal(FieldOrigin.Template, draft.OriginOf(nameof(draft.SellerName)));
     }
 
+    [Fact]
+    public void SellerProposalÄndertDiePdfHerkunftNicht()
+    {
+        var draft = new InvoiceDraft();
+        var detection = new InvoiceDetectionResult
+        {
+            HasUsableText = true,
+            Seller = new DetectedParty
+            {
+                Name = new DetectedValue<string>(
+                    "Erkannte Firma", DetectionConfidence.Medium),
+                VatId = new DetectedValue<string>(
+                    "DE123456789", DetectionConfidence.High),
+            },
+            OwnCompanyProposal = new DetectedOwnCompanyProposal
+            {
+                Fields =
+                [
+                    new(
+                        DetectedOwnCompanyFieldKind.SellerName,
+                        "Erkannte Firma",
+                        DetectionConfidence.Medium,
+                        ["Test"]),
+                    new(
+                        DetectedOwnCompanyFieldKind.SellerVatId,
+                        "DE123456789",
+                        DetectionConfidence.High,
+                        ["Test"]),
+                ],
+            },
+        };
+
+        DraftPrefiller.Apply(draft, detection);
+
+        Assert.Equal(FieldOrigin.DetectedUncertain,
+            draft.OriginOf(nameof(draft.SellerName)));
+        Assert.Equal(FieldOrigin.DetectedReliably,
+            draft.OriginOf(nameof(draft.SellerVatId)));
+        Assert.DoesNotContain(FieldOrigin.Manual, draft.Origins.Values);
+    }
+
 }
 
 /// <summary>

@@ -17,6 +17,8 @@ public static class TestInvoice
     /// <summary>Die erwarteten Kerndaten – die Sollwerte des Testlaufs.</summary>
     public const string InvoiceNumber = "RE-2026-0815";
 
+    public const string SellerName = "Muster IT GmbH";
+    public const string SellerVatId = "DE123456789";
     public const string BuyerName = "Nordlicht Handel GmbH";
     public const string BuyerPostalCode = "20095";
     public const string BuyerCity = "Hamburg";

@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 747 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.Core.Tests` | 771 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
 | `tests/EInvoiceSender.IntegrationTests` | 91 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **838** | |
+| **Summe** | **862** | |
 
 ## Ebenen
 
@@ -264,13 +264,15 @@ Quelldatei-Stacks, abweichende Pfad-/Grenzdefinitionen und Netzwerk- oder
 Uploadbausteine werden abgewiesen. Diese Quellregeln ersetzen den Test der
 tatsächlich persistierten Dateien nicht.
 
-## Unternehmensvorlage aus manuellen Angaben
+## Unternehmensvorlage aus bestätigten Angaben
 
 `CompanyTemplateSavePlannerTests` prüft die feste Allowlist und den Merge gegen
 markante Daten. Manuell geänderte Verkäufer- und Bankfelder werden übernommen;
-zuverlässig oder unsicher erkannte Verkäuferdaten, IBAN und BIC werden
-verworfen. Markante Käufer-, Rechnungs-, Zahlungs- und Positionswerte dürfen
-weder im Kandidaten noch in der gespeicherten JSON-Datei erscheinen.
+zuverlässig oder unsicher erkannte Werte werden ohne ein exakt passendes
+`DetectedOwnCompanyProposal` verworfen. Mit Proposal werden ausschließlich
+dessen unveränderte Allowlist-Werte übernommen. Markante Käufer-, Rechnungs-,
+Zahlungs- und Positionswerte dürfen weder im Kandidaten noch in der
+gespeicherten JSON-Datei erscheinen.
 
 Gemischte Zustände sind ausdrücklich abgedeckt: Bei vorhandener Vorlage und
 genau einem manuell geänderten Feld bleibt jedes andere Unternehmensfeld
@@ -287,3 +289,12 @@ Property-Changes, Reset, Navigation, Erzeugung und Abbruch rufen den neuen
 Schreibweg nicht auf. Eine vorhandene Vorlage wird inline bestätigt, ein
 identischer Kandidat wird nicht geschrieben und `MainViewModel` synchronisiert
 nach Erfolg ausschließlich seinen Vorlagen-Snapshot.
+
+`SellerDetectionTests` bildet die konservativen Mindestkombinationen als echte
+PDFs nach. Abgedeckt sind der manuell gefundene Erstnutzerfall, ein
+Einzelunternehmer ohne Rechtsform, ein zweispaltiges Layout mit Käufer oben und
+links, eine Lieferanschrift, getrennte Seller-/Buyer-USt-IdNrn. sowie ein
+ausdrücklicher Seller-Block. Eine bloße erste Adresse, zwei gleich starke Firmen
+und mehrere gültige IBANs sind Negativfälle: Seller beziehungsweise eigene
+Bankverbindung bleiben dann leer. Proposal-Tests sichern konkrete Werte,
+Confidence, Evidenz und unveränderte PDF-Herkünfte.

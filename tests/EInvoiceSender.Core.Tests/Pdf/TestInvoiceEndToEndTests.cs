@@ -50,6 +50,24 @@ public sealed class TestInvoiceEndToEndTests : IDisposable
         Assert.Equal(TestInvoice.BuyerCity, draft.BuyerCity);
     }
 
+    /// <summary>
+    /// Regression des manuellen Funds: Auch auf einer Erstinstallation ohne
+    /// Firmenvorlage muss der räumlich klar getrennte Seller vorausgefüllt sein.
+    /// </summary>
+    [Fact]
+    public async Task OhneFirmenvorlageStehtDerEindeutigeSellerImEntwurf()
+    {
+        InvoiceDetectionResult detection = await Detect();
+        var draft = new InvoiceDraft();
+
+        DraftPrefiller.Apply(draft, detection);
+
+        Assert.Equal(TestInvoice.SellerName, draft.SellerName);
+        Assert.Equal(TestInvoice.SellerVatId, draft.SellerVatId);
+        Assert.NotNull(detection.OwnCompanyProposal);
+        Assert.NotEqual(FieldOrigin.Manual, draft.OriginOf(nameof(draft.SellerName)));
+    }
+
     [Fact]
     public async Task DieBankverbindungStehtAnschließendImEntwurf()
     {
@@ -73,6 +91,8 @@ public sealed class TestInvoiceEndToEndTests : IDisposable
     [InlineData(nameof(InvoiceDraft.BuyerName))]
     [InlineData(nameof(InvoiceDraft.BuyerPostalCode))]
     [InlineData(nameof(InvoiceDraft.BuyerCity))]
+    [InlineData(nameof(InvoiceDraft.SellerName))]
+    [InlineData(nameof(InvoiceDraft.SellerVatId))]
     [InlineData(nameof(InvoiceDraft.BankIban))]
     [InlineData(nameof(InvoiceDraft.BankBic))]
     public async Task JederÜbernommeneWertIstAlsErkanntGekennzeichnet(string field)

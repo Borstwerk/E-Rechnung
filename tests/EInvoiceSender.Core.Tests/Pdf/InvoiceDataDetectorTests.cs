@@ -205,17 +205,14 @@ public sealed class InvoiceDataDetectorTests : IDisposable
         Assert.Contains("USt-IdNr", result.Seller.Name?.Reason ?? string.Empty, StringComparison.Ordinal);
     }
 
-    /// <summary>
-    /// Ohne Vorlage und ohne Schlüsselwort bleibt der Verkäufer leer. Eine
-    /// geratene Zuordnung wäre schlimmer: Vertauschte Parteien ergeben eine
-    /// formal gültige, inhaltlich falsche Rechnung.
-    /// </summary>
     [Fact]
-    public async Task OhneVorlageWirdKeinVerkäuferGeraten()
+    public async Task OhneVorlageWirdEinBelastbarerBriefkopfErkannt()
     {
         InvoiceDetectionResult result = await Detect(PdfTextExtractorTests.FullInvoiceLines());
 
-        Assert.False(result.Seller.HasAnything);
+        Assert.Equal("Muster IT GmbH", result.Seller.Name?.Value);
+        Assert.Equal("DE123456789", result.Seller.VatId?.Value);
+        Assert.NotNull(result.OwnCompanyProposal);
     }
 
     [Fact]

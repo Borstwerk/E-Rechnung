@@ -16,7 +16,7 @@ public sealed class CompanyTemplateSaveFlowTests
         "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
 
     [Fact]
-    public void OberflächeBietetDieAusdrücklicheAktionUndErklärtDenPdfAusschluss()
+    public void OberflächeBietetDieAusdrücklicheSellerBestätigungUndErklärtDieDatengrenze()
     {
         XDocument view = XDocument.Load(ProjectFiles.With(".xaml")
             .Single(path => Path.GetFileName(path) == "InvoiceDataView.xaml"));
@@ -24,11 +24,18 @@ public sealed class CompanyTemplateSaveFlowTests
             view.Descendants(Presentation + "Button"),
             element => element.Attribute("Command")?.Value
                 .Contains("SaveOwnCompanyDataCommand", StringComparison.Ordinal) == true);
-        string text = string.Join(' ', view.Descendants(Presentation + "TextBlock")
-            .Select(element => element.Attribute("Text")?.Value));
+        XElement rejectButton = Assert.Single(
+            view.Descendants(Presentation + "Button"),
+            element => element.Attribute("Command")?.Value
+                .Contains("DismissOwnCompanyProposalCommand", StringComparison.Ordinal) == true);
+        string viewModel = Source("InvoiceDataViewModel.cs");
 
-        Assert.Equal("Als eigene Unternehmensdaten _speichern", saveButton.Attribute("Content")?.Value);
-        Assert.Contains("Aus der PDF erkannte Angaben werden nicht übernommen", text, StringComparison.Ordinal);
+        Assert.Equal("Als _meine Unternehmensdaten speichern", saveButton.Attribute("Content")?.Value);
+        Assert.Equal("_Nicht als eigene Daten speichern", rejectButton.Attribute("Content")?.Value);
+        Assert.Contains("Der Rechnungsaussteller wurde aus der PDF erkannt", viewModel,
+            StringComparison.Ordinal);
+        Assert.Contains("ausschließlich die hier vorgeschlagenen, unveränderten", viewModel,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -61,12 +68,23 @@ public sealed class CompanyTemplateSaveFlowTests
     [InlineData("OnDraftPropertyChanged")]
     [InlineData("Reset")]
     [InlineData("CancelCompanyTemplateOverwrite")]
+    [InlineData("DismissOwnCompanyProposal")]
     public void PropertyChangeResetUndAbbruchSchreibenNicht(string method)
     {
         string body = MethodBody("InvoiceDataViewModel.cs", method);
 
         Assert.DoesNotContain("SaveTemplateAsync", body, StringComparison.Ordinal);
         Assert.DoesNotContain("PersistCompanyTemplateAsync", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AblehnungSchließtNurDasProposalUndFasstDenDraftNichtAn()
+    {
+        string body = MethodBody("InvoiceDataViewModel.cs", "DismissOwnCompanyProposal");
+
+        Assert.Contains("SetOwnCompanyProposal(null)", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Draft.", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("SaveTemplateAsync", body, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -79,6 +97,7 @@ public sealed class CompanyTemplateSaveFlowTests
         int plan = body.IndexOf("CompanyTemplateSavePlanner.Plan", StringComparison.Ordinal);
 
         Assert.True(load >= 0 && plan > load, $"{method} plant ohne unmittelbar vorher frisch zu laden.");
+        Assert.Contains("_ownCompanyProposal", body[plan..], StringComparison.Ordinal);
     }
 
     [Fact]

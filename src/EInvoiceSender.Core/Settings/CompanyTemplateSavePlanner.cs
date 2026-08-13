@@ -1,4 +1,5 @@
 using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf.Detection;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Validation;
 using EInvoiceSender.Core.Validation.Rules;
@@ -6,12 +7,14 @@ using EInvoiceSender.Core.Validation.Rules;
 namespace EInvoiceSender.Core.Settings;
 
 /// <summary>
-/// Bereitet das ausdrückliche Speichern manuell erfasster Unternehmensdaten vor.
+/// Bereitet das ausdrückliche Speichern bestätigter Unternehmensdaten vor.
 ///
 /// Die feste Allowlist ist die Sicherheitsgrenze: Nicht der gesamte Entwurf,
 /// sondern ausschließlich die hier einzeln genannten Unternehmensfelder dürfen
-/// in eine <see cref="CompanyTemplate"/> gelangen. PDF-Erkennung, Käufer- und
-/// Rechnungsdaten sind damit konstruktiv ausgeschlossen.
+/// in eine <see cref="CompanyTemplate"/> gelangen. Neben manuellen Werten ist
+/// nur ein unverändert zum aktuellen Draft passender Wert aus dem konkreten
+/// <see cref="DetectedOwnCompanyProposal"/> zugelassen. Käufer-, Rechnungs-
+/// und beliebige andere PDF-Daten sind damit konstruktiv ausgeschlossen.
 /// </summary>
 public static class CompanyTemplateSavePlanner
 {
@@ -33,33 +36,54 @@ public static class CompanyTemplateSavePlanner
 
     /// <summary>
     /// Erstellt einen Kandidaten durch feldweises Zusammenführen mit der frisch
-    /// gelesenen Vorlage. Nur <see cref="FieldOrigin.Manual"/> darf einen Wert
-    /// ändern. Einzige Ausnahme ist das unveränderte Programmstandardland DE.
+    /// gelesenen Vorlage. Ein Wert darf nur manuell sein oder unverändert zum
+    /// aktuellen Seller-Proposal passen. Einzige weitere Ausnahme ist das
+    /// unveränderte Programmstandardland DE.
     /// </summary>
-    public static CompanyTemplateSavePlan Plan(InvoiceDraft draft, CompanyTemplate existing)
+    public static CompanyTemplateSavePlan Plan(
+        InvoiceDraft draft,
+        CompanyTemplate existing,
+        DetectedOwnCompanyProposal? proposal = null)
     {
         ArgumentNullException.ThrowIfNull(draft);
         ArgumentNullException.ThrowIfNull(existing);
 
         bool hasManualInput = AllowedFields.Any(
             property => draft.OriginOf(property) == FieldOrigin.Manual);
+        bool hasProposalInput = proposal?.Fields.Any(field => MatchesProposal(draft, field)) == true;
 
         CompanyTemplate candidate = existing with
         {
-            SellerName = Manual(draft, nameof(draft.SellerName), draft.SellerName, existing.SellerName),
-            SellerStreet = Manual(draft, nameof(draft.SellerStreet), draft.SellerStreet, existing.SellerStreet),
-            SellerPostalCode = Manual(
-                draft, nameof(draft.SellerPostalCode), draft.SellerPostalCode, existing.SellerPostalCode),
-            SellerCity = Manual(draft, nameof(draft.SellerCity), draft.SellerCity, existing.SellerCity),
-            SellerCountry = SellerCountry(draft, existing.SellerCountry),
-            SellerEmail = Manual(draft, nameof(draft.SellerEmail), draft.SellerEmail, existing.SellerEmail),
-            SellerVatId = Manual(draft, nameof(draft.SellerVatId), draft.SellerVatId, existing.SellerVatId),
-            SellerTaxNumber = Manual(
-                draft, nameof(draft.SellerTaxNumber), draft.SellerTaxNumber, existing.SellerTaxNumber),
+            SellerName = Approved(
+                draft, nameof(draft.SellerName), draft.SellerName, existing.SellerName,
+                proposal, DetectedOwnCompanyFieldKind.SellerName),
+            SellerStreet = Approved(
+                draft, nameof(draft.SellerStreet), draft.SellerStreet, existing.SellerStreet,
+                proposal, DetectedOwnCompanyFieldKind.SellerStreet),
+            SellerPostalCode = Approved(
+                draft, nameof(draft.SellerPostalCode), draft.SellerPostalCode, existing.SellerPostalCode,
+                proposal, DetectedOwnCompanyFieldKind.SellerPostalCode),
+            SellerCity = Approved(
+                draft, nameof(draft.SellerCity), draft.SellerCity, existing.SellerCity,
+                proposal, DetectedOwnCompanyFieldKind.SellerCity),
+            SellerCountry = SellerCountry(draft, existing.SellerCountry, proposal),
+            SellerEmail = Approved(
+                draft, nameof(draft.SellerEmail), draft.SellerEmail, existing.SellerEmail,
+                proposal, DetectedOwnCompanyFieldKind.SellerEmail),
+            SellerVatId = Approved(
+                draft, nameof(draft.SellerVatId), draft.SellerVatId, existing.SellerVatId,
+                proposal, DetectedOwnCompanyFieldKind.SellerVatId),
+            SellerTaxNumber = Approved(
+                draft, nameof(draft.SellerTaxNumber), draft.SellerTaxNumber, existing.SellerTaxNumber,
+                proposal, DetectedOwnCompanyFieldKind.SellerTaxNumber),
             BankAccountHolder = Manual(
                 draft, nameof(draft.BankAccountHolder), draft.BankAccountHolder, existing.BankAccountHolder),
-            BankIban = Manual(draft, nameof(draft.BankIban), draft.BankIban, existing.BankIban),
-            BankBic = Manual(draft, nameof(draft.BankBic), draft.BankBic, existing.BankBic),
+            BankIban = Approved(
+                draft, nameof(draft.BankIban), draft.BankIban, existing.BankIban,
+                proposal, DetectedOwnCompanyFieldKind.BankIban),
+            BankBic = Approved(
+                draft, nameof(draft.BankBic), draft.BankBic, existing.BankBic,
+                proposal, DetectedOwnCompanyFieldKind.BankBic),
         };
 
         string[] changedFields =
@@ -67,13 +91,15 @@ public static class CompanyTemplateSavePlanner
             .. AllowedFields.Where(property => FieldChanged(property, existing, candidate)),
         ];
 
-        (string[] errors, string[] warnings) = Validate(candidate, hasManualInput);
+        (string[] errors, string[] warnings) = Validate(
+            candidate, hasManualInput || hasProposalInput);
 
         return new CompanyTemplateSavePlan(
             Existing: existing,
             Candidate: candidate,
             HasExistingCompanyData: HasCompanyData(existing),
             HasManualInput: hasManualInput,
+            HasProposalInput: hasProposalInput,
             ChangedFields: changedFields,
             Errors: errors,
             Warnings: warnings);
@@ -105,11 +131,44 @@ public static class CompanyTemplateSavePlanner
         InvoiceDraft draft, string property, string value, string? existing)
         => draft.OriginOf(property) == FieldOrigin.Manual ? Blank(value) : existing;
 
-    private static string? SellerCountry(InvoiceDraft draft, string? existing)
+    private static string? Approved(
+        InvoiceDraft draft,
+        string property,
+        string value,
+        string? existing,
+        DetectedOwnCompanyProposal? proposal,
+        DetectedOwnCompanyFieldKind proposalKind)
+    {
+        if (draft.OriginOf(property) == FieldOrigin.Manual)
+        {
+            return Blank(value);
+        }
+
+        DetectedOwnCompanyField? proposed = proposal?.Field(proposalKind);
+
+        return proposed is not null && MatchesProposal(draft, property, value, proposed)
+            ? Blank(value)
+            : existing;
+    }
+
+    private static string? SellerCountry(
+        InvoiceDraft draft,
+        string? existing,
+        DetectedOwnCompanyProposal? proposal)
     {
         FieldOrigin origin = draft.OriginOf(nameof(draft.SellerCountry));
 
         if (origin == FieldOrigin.Manual)
+        {
+            return Blank(draft.SellerCountry)?.ToUpperInvariant();
+        }
+
+        DetectedOwnCompanyField? proposed =
+            proposal?.Field(DetectedOwnCompanyFieldKind.SellerCountry);
+
+        if (proposed is not null
+            && MatchesProposal(
+                draft, nameof(draft.SellerCountry), draft.SellerCountry, proposed))
         {
             return Blank(draft.SellerCountry)?.ToUpperInvariant();
         }
@@ -126,15 +185,60 @@ public static class CompanyTemplateSavePlanner
         return existing;
     }
 
+    private static bool MatchesProposal(
+        InvoiceDraft draft, DetectedOwnCompanyField proposed)
+        => proposed.Kind switch
+        {
+            DetectedOwnCompanyFieldKind.SellerName => MatchesProposal(
+                draft, nameof(draft.SellerName), draft.SellerName, proposed),
+            DetectedOwnCompanyFieldKind.SellerStreet => MatchesProposal(
+                draft, nameof(draft.SellerStreet), draft.SellerStreet, proposed),
+            DetectedOwnCompanyFieldKind.SellerPostalCode => MatchesProposal(
+                draft, nameof(draft.SellerPostalCode), draft.SellerPostalCode, proposed),
+            DetectedOwnCompanyFieldKind.SellerCity => MatchesProposal(
+                draft, nameof(draft.SellerCity), draft.SellerCity, proposed),
+            DetectedOwnCompanyFieldKind.SellerCountry => MatchesProposal(
+                draft, nameof(draft.SellerCountry), draft.SellerCountry, proposed),
+            DetectedOwnCompanyFieldKind.SellerEmail => MatchesProposal(
+                draft, nameof(draft.SellerEmail), draft.SellerEmail, proposed),
+            DetectedOwnCompanyFieldKind.SellerVatId => MatchesProposal(
+                draft, nameof(draft.SellerVatId), draft.SellerVatId, proposed),
+            DetectedOwnCompanyFieldKind.SellerTaxNumber => MatchesProposal(
+                draft, nameof(draft.SellerTaxNumber), draft.SellerTaxNumber, proposed),
+            DetectedOwnCompanyFieldKind.BankIban => MatchesProposal(
+                draft, nameof(draft.BankIban), draft.BankIban, proposed),
+            DetectedOwnCompanyFieldKind.BankBic => MatchesProposal(
+                draft, nameof(draft.BankBic), draft.BankBic, proposed),
+            _ => false,
+        };
+
+    private static bool MatchesProposal(
+        InvoiceDraft draft,
+        string property,
+        string currentValue,
+        DetectedOwnCompanyField proposed)
+    {
+        FieldOrigin expectedOrigin = proposed.Confidence switch
+        {
+            DetectionConfidence.High => FieldOrigin.DetectedReliably,
+            DetectionConfidence.Medium => FieldOrigin.DetectedUncertain,
+            _ => FieldOrigin.Default,
+        };
+
+        return proposed.Confidence >= DetectionConfidence.Medium
+               && draft.OriginOf(property) == expectedOrigin
+               && string.Equals(currentValue, proposed.Value, StringComparison.Ordinal);
+    }
+
     private static (string[] Errors, string[] Warnings) Validate(
-        CompanyTemplate candidate, bool hasManualInput)
+        CompanyTemplate candidate, bool hasApprovedInput)
     {
         var errors = new List<string>();
         var warnings = new List<string>();
 
-        if (!hasManualInput)
+        if (!hasApprovedInput)
         {
-            errors.Add("Es wurden keine Unternehmensdaten von Hand eingegeben oder geändert.");
+            errors.Add("Es wurden keine bestätigbaren Unternehmensdaten eingegeben oder erkannt.");
         }
 
         if (string.IsNullOrWhiteSpace(candidate.SellerName))
@@ -220,6 +324,7 @@ public sealed record CompanyTemplateSavePlan(
     CompanyTemplate Candidate,
     bool HasExistingCompanyData,
     bool HasManualInput,
+    bool HasProposalInput,
     IReadOnlyList<string> ChangedFields,
     IReadOnlyList<string> Errors,
     IReadOnlyList<string> Warnings)
@@ -230,6 +335,9 @@ public sealed record CompanyTemplateSavePlan(
     /// <summary>Muss eine inhaltlich vorhandene Vorlage bestätigt werden?</summary>
     public bool RequiresConfirmation => HasExistingCompanyData && IsChanged;
 
+    /// <summary>Enthält der Plan manuelle oder konkret bestätigbare Proposal-Werte?</summary>
+    public bool HasApprovedInput => HasManualInput || HasProposalInput;
+
     /// <summary>Kann dieser Kandidat gespeichert werden?</summary>
-    public bool CanSave => HasManualInput && IsChanged && Errors.Count == 0;
+    public bool CanSave => HasApprovedInput && IsChanged && Errors.Count == 0;
 }

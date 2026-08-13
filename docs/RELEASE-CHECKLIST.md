@@ -65,9 +65,14 @@ aussieht.
 - [ ] Einstellungen ändern und schließen: neue Vorgaben gelten ohne Neustart für den nächsten Vorgang.
 - [ ] Ein bereits ausgefülltes Formular bleibt durch bloßes Speichern der Einstellungen unberührt.
 - [ ] Ist Schritt 2 bereits offen, erscheint die vorgesehene Rückfrage; „Für diese Rechnung übernehmen“ aktualisiert ausschließlich Verkäufer- und Bankangaben.
-- [ ] Ohne Firmenvorlage Verkäuferdaten von Hand erfassen und „Als eigene Unternehmensdaten speichern“ verwenden; es erscheint keine zweite Bestätigung.
+- [ ] Ohne Firmenvorlage typische Rechnung mit eindeutigem Seller und getrenntem Käuferblock öffnen: Seller wird sichtbar als erkannt vorausgefüllt.
+- [ ] „Als meine Unternehmensdaten speichern“ verwenden: Bei der ersten Vorlage wird ohne vorgelagerten zweiten Bestätigungsschritt gespeichert.
+- [ ] Dasselbe Angebot mit „Nicht als eigene Daten speichern“ schließen: Erkannte Rechnungsfelder bleiben stehen, die Vorlage bleibt unverändert.
 - [ ] Neue Rechnung starten: Die gespeicherten Unternehmensdaten werden als normale Firmenvorlage vorbelegt.
-- [ ] Erkannte fremde Verkäuferdaten sowie erkannte IBAN/BIC bleiben von der Speicheraktion ausgeschlossen.
+- [ ] Mehrdeutige Rechnung mit zwei gleich starken Firmen prüfen: Seller bleibt leer und es erscheint kein Speicherangebot.
+- [ ] Rechnung mit Käufer-/Lieferblock oben oder links prüfen: Kein Wert dieses Blocks wird dem Seller zugeordnet.
+- [ ] Rechnung mit mehreren gültigen IBANs prüfen: Keine Bankverbindung wird als eigene vorgeschlagen.
+- [ ] Erkannte Werte außerhalb des konkreten Seller-Proposals bleiben von der Speicheraktion ausgeschlossen.
 - [ ] Bei vorhandener Firmenvorlage genau ein Verkäuferfeld manuell ändern: Vor dem Aktualisieren erscheint die Inline-Bestätigung.
 - [ ] Inline-Bestätigung abbrechen: Die gespeicherte Vorlage bleibt unverändert.
 - [ ] Nach erfolgreichem Speichern bleiben Inhalt und Herkunftshinweise der laufenden Rechnung unverändert.

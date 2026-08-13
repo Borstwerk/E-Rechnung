@@ -27,6 +27,7 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
     private readonly IEInvoiceService _service;
     private readonly ISettingsStore _settingsStore;
     private CompanyTemplateSavePlan? _pendingCompanyTemplateSave;
+    private DetectedOwnCompanyProposal? _ownCompanyProposal;
 
     public InvoiceDataViewModel(IEInvoiceService service, ISettingsStore settingsStore)
     {
@@ -137,10 +138,20 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
     public bool HasPrefillMessage => PrefillMessage.Length > 0;
 
     /// <summary>
-    /// Wird angeboten, sobald mindestens ein erlaubtes Unternehmensfeld vom
-    /// Anwender selbst bearbeitet wurde. PDF-Erkennung allein reicht nie aus.
+    /// Wird bei manuellen Unternehmensfeldern oder einem konkreten,
+    /// konservativ erkannten Seller-Proposal angeboten. Beliebige andere
+    /// PDF-Erkennung reicht weiterhin nie aus.
     /// </summary>
-    public bool ShowsCompanyTemplateSaveOffer => CompanyTemplateSavePlanner.HasManualInput(Draft);
+    public bool ShowsCompanyTemplateSaveOffer
+        => CompanyTemplateSavePlanner.HasManualInput(Draft) || HasOwnCompanyProposal;
+
+    /// <summary>Ist für den aktuellen Entwurf ein bestätigbarer Seller vorhanden?</summary>
+    public bool HasOwnCompanyProposal => _ownCompanyProposal is not null;
+
+    /// <summary>Datensparsame Erklärung der jeweils angebotenen Speicheraktion.</summary>
+    public string CompanyTemplateSaveOfferText => HasOwnCompanyProposal
+        ? "Der Rechnungsaussteller wurde aus der PDF erkannt. Speichern Sie ihn nur, wenn dies Ihr eigenes Unternehmen ist. Es werden ausschließlich die hier vorgeschlagenen, unveränderten Verkäufer- und Bankangaben übernommen."
+        : "Speichern Sie Ihre von Hand eingegebenen Verkäufer- und Bankangaben lokal als Vorlage für neue Rechnungen. Erkannte PDF-Daten ohne konkretes Seller-Angebot werden nicht übernommen.";
 
     /// <summary>Status der ausdrücklichen Vorlagenspeicherung.</summary>
     [ObservableProperty]
@@ -172,6 +183,7 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         }
 
         Prefill = DraftPrefiller.Apply(Draft, detection, ownCompany);
+        SetOwnCompanyProposal(detection.OwnCompanyProposal);
         RecalculateTotals();
     }
 
@@ -288,6 +300,7 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         Totals = null;
         ChangedTemplate = null;
         _pendingCompanyTemplateSave = null;
+        SetOwnCompanyProposal(null);
         HasCompanyTemplateOverwriteQuestion = false;
         CompanyTemplateSaveMessage = string.Empty;
         ClearFindings();
@@ -306,9 +319,10 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         {
             CompanyTemplate existing = await _settingsStore.LoadTemplateAsync(cancellationToken)
                 .ConfigureAwait(true);
-            CompanyTemplateSavePlan plan = CompanyTemplateSavePlanner.Plan(Draft, existing);
+            CompanyTemplateSavePlan plan = CompanyTemplateSavePlanner.Plan(
+                Draft, existing, _ownCompanyProposal);
 
-            if (!plan.HasManualInput)
+            if (!plan.HasApprovedInput)
             {
                 CompanyTemplateSaveMessage = plan.Errors[0];
                 return;
@@ -372,7 +386,8 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
                 return;
             }
 
-            CompanyTemplateSavePlan freshPlan = CompanyTemplateSavePlanner.Plan(Draft, current);
+            CompanyTemplateSavePlan freshPlan = CompanyTemplateSavePlanner.Plan(
+                Draft, current, _ownCompanyProposal);
 
             if (!freshPlan.CanSave)
             {
@@ -401,6 +416,20 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         CompanyTemplateSaveMessage = "Die gespeicherte Firmenvorlage wurde nicht geändert.";
     }
 
+    /// <summary>
+    /// Schließt nur das Seller-Angebot. Der Entwurf und seine PDF-Herkünfte
+    /// bleiben unverändert; insbesondere findet kein Store-Zugriff statt.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanDismissOwnCompanyProposal))]
+    public void DismissOwnCompanyProposal()
+    {
+        ClearPendingCompanyTemplateSave();
+        SetOwnCompanyProposal(null);
+        CompanyTemplateSaveMessage = "Das Angebot wurde geschlossen. Die erkannten Rechnungsdaten bleiben erhalten.";
+    }
+
+    private bool CanDismissOwnCompanyProposal() => HasOwnCompanyProposal;
+
     private async Task PersistCompanyTemplateAsync(
         CompanyTemplateSavePlan plan, CancellationToken cancellationToken)
     {
@@ -408,6 +437,7 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
             .ConfigureAwait(true);
 
         ClearPendingCompanyTemplateSave();
+        SetOwnCompanyProposal(null);
         CompanyTemplateSaveMessage = plan.Warnings.Count == 0
             ? "Die Unternehmensdaten wurden lokal gespeichert."
             : "Die Unternehmensdaten wurden lokal gespeichert. Hinweis: "
@@ -420,6 +450,21 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         _pendingCompanyTemplateSave = null;
         HasCompanyTemplateOverwriteQuestion = false;
         SaveOwnCompanyDataCommand.NotifyCanExecuteChanged();
+    }
+
+    private void SetOwnCompanyProposal(DetectedOwnCompanyProposal? proposal)
+    {
+        if (ReferenceEquals(_ownCompanyProposal, proposal))
+        {
+            return;
+        }
+
+        _ownCompanyProposal = proposal;
+        OnPropertyChanged(nameof(HasOwnCompanyProposal));
+        OnPropertyChanged(nameof(ShowsCompanyTemplateSaveOffer));
+        OnPropertyChanged(nameof(CompanyTemplateSaveOfferText));
+        SaveOwnCompanyDataCommand.NotifyCanExecuteChanged();
+        DismissOwnCompanyProposalCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>

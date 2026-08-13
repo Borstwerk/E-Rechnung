@@ -348,30 +348,39 @@ ist belastbarer als eine unvollständige Liste regulärer Ausdrücke.
   gibt keinen Upload, Versand oder Freigabemechanismus.
 - Die Anwendung bleibt bei jedem Fehler des Loggings uneingeschränkt nutzbar.
 
-## DEC-007 – Unternehmensvorlage nur aus ausdrücklich manuellen Angaben
+## DEC-007 – Unternehmensvorlage nur aus ausdrücklich bestätigten Angaben
 
 **Status:** gültig
 
-**Bezug:** ER-020-SET-01
+**Bezug:** ER-020-SET-01, ER-020-DET-01
 
 ### Kontext
 
-Ohne gespeicherte Firmenvorlage kann die Anwendung den Rechnungsteller
-absichtlich nicht aus einer PDF erraten. Anwender erfassen ihre Verkäuferdaten
-dann in Schritt 2, mussten dieselben Angaben bisher aber noch einmal in den
-Einstellungen eingeben. Der aktuelle Formularinhalt kann zugleich erkannte
-Verkäufer-, Bank-, Käufer- und Rechnungsdaten enthalten und darf deshalb nicht
-pauschal zur Unternehmensvorlage werden.
+Ohne gespeicherte Firmenvorlage kann die Anwendung einen Rechnungsteller aus
+einer typischen Rechnung konservativ erkennen, wenn feste Mindestkombinationen,
+räumlicher Ausschluss der Käufer-/Lieferblöcke und Eindeutigkeit zusammenkommen.
+Der aktuelle Formularinhalt kann zugleich beliebige erkannte Verkäufer-, Bank-,
+Käufer- und Rechnungsdaten enthalten und darf deshalb trotzdem niemals pauschal
+zur Unternehmensvorlage werden.
 
 ### Entscheidung
 
 Eine ausdrückliche Aktion „Als eigene Unternehmensdaten speichern“ plant die
 Speicherung über eine feste Allowlist aus Verkäufer- und Bankfeldern. Neu
-übernommen werden nur Felder mit Herkunft `Manual`. Das sichtbare
-Programmstandardland `DE` ist die einzige Ausnahme, solange es nicht aus einer
-PDF-Erkennung stammt. Zuverlässig und unsicher erkannte Werte werden
-gleichermaßen ausgeschlossen; Käufer- und Rechnungsfelder kommen in der
+übernommen werden Felder mit Herkunft `Manual` sowie unveränderte Werte aus dem
+konkreten aktuellen `DetectedOwnCompanyProposal`. Dieses Proposal enthält nur
+den eindeutig zusammengehörigen Seller und nachgelagert eine eindeutige
+Bankverbindung samt Wert, Confidence und Evidenz. Es ist die kontrollierte
+Brücke, keine neue `FieldOrigin`-Stufe. Das sichtbare Programmstandardland `DE`
+bleibt die einzige Ausnahme außerhalb dieser beiden Quellen, solange es nicht
+aus einer PDF-Erkennung stammt. Käufer- und Rechnungsfelder kommen in der
 Allowlist nicht vor.
+
+Der Klick auf „Als meine Unternehmensdaten speichern“ bestätigt den erkannten
+Seller und führt unmittelbar in denselben SET-01-Speicherweg. Es gibt keinen
+vorgelagerten Bestätigungsschritt und kein Umkennzeichnen erkannter Werte zu
+`Manual`. „Nicht als eigene Daten speichern“ schließt nur das flüchtige Angebot;
+Draftwerte und PDF-Herkünfte bleiben bestehen, der Store wird nicht aufgerufen.
 
 Vor jedem Plan wird `firmenvorlage.json` frisch gelesen. Die Existenz der Datei
 gilt nicht als Unternehmensvorlage: Maßgeblich sind inhaltliche Verkäufer- oder
@@ -387,10 +396,13 @@ zentrale Ort für spätere Bearbeitung.
 
 ### Grund
 
-Die bestehende Herkunftsverfolgung liefert eine belastbare technische Grenze
-zwischen eigener Eingabe und PDF-Erkennung. Eine kleine reine Planerfunktion
-ist einfacher zu prüfen als eine allgemeine Objektkopie oder automatisches
-Lernen und benötigt weder Datenbank noch neue Synchronisationsinfrastruktur.
+Die bestehende Herkunftsverfolgung und der exakte Wertabgleich mit dem
+flüchtigen Proposal liefern gemeinsam die technische Grenze. Ein anderer oder
+inzwischen veränderter erkannter Wert passt nicht und wird nicht übernommen;
+eine normale manuelle Bearbeitung bleibt weiterhin `Manual`. Eine kleine reine
+Planerfunktion ist einfacher zu prüfen als eine allgemeine Objektkopie oder
+automatisches Lernen und benötigt weder Datenbank noch neue
+Synchronisationsinfrastruktur.
 
 ### Konsequenzen
 
@@ -398,8 +410,10 @@ Lernen und benötigt weder Datenbank noch neue Synchronisationsinfrastruktur.
   aufgenommen werden; unbeabsichtigt werden sie nicht mitgespeichert.
 - Die Speicheraktion darf ausschließlich an den sichtbaren Benutzerbefehl und
   seine Bestätigung gebunden sein.
-- Erkannte Werte müssen vom Anwender tatsächlich bearbeitet werden, bevor sie
-  als eigene Unternehmensangabe gelten können.
+- Ein erkannter Wert darf nur über das konkrete aktuelle Seller-Proposal und
+  die ausdrückliche Speicheraktion als eigene Unternehmensangabe gelten.
+- Bankdaten dürfen den Seller nie identifizieren und werden bei mehreren
+  gültigen IBANs nicht in das Proposal aufgenommen.
 - Eine beschädigte oder fehlende Vorlagendatei bleibt ein kontrollierter leerer
   Ausgangszustand und kann durch die ausdrückliche Aktion neu angelegt werden.
 

@@ -8,7 +8,17 @@ public sealed record DetectedPayment
 {
     public DetectedValue<string>? Iban { get; init; }
     public DetectedValue<string>? Bic { get; init; }
+
+    internal IReadOnlyList<LocatedPaymentValue> IbanCandidates { get; init; } = [];
+    internal IReadOnlyList<LocatedPaymentValue> BicCandidates { get; init; } = [];
 }
+
+/// <summary>Bankwert samt räumlicher Fundstelle für die Seller-Zuordnung.</summary>
+internal sealed record LocatedPaymentValue(
+    DetectedValue<string> Detection,
+    int PageNumber,
+    double Top,
+    double Left);
 
 /// <summary>
 /// Erkennt IBAN und BIC.
@@ -20,56 +30,94 @@ public sealed record DetectedPayment
 /// </summary>
 internal static class PaymentDetector
 {
-    public static DetectedPayment Detect(IReadOnlyList<PdfTextLine> lines) => new()
+    public static DetectedPayment Detect(IReadOnlyList<PdfTextLine> lines)
     {
-        Iban = DetectIban(lines),
-        Bic = DetectBic(lines),
-    };
+        IReadOnlyList<LocatedPaymentValue> ibans = DetectIbans(lines);
+        IReadOnlyList<LocatedPaymentValue> bics = DetectBics(lines);
 
-    private static DetectedValue<string>? DetectIban(IReadOnlyList<PdfTextLine> lines)
+        return new DetectedPayment
+        {
+            // Mehrere verschiedene gültige IBANs sind mehrdeutig. Dann wird
+            // weder im allgemeinen Bankfeld noch im eigenen Unternehmens-
+            // Proposal eine Bankverbindung vorausgewählt.
+            Iban = ibans.Count == 1 ? ibans[0].Detection : null,
+            Bic = ibans.Count <= 1 && bics.Count == 1 ? bics[0].Detection : null,
+            IbanCandidates = ibans,
+            BicCandidates = bics,
+        };
+    }
+
+    private static IReadOnlyList<LocatedPaymentValue> DetectIbans(
+        IReadOnlyList<PdfTextLine> lines)
     {
+        var found = new List<LocatedPaymentValue>();
+
         foreach (PdfTextLine line in lines)
         {
-            foreach (Match match in DetectionParsers.Iban().Matches(line.Text))
+            foreach (PdfTextSegment segment in line.Segments)
             {
-                string candidate = match.Value.Replace(" ", string.Empty, StringComparison.Ordinal);
+                foreach (Match match in DetectionParsers.Iban().Matches(segment.Text))
+                {
+                    string candidate = match.Value.Replace(" ", string.Empty, StringComparison.Ordinal);
 
-                if (!Iban.TryParse(candidate, out Iban iban))
+                    if (!Iban.TryParse(candidate, out Iban iban))
+                    {
+                        continue;
+                    }
+
+                    found.Add(new LocatedPaymentValue(
+                        new DetectedValue<string>(
+                            iban.Value, DetectionConfidence.High,
+                            DetectionParsers.MaskIbans(segment.Text),
+                            "Muster erkannt und Prüfsumme nach ISO 7064 bestätigt."),
+                        line.PageNumber,
+                        line.Top,
+                        segment.Left));
+                }
+            }
+        }
+
+        return DistinctByValue(found);
+    }
+
+    private static IReadOnlyList<LocatedPaymentValue> DetectBics(
+        IReadOnlyList<PdfTextLine> lines)
+    {
+        var found = new List<LocatedPaymentValue>();
+
+        foreach (PdfTextLine line in lines)
+        {
+            foreach (PdfTextSegment segment in line.Segments)
+            {
+                string lower = segment.Text.ToLowerInvariant();
+
+                if (!lower.Contains("bic", StringComparison.Ordinal)
+                    && !lower.Contains("swift", StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                return new DetectedValue<string>(
-                    iban.Value, DetectionConfidence.High,
-                    DetectionParsers.MaskIbans(line.Text),
-                    "Muster erkannt und Prüfsumme nach ISO 7064 bestätigt.");
+                Match match = DetectionParsers.Bic().Match(segment.Text);
+
+                if (match.Success)
+                {
+                    found.Add(new LocatedPaymentValue(
+                        new DetectedValue<string>(
+                            match.Value, DetectionConfidence.Medium,
+                            segment.Text, "Stand hinter \"BIC\"."),
+                        line.PageNumber,
+                        line.Top,
+                        segment.Left));
+                }
             }
         }
 
-        return null;
+        return DistinctByValue(found);
     }
 
-    private static DetectedValue<string>? DetectBic(IReadOnlyList<PdfTextLine> lines)
-    {
-        foreach (PdfTextLine line in lines)
-        {
-            string lower = line.Text.ToLowerInvariant();
-
-            if (!lower.Contains("bic", StringComparison.Ordinal)
-                && !lower.Contains("swift", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            Match match = DetectionParsers.Bic().Match(line.Text);
-
-            if (match.Success)
-            {
-                return new DetectedValue<string>(
-                    match.Value, DetectionConfidence.Medium, line.Text, "Stand hinter \"BIC\".");
-            }
-        }
-
-        return null;
-    }
+    private static IReadOnlyList<LocatedPaymentValue> DistinctByValue(
+        IEnumerable<LocatedPaymentValue> values)
+        => [.. values
+            .GroupBy(value => value.Detection.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())];
 }

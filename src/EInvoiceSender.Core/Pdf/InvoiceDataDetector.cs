@@ -75,8 +75,8 @@ public sealed partial class InvoiceDataDetector(
     private static InvoiceDetectionResult Detect(PdfTextResult text, CompanyTemplate? ownCompany)
     {
         DetectedDocument document = DocumentFieldDetector.Detect(text.Lines);
-        DetectedParties parties = PartyDetector.Detect(text.Lines, ownCompany);
         DetectedPayment payment = PaymentDetector.Detect(text.Lines);
+        DetectedParties parties = PartyDetector.Detect(text.Lines, ownCompany, payment);
         DetectedTotals totals = TotalsDetector.Detect(text.Lines);
 
         return Combine(text, document, parties, payment, totals);
@@ -98,6 +98,7 @@ public sealed partial class InvoiceDataDetector(
             Currency = document.Currency,
             Seller = parties.Seller,
             Buyer = parties.Buyer,
+            OwnCompanyProposal = parties.OwnCompanyProposal,
             Iban = payment.Iban,
             Bic = payment.Bic,
             Totals = totals,

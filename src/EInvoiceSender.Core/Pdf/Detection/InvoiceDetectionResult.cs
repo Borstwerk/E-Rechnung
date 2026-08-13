@@ -18,6 +18,49 @@ public sealed record DetectedParty
         || VatId is not null || TaxNumber is not null || Email is not null;
 }
 
+/// <summary>
+/// Die eng begrenzten Unternehmensfelder, die eine Seller-Erkennung für die
+/// ausdrückliche Übernahme in die eigene Firmenvorlage anbieten darf.
+/// </summary>
+public enum DetectedOwnCompanyFieldKind
+{
+    SellerName,
+    SellerStreet,
+    SellerPostalCode,
+    SellerCity,
+    SellerCountry,
+    SellerEmail,
+    SellerVatId,
+    SellerTaxNumber,
+    BankIban,
+    BankBic,
+}
+
+/// <summary>
+/// Ein konkreter, bestätigbarer Wert des erkannten eigenen Unternehmens.
+/// Wert, Confidence und Evidenz bleiben gemeinsam erhalten, damit weder ein
+/// beliebiger anderer PDF-Wert noch ein inzwischen geänderter Wert unter dem
+/// Proposal gespeichert werden kann.
+/// </summary>
+public sealed record DetectedOwnCompanyField(
+    DetectedOwnCompanyFieldKind Kind,
+    string Value,
+    DetectionConfidence Confidence,
+    IReadOnlyList<string> Evidence);
+
+/// <summary>
+/// Kontrollierte Brücke zwischen konservativer Seller-Erkennung und der
+/// ausdrücklichen SET-01-Speicheraktion. Das Proposal ist nur für den
+/// aktuellen Rechnungsentwurf gültig und bewirkt selbst keinerlei Speicherung.
+/// </summary>
+public sealed record DetectedOwnCompanyProposal
+{
+    public IReadOnlyList<DetectedOwnCompanyField> Fields { get; init; } = [];
+
+    public DetectedOwnCompanyField? Field(DetectedOwnCompanyFieldKind kind)
+        => Fields.SingleOrDefault(field => field.Kind == kind);
+}
+
 /// <summary>Erkannte Summen aus der PDF.</summary>
 public sealed record DetectedTotals
 {
@@ -61,6 +104,12 @@ public sealed record InvoiceDetectionResult
     // --- Parteien ----------------------------------------------------------
     public DetectedParty Seller { get; init; } = new();
     public DetectedParty Buyer { get; init; } = new();
+
+    /// <summary>
+    /// Ausschließlich bei einem ohne Firmenvorlage eindeutig erkannten Seller.
+    /// Die Benutzeraktion entscheidet später, ob diese Werte gespeichert werden.
+    /// </summary>
+    public DetectedOwnCompanyProposal? OwnCompanyProposal { get; init; }
 
     // --- Bankverbindung ----------------------------------------------------
     public DetectedValue<string>? Iban { get; init; }

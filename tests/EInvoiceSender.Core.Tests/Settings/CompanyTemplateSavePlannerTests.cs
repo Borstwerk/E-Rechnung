@@ -1,4 +1,5 @@
 using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Pdf.Detection;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Settings;
 using Xunit;
@@ -97,6 +98,141 @@ public sealed class CompanyTemplateSavePlannerTests
 
         Assert.Null(plan.Candidate.BankIban);
         Assert.Null(plan.Candidate.BankBic);
+    }
+
+    [Fact]
+    public void KonkretesSellerProposalErlaubtNurSeineUnverändertenFelder()
+    {
+        var draft = new InvoiceDraft();
+        Detect(draft, nameof(draft.SellerName), () => draft.SellerName = "ERKANNTE EIGENE FIRMA",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerStreet), () => draft.SellerStreet = "Werkstraße 7",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerPostalCode), () => draft.SellerPostalCode = "18055",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerCity), () => draft.SellerCity = "Rostock",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerVatId), () => draft.SellerVatId = "DE123456789",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerEmail), () => draft.SellerEmail = "NICHT-IM-PROPOSAL@example.test",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.BankIban), () => draft.BankIban = "DE89370400440532013000");
+        Detect(draft, nameof(draft.BankBic), () => draft.BankBic = "NICHT-IM-PROPOSAL");
+        draft.BuyerName = "KÄUFER-MARKER";
+
+        var proposal = new DetectedOwnCompanyProposal
+        {
+            Fields =
+            [
+                Proposed(DetectedOwnCompanyFieldKind.SellerName, draft.SellerName),
+                Proposed(DetectedOwnCompanyFieldKind.SellerStreet, draft.SellerStreet),
+                Proposed(DetectedOwnCompanyFieldKind.SellerPostalCode, draft.SellerPostalCode),
+                Proposed(DetectedOwnCompanyFieldKind.SellerCity, draft.SellerCity),
+                Proposed(DetectedOwnCompanyFieldKind.SellerVatId, draft.SellerVatId),
+                Proposed(
+                    DetectedOwnCompanyFieldKind.BankIban,
+                    draft.BankIban,
+                    DetectionConfidence.High),
+            ],
+        };
+        string before = DraftSnapshot(draft);
+
+        CompanyTemplateSavePlan plan = CompanyTemplateSavePlanner.Plan(
+            draft, new CompanyTemplate(), proposal);
+
+        Assert.True(plan.HasProposalInput);
+        Assert.True(plan.CanSave);
+        Assert.Equal("ERKANNTE EIGENE FIRMA", plan.Candidate.SellerName);
+        Assert.Equal("DE89370400440532013000", plan.Candidate.BankIban);
+        Assert.Null(plan.Candidate.SellerEmail);
+        Assert.Null(plan.Candidate.BankBic);
+        Assert.DoesNotContain("KÄUFER", string.Join('|', CompanyValues(plan.Candidate)),
+            StringComparison.Ordinal);
+        Assert.Equal(before, DraftSnapshot(draft));
+    }
+
+    [Fact]
+    public void GegenüberProposalVeränderterErkannterWertWirdNichtÜbernommen()
+    {
+        var draft = new InvoiceDraft();
+        Detect(draft, nameof(draft.SellerName), () => draft.SellerName = "Erkannte Firma",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerVatId), () => draft.SellerVatId = "DE123456789",
+            FieldOrigin.DetectedUncertain);
+        var proposal = new DetectedOwnCompanyProposal
+        {
+            Fields =
+            [
+                Proposed(DetectedOwnCompanyFieldKind.SellerName, "Erkannte Firma"),
+                Proposed(DetectedOwnCompanyFieldKind.SellerVatId, "DE123456789"),
+            ],
+        };
+
+        // Simuliert einen inzwischen programmgesteuert ausgetauschten Wert,
+        // ohne ihn fälschlich als manuelle Eingabe zu behandeln.
+        draft.Prefill(current => current.SellerName = "Anderer erkannter Wert");
+
+        CompanyTemplateSavePlan plan = CompanyTemplateSavePlanner.Plan(
+            draft, new CompanyTemplate(), proposal);
+
+        Assert.Null(plan.Candidate.SellerName);
+        Assert.Equal("DE123456789", plan.Candidate.SellerVatId);
+        Assert.False(plan.CanSave);
+    }
+
+    [Fact]
+    public void ManuelleÄnderungBleibtAuchNebenProposalEineNormaleBenutzereingabe()
+    {
+        var draft = new InvoiceDraft();
+        Detect(draft, nameof(draft.SellerName), () => draft.SellerName = "Erkannte Firma",
+            FieldOrigin.DetectedUncertain);
+        Detect(draft, nameof(draft.SellerVatId), () => draft.SellerVatId = "DE123456789",
+            FieldOrigin.DetectedUncertain);
+        var proposal = new DetectedOwnCompanyProposal
+        {
+            Fields =
+            [
+                Proposed(DetectedOwnCompanyFieldKind.SellerName, "Erkannte Firma"),
+                Proposed(DetectedOwnCompanyFieldKind.SellerVatId, "DE123456789"),
+            ],
+        };
+
+        draft.SellerName = "Von Hand bestätigte Schreibweise";
+
+        CompanyTemplateSavePlan plan = CompanyTemplateSavePlanner.Plan(
+            draft, new CompanyTemplate(), proposal);
+
+        Assert.Equal(FieldOrigin.Manual, draft.OriginOf(nameof(draft.SellerName)));
+        Assert.Equal("Von Hand bestätigte Schreibweise", plan.Candidate.SellerName);
+        Assert.Equal("DE123456789", plan.Candidate.SellerVatId);
+        Assert.True(plan.CanSave);
+    }
+
+    [Fact]
+    public void NeueRechnungNutztNachProposalSpeicherungDieVorlage()
+    {
+        var detectedDraft = new InvoiceDraft();
+        Detect(detectedDraft, nameof(detectedDraft.SellerName),
+            () => detectedDraft.SellerName = "Erkannte Firma", FieldOrigin.DetectedUncertain);
+        Detect(detectedDraft, nameof(detectedDraft.SellerVatId),
+            () => detectedDraft.SellerVatId = "DE123456789", FieldOrigin.DetectedUncertain);
+        var proposal = new DetectedOwnCompanyProposal
+        {
+            Fields =
+            [
+                Proposed(DetectedOwnCompanyFieldKind.SellerName, "Erkannte Firma"),
+                Proposed(DetectedOwnCompanyFieldKind.SellerVatId, "DE123456789"),
+            ],
+        };
+        CompanyTemplateSavePlan save = CompanyTemplateSavePlanner.Plan(
+            detectedDraft, new CompanyTemplate(), proposal);
+        var nextDraft = new InvoiceDraft();
+
+        CompanyTemplateApplier.Apply(nextDraft, save.Candidate);
+
+        Assert.Equal("Erkannte Firma", nextDraft.SellerName);
+        Assert.Equal("DE123456789", nextDraft.SellerVatId);
+        Assert.Equal(FieldOrigin.Template, nextDraft.OriginOf(nameof(nextDraft.SellerName)));
     }
 
     [Fact]
@@ -289,7 +425,6 @@ public sealed class CompanyTemplateSavePlannerTests
         Assert.Contains(plan.Errors, error => error.Contains("IBAN", StringComparison.Ordinal));
     }
 
-
     private static void Detect(
         InvoiceDraft draft, string property, Action assign,
         FieldOrigin origin = FieldOrigin.DetectedReliably)
@@ -297,6 +432,12 @@ public sealed class CompanyTemplateSavePlannerTests
         draft.Prefill(_ => assign());
         draft.MarkOrigin(property, origin);
     }
+
+    private static DetectedOwnCompanyField Proposed(
+        DetectedOwnCompanyFieldKind kind,
+        string value,
+        DetectionConfidence confidence = DetectionConfidence.Medium)
+        => new(kind, value, confidence, ["synthetische Testevidenz"]);
 
     private static CompanyTemplate CompleteTemplate() => new()
     {
