@@ -69,15 +69,17 @@ public sealed class InstallerProjectTests
     public void JederInstallerbauPrüftDieGebautenMsiMetadaten()
     {
         string scriptName = "Test-InstallerMetadata.ps1";
-        string localBuild = File.ReadAllText(
+        string installerBuild = File.ReadAllText(
             Path.Combine(TestPaths.RepositoryRoot, "build", "Build-Installer.ps1"));
+        string releaseBuild = File.ReadAllText(
+            Path.Combine(TestPaths.RepositoryRoot, "build", "Build-Release.ps1"));
         string continuousIntegration = File.ReadAllText(
             Path.Combine(TestPaths.RepositoryRoot, ".github", "workflows", "ci.yml"));
 
-        Assert.Contains(scriptName, localBuild, StringComparison.Ordinal);
-        Assert.Contains(scriptName, continuousIntegration, StringComparison.Ordinal);
-        Assert.Contains("-ApplicationPath", localBuild, StringComparison.Ordinal);
-        Assert.Contains("-ApplicationPath", continuousIntegration, StringComparison.Ordinal);
+        Assert.Contains(scriptName, installerBuild, StringComparison.Ordinal);
+        Assert.Contains("-ApplicationPath", installerBuild, StringComparison.Ordinal);
+        Assert.Contains("Build-Installer.ps1", releaseBuild, StringComparison.Ordinal);
+        Assert.Contains("Build-Release.ps1", continuousIntegration, StringComparison.Ordinal);
         Assert.True(
             File.Exists(Path.Combine(TestPaths.RepositoryRoot, "build", scriptName)),
             $"build/{scriptName} fehlt.");

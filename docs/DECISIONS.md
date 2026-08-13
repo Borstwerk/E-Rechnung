@@ -172,9 +172,9 @@ Pflichtangaben mit der Hauptquelle und dem tatsächlichen `deps.json` ab.
 
 Vollständige Lizenz- und Notice-Texte werden unverändert unter
 `installer/Drittanbieterhinweise/Lizenzen` abgelegt. Das MSI bezieht Übersicht
-und Texte unmittelbar aus diesem Verzeichnis; der portable CI-Bau kopiert
-dieselben Dateien. Die RTF bleibt eine kurze Zusammenfassung und wird nicht als
-vollständiger Lizenztext bezeichnet.
+und Texte unmittelbar aus diesem Verzeichnis; der gemeinsame Releasebau
+kopiert dieselben Dateien in die portable Fassung. Die RTF bleibt eine kurze
+Zusammenfassung und wird nicht als vollständiger Lizenztext bezeichnet.
 
 ### Grund
 
@@ -192,7 +192,59 @@ Runtimeabhängigkeit sichtbar, bevor ein Artefakt freigegeben wird.
   Paketnamen abgeleitet.
 - Das MSI muss `Drittanbieterhinweise.md` und die vorgesehenen Lizenztexte als
   installierte Dateien enthalten.
-- Die Vereinheitlichung des örtlichen und des CI-Releasewegs bleibt davon
-  getrennt und gehört zu ER-020-REL-01.
+- Der gemeinsame lokale/CI-Releaseweg kopiert dieselben Quellen in die
+  portable Fassung und prüft deren vollständigen Inhalt.
+
+## DEC-004 – Ein maßgeblicher Releasepaketierungsweg
+
+**Status:** gültig
+
+**Bezug:** ER-020-REL-01
+
+### Kontext
+
+Der örtliche Installerbau und die Windows-CI formulierten Publish,
+Drittanbieterhinweise, ZIP, Releaseordner und Prüfsummen getrennt. Der lokale
+Weg ließ die Hinweise im portablen ZIP aus und übernahm vorhandene Dateien aus
+`artifacts/release` in die Prüfsummendatei.
+
+### Entscheidung
+
+`build/Build-Release.ps1` ist der einzige maßgebliche Paketierungsweg für
+lokale Releasebauten und GitHub Actions. `Build-Installer.ps1` bleibt auf
+Installerbau und die bestehende MSI-/Publish-Prüfung begrenzt. Checkout,
+Werkzeuge, Tests und Artifact-Upload bleiben Aufgaben der CI.
+
+Der Releaseweg entfernt einen vorhandenen finalen Releasebestand, arbeitet
+anschließend in einem separaten Staging und veröffentlicht diesen erst nach
+vollständiger ZIP-, Dateisatz- und Prüfsummenprüfung. Kann kein sauberer
+Ausgangszustand hergestellt werden oder schlägt ein Schritt fehl, wird kein
+fertiger Releasebestand gemeldet.
+
+Der reguläre Satz besteht genau aus MSI, portabler ZIP und
+`SHA256SUMS.txt`. Die portable Fassung behält Dateien direkt an ihrer
+ZIP-Wurzel und übernimmt Übersicht und Lizenzordner aus den durch DEC-003
+festgelegten Quellen. Die Prüfsummendatei nennt ausschließlich MSI und ZIP in
+fester Reihenfolge und wird nach ihrer Erstellung erneut verifiziert.
+
+### Grund
+
+Ein gemeinsamer, kleiner Repositoryweg verhindert Drift zwischen lokalem und
+CI-Bau. Staging und exakte Dateisätze verhindern, dass Altdateien oder
+unvollständige Ergebnisse als Release erscheinen. Wiederverwendete
+PowerShell-Funktionen erlauben Positiv- und Negativtests ohne ein zusätzliches
+Buildframework.
+
+### Konsequenzen
+
+- Änderungen an ZIP-Inhalt, Artefaktnamen oder Prüfsummen erfolgen nur im
+  gemeinsamen Releaseweg.
+- Die CI darf keine parallele MSI-Auswahl, Lizenzkopie, ZIP- oder SHA-Logik
+  enthalten.
+- Reproduzierbarkeit bezeichnet gleiche Struktur, Quellen und Prüfungen;
+  MSI-PackageCode, Zeitstempel und Binärhashes dürfen zwischen Bauten
+  abweichen.
+- Code Signing kann später vor ZIP und Prüfsummenerzeugung ergänzt werden,
+  gehört aber nicht zu dieser Entscheidung.
 
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

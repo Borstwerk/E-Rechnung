@@ -65,6 +65,7 @@ public sealed class VersioningTests
             Path.Combine(TestPaths.RepositoryRoot, "build", "Build.ps1"),
             Path.Combine(TestPaths.RepositoryRoot, "build", "Publish.ps1"),
             Path.Combine(TestPaths.RepositoryRoot, "build", "Build-Installer.ps1"),
+            Path.Combine(TestPaths.RepositoryRoot, "build", "Build-Release.ps1"),
         ];
 
         foreach (string path in paths)

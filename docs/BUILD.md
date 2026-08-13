@@ -25,7 +25,9 @@ Die Skripte in `build/` sind für den Fall gedacht, dass ohne IDE gebaut wird.
 | `Build.ps1` | Pakete wiederherstellen und Release bauen |
 | `Test.ps1` | alle Tests; `-RequireExternalValidators` erzwingt das Prüfgate |
 | `Publish.ps1` | eigenständige Fassung für win-x64 |
-| `Build-Installer.ps1` | MSI, tragbares ZIP und SHA-256-Prüfsummen |
+| `Build-Installer.ps1` | MSI bauen und gegen App, Versionen und Lizenzbestand prüfen |
+| `Build-Release.ps1` | gemeinsamer lokaler/CI-Weg für MSI, portable ZIP und SHA-256 |
+| `Test-ReleasePackaging.ps1` | Positiv- und Negativtests der Paketierungsfunktionen |
 | `Validate-Reference.ps1` | Gegenprüfung mit CEN-Schematron und veraPDF |
 
 Jedes Skript endet bei einem Fehler mit einem Exitcode ungleich null.
@@ -57,16 +59,47 @@ geklontes Repository nicht sofort rot ist. In der Pipeline steht
 `REQUIRE_EXTERNAL_VALIDATORS=1`; dort **scheitern** sie stattdessen. Ein
 Freigabegate darf nicht stillschweigend entfallen.
 
-## Installer
+## Releasepaket
+
+```powershell
+.\build\Test-ReleasePackaging.ps1
+.\build\Build-Release.ps1
+```
+
+`Build-Release.ps1` ist der gemeinsame maßgebliche Paketierungsweg für lokale
+Builds und GitHub Actions. Das Skript erzeugt einen frischen Publish, baut und
+prüft das MSI, ergänzt die portable Fassung um die festgelegten
+Drittanbieterhinweise und erzeugt ZIP und Prüfsummen zunächst unter
+`artifacts/release-staging`.
+
+Erst nach erfolgreicher Inhalts- und SHA-256-Prüfung wird das Staging als
+`artifacts/release` veröffentlicht. Kann ein vorhandener Releaseordner nicht
+vollständig entfernt werden, bricht der Build vor dem Publish ab. Nach Erfolg
+enthält der Ordner ausschließlich:
+
+```text
+BorstWerk-E-Rechnung-Setup.msi
+BorstWerk-E-Rechnung-portable-win-x64.zip
+SHA256SUMS.txt
+```
+
+Die portable ZIP enthält die Programmdateien direkt an ihrer Wurzel sowie
+`Drittanbieterhinweise.md` und `Drittanbieterhinweise/Lizenzen/...`.
+`SHA256SUMS.txt` nennt ausschließlich MSI und ZIP in dieser Reihenfolge und
+wird sofort nach ihrer Erstellung und nach der finalen Promotion verifiziert.
+
+WiX erzeugt MSI-Dateien ausschließlich unter Windows; unter Linux bricht der
+Releaseweg mit einer entsprechenden Meldung ab.
+
+## Reiner Installerbau
 
 ```powershell
 .\build\Build-Installer.ps1
 ```
 
-Das Skript veröffentlicht bei Bedarf vorher, baut das MSI, legt zusätzlich
-eine tragbare ZIP-Fassung an und schreibt `SHA256SUMS.txt` nach
-`artifacts/release/`. WiX erzeugt MSI-Dateien ausschließlich unter Windows;
-unter Linux bricht das Skript mit einer entsprechenden Meldung ab.
+Dieses Skript veröffentlicht bei Bedarf, baut das MSI am festgelegten Pfad und
+führt `Test-InstallerMetadata.ps1` aus. ZIP, Releaseordner und Prüfsummen gehören
+ausschließlich zu `Build-Release.ps1`.
 
 Die Versionsnummer steht zentral in `Directory.Build.props` (`VersionPrefix`)
 und wird von Anwendung, lokalem Installerbau und CI gemeinsam verwendet. Das
@@ -89,6 +122,11 @@ Nach dem Installerbau prüft `build/Test-InstallerMetadata.ps1` Assembly-,
 Datei- und Produktversion der veröffentlichten Anwendung sowie Identität,
 Upgrade-Tabelle und Aktionsreihenfolge des tatsächlich erzeugten MSI, ohne es
 zu installieren.
+
+Vollständige Tests und externe Referenzvalidatoren bleiben vorgelagerte
+Freigabegates. Die CI führt sie vor `Build-Release.ps1` aus; lokal sind sie vor
+einem freizugebenden Paket über `Test.ps1 -RequireExternalValidators`
+auszuführen.
 
 ## Linux und macOS
 

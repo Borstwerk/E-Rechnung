@@ -228,6 +228,8 @@ public sealed class ThirdPartyNoticeTests
     {
         string files = Read("installer", "EInvoiceSender.Setup", "Files.wxs");
         string package = Read("installer", "EInvoiceSender.Setup", "Package.wxs");
+        string release = Read("build", "Build-Release.ps1");
+        string packaging = Read("build", "Release-Packaging.psm1");
         string workflow = Read(".github", "workflows", "ci.yml");
 
         RequireTerms(files,
@@ -236,15 +238,21 @@ public sealed class ThirdPartyNoticeTests
             @"..\Drittanbieterhinweise\Lizenzen\**",
             "DrittanbieterLizenzordner");
         RequireTerms(package, "DrittanbieterHinweisordner", "DrittanbieterLizenzordner");
-        RequireTerms(workflow,
-            "installer/Drittanbieterhinweise/README.md",
-            "installer/Drittanbieterhinweise/Lizenzen",
-            "artifacts/publish/win-x64/Drittanbieterhinweise.md");
+        RequireTerms(release,
+            "thirdPartySourceDirectory",
+            "Copy-ThirdPartyNotices",
+            "Assert-ThirdPartyNotices",
+            "New-PortableArchive");
+        RequireTerms(packaging,
+            "README.md",
+            "Lizenzen",
+            "Drittanbieterhinweise.md");
+        RequireTerms(workflow, "Build-Release.ps1");
 
-        int notices = workflow.IndexOf("Drittanbieterhinweise beilegen", StringComparison.Ordinal);
-        int archive = workflow.IndexOf("Portable ZIP erzeugen", StringComparison.Ordinal);
+        int notices = release.IndexOf("Copy-ThirdPartyNotices", StringComparison.Ordinal);
+        int archive = release.IndexOf("New-PortableArchive", StringComparison.Ordinal);
         Assert.True(notices >= 0 && archive > notices,
-            "Die CI muss die Hinweise vor dem portablen ZIP beilegen.");
+            "Der gemeinsame Releaseweg muss die Hinweise vor dem portablen ZIP beilegen.");
     }
 
     [Fact]

@@ -1,23 +1,29 @@
 ﻿<#
 .SYNOPSIS
-    Baut das MSI-Paket und legt es mit Prüfsumme im Release-Ordner ab.
+    Baut und prüft das MSI-Paket.
 
 .DESCRIPTION
     Der Installer setzt eine fertige Veröffentlichung voraus. Fehlt sie oder
-    ist sie älter als der Quelltext, wird Publish.ps1 vorher ausgeführt.
+    wurde -SkipPublish nicht angegeben, wird Publish.ps1 vorher ausgeführt.
+
+    Dieses Skript paketiert weder das portable ZIP noch den Releaseordner.
+    Der vollständige gemeinsame Releaseweg liegt in Build-Release.ps1.
 
     WiX erzeugt MSI-Dateien nur unter Windows.
 #>
 [CmdletBinding()]
 param(
-    [switch]$SkipPublish
+    [switch]$SkipPublish,
+
+    [switch]$Rebuild
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $publishDirectory = Join-Path $root 'artifacts' 'publish' 'win-x64'
-$releaseDirectory = Join-Path $root 'artifacts' 'release'
 $setupProject = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'EInvoiceSender.Setup.wixproj'
+$msi = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'bin' 'Release' `
+    'BorstWerk-E-Rechnung-Setup.msi'
 
 if (-not $IsWindows) {
     throw "Der Installer lässt sich nur unter Windows bauen: WiX erzeugt MSI-Dateien nur dort."
@@ -27,35 +33,31 @@ if (-not $SkipPublish -or -not (Test-Path (Join-Path $publishDirectory 'EInvoice
     & (Join-Path $PSScriptRoot 'Publish.ps1') -OutputDirectory $publishDirectory
 }
 
+if (-not (Test-Path (Join-Path $publishDirectory 'EInvoiceSender.exe') -PathType Leaf)) {
+    throw "Die veröffentlichte Anwendung fehlt: $publishDirectory\EInvoiceSender.exe"
+}
+
 Write-Host "MSI wird gebaut ..." -ForegroundColor Cyan
-dotnet build $setupProject -c Release -p:PublishDir="$publishDirectory\"
+$buildArguments = @(
+    'build',
+    $setupProject,
+    '-c',
+    'Release',
+    "-p:PublishDir=$publishDirectory\"
+)
+if ($Rebuild) {
+    $buildArguments += '-t:Rebuild'
+}
+
+dotnet @buildArguments
 if ($LASTEXITCODE -ne 0) { throw "Der Installerbau ist fehlgeschlagen." }
 
-$msi = Get-ChildItem -Path (Join-Path $root 'installer') -Filter '*.msi' -Recurse |
-       Sort-Object LastWriteTime -Descending |
-       Select-Object -First 1
-if (-not $msi) { throw "Es wurde keine MSI-Datei gefunden." }
+if (-not (Test-Path -LiteralPath $msi -PathType Leaf)) {
+    throw "Das erwartete MSI wurde nicht erzeugt: $msi"
+}
 
 & (Join-Path $PSScriptRoot 'Test-InstallerMetadata.ps1') `
-    -MsiPath $msi.FullName `
+    -MsiPath $msi `
     -ApplicationPath (Join-Path $publishDirectory 'EInvoiceSender.exe')
 
-New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
-
-$target = Join-Path $releaseDirectory $msi.Name
-Copy-Item $msi.FullName $target -Force
-
-# Tragbare Fassung als ZIP, für Anwender ohne Installationsrechte.
-$zip = Join-Path $releaseDirectory 'BorstWerk-E-Rechnung-portable-win-x64.zip'
-if (Test-Path $zip) { Remove-Item $zip -Force }
-Compress-Archive -Path (Join-Path $publishDirectory '*') -DestinationPath $zip
-
-# Prüfsummen über alle Artefakte, damit sich die Auslieferung nachweisen lässt.
-$checksums = Join-Path $releaseDirectory 'SHA256SUMS.txt'
-Get-ChildItem $releaseDirectory -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
-    $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-    "$hash  $($_.Name)"
-} | Set-Content -Path $checksums -Encoding utf8
-
-Write-Host "Fertig. Artefakte in $releaseDirectory" -ForegroundColor Green
-Get-Content $checksums
+Write-Host "MSI erfolgreich gebaut und geprüft: $msi" -ForegroundColor Green

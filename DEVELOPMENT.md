@@ -85,13 +85,24 @@ Die Formatprüfung läuft in der CI mit und bricht den Bau ab. Warnungen gelten 
 Erzeugt eine eigenständige `win-x64`-Fassung samt .NET-Laufzeit. Auf dem Zielrechner muss nichts
 nachinstalliert werden.
 
-## Installer
+## Releasepaket und Installer
+
+```powershell
+\.\build\Build-Release.ps1
+```
+
+Erzeugt über denselben maßgeblichen Weg wie die Windows-CI das MSI, die
+portable ZIP-Fassung und die verifizierte `SHA256SUMS.txt`. Der endgültige
+Releaseordner erscheint erst, nachdem alle drei Artefakte vollständig geprüft
+wurden.
+
+Für einen reinen Installerbau während der Entwicklung:
 
 ```powershell
 .\build\Build-Installer.ps1
 ```
 
-Veröffentlicht die Anwendung und erzeugt MSI, portable ZIP und SHA-256-Prüfsummen.
+Veröffentlicht die Anwendung bei Bedarf und baut und prüft ausschließlich das MSI.
 
 Das Paket ist ein Dual-Purpose-Paket (`Scope="perUserOrMachine"`): Die Standardinstallation läuft
 für den aktuellen Benutzer ohne UAC-Rückfrage, dieselbe Datei lässt sich bei Bedarf für alle
@@ -109,6 +120,11 @@ WiX wird nur zum **Bauen** gebraucht, nicht auf dem Zielrechner. Die ICE-Prüfun
 Unterdrückung; die Vorgeschichte zu ICE38, ICE57 und ICE61 steht in den Kommentaren von
 `installer/EInvoiceSender.Setup/Package.wxs`. `wix.exe` bricht auf Nicht-Windows-Systemen ab, der
 Installer lässt sich also nur unter Windows bauen.
+
+Der gemeinsame Releaseweg übernimmt `Drittanbieterhinweise.md` und den vollständigen
+Lizenzordner aus `installer/Drittanbieterhinweise`, prüft den ZIP-Inhalt gegen den vorbereiteten
+Publish und erzeugt Prüfsummen ausschließlich für MSI und ZIP in fester Reihenfolge. Ein alter
+oder unvollständiger Bestand in `artifacts/release` wird nicht weiterverwendet.
 
 ## Externe Referenzprüfung
 

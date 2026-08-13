@@ -113,8 +113,11 @@ Benutzer unterstützt:
 
 ## Lokaler Releasebau
 
-- [ ] `.\build\Build-Installer.ps1` aus einer gewöhnlichen PowerShell ohne erhöhte Rechte ausführen.
+- [ ] `.\build\Test-ReleasePackaging.ps1` ausführen.
+- [ ] `.\build\Build-Release.ps1` aus einer gewöhnlichen PowerShell ohne erhöhte Rechte ausführen.
 - [ ] MSI-Prüfung läuft fehlerfrei durch.
+- [ ] `artifacts/release` enthält exakt MSI, portable ZIP und `SHA256SUMS.txt`.
+- [ ] Ein zweiter Releasebau über vorhandenen Artefakten bleibt frei von Altdateien.
 - [ ] Lokaler Build und CI erzeugen inhaltlich denselben vorgesehenen Satz von Release-Artefakten.
 
 ## Oberfläche

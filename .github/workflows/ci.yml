@@ -98,69 +98,15 @@ jobs:
           REQUIRE_EXTERNAL_VALIDATORS: "1"
         run: dotnet test EInvoiceSender.sln -c Release
 
-      - name: Self-contained win-x64 veröffentlichen
-        run: >
-          dotnet publish src/EInvoiceSender.App
-          -c Release -r win-x64 --self-contained true
-          -p:PublishReadyToRun=true
-          -o artifacts/publish/win-x64
-
-      # Der Installer wird nur hier gebaut: WiX erzeugt MSI-Dateien
-      # ausschließlich unter Windows.
-      - name: Installer bauen
-        run: >
-          dotnet build installer/EInvoiceSender.Setup
-          -c Release
-          -p:PublishDir=${{ github.workspace }}\artifacts\publish\win-x64\
-
-      - name: Installer-Metadaten prüfen
+      - name: Release-Paketierungslogik prüfen
         shell: pwsh
-        run: >
-          ./build/Test-InstallerMetadata.ps1
-          -MsiPath installer/EInvoiceSender.Setup/bin/Release/BorstWerk-E-Rechnung-Setup.msi
-          -ApplicationPath artifacts/publish/win-x64/EInvoiceSender.exe
+        run: ./build/Test-ReleasePackaging.ps1
 
-      - name: Installer bereitstellen
+      # Publish, MSI-Bau und -Prüfung, portable Fassung und Prüfsummen laufen
+      # über denselben maßgeblichen Weg wie bei einem lokalen Releasebau.
+      - name: Releasepaket bauen
         shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
-          Get-ChildItem -Recurse -Filter *.msi installer |
-            ForEach-Object { Copy-Item $_.FullName artifacts/release/ }
-
-      - name: Drittanbieterhinweise beilegen
-        shell: pwsh
-        run: |
-          Copy-Item installer/Drittanbieterhinweise/README.md `
-            artifacts/publish/win-x64/Drittanbieterhinweise.md -Force
-          New-Item -ItemType Directory -Force `
-            -Path artifacts/publish/win-x64/Drittanbieterhinweise | Out-Null
-          Copy-Item installer/Drittanbieterhinweise/Lizenzen `
-            artifacts/publish/win-x64/Drittanbieterhinweise/ -Recurse -Force
-
-      - name: Portable ZIP erzeugen
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
-          Compress-Archive -Path artifacts/publish/win-x64/* `
-            -DestinationPath artifacts/release/BorstWerk-E-Rechnung-portable-win-x64.zip -Force
-
-      # Die Namen stehen nirgends hier: Es wird über den Ordner gelaufen, also
-      # tragen die Prüfsummen von selbst die tatsächlichen Dateinamen.
-      #
-      # Die Liste wird vorher vollständig eingesammelt und SHA256SUMS.txt
-      # ausgenommen. Sonst kann die Aufzählung die Datei erwischen, die
-      # währenddessen im selben Ordner entsteht – und in den Prüfsummen stünde
-      # eine Zeile über die Prüfsummendatei, die niemand nachrechnen kann.
-      - name: Prüfsummen erzeugen
-        shell: pwsh
-        run: |
-          $dateien = @(Get-ChildItem artifacts/release -File |
-            Where-Object { $_.Name -ne 'SHA256SUMS.txt' })
-          $dateien | ForEach-Object {
-            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
-            "$hash  $($_.Name)"
-          } | Set-Content -Path artifacts/release/SHA256SUMS.txt -Encoding utf8
-          Get-Content artifacts/release/SHA256SUMS.txt
+        run: ./build/Build-Release.ps1
 
       - name: Artefakte bereitstellen
         uses: actions/upload-artifact@v4

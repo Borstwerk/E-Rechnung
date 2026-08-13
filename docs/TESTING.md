@@ -199,3 +199,30 @@ Prüfung erzeugt keine Lizenzzuordnung aus NuGet-Metadaten. Die fachliche
 Zuordnung bleibt in `docs/THIRD-PARTY-NOTICES.md`; der Test verhindert nur,
 dass sie unbemerkt vom technischen Bestand oder den Anwenderdarstellungen
 abweicht.
+
+## Releasepaketierung
+
+`build/Test-ReleasePackaging.ps1` prüft die von lokalem Releasebau und CI
+gemeinsam verwendeten PowerShell-Funktionen mit temporären Dateien. Abgedeckt
+sind insbesondere:
+
+- vollständige Bereinigung eines schmutzigen Releaseordners,
+- Abbruch bei einer gesperrten Datei unter Windows,
+- fehlendes MSI und fehlendes ZIP,
+- unerwartete zusätzliche Release-Datei,
+- vollständige Übernahme der Drittanbieterhinweise und Lizenztexte,
+- fehlender Lizenztext,
+- exakte ZIP-Struktur ohne zusätzlichen obersten Ordner,
+- exakt zwei Prüfsummenzeilen in fester Reihenfolge,
+- manipuliertes MSI und manipuliertes ZIP.
+
+`ReleasePackagingTests` verhindert plattformneutral, dass die CI erneut eine
+eigene ZIP-, Lizenzkopier-, MSI-Auswahl- oder SHA-Logik erhält. Der reale
+`Build-Release.ps1` prüft das portable ZIP bytegenau gegen den vorbereiteten
+Publish, den finalen Drei-Dateien-Satz und alle Prüfsummen vor und nach der
+Promotion nach `artifacts/release`.
+
+Reproduzierbarkeit bedeutet für Releaseartefakte gleiche Schritte,
+Dateiauswahl, Struktur, Namen und Validierungen. Byteidentische MSI- oder
+ZIP-Dateien werden nicht verlangt; insbesondere darf WiX pro Bau einen neuen
+PackageCode erzeugen.
