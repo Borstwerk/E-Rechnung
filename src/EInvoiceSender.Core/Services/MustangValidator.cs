@@ -125,7 +125,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
 
             if (!usable)
             {
-                LogJavaMissing(_options.JavaExecutable);
+                LogJavaMissing();
             }
 
             return usable;
@@ -134,7 +134,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
         {
             // Fehlt java ganz, wirft der Start eine Ausnahme. Das ist hier kein
             // Fehler, sondern die Antwort auf die gestellte Frage.
-            LogJavaMissing(_options.JavaExecutable);
+            LogJavaMissing();
 
             return false;
         }
@@ -412,7 +412,7 @@ public sealed partial class MustangValidator : IExternalDocumentValidator
 
     [LoggerMessage(
         EventId = 4002, Level = LogLevel.Information,
-        Message = "Keine startbare Java-Laufzeit unter '{JavaExecutable}' gefunden. Die "
+        Message = "Keine startbare Java-Laufzeit für die externe Prüfung gefunden. Die "
                   + "zusätzliche Prüfung entfällt; die Anwendung arbeitet normal weiter.")]
-    private partial void LogJavaMissing(string javaExecutable);
+    private partial void LogJavaMissing();
 }

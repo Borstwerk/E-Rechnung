@@ -45,6 +45,13 @@
       <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,16"
                  Text="Die Anwendung arbeitet vollständig auf diesem Rechner. Rechnungsdaten, PDF-Dateien, Bankverbindungen und E-Mail-Adressen werden nicht an andere Stellen übertragen. Es gibt keine Nutzungsstatistik und keine automatische Fehlerübermittlung." />
 
+      <TextBlock Text="Diagnose" Style="{StaticResource BorstWerk.Text.CardTitle}" Margin="0,0,0,4" />
+      <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,8"
+                 Text="Begrenzte technische Diagnoseprotokolle bleiben ausschließlich auf diesem Rechner. Sie enthalten keine Rechnungs- oder Kundendaten und werden niemals automatisch übertragen." />
+      <Button Content="_Diagnoseordner öffnen" Click="OnOpenDiagnosisFolderClicked"
+              HorizontalAlignment="Left" Margin="0,0,0,16"
+              Style="{StaticResource BorstWerk.Button.Secondary}" />
+
       <TextBlock Text="Lizenz" Style="{StaticResource BorstWerk.Text.CardTitle}" Margin="0,0,0,4" />
       <TextBlock Style="{StaticResource BorstWerk.Text.Body}" Margin="0,0,0,4"
                  Text="Privates Open-Source-Projekt unter der MIT-Lizenz. Ohne Supportzusage." />

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Reports;
@@ -91,6 +92,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var stopwatch = Stopwatch.StartNew();
         var context = new CreationContext(request, progress, _clock.Now, cancellationToken);
 
         // Die Bestätigung wird vor allem anderen geprüft - noch vor dem
@@ -98,7 +100,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
         // Oberfläche, sondern Voraussetzung des Vorgangs.
         if (!UserConfirmedContentMatch(context))
         {
-            return Failed(context);
+            return LogFailedAndReturn(context, stopwatch);
         }
 
         using ITemporaryWorkspace workspace = _workspaceFactory.Create();
@@ -108,39 +110,44 @@ public sealed partial class EInvoiceService : IEInvoiceService
         {
             if (!await SourcePdfIsSuitableAsync(context).ConfigureAwait(false))
             {
-                return Failed(context);
+                return LogFailedAndReturn(context, stopwatch);
             }
 
             if (!InvoiceDataIsValid(context))
             {
-                return Failed(context);
+                return LogFailedAndReturn(context, stopwatch);
             }
 
             CreateStructuredInvoice(context);
 
             if (!StructuredInvoiceMatchesInput(context))
             {
-                return Failed(context);
+                return LogFailedAndReturn(context, stopwatch);
             }
 
             if (!await ComposePdfAAsync(context).ConfigureAwait(false))
             {
-                return Failed(context);
+                return LogFailedAndReturn(context, stopwatch);
             }
 
             if (!await EmbeddedInvoiceIsReadableAsync(context).ConfigureAwait(false))
             {
-                return Failed(context);
+                return LogFailedAndReturn(context, stopwatch);
             }
 
             if (!await ReferenceValidatorsAcceptAsync(context).ConfigureAwait(false))
             {
-                return Failed(context);
+                return LogFailedAndReturn(context, stopwatch);
             }
 
             BuildChecksum(context);
 
-            return await SaveResultAsync(context).ConfigureAwait(false);
+            CreateEInvoiceResult result = await SaveResultAsync(context).ConfigureAwait(false);
+            LogCompleted(
+                _logger,
+                result.OutputFile?.SizeInBytes ?? 0,
+                stopwatch.ElapsedMilliseconds);
+            return result;
         }
         catch (OperationCanceledException)
         {
@@ -150,7 +157,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
                 "APP-USE-090",
                 "Der Vorgang wurde abgebrochen. Es wurde keine Datei erzeugt.");
 
-            LogCanceled(_logger, request.Invoice.InvoiceNumber);
+            LogCanceled(_logger, stopwatch.ElapsedMilliseconds);
 
             return Failed(context, canceled: true);
         }
@@ -163,8 +170,17 @@ public sealed partial class EInvoiceService : IEInvoiceService
                 "OutputDirectory",
                 $"{ex.GetType().Name}: {ex.Message}");
 
+            LogTechnicalFailure(_logger, stopwatch.ElapsedMilliseconds, ex);
             return Failed(context);
         }
+    }
+
+    private CreateEInvoiceResult LogFailedAndReturn(
+        CreationContext context,
+        Stopwatch stopwatch)
+    {
+        LogFailed(_logger, stopwatch.ElapsedMilliseconds);
+        return Failed(context);
     }
 
     // ===================================================== Die neun Schritte
@@ -444,8 +460,6 @@ public sealed partial class EInvoiceService : IEInvoiceService
         }
 
         context.Succeed(PipelineStep.Save, 9, "Datei gespeichert");
-
-        LogCompleted(_logger, request.Invoice.InvoiceNumber, stored.SizeInBytes, context.Checksum![..12]);
 
         return new CreateEInvoiceResult(
             Succeeded: true,
@@ -761,12 +775,23 @@ public sealed partial class EInvoiceService : IEInvoiceService
 
     [LoggerMessage(
         EventId = 6001, Level = LogLevel.Information,
-        Message = "E-Rechnung erzeugt: Nummer {InvoiceNumber}, {ByteCount} Bytes, Prüfsumme {ChecksumPrefix}")]
+        Message = "E-Rechnung technisch erzeugt: {ByteCount} Bytes, {Milliseconds} ms")]
     private static partial void LogCompleted(
-        ILogger logger, string invoiceNumber, long byteCount, string checksumPrefix);
+        ILogger logger, long byteCount, long milliseconds);
 
     [LoggerMessage(
         EventId = 6002, Level = LogLevel.Information,
-        Message = "Erzeugung abgebrochen: Nummer {InvoiceNumber}")]
-    private static partial void LogCanceled(ILogger logger, string invoiceNumber);
+        Message = "Erzeugung technisch abgebrochen: {Milliseconds} ms")]
+    private static partial void LogCanceled(ILogger logger, long milliseconds);
+
+    [LoggerMessage(
+        EventId = 6003, Level = LogLevel.Information,
+        Message = "Erzeugung fachlich oder technisch nicht abgeschlossen: {Milliseconds} ms")]
+    private static partial void LogFailed(ILogger logger, long milliseconds);
+
+    [LoggerMessage(
+        EventId = 6004, Level = LogLevel.Error,
+        Message = "Technischer Dateifehler während der Erzeugung nach {Milliseconds} ms")]
+    private static partial void LogTechnicalFailure(
+        ILogger logger, long milliseconds, Exception exception);
 }

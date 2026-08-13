@@ -1,8 +1,12 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
 using EInvoiceSender.App.Services;
 using EInvoiceSender.App.ViewModels;
 using EInvoiceSender.App.Views;
+using EInvoiceSender.App.Views.Dialogs;
+using EInvoiceSender.Core.Diagnostics;
 using EInvoiceSender.Core.Mail;
 using EInvoiceSender.Core.Pdf;
 using EInvoiceSender.Core.Security;
@@ -28,6 +32,8 @@ namespace EInvoiceSender.App;
 public partial class App : Application
 {
     private ServiceProvider? _services;
+    private ILogger<App>? _logger;
+    private Stopwatch? _sessionStopwatch;
 
     /// <summary>
     /// Die zusammengesetzten Dienste. Wird außerhalb dieser Klasse nur von
@@ -41,25 +47,56 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        _sessionStopwatch = Stopwatch.StartNew();
+
         var services = new ServiceCollection();
         ConfigureServices(services);
         _services = services.BuildServiceProvider();
+        _logger = _services.GetRequiredService<ILogger<App>>();
 
         // Eine unerwartete Ausnahme darf die Anwendung nicht wortlos beenden.
         DispatcherUnhandledException += OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledDomainException;
+
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            Version? version = typeof(App).Assembly.GetName().Version;
+            string versionText = version?.ToString(3) ?? "unbekannt";
+            string architecture = RuntimeInformation.ProcessArchitecture.ToString();
+            LogStarted(
+                _logger,
+                versionText,
+                RuntimeInformation.FrameworkDescription,
+                architecture);
+        }
 
         _services.GetRequiredService<MainWindow>().Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _sessionStopwatch?.Stop();
+
+        if (_logger is not null)
+        {
+            LogStopped(_logger, _sessionStopwatch?.ElapsedMilliseconds ?? 0, e.ApplicationExitCode);
+        }
+
+        DispatcherUnhandledException -= OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException -= OnUnhandledDomainException;
         _services?.Dispose();
         base.OnExit(e);
     }
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information));
+        DiagnosticLogDirectory diagnosticDirectory = DiagnosticLogDirectory.CreateDefault();
+        var diagnosticOptions = new DiagnosticLogOptions(diagnosticDirectory.DirectoryPath);
+
+        services.AddSingleton(diagnosticDirectory);
+        services.AddLogging(builder => builder
+            .SetMinimumLevel(LogLevel.Information)
+            .AddProvider(new LocalFileLoggerProvider(diagnosticOptions)));
 
         // --- Kern -----------------------------------------------------------
         services.AddSingleton<IClock, SystemClock>();
@@ -116,11 +153,17 @@ public partial class App : Application
         services.AddSingleton<ResultViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<SettingsViewModel>();
+        services.AddTransient<AboutWindow>();
         services.AddSingleton<MainWindow>();
     }
 
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        if (_logger is not null)
+        {
+            LogUnhandledDispatcherException(_logger, e.Exception);
+        }
+
         MessageBox.Show(
             "Es ist eine unerwartete Störung aufgetreten. Die bisher erzeugten Dateien "
             + "bleiben erhalten.\n\nTechnische Angabe:\n" + e.Exception.Message,
@@ -130,4 +173,63 @@ public partial class App : Application
 
         e.Handled = true;
     }
+
+    private void OnUnhandledDomainException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (_logger is null)
+        {
+            return;
+        }
+
+        if (e.ExceptionObject is Exception exception)
+        {
+            LogUnhandledDomainException(_logger, e.IsTerminating, exception);
+            return;
+        }
+
+        LogUnhandledDomainObject(
+            _logger,
+            e.IsTerminating,
+            e.ExceptionObject?.GetType().Name ?? "unbekannt");
+    }
+
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Information,
+        Message = "Anwendung gestartet: Version {Version}, Runtime {Runtime}, Architektur {Architecture}")]
+    private static partial void LogStarted(
+        ILogger logger,
+        string version,
+        string runtime,
+        string architecture);
+
+    [LoggerMessage(
+        EventId = 1001,
+        Level = LogLevel.Information,
+        Message = "Anwendung regulär beendet: {Milliseconds} ms, Exitcode {ExitCode}")]
+    private static partial void LogStopped(ILogger logger, long milliseconds, int exitCode);
+
+    [LoggerMessage(
+        EventId = 1002,
+        Level = LogLevel.Error,
+        Message = "Unerwartete Ausnahme im Oberflächenthread")]
+    private static partial void LogUnhandledDispatcherException(ILogger logger, Exception exception);
+
+    [LoggerMessage(
+        EventId = 1003,
+        Level = LogLevel.Critical,
+        Message = "Unbehandelte Laufzeitausnahme; Programmende: {IsTerminating}")]
+    private static partial void LogUnhandledDomainException(
+        ILogger logger,
+        bool isTerminating,
+        Exception exception);
+
+    [LoggerMessage(
+        EventId = 1004,
+        Level = LogLevel.Critical,
+        Message = "Unbehandeltes Laufzeitobjekt vom Typ {ExceptionObjectType}; Programmende: {IsTerminating}")]
+    private static partial void LogUnhandledDomainObject(
+        ILogger logger,
+        bool isTerminating,
+        string exceptionObjectType);
 }

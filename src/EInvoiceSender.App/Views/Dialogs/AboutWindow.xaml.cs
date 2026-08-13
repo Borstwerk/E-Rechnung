@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
+using EInvoiceSender.Core.Diagnostics;
+using EInvoiceSender.Core.Services;
 
 namespace EInvoiceSender.App.Views.Dialogs;
 
@@ -13,8 +15,17 @@ namespace EInvoiceSender.App.Views.Dialogs;
 /// </summary>
 public partial class AboutWindow : Window
 {
-    public AboutWindow()
+    private readonly IShellService _shellService;
+    private readonly DiagnosticLogDirectory _diagnosticLogDirectory;
+
+    public AboutWindow(
+        IShellService shellService,
+        DiagnosticLogDirectory diagnosticLogDirectory)
     {
+        _shellService = shellService ?? throw new ArgumentNullException(nameof(shellService));
+        _diagnosticLogDirectory = diagnosticLogDirectory
+            ?? throw new ArgumentNullException(nameof(diagnosticLogDirectory));
+
         InitializeComponent();
 
         Fassung.Text = $"Fassung {ReadVersion()}";
@@ -53,4 +64,22 @@ public partial class AboutWindow : Window
     }
 
     private void OnCloseClicked(object sender, RoutedEventArgs e) => Close();
+
+    private async void OnOpenDiagnosisFolderClicked(object sender, RoutedEventArgs e)
+    {
+        if (!_diagnosticLogDirectory.TryEnsureExists())
+        {
+            MessageBox.Show(
+                this,
+                "Der lokale Diagnoseordner konnte nicht geöffnet werden.",
+                "BorstWerk E-Rechnung",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        await _shellService
+            .OpenFolderAsync(_diagnosticLogDirectory.DirectoryPath)
+            .ConfigureAwait(true);
+    }
 }

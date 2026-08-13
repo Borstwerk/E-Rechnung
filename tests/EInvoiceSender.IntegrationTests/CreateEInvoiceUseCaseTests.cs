@@ -1,4 +1,7 @@
 using System.Runtime.Versioning;
+using System.Text;
+using EInvoiceSender.Core.Diagnostics;
+using EInvoiceSender.Core.Mail;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf;
 using EInvoiceSender.Core.Services;
@@ -6,6 +9,7 @@ using EInvoiceSender.Core.Storage;
 using EInvoiceSender.Core.Tests.Support;
 using EInvoiceSender.Core.Validation;
 using EInvoiceSender.Core.Zugferd;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -385,6 +389,110 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.False(Directory.Exists(workspace));
     }
 
+    /// <summary>
+    /// Maßgeblicher Datenschutztest des persistierten Ergebnisses. Er fährt
+    /// den echten Erzeugungsweg und den E-Mail-Entwurf mit bewusst markanten
+    /// Nutzdaten und durchsucht danach jede tatsächlich geschriebene
+    /// Diagnosezeile.
+    /// </summary>
+    [Fact]
+    public async Task PersistenteDiagnoselogsEnthaltenKeineRechnungsOderKundendaten()
+    {
+        string logDirectory = TempDirectory("PRIVACY-LOG-DIRECTORY-9F3");
+        string sourceDirectory = TempDirectory("PRIVACY-INPUT-DIRECTORY-9F3");
+        string outputDirectory = TempDirectory("PRIVACY-OUTPUT-DIRECTORY-9F3");
+        string draftDirectory = TempDirectory("PRIVACY-DRAFT-DIRECTORY-9F3");
+        string sourcePath = Path.Combine(sourceDirectory, "PRIVACY-INPUT-FILENAME-9F3.pdf");
+
+        byte[] sourcePdf =
+        [
+            .. TestPdfFactory.CreateSimplePdf(),
+            .. Encoding.UTF8.GetBytes("\n% PRIVACY-PDF-CONTENT-9F3\n"),
+        ];
+        await File.WriteAllBytesAsync(sourcePath, sourcePdf, TestContext.Current.CancellationToken);
+
+        Invoice invoice = PrivacyInvoice();
+
+        using (var provider = new LocalFileLoggerProvider(new DiagnosticLogOptions(logDirectory)))
+        using (ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+                   .SetMinimumLevel(LogLevel.Information)
+                   .AddProvider(provider)))
+        {
+            CreateEInvoiceResult result = await BuildUseCase(loggerFactory).CreateAsync(
+                new CreateEInvoiceRequest(
+                    SourcePdfPath: sourcePath,
+                    Invoice: invoice,
+                    ContentMatchConfirmed: true,
+                    OutputDirectory: outputDirectory),
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.Succeeded, Describe(result));
+
+            byte[] attachment = await File.ReadAllBytesAsync(
+                result.OutputFile!.FullPath,
+                TestContext.Current.CancellationToken);
+            var mail = new EmlDraftService(
+                loggerFactory.CreateLogger<EmlDraftService>(),
+                draftDirectory);
+            EmailDraftResult draft = await mail.CreateDraftAsync(
+                new EmailDraft(
+                    From: "PRIVACY-SELLER-MAIL-9F3@example.invalid",
+                    FromDisplayName: "PRIVACY-SELLER-NAME-9F3 GmbH",
+                    To: ["PRIVACY-BUYER-MAIL-9F3@example.invalid"],
+                    Subject: "PRIVACY-INVOICE-NUMBER-9F3",
+                    Body: "PRIVACY-MAIL-BODY-9F3",
+                    Attachments:
+                    [
+                        new EmailAttachment(
+                            "PRIVACY-OUTPUT-FILENAME-9F3.pdf",
+                            "application/pdf",
+                            attachment),
+                    ]),
+                TestContext.Current.CancellationToken);
+
+            Assert.True(draft.Succeeded, draft.Message);
+        }
+
+        string[] logFiles = Directory.GetFiles(logDirectory, "diagnose-*.log");
+        string persisted = string.Join('\n', logFiles.Select(File.ReadAllText));
+
+        // Positiver Beleg, dass der echte Ablauf tatsächlich in genau diese
+        // Dateien geschrieben hat und der Test nicht bloß ein leeres Log prüft.
+        Assert.Contains("event=2020", persisted, StringComparison.Ordinal);
+        Assert.Contains("event=5001", persisted, StringComparison.Ordinal);
+        Assert.Contains("event=6001", persisted, StringComparison.Ordinal);
+        Assert.Contains("event=7001", persisted, StringComparison.Ordinal);
+
+        string[] forbiddenMarkers =
+        [
+            "PRIVACY-SELLER-NAME-9F3",
+            "PRIVACY-BUYER-NAME-9F3",
+            "PRIVACY-INVOICE-NUMBER-9F3",
+            "PRIVACY-SELLER-MAIL-9F3",
+            "PRIVACY-BUYER-MAIL-9F3",
+            "PRIVACY-STREET-9F3",
+            "DE89370400440532013000",
+            "DE89 3704 0044 0532 0130 00",
+            "MARKDEFFXXX",
+            "DE999999999",
+            "99/888/77777",
+            "PRIVACY-POSITION-9F3",
+            "PRIVACY-PDF-CONTENT-9F3",
+            "PRIVACY-XML-CONTENT-9F3",
+            "PRIVACY-MAIL-BODY-9F3",
+            "PRIVACY-INPUT-DIRECTORY-9F3",
+            "PRIVACY-INPUT-FILENAME-9F3",
+            "PRIVACY-OUTPUT-DIRECTORY-9F3",
+            "PRIVACY-OUTPUT-FILENAME-9F3",
+            "PRIVACY-DRAFT-DIRECTORY-9F3",
+        ];
+
+        foreach (string marker in forbiddenMarkers)
+        {
+            Assert.DoesNotContain(marker, persisted, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     // ------------------------------------------------------------------ Aufbau
 
     private EInvoiceService BuildUseCase(params IExternalDocumentValidator[] validators)
@@ -406,6 +514,38 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             validators,
             NullLogger<EInvoiceService>.Instance);
 
+    private EInvoiceService BuildUseCase(ILoggerFactory loggerFactory)
+    {
+        var analyzer = new PdfAnalyzer(_reader, loggerFactory.CreateLogger<PdfAnalyzer>());
+        var renderProbe = new PdfiumRenderProbe(loggerFactory.CreateLogger<PdfiumRenderProbe>());
+        var preflight = new PdfPreflightService(
+            analyzer,
+            renderProbe,
+            loggerFactory.CreateLogger<PdfPreflightService>());
+        var directComposer = new PdfAInvoiceComposer(
+            analyzer,
+            loggerFactory.CreateLogger<PdfAInvoiceComposer>());
+        var rasterBuilder = new RasterizedPdfBuilder(
+            loggerFactory.CreateLogger<RasterizedPdfBuilder>());
+        var rasterComposer = new RasterFallbackComposer(
+            rasterBuilder,
+            loggerFactory.CreateLogger<RasterFallbackComposer>());
+
+        return new EInvoiceService(
+            preflight,
+            new En16931RuleValidator(new FixedClock(FixedNow)),
+            _writer,
+            _reader,
+            directComposer,
+            rasterComposer,
+            analyzer,
+            new FileStorage(loggerFactory.CreateLogger<FileStorage>()),
+            new TemporaryWorkspaceFactory(),
+            new StubClock(FixedNow),
+            [],
+            loggerFactory.CreateLogger<EInvoiceService>());
+    }
+
     private CreateEInvoiceRequest Request(string sourcePath)
         => new(
             SourcePdfPath: sourcePath,
@@ -415,6 +555,47 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 
     private static Invoice BaseInvoice()
         => InvoiceScenarios.ByKey("01-dienstleistung-19").Invoice;
+
+    private static Invoice PrivacyInvoice()
+    {
+        Invoice baseline = BaseInvoice();
+
+        return baseline with
+        {
+            InvoiceNumber = "PRIVACY-INVOICE-NUMBER-9F3",
+            Seller = baseline.Seller with
+            {
+                Name = "PRIVACY-SELLER-NAME-9F3 GmbH",
+                Address = baseline.Seller.Address with { Street = "PRIVACY-STREET-9F3 42" },
+                Email = "PRIVACY-SELLER-MAIL-9F3@example.invalid",
+                VatId = "DE999999999",
+                TaxNumber = "99/888/77777",
+            },
+            Buyer = baseline.Buyer with
+            {
+                Name = "PRIVACY-BUYER-NAME-9F3 AG",
+                Address = baseline.Buyer.Address with { Street = "PRIVACY-STREET-9F3 84" },
+                Email = "PRIVACY-BUYER-MAIL-9F3@example.invalid",
+            },
+            Lines =
+            [
+                baseline.Lines[0] with
+                {
+                    Name = "PRIVACY-POSITION-9F3",
+                    Description = "PRIVACY-PDF-CONTENT-9F3",
+                },
+            ],
+            Payment = baseline.Payment! with
+            {
+                BankAccount = new BankAccount(
+                    "PRIVACY-SELLER-NAME-9F3 GmbH",
+                    Iban.Parse("DE89370400440532013000"),
+                    "MARKDEFFXXX"),
+                Reference = "PRIVACY-INVOICE-NUMBER-9F3",
+            },
+            Note = "PRIVACY-XML-CONTENT-9F3",
+        };
+    }
 
     private static string Describe(CreateEInvoiceResult result)
         => string.Join(
@@ -428,6 +609,14 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         string path = TestPdfFactory.WriteToTempFile(content);
         _temporaryPaths.Add(path);
 
+        return path;
+    }
+
+    private string TempDirectory(string name)
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"{name}-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(path);
+        _temporaryPaths.Add(path);
         return path;
     }
 

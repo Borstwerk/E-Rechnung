@@ -238,3 +238,28 @@ Reproduzierbarkeit bedeutet für Releaseartefakte gleiche Schritte,
 Dateiauswahl, Struktur, Namen und Validierungen. Byteidentische MSI- oder
 ZIP-Dateien werden nicht verlangt; insbesondere darf WiX pro Bau einen neuen
 PackageCode erzeugen.
+
+## Lokales Diagnoselog
+
+`LocalFileLoggerTests` prüft das tatsächliche UTF-8-Dateiformat, das
+Ein-MiB-Limit, die Begrenzung abgeschlossener Sitzungen, gesperrte aktive Logs,
+parallele Provider sowie nicht beschreibbare Verzeichnisse und einen absichtlich
+fehlschlagenden Writer. Kein Fehler des Providers darf beim Aufrufer ankommen.
+
+Der Exception-Test baut Message, Data, InnerException und einen Pfad mit
+markanten Geheimwerten. Im Log müssen Exception-Typkette und Methodenstack
+stehen; Geheimwerte, Quelldateiname und Zeilennummer dürfen nicht vorkommen.
+
+Der maßgebliche Privacy-Test fährt den echten Erzeugungs- und E-Mail-Weg mit
+markanten Werten für Namen, Rechnungsnummer, Anschrift, E-Mail, IBAN/BIC,
+USt-ID, Steuernummer, Rechnungsposition, PDF-/XML-Inhalt sowie Ein- und
+Ausgabedateinamen. Anschließend liest er sämtliche erzeugten Sitzungslogs und
+weist nach, dass keines dieser Merkmale vorkommt. Positive Zusicherungen auf
+die Events von Preflight, Speichern, Erzeugung und E-Mail verhindern, dass ein
+leeres Log versehentlich als Datenschutzbeleg gilt.
+
+`DiagnosticLoggingSourceTests` ist eine zusätzliche, bewusst nachgeordnete
+Schutzschicht: verdächtige Platzhalternamen, rohe Exceptiontexte,
+Quelldatei-Stacks, abweichende Pfad-/Grenzdefinitionen und Netzwerk- oder
+Uploadbausteine werden abgewiesen. Diese Quellregeln ersetzen den Test der
+tatsächlich persistierten Dateien nicht.

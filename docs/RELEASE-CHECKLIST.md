@@ -147,6 +147,10 @@ Benutzer unterstützt:
 - [ ] `.eml` im klassischen Outlook praktisch öffnen.
 - [ ] `.eml` im neuen Outlook praktisch öffnen.
 - [ ] DPAPI-Schutz der IBAN in den Einstellungen prüfen.
+- [ ] Einen vollständigen Testvorgang durchführen und „Über“ → „Diagnoseordner öffnen“ wählen; geöffnet wird `%LOCALAPPDATA%\EInvoiceSender\Diagnose`.
+- [ ] Das Sitzungslog enthält Start, technische Verarbeitung und reguläres Ende, aber keine Ein-/Ausgabedateinamen oder Rechnungs-/Kundendaten.
+- [ ] Es findet keine automatische Übertragung, Freigabe oder Versendung der Diagnoseprotokolle statt.
+- [ ] Mehr als zehn abgeschlossene Sitzungslogs werden beim nächsten Start auf zehn begrenzt; aktive Logs paralleler Instanzen bleiben unberührt.
 
 ## Abschluss
 

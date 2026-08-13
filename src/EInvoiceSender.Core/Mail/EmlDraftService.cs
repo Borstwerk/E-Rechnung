@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using EInvoiceSender.Core.Services;
@@ -60,6 +61,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(draft);
+        var stopwatch = Stopwatch.StartNew();
 
         Uri fallback = BuildMailtoUri(draft);
 
@@ -96,7 +98,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
 
             File.Move(temporaryPath, path, overwrite: true);
 
-            LogDraftCreated(_logger, fileName, draft.Attachments.Count);
+            LogDraftCreated(_logger, draft.Attachments.Count, stopwatch.ElapsedMilliseconds);
 
             return new EmailDraftResult(
                 Succeeded: true,
@@ -108,7 +110,7 @@ public sealed partial class EmlDraftService : IEmailDraftService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException)
         {
-            LogDraftFailed(_logger, ex.GetType().Name);
+            LogDraftFailed(_logger, ex.GetType().Name, stopwatch.ElapsedMilliseconds);
 
             // Ein misslungener Entwurf darf den Anwender nicht blockieren:
             // Die Rechnung ist bereits erzeugt und gespeichert.
@@ -252,11 +254,13 @@ public sealed partial class EmlDraftService : IEmailDraftService
 
     [LoggerMessage(
         EventId = 7001, Level = LogLevel.Information,
-        Message = "E-Mail-Entwurf erzeugt: {FileName}, {AttachmentCount} Anhang/Anhänge")]
-    private static partial void LogDraftCreated(ILogger logger, string fileName, int attachmentCount);
+        Message = "E-Mail-Entwurf technisch erzeugt: {AttachmentCount} Anhang/Anhänge, {Milliseconds} ms")]
+    private static partial void LogDraftCreated(
+        ILogger logger, int attachmentCount, long milliseconds);
 
     [LoggerMessage(
         EventId = 7002, Level = LogLevel.Warning,
-        Message = "E-Mail-Entwurf konnte nicht erzeugt werden ({Reason}).")]
-    private static partial void LogDraftFailed(ILogger logger, string reason);
+        Message = "E-Mail-Entwurf konnte nicht erzeugt werden ({Reason}), {Milliseconds} ms.")]
+    private static partial void LogDraftFailed(
+        ILogger logger, string reason, long milliseconds);
 }

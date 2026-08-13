@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Validation;
@@ -46,6 +47,7 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
+        var stopwatch = Stopwatch.StartNew();
         var findings = new ValidationReportBuilder();
         string fileName = Path.GetFileName(filePath);
 
@@ -132,7 +134,12 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
                 ? PreflightVerdict.SuitableWithWarnings
                 : PreflightVerdict.Suitable;
 
-        LogPreflight(_logger, fileName, verdict, route, analysis.UpgradeBlockers.Count);
+        LogPreflight(
+            _logger,
+            verdict,
+            route,
+            analysis.UpgradeBlockers.Count,
+            stopwatch.ElapsedMilliseconds);
 
         return new PdfPreflightReport(
             Verdict: verdict,
@@ -482,11 +489,11 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
 
     [LoggerMessage(
         EventId = 2020, Level = LogLevel.Information,
-        Message = "Eingangsprüfung {FileName}: {Verdict}, Weg {Route}, {BlockerCount} Hindernisse")]
+        Message = "Eingangsprüfung abgeschlossen: {Verdict}, Weg {Route}, {BlockerCount} Hindernisse, {Milliseconds} ms")]
     private static partial void LogPreflight(
         ILogger logger,
-        string fileName,
         PreflightVerdict verdict,
         PdfProcessingRoute route,
-        int blockerCount);
+        int blockerCount,
+        long milliseconds);
 }

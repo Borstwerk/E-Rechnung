@@ -122,7 +122,11 @@ public partial class MainWindow : Window
 
     /// <summary>Öffnet den Info-Bereich.</summary>
     private void OnAboutClicked(object sender, RoutedEventArgs e)
-        => new AboutWindow { Owner = this }.ShowDialog();
+    {
+        AboutWindow dialog = App.Services.GetRequiredService<AboutWindow>();
+        dialog.Owner = this;
+        dialog.ShowDialog();
+    }
 
     /// <summary>
     /// Öffnet die Einstellungen und übernimmt danach die geänderten Vorgaben.

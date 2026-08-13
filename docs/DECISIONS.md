@@ -295,4 +295,57 @@ Publish-Ereignisse am eingebauten WiX-Dialogsatz.
 - Quelltests und die Prüfung der gebauten MSI-Tabellen sichern Featurezustand,
   Dialogpfade und native ControlEvents ab.
 
+## DEC-006 – Lokales Diagnoselog ohne Nutzdaten
+
+**Status:** gültig
+
+**Bezug:** ER-020-LOG-01
+
+### Kontext
+
+Die Anwendung verwendete bereits `Microsoft.Extensions.Logging` und
+quellgenerierte Logevents, hatte aber keinen persistierenden Provider. Einige
+dieser Ereignisse enthielten Rechnungsnummern, Dokumenthashes, Datei- oder
+Werkzeugpfade. Eine unveränderte Dateipersistenz hätte damit genau die Daten
+gesammelt, die das Diagnoselog ausschließen soll.
+
+### Entscheidung
+
+Ein kleiner eigener `ILoggerProvider` schreibt ausschließlich lokale
+Sitzungslogs nach `%LOCALAPPDATA%\EInvoiceSender\Diagnose`. Eine zufällige
+Session-ID gilt nur für den jeweiligen Programmlauf. Es gibt keine dauerhafte
+Benutzer-, Rechner- oder Installationskennung und keine Netzwerkfunktion.
+
+Vor der Provideraktivierung wurden alle bestehenden Logevents geprüft.
+Nutzdaten werden nicht nachträglich geschwärzt, sondern gar nicht erst an den
+Logger übergeben. Dateipfade und -namen werden weggelassen oder durch feste
+technische Kategorien ersetzt. Persistierte Exceptions bestehen nur aus der
+Typkette und höchstens 40 Methodennamen; Message, Data, Argumentwerte,
+Quelldateien und Zeilennummern werden nicht gelesen.
+
+Jeder Programmlauf erhält eine eigene UTF-8-Datei. Eine Datei ist auf ein MiB
+begrenzt, zehn abgeschlossene Dateien werden aufbewahrt. Aktive oder gesperrte
+Dateien werden bei der Rotation übersprungen. Jeder Initialisierungs-, Schreib-,
+Rotations- oder Dispose-Fehler schaltet höchstens das Logging ab und läuft nie
+in den Anwendungspfad zurück.
+
+### Grund
+
+Die bestehende Logging-Abstraktion genügt; eine weitere Bibliothek und deren
+Lizenz-/Runtimepflege wären für Dateiausgabe und einfache Rotation unnötig.
+Sitzungsdateien trennen einzelne Fehlerläufe verständlich. Harte Mengen- und
+Größengrenzen verhindern unbegrenztes Wachstum. Datenminimierung an der Quelle
+ist belastbarer als eine unvollständige Liste regulärer Ausdrücke.
+
+### Konsequenzen
+
+- Neue Logevents dürfen nur kontrollierte technische Werte erhalten.
+- Exceptionobjekte werden ausschließlich vom sicheren Formatter des Providers
+  ausgewertet.
+- Der vollständige Privacy-Test durchsucht tatsächlich erzeugte Logs nach
+  markanten Rechnungs-, Kunden-, Bank-, Mail-, PDF-, XML- und Pfadwerten.
+- „Diagnoseordner öffnen“ zeigt nur den zentral berechneten lokalen Ordner; es
+  gibt keinen Upload, Versand oder Freigabemechanismus.
+- Die Anwendung bleibt bei jedem Fehler des Loggings uneingeschränkt nutzbar.
+
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

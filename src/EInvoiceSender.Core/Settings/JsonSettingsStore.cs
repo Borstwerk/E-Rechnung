@@ -115,7 +115,7 @@ public sealed partial class JsonSettingsStore : ISettingsStore
         {
             // Eine beschädigte Einstellungsdatei darf den Programmstart nicht
             // verhindern. Der Benutzer beginnt dann mit leeren Vorgaben.
-            LogReadFailed(_logger, Path.GetFileName(path), ex.GetType().Name);
+            LogReadFailed(_logger, SettingsArea(path), ex.GetType().Name);
 
             return null;
         }
@@ -213,8 +213,8 @@ public sealed partial class JsonSettingsStore : ISettingsStore
 
     [LoggerMessage(
         EventId = 8001, Level = LogLevel.Warning,
-        Message = "Einstellungsdatei {FileName} konnte nicht gelesen werden ({Reason}). Es werden Vorgaben verwendet.")]
-    private static partial void LogReadFailed(ILogger logger, string fileName, string reason);
+        Message = "{SettingsArea} konnten nicht gelesen werden ({Reason}). Es werden Vorgaben verwendet.")]
+    private static partial void LogReadFailed(ILogger logger, string settingsArea, string reason);
 
     [LoggerMessage(
         EventId = 8002, Level = LogLevel.Warning,
@@ -225,4 +225,9 @@ public sealed partial class JsonSettingsStore : ISettingsStore
         EventId = 8003, Level = LogLevel.Warning,
         Message = "Ein geschützter Wert konnte nicht entschlüsselt werden und wurde verworfen.")]
     private static partial void LogUnprotectFailed(ILogger logger);
+
+    private string SettingsArea(string path)
+        => string.Equals(path, TemplatePath, StringComparison.Ordinal)
+            ? "Firmenvorlage"
+            : "Anwendungseinstellungen";
 }

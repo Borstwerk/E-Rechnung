@@ -133,7 +133,7 @@ public sealed partial class ProcessRunner : IProcessRunner
 
         int exitCode = timedOut ? -1 : process.ExitCode;
 
-        LogProcessFinished(_logger, fileName, exitCode, stopwatch.ElapsedMilliseconds, timedOut);
+        LogProcessFinished(_logger, exitCode, stopwatch.ElapsedMilliseconds, timedOut);
 
         return new ProcessResult(
             ExitCode: exitCode,
@@ -174,7 +174,7 @@ public sealed partial class ProcessRunner : IProcessRunner
 
     [LoggerMessage(
         EventId = 3001, Level = LogLevel.Information,
-        Message = "Externes Werkzeug {FileName} beendet: Exitcode {ExitCode}, {Milliseconds} ms, Zeitüberschreitung: {TimedOut}")]
+        Message = "Externes Werkzeug beendet: Exitcode {ExitCode}, {Milliseconds} ms, Zeitüberschreitung: {TimedOut}")]
     private static partial void LogProcessFinished(
-        ILogger logger, string fileName, int exitCode, long milliseconds, bool timedOut);
+        ILogger logger, int exitCode, long milliseconds, bool timedOut);
 }

@@ -73,9 +73,7 @@ public sealed partial class FileStorage : IFileStorage
         }
 
         string checksum = ComputeSha256(content.Span);
-        string writtenName = Path.GetFileName(targetPath);
-
-        LogFileWritten(_logger, writtenName, content.Length);
+        LogFileWritten(_logger, content.Length);
 
         return new StoredFile(targetPath, checksum, content.Length);
     }
@@ -193,8 +191,8 @@ public sealed partial class FileStorage : IFileStorage
 
     [LoggerMessage(
         EventId = 5001, Level = LogLevel.Information,
-        Message = "Datei geschrieben: {FileName}, {ByteCount} Bytes")]
-    private static partial void LogFileWritten(ILogger logger, string fileName, int byteCount);
+        Message = "Ausgabedatei technisch geschrieben: {ByteCount} Bytes")]
+    private static partial void LogFileWritten(ILogger logger, int byteCount);
 }
 
 /// <summary>

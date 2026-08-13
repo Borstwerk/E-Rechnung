@@ -211,6 +211,26 @@ tiefer verschachtelt als `MaxFormDepth`, gilt die Einbettung als **nicht
 bestätigt** – nicht als in Ordnung. Eine Tiefengrenze, die nach außen öffnet,
 wäre selbst der Weg an der Prüfung vorbei.
 
+## Lokales Diagnoselog
+
+`Microsoft.Extensions.Logging` bleibt die einzige Logging-Abstraktion. Der
+kleine `LocalFileLoggerProvider` im Core schreibt pro Programmlauf eine lokale
+UTF-8-Datei nach `%LOCALAPPDATA%\EInvoiceSender\Diagnose`. Die Oberfläche
+bezieht denselben `DiagnosticLogDirectory` aus der Dependency Injection und
+kann genau diesen Ordner über den vorhandenen Windows-Shelldienst öffnen.
+
+Die Datenschutzgrenze liegt vor dem Provider: Logevents erhalten nur feste
+technische Kategorien, Zähler, Statuswerte, Fassungen und Laufzeiten. Namen,
+Pfade, Rechnungsdaten und Dokumentinhalte werden nicht übergeben. Für eine
+übergebene Exception ignoriert der Provider Message und Data vollständig und
+schreibt nur Typkette und Methodennamen ohne PDB-Datei- oder Zeilenangaben.
+
+Eine Sitzung endet spätestens bei einem MiB. Beim nächsten Start bleiben bis
+zu zehn abgeschlossene Logs erhalten. Gesperrte Dateien anderer laufender
+Instanzen werden übersprungen. Der Provider enthält absichtlich keinen
+Netzwerkbaustein, keine Warteschlange und keinen Fehler-Rückkanal: Kann er
+nicht schreiben oder rotieren, deaktiviert er nur sich selbst.
+
 ## Abhängigkeiten
 
 `App` verweist auf `Core`. `Core` verweist auf nichts aus der Projektmappe.

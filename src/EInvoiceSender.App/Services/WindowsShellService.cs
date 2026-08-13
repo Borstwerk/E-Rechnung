@@ -27,7 +27,7 @@ public sealed partial class WindowsShellService : IShellService
 
         if (!Directory.Exists(directory))
         {
-            LogTargetMissing(_logger, directory);
+            LogTargetMissing(_logger, "Ordner");
 
             return Task.CompletedTask;
         }
@@ -42,7 +42,7 @@ public sealed partial class WindowsShellService : IShellService
 
         if (!File.Exists(filePath))
         {
-            LogTargetMissing(_logger, filePath);
+            LogTargetMissing(_logger, "Datei");
 
             return Task.CompletedTask;
         }
@@ -59,7 +59,7 @@ public sealed partial class WindowsShellService : IShellService
         // Wert kein beliebiges Programm starten.
         if (uri.Scheme is not ("mailto" or "http" or "https" or "file"))
         {
-            LogSchemeRejected(_logger, uri.Scheme);
+            LogSchemeRejected(_logger);
 
             return Task.CompletedTask;
         }
@@ -86,11 +86,11 @@ public sealed partial class WindowsShellService : IShellService
         return Task.CompletedTask;
     }
 
-    [LoggerMessage(EventId = 9001, Level = LogLevel.Warning, Message = "Ziel nicht gefunden: {Target}")]
-    private static partial void LogTargetMissing(ILogger logger, string target);
+    [LoggerMessage(EventId = 9001, Level = LogLevel.Warning, Message = "Technisches Ziel nicht gefunden: {TargetKind}")]
+    private static partial void LogTargetMissing(ILogger logger, string targetKind);
 
-    [LoggerMessage(EventId = 9002, Level = LogLevel.Warning, Message = "Schema abgelehnt: {Scheme}")]
-    private static partial void LogSchemeRejected(ILogger logger, string scheme);
+    [LoggerMessage(EventId = 9002, Level = LogLevel.Warning, Message = "Nicht zugelassenes URI-Schema abgelehnt")]
+    private static partial void LogSchemeRejected(ILogger logger);
 
     [LoggerMessage(EventId = 9003, Level = LogLevel.Warning, Message = "Öffnen fehlgeschlagen ({Reason}).")]
     private static partial void LogStartFailed(ILogger logger, string reason);
