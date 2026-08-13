@@ -78,8 +78,7 @@
     liegen außerhalb des Installationsordners und sind vom Wechsel des
     Zielverzeichnisses nicht betroffen.
 -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
-     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
   <Package Name="$(ProductName)"
            Manufacturer="$(ProductManufacturer)"
@@ -121,7 +120,13 @@
     <!-- Lizenzhinweise der Drittkomponenten, im Installationsdialog sichtbar -->
     <WixVariable Id="WixUILicenseRtf" Value="Lizenzhinweise.rtf" />
 
-    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <!--
+      Eigene, an WixUI_InstallDir angelehnte Dialogsequenz. Sie fügt genau
+      einen Erstinstallationsdialog für die Desktopverknüpfung ein, ohne den
+      eingebauten Dialogsatz durch konkurrierende Publish-Ereignisse zu
+      verändern. Repair und Major Upgrade behalten ihren Featurezustand.
+    -->
+    <UIRef Id="BorstWerk_InstallDir" />
 
     <Feature Id="Hauptfunktion" Title="$(ProductName)" Level="1"
              Description="Die Anwendung und alle benötigten Bestandteile.">
@@ -129,7 +134,7 @@
       <ComponentRef Id="StartmenuVerknuepfung" />
     </Feature>
 
-    <Feature Id="Desktopverknuepfung" Title="Verknüpfung auf dem Desktop" Level="2"
+    <Feature Id="Desktopverknuepfung" Title="Verknüpfung auf dem Desktop" Level="1"
              Description="Legt zusätzlich eine Verknüpfung auf dem Desktop an.">
       <ComponentRef Id="DesktopVerknuepfung" />
     </Feature>

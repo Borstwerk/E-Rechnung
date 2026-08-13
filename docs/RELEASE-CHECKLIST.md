@@ -94,22 +94,30 @@ Zielsystem: Windows 11 x64 ohne .NET SDK, Java, Mustang oder veraPDF.
 - [ ] MSI ohne erhöhte Rechte starten; für die normale Benutzerinstallation darf keine UAC-Rückfrage erscheinen.
 - [ ] Anwendung startet.
 - [ ] Installationspfad entspricht der freigegebenen Installerkonfiguration.
-- [ ] Startmenüeintrag vorhanden.
-- [ ] Desktopverknüpfung nur bei Auswahl vorhanden.
+- [ ] Bei sauberer Erstinstallation erscheint „Desktop-Verknüpfung erstellen“ standardmäßig aktiviert.
+- [ ] Erstinstallation mit aktivierter Option: Startmenüeintrag und genau eine Desktopverknüpfung sind vorhanden; Ziel ist die installierte `EInvoiceSender.exe`, das Symbol gehört zu BorstWerk E-Rechnung.
+- [ ] Erstinstallation mit abgewählter Option: Startmenüeintrag ist vorhanden, Desktopverknüpfung fehlt.
+- [ ] Im Dialog zurück- und wieder vorgehen, Auswahl ändern und prüfen, dass nur der zuletzt bestätigte Zustand installiert wird.
+- [ ] Stille Erstinstallation ohne UI legt Startmenü- und Desktopverknüpfung standardmäßig an.
+- [ ] Repair nach aktivierter Option zeigt die Auswahl nicht erneut und behält genau eine Desktopverknüpfung.
+- [ ] Repair nach abgewählter Option zeigt die Auswahl nicht erneut und legt keine Desktopverknüpfung an.
 - [ ] Upgrade von der letzten veröffentlichten Version auf den Releasekandidaten durchführen.
+- [ ] Upgrade zeigt die Desktopoption nicht erneut und übernimmt den bisherigen Featurezustand.
+- [ ] Upgrade einer Installation mit Desktopverknüpfung behält genau eine Desktopverknüpfung; ohne vorherige Desktopverknüpfung bleibt sie abwesend.
 - [ ] Nach Upgrade existiert genau ein Programmeintrag.
 - [ ] Keine doppelten Startmenü- oder Desktopverknüpfungen.
 - [ ] Gespeicherte Firmendaten und Einstellungen bleiben erhalten.
 - [ ] Daten unter `%LOCALAPPDATA%\EInvoiceSender` bleiben erhalten.
 - [ ] Erneute Installation derselben Version erzeugt keine zweite Produktinstanz.
 - [ ] Downgrade auf die vorherige Version wird sauber verhindert beziehungsweise verständlich behandelt.
-- [ ] Deinstallation entfernt Programm und Verknüpfungen, nicht aber die Benutzerdaten.
+- [ ] Deinstallation entfernt eine vom Installer angelegte Desktopverknüpfung sowie den Startmenüeintrag, nicht aber die Benutzerdaten.
 - [ ] Symbol in Taskleiste, Startmenü, Explorer und „Installierte Apps“ prüfen.
 
 Falls die freigegebene Installerarchitektur weiterhin eine Installation für alle
 Benutzer unterstützt:
 
-- [ ] `msiexec /i BorstWerk-E-Rechnung-Setup.msi MSIINSTALLPERUSER=""` prüfen; UAC ist hier erwartet und der Zielpfad muss der freigegebenen Machine-Installation entsprechen.
+- [ ] `msiexec /i BorstWerk-E-Rechnung-Setup.msi MSIINSTALLPERUSER=""` jeweils mit Desktopoption an und aus prüfen; UAC ist hier erwartet und der Zielpfad muss der freigegebenen Machine-Installation entsprechen.
+- [ ] Per-machine Repair und Deinstallation im Installationsbenutzerprofil prüfen; das bestehende profilbezogene HKCU-/DesktopFolder-Verhalten darf nicht regressieren.
 
 ## Lokaler Releasebau
 

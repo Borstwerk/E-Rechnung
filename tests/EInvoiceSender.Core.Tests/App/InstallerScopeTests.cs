@@ -32,6 +32,9 @@ namespace EInvoiceSender.Core.Tests.App;
 public sealed class InstallerScopeTests
 {
     private static readonly XNamespace Wxs = "http://wixtoolset.org/schemas/v4/wxs";
+    private const string DesktopFeatureId = "Desktopverkn" + "uepfung";
+    private const string DesktopComponentId = "DesktopVerkn" + "uepfung";
+    private const string StartmenuComponentId = "StartmenuVerkn" + "uepfung";
 
     [Fact]
     public void DasPaketIstNichtMehrReinBenutzerbezogen()
@@ -197,23 +200,204 @@ public sealed class InstallerScopeTests
             ignoreCase: true);
 
     /// <summary>
-    /// Der Startmenüeintrag gehört zur Hauptfunktion, die Desktopverknüpfung
-    /// zu einer eigenen Funktion mit <c>Level="2"</c> – damit ist sie
-    /// abwählbar. Läge sie in der Hauptfunktion, bekäme sie jeder.
+    /// Der Startmenüeintrag gehört unverändert zur Hauptfunktion, die
+    /// Desktopverknüpfung zu einem eigenen Feature. Beide stehen auf Level 1:
+    /// Das ist der wirksame Default für stille und sichtbare Erstinstallationen;
+    /// die sichtbare Checkbox kann ausschließlich das Desktopfeature abwählen.
     /// </summary>
     [Fact]
     public void DerStartmenüeintragIstFestUndDerDesktopeintragWählbar()
     {
-        XElement[] features = [.. Package().Elements(Wxs + "Feature")];
+        XElement haupt = Feature("Hauptfunktion");
+        XElement desktop = Feature(DesktopFeatureId);
 
-        XElement haupt = Assert.Single(features, f => f.Attribute("Level")?.Value == "1");
-        XElement desktop = Assert.Single(features, f => f.Attribute("Level")?.Value == "2");
+        Assert.Equal("1", haupt.Attribute("Level")?.Value);
+        Assert.Equal("1", desktop.Attribute("Level")?.Value);
+        Assert.Equal(["AnwendungsDateien", StartmenuComponentId],
+            KomponentenUndGruppenIn(haupt));
+        Assert.Equal([DesktopComponentId], KomponentenUndGruppenIn(desktop));
 
-        // Gesucht wird über den Zielordner, nicht über die Kennung: Welche
-        // Verknüpfung wohin gehört, ist die Aussage – wie die Komponente
-        // heißt, ist Nebensache und darf sich ändern.
-        Assert.Contains(KomponentenIn(haupt), id => id == KomponenteFür("StartmenuOrdner"));
-        Assert.Contains(KomponentenIn(desktop), id => id == KomponenteFür("DesktopFolder"));
+        Assert.Equal(StartmenuComponentId, KomponenteFür("StartmenuOrdner"));
+        Assert.Equal(DesktopComponentId, KomponenteFür("DesktopFolder"));
+
+        XElement startmenuShortcut = Shortcut("StartmenuEintrag");
+        XElement desktopShortcut = Shortcut("DesktopEintrag");
+        Assert.Equal("[INSTALLFOLDER]EInvoiceSender.exe", startmenuShortcut.Attribute("Target")?.Value);
+        Assert.Equal("[INSTALLFOLDER]EInvoiceSender.exe", desktopShortcut.Attribute("Target")?.Value);
+
+        XElement desktopKeyPath = Assert.Single(
+            Component(DesktopComponentId).Elements(Wxs + "RegistryValue"));
+        Assert.Equal("HKCU", desktopKeyPath.Attribute("Root")?.Value);
+        Assert.Equal("Desktop", desktopKeyPath.Attribute("Name")?.Value);
+        Assert.Equal("yes", desktopKeyPath.Attribute("KeyPath")?.Value);
+    }
+
+    [Fact]
+    public void DieDesktopoptionVerwendetNurNativeMsiFeatureereignisse()
+        => Assert.Empty(DesktopOptionViolations(Document("Package.wxs"), Document("InstallerUI.wxs")));
+
+    [Fact]
+    public void DieStandardnavigationDesInstallDirDialogsatzesBleibtErhalten()
+    {
+        XDocument ui = Document("InstallerUI.wxs");
+        (string Dialog, string Control, string Event, string Value, string? Condition)[] expected =
+        [
+            ("ExitDialog", "Finish", "EndDialog", "Return", null),
+            ("WelcomeDlg", "Next", "NewDialog", "LicenseAgreementDlg", "NOT Installed"),
+            ("WelcomeDlg", "Next", "NewDialog", "VerifyReadyDlg", "Installed AND PATCH"),
+            ("LicenseAgreementDlg", "Back", "NewDialog", "WelcomeDlg", null),
+            ("LicenseAgreementDlg", "Next", "NewDialog", "InstallDirDlg", "LicenseAccepted = \"1\""),
+            ("InstallDirDlg", "Back", "NewDialog", "LicenseAgreementDlg", null),
+            ("MaintenanceWelcomeDlg", "Next", "NewDialog", "MaintenanceTypeDlg", null),
+            ("MaintenanceTypeDlg", "RepairButton", "NewDialog", "VerifyReadyDlg", null),
+            ("MaintenanceTypeDlg", "RemoveButton", "NewDialog", "VerifyReadyDlg", null),
+            ("MaintenanceTypeDlg", "Back", "NewDialog", "MaintenanceWelcomeDlg", null),
+            ("VerifyReadyDlg", "Back", "NewDialog", "MaintenanceTypeDlg", "Installed AND NOT PATCH"),
+            ("VerifyReadyDlg", "Back", "NewDialog", "WelcomeDlg", "Installed AND PATCH"),
+        ];
+
+        foreach ((string dialog, string control, string eventName, string value, string? condition) in expected)
+        {
+            XElement publish = Publish(ui, dialog, control, eventName, value);
+            Assert.Equal(condition, publish.Attribute("Condition")?.Value);
+        }
+
+        string[] builtInActions =
+        [
+            .. ui.Descendants(Wxs + "Publish")
+                .Where(element => element.Attribute("Event")?.Value == "DoAction")
+                .Select(element => element.Attribute("Value")?.Value ?? string.Empty)
+                .OrderBy(value => value, StringComparer.Ordinal),
+        ];
+        Assert.Equal(
+            ["WixUIPrintEula_X64", "WixUIValidatePath_X64", "WixUIValidatePath_X64"],
+            builtInActions);
+        Assert.Contains(ui.Descendants(Wxs + "UIRef"),
+            element => element.Attribute("Id")?.Value == "WixUI_Common");
+        Assert.Equal("1", Property(ui, "ARPNOMODIFY").Attribute("Value")?.Value);
+    }
+
+    /// <summary>
+    /// Negativnachweis: Die Strukturprüfung muss typische Drifts einzeln
+    /// erkennen. Die mutierten Dokumente existieren ausschließlich im
+    /// Arbeitsspeicher; produktive Dateien und MSI werden nicht verändert.
+    /// </summary>
+    [Theory]
+    [InlineData("Level")]
+    [InlineData("Default")]
+    [InlineData("Startmenu")]
+    [InlineData("UpgradeCondition")]
+    [InlineData("FeatureEvent")]
+    [InlineData("CustomAction")]
+    public void DieDesktopstrukturprüfungErkenntUnzulässigeAbweichungen(string mutation)
+    {
+        var package = new XDocument(Document("Package.wxs"));
+        var ui = new XDocument(Document("InstallerUI.wxs"));
+
+        switch (mutation)
+        {
+            case "Level":
+                Feature(package, DesktopFeatureId).SetAttributeValue("Level", "2");
+                break;
+            case "Default":
+                Property(ui, "INSTALLDESKTOPSHORTCUT").SetAttributeValue("Value", "0");
+                break;
+            case "Startmenu":
+                Feature(package, "Hauptfunktion")
+                    .Elements(Wxs + "ComponentRef")
+                    .Single(element => element.Attribute("Id")?.Value == StartmenuComponentId)
+                    .Remove();
+                Feature(package, DesktopFeatureId)
+                    .Add(new XElement(Wxs + "ComponentRef", new XAttribute("Id", StartmenuComponentId)));
+                break;
+            case "UpgradeCondition":
+                Publish(ui, "InstallDirDlg", "Next", "NewDialog", "DesktopShortcutDlg")
+                    .SetAttributeValue("Condition",
+                        "(WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID=\"1\") AND NOT Installed");
+                break;
+            case "FeatureEvent":
+                Publish(ui, "DesktopShortcutDlg", "Next", "AddLocal", DesktopFeatureId)
+                    .SetAttributeValue("Condition", "1");
+                break;
+            case "CustomAction":
+                ui.Root!.Element(Wxs + "Fragment")!
+                    .Add(new XElement(Wxs + "CustomAction", new XAttribute("Id", "DesktopCustomAction")));
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(mutation), mutation, null);
+        }
+
+        Assert.NotEmpty(DesktopOptionViolations(package, ui));
+    }
+
+    private static List<string> DesktopOptionViolations(XDocument packageDocument, XDocument uiDocument)
+    {
+        var violations = new List<string>();
+        XElement package = packageDocument.Root!.Element(Wxs + "Package")!;
+        XElement ui = Assert.Single(uiDocument.Descendants(Wxs + "UI"));
+
+        void Require(bool condition, string message)
+        {
+            if (!condition)
+            {
+                violations.Add(message);
+            }
+        }
+
+        XElement haupt = Feature(packageDocument, "Hauptfunktion");
+        XElement desktop = Feature(packageDocument, DesktopFeatureId);
+        string[] hauptRefs = KomponentenUndGruppenIn(haupt);
+        string[] desktopRefs = KomponentenUndGruppenIn(desktop);
+
+        Require(haupt.Attribute("Level")?.Value == "1", "Hauptfunktion muss Level 1 behalten.");
+        Require(desktop.Attribute("Level")?.Value == "1", "Desktopverknüpfung muss standardmäßig lokal sein.");
+        Require(hauptRefs.SequenceEqual(["AnwendungsDateien", StartmenuComponentId]),
+            "Startmenü und Anwendung müssen ausschließlich in der Hauptfunktion bleiben.");
+        Require(desktopRefs.SequenceEqual([DesktopComponentId]),
+            "Das Desktopfeature darf ausschließlich die Desktopkomponente enthalten.");
+        Require(package.Elements(Wxs + "UIRef").SingleOrDefault()?.Attribute("Id")?.Value == "BorstWerk_InstallDir",
+            "Das Paket muss genau die eigene vollständige UI-Sequenz referenzieren.");
+
+        Require(ui.Attribute("Id")?.Value == "BorstWerk_InstallDir", "Die UI-Kennung wurde verändert.");
+        Require(Property(uiDocument, "WIXUI_INSTALLDIR").Attribute("Value")?.Value == "INSTALLFOLDER",
+            "Die InstallDir-Eigenschaft muss erhalten bleiben.");
+        Require(Property(uiDocument, "INSTALLDESKTOPSHORTCUT").Attribute("Value")?.Value == "1",
+            "Die Desktopoption muss standardmäßig aktiviert sein.");
+
+        XElement checkBox = Assert.Single(
+            ui.Descendants(Wxs + "Control"),
+            control => control.Attribute("Id")?.Value == "DesktopShortcutCheckBox");
+        Require(checkBox.Attribute("Type")?.Value == "CheckBox", "Die Desktopoption muss eine native Checkbox sein.");
+        Require(checkBox.Attribute("Property")?.Value == "INSTALLDESKTOPSHORTCUT",
+            "Die Checkbox muss ausschließlich ihre Auswahlproperty setzen.");
+        Require(checkBox.Attribute("CheckBoxValue")?.Value == "1", "Der gesetzte Checkboxwert muss 1 sein.");
+        Require(checkBox.Attribute("Text")?.Value == "Desktop-Verknüpfung erstellen",
+            "Der sichtbare Text der Desktopoption wurde verändert.");
+
+        XElement forward = Publish(uiDocument, "InstallDirDlg", "Next", "NewDialog", "DesktopShortcutDlg");
+        XElement backward = Publish(uiDocument, "VerifyReadyDlg", "Back", "NewDialog", "DesktopShortcutDlg");
+        const string firstInstall = "NOT Installed AND NOT WIX_UPGRADE_DETECTED";
+        Require((forward.Attribute("Condition")?.Value ?? string.Empty).Contains(firstInstall, StringComparison.Ordinal),
+            "Der Dialog darf vorwärts nur bei echter Erstinstallation erscheinen.");
+        Require(backward.Attribute("Condition")?.Value == firstInstall,
+            "Der Zurück-Pfad darf nur bei echter Erstinstallation zum Desktopdialog führen.");
+        Require(ui.Descendants(Wxs + "Publish").Count(p => p.Attribute("Value")?.Value == "DesktopShortcutDlg") == 2,
+            "Maintenance und Upgrade dürfen keinen weiteren Pfad zum Desktopdialog besitzen.");
+
+        XElement addLocal = Publish(uiDocument, "DesktopShortcutDlg", "Next", "AddLocal", DesktopFeatureId);
+        XElement remove = Publish(uiDocument, "DesktopShortcutDlg", "Next", "Remove", DesktopFeatureId);
+        Require(addLocal.Attribute("Condition")?.Value == "INSTALLDESKTOPSHORTCUT = \"1\"",
+            "Aktiviert muss das Desktopfeature lokal anfordern.");
+        Require(remove.Attribute("Condition")?.Value == "NOT INSTALLDESKTOPSHORTCUT",
+            "Abgewählt muss das Desktopfeature absent anfordern.");
+        Require(ui.Descendants(Wxs + "Publish").Count(p =>
+                p.Attribute("Event")?.Value is "AddLocal" or "Remove") == 2,
+            "Nur die beiden nativen Desktop-Featureereignisse sind zulässig.");
+        Require(!packageDocument.Descendants(Wxs + "CustomAction").Any()
+                && !uiDocument.Descendants(Wxs + "CustomAction").Any(),
+            "Für die Desktopoption darf keine Custom Action verfasst werden.");
+
+        return violations;
     }
 
     /// <summary>Kennung der Komponente, die in diesen Ordner installiert.</summary>
@@ -223,9 +407,45 @@ public sealed class InstallerScopeTests
             c => c.Attribute("Directory")?.Value == ordner)
             .Attribute("Id")!.Value;
 
-    private static IEnumerable<string> KomponentenIn(XElement feature)
-        => feature.Elements(Wxs + "ComponentRef")
-            .Select(r => r.Attribute("Id")?.Value ?? string.Empty);
+    private static string[] KomponentenUndGruppenIn(XElement feature)
+        =>
+        [
+            .. feature.Elements()
+                .Where(element => element.Name == Wxs + "ComponentRef"
+                                  || element.Name == Wxs + "ComponentGroupRef")
+                .Select(element => element.Attribute("Id")?.Value ?? string.Empty),
+        ];
+
+    private static XElement Component(string id)
+        => Assert.Single(Package().Elements(Wxs + "Component"),
+            element => element.Attribute("Id")?.Value == id);
+
+    private static XElement Shortcut(string id)
+        => Assert.Single(Package().Descendants(Wxs + "Shortcut"),
+            element => element.Attribute("Id")?.Value == id);
+
+    private static XElement Feature(string id)
+        => Feature(Document("Package.wxs"), id);
+
+    private static XElement Feature(XDocument document, string id)
+        => Assert.Single(document.Descendants(Wxs + "Feature"),
+            element => element.Attribute("Id")?.Value == id);
+
+    private static XElement Property(XDocument document, string id)
+        => Assert.Single(document.Descendants(Wxs + "Property"),
+            element => element.Attribute("Id")?.Value == id);
+
+    private static XElement Publish(
+        XDocument document,
+        string dialog,
+        string control,
+        string eventName,
+        string value)
+        => Assert.Single(document.Descendants(Wxs + "Publish"),
+            element => element.Attribute("Dialog")?.Value == dialog
+                       && element.Attribute("Control")?.Value == control
+                       && element.Attribute("Event")?.Value == eventName
+                       && element.Attribute("Value")?.Value == value);
 
     /// <summary>
     /// Beide Verknüpfungen tragen das BorstWerk-Symbol, und die Symboldatei

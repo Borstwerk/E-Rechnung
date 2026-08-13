@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Native MSI-Oberfläche für ER-020-INS-02.
+
+  Die Navigation übernimmt bewusst den vollständigen WixUI_InstallDir-Ablauf
+  aus WixToolset.UI.wixext 5.0.2 und fügt den DesktopShortcutDlg nur bei einer
+  echten Erstinstallation ein. Dadurch entstehen keine parallelen Publish-
+  Ereignisse zum eingebauten Dialogsatz.
+
+  Die Checkbox ändert ausschließlich den angeforderten Zustand des bereits
+  vorhandenen Features für die Desktopverknüpfung. Es gibt keine Custom Action und
+  keine eigene Shortcutverwaltung.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <UI Id="BorstWerk_InstallDir">
+      <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+      <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+      <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+      <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+      <Property Id="INSTALLDESKTOPSHORTCUT" Value="1" />
+
+      <DialogRef Id="BrowseDlg" />
+      <DialogRef Id="DiskCostDlg" />
+      <DialogRef Id="ErrorDlg" />
+      <DialogRef Id="FatalError" />
+      <DialogRef Id="FilesInUse" />
+      <DialogRef Id="MsiRMFilesInUse" />
+      <DialogRef Id="PrepareDlg" />
+      <DialogRef Id="ProgressDlg" />
+      <DialogRef Id="ResumeDlg" />
+      <DialogRef Id="UserExit" />
+
+      <Dialog Id="DesktopShortcutDlg" Width="370" Height="270" Title="[ProductName] Setup">
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
+                 Default="yes" Text="!(loc.WixUINext)" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
+                 Text="!(loc.WixUIBack)" />
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"
+                 Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="300" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="Zusätzliche Verknüpfung" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="300" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="Desktop-Verknüpfung" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
+                 TabSkip="no" Text="!(loc.InstallDirDlgBannerBitmap)" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Prompt" Type="Text" X="20" Y="65" Width="330" Height="30"
+                 NoPrefix="yes"
+                 Text="Soll zusätzlich zum Startmenüeintrag eine Verknüpfung auf dem Desktop angelegt werden?" />
+        <Control Id="DesktopShortcutCheckBox" Type="CheckBox" X="20" Y="105"
+                 Width="330" Height="17" Property="INSTALLDESKTOPSHORTCUT"
+                 CheckBoxValue="1" Text="Desktop-Verknüpfung erstellen" />
+      </Dialog>
+
+      <!-- Architekturspezifische Standardaktionen des bisherigen x64-Dialogsatzes. -->
+      <Publish Dialog="LicenseAgreementDlg" Control="Print" Event="DoAction"
+               Value="WixUIPrintEula_X64" />
+      <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction"
+               Value="WixUIValidatePath_X64" Order="3"
+               Condition="NOT WIXUI_DONTVALIDATEPATH" />
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction"
+               Value="WixUIValidatePath_X64" Order="2"
+               Condition="NOT WIXUI_DONTVALIDATEPATH" />
+
+      <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog"
+               Value="InvalidDirDlg" Order="4"
+               Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog"
+               Value="Return" Order="999" />
+
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
+               Value="LicenseAgreementDlg" Condition="NOT Installed" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
+               Value="VerifyReadyDlg" Condition="Installed AND PATCH" />
+
+      <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog"
+               Value="WelcomeDlg" />
+      <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog"
+               Value="InstallDirDlg" Condition="LicenseAccepted = &quot;1&quot;" />
+
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog"
+               Value="LicenseAgreementDlg" />
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath"
+               Value="[WIXUI_INSTALLDIR]" Order="1" />
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog"
+               Value="InvalidDirDlg" Order="3"
+               Condition="NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID&lt;&gt;&quot;1&quot;" />
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog"
+               Value="DesktopShortcutDlg" Order="4"
+               Condition="(WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID=&quot;1&quot;) AND NOT Installed AND NOT WIX_UPGRADE_DETECTED" />
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog"
+               Value="VerifyReadyDlg" Order="5"
+               Condition="(WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID=&quot;1&quot;) AND (Installed OR WIX_UPGRADE_DETECTED)" />
+      <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty"
+               Value="[WIXUI_INSTALLDIR]" Order="1" />
+      <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog"
+               Value="BrowseDlg" Order="2" />
+
+      <Publish Dialog="DesktopShortcutDlg" Control="Back" Event="NewDialog"
+               Value="InstallDirDlg" />
+      <Publish Dialog="DesktopShortcutDlg" Control="Next" Event="AddLocal"
+               Value="Desktopverkn&#x75;epfung" Order="1"
+               Condition="INSTALLDESKTOPSHORTCUT = &quot;1&quot;" />
+      <Publish Dialog="DesktopShortcutDlg" Control="Next" Event="Remove"
+               Value="Desktopverkn&#x75;epfung" Order="2"
+               Condition="NOT INSTALLDESKTOPSHORTCUT" />
+      <Publish Dialog="DesktopShortcutDlg" Control="Next" Event="NewDialog"
+               Value="VerifyReadyDlg" Order="3" />
+
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog"
+               Value="DesktopShortcutDlg" Order="1"
+               Condition="NOT Installed AND NOT WIX_UPGRADE_DETECTED" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog"
+               Value="InstallDirDlg" Order="2"
+               Condition="NOT Installed AND WIX_UPGRADE_DETECTED" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog"
+               Value="MaintenanceTypeDlg" Order="3"
+               Condition="Installed AND NOT PATCH" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog"
+               Value="WelcomeDlg" Order="3"
+               Condition="Installed AND PATCH" />
+
+      <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog"
+               Value="MaintenanceTypeDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog"
+               Value="VerifyReadyDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog"
+               Value="VerifyReadyDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog"
+               Value="MaintenanceWelcomeDlg" />
+
+      <Property Id="ARPNOMODIFY" Value="1" />
+    </UI>
+
+    <UIRef Id="WixUI_Common" />
+  </Fragment>
+</Wix>

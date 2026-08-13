@@ -31,6 +31,9 @@ $buildPropsPath = Join-Path $root 'Directory.Build.props'
 $thirdPartyDocumentPath = Join-Path $root 'docs' 'THIRD-PARTY-NOTICES.md'
 $thirdPartySourcePath = Join-Path $root 'installer' 'Drittanbieterhinweise'
 $licenseRtfPath = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'Lizenzhinweise.rtf'
+$desktopFeatureId = 'Desktopverkn' + 'uepfung'
+$desktopComponentId = 'DesktopVerkn' + 'uepfung'
+$startmenuComponentId = 'StartmenuVerkn' + 'uepfung'
 
 if (-not $IsWindows) {
     throw 'MSI-Metadaten lassen sich mit der Windows-Installer-API nur unter Windows prüfen.'
@@ -364,6 +367,208 @@ try {
     Assert-Equal -Name 'UpgradeCode' -Actual $properties.UpgradeCode -Expected "{$expectedUpgradeCode}"
     Assert-Equal -Name 'ALLUSERS' -Actual $properties.ALLUSERS -Expected '2'
     Assert-Equal -Name 'MSIINSTALLPERUSER' -Actual $properties.MSIINSTALLPERUSER -Expected '1'
+    Assert-Equal -Name 'WIXUI_INSTALLDIR' -Actual $properties.WIXUI_INSTALLDIR -Expected 'INSTALLFOLDER'
+    Assert-Equal -Name 'INSTALLDESKTOPSHORTCUT' -Actual $properties.INSTALLDESKTOPSHORTCUT -Expected '1'
+    Assert-Equal -Name 'ARPNOMODIFY' -Actual $properties.ARPNOMODIFY -Expected '1'
+
+    # ER-020-INS-02: Das gebaute MSI muss die getrennten Featurezustände,
+    # die native Checkbox und ihre ControlEvents tatsächlich enthalten. Eine
+    # reine Quelltextprüfung würde Linker- oder UI-Tabellendrift übersehen.
+    $featureRows = @(
+        Get-MsiRows -Database $database `
+            -Query 'SELECT `Feature`,`Title`,`Level` FROM `Feature`' `
+            -FieldCount 3 |
+            ForEach-Object {
+                [pscustomobject]@{
+                    Id = $_[0]
+                    Title = $_[1]
+                    Level = $_[2]
+                }
+            }
+    )
+    $mainFeature = @($featureRows | Where-Object Id -eq 'Hauptfunktion')
+    $desktopFeature = @($featureRows | Where-Object Id -eq $desktopFeatureId)
+    if ($mainFeature.Count -ne 1 -or $desktopFeature.Count -ne 1) {
+        throw "Haupt- und Desktopfeature müssen genau einmal vorhanden sein. Haupt: $($mainFeature.Count), Desktop: $($desktopFeature.Count)."
+    }
+    Assert-Equal -Name 'Hauptfunktion.Level' -Actual $mainFeature[0].Level -Expected '1'
+    Assert-Equal -Name 'Desktopverknüpfung.Level' -Actual $desktopFeature[0].Level -Expected '1'
+
+    $featureComponents = @(
+        Get-MsiRows -Database $database `
+            -Query 'SELECT `Feature_`,`Component_` FROM `FeatureComponents`' `
+            -FieldCount 2 |
+            ForEach-Object { "{0}|{1}" -f $_[0], $_[1] }
+    )
+    if ("Hauptfunktion|$startmenuComponentId" -notin $featureComponents) {
+        throw 'Der Startmenüeintrag ist im gebauten MSI nicht mehr Bestandteil der Hauptfunktion.'
+    }
+    if ("$desktopFeatureId|$desktopComponentId" -notin $featureComponents) {
+        throw 'Die Desktopkomponente ist im gebauten MSI nicht mehr Bestandteil des Desktopfeatures.'
+    }
+    if ("Hauptfunktion|$desktopComponentId" -in $featureComponents `
+        -or "$desktopFeatureId|$startmenuComponentId" -in $featureComponents) {
+        throw 'Startmenü- und Desktopkomponente sind im gebauten MSI nicht mehr unabhängig.'
+    }
+
+    $shortcutRows = @(
+        Get-MsiRows -Database $database `
+            -Query 'SELECT `Shortcut`,`Directory_`,`Component_`,`Name`,`Target`,`WkDir`,`Icon_` FROM `Shortcut`' `
+            -FieldCount 7 |
+            ForEach-Object {
+                [pscustomobject]@{
+                    Id = $_[0]
+                    Directory = $_[1]
+                    Component = $_[2]
+                    Name = Get-LongMsiFileName -FileName $_[3]
+                    Target = $_[4]
+                    WorkingDirectory = $_[5]
+                    Icon = $_[6]
+                }
+            }
+    )
+    $startmenuShortcut = @($shortcutRows | Where-Object Id -eq 'StartmenuEintrag')
+    $desktopShortcut = @($shortcutRows | Where-Object Id -eq 'DesktopEintrag')
+    if ($startmenuShortcut.Count -ne 1 -or $desktopShortcut.Count -ne 1) {
+        throw "Startmenü- und Desktopshortcut müssen genau einmal vorhanden sein. Startmenü: $($startmenuShortcut.Count), Desktop: $($desktopShortcut.Count)."
+    }
+    Assert-Equal -Name 'Startmenü.Directory' -Actual $startmenuShortcut[0].Directory -Expected 'StartmenuOrdner'
+    Assert-Equal -Name 'Startmenü.Component' -Actual $startmenuShortcut[0].Component -Expected $startmenuComponentId
+    Assert-Equal -Name 'Desktop.Directory' -Actual $desktopShortcut[0].Directory -Expected 'DesktopFolder'
+    Assert-Equal -Name 'Desktop.Component' -Actual $desktopShortcut[0].Component -Expected $desktopComponentId
+    foreach ($shortcut in @($startmenuShortcut[0], $desktopShortcut[0])) {
+        Assert-Equal -Name "$($shortcut.Id).Name" -Actual $shortcut.Name -Expected 'BorstWerk E-Rechnung'
+        Assert-Equal -Name "$($shortcut.Id).Target" -Actual $shortcut.Target -Expected '[INSTALLFOLDER]EInvoiceSender.exe'
+        Assert-Equal -Name "$($shortcut.Id).WorkingDirectory" -Actual $shortcut.WorkingDirectory -Expected 'INSTALLFOLDER'
+        Assert-Equal -Name "$($shortcut.Id).Icon" -Actual $shortcut.Icon -Expected 'BorstWerkEInvoice.ico'
+    }
+
+    $desktopComponentRows = @(
+        Get-MsiRows -Database $database `
+            -Query "SELECT ``Directory_``,``KeyPath`` FROM ``Component`` WHERE ``Component``='$desktopComponentId'" `
+            -FieldCount 2
+    )
+    if ($desktopComponentRows.Count -ne 1) {
+        throw "Die Desktopkomponente ist $($desktopComponentRows.Count)-mal statt genau einmal vorhanden."
+    }
+    Assert-Equal -Name 'Desktopkomponente.Directory' -Actual $desktopComponentRows[0][0] -Expected 'DesktopFolder'
+    $desktopRegistryRows = @(
+        Get-MsiRows -Database $database `
+            -Query "SELECT ``Registry``,``Root``,``Name``,``Component_`` FROM ``Registry`` WHERE ``Component_``='$desktopComponentId'" `
+            -FieldCount 4
+    )
+    if ($desktopRegistryRows.Count -ne 1) {
+        throw "Der Registry-KeyPath der Desktopkomponente ist $($desktopRegistryRows.Count)-mal statt genau einmal vorhanden."
+    }
+    Assert-Equal -Name 'Desktop-Registry.Root' -Actual $desktopRegistryRows[0][1] -Expected '1'
+    Assert-Equal -Name 'Desktop-Registry.Name' -Actual $desktopRegistryRows[0][2] -Expected 'Desktop'
+    Assert-Equal -Name 'Desktop-Registry.Component' -Actual $desktopRegistryRows[0][3] -Expected $desktopComponentId
+    Assert-Equal -Name 'Desktopkomponente.KeyPath' -Actual $desktopComponentRows[0][1] -Expected $desktopRegistryRows[0][0]
+
+    $desktopControls = @(
+        Get-MsiRows -Database $database `
+            -Query "SELECT ``Control``,``Type``,``Property``,``Text`` FROM ``Control`` WHERE ``Dialog_``='DesktopShortcutDlg'" `
+            -FieldCount 4
+    )
+    $desktopCheckBox = @($desktopControls | Where-Object { $_[0] -eq 'DesktopShortcutCheckBox' })
+    if ($desktopCheckBox.Count -ne 1) {
+        throw "Der Desktopdialog enthält $($desktopCheckBox.Count) statt genau einer erwarteten Checkbox."
+    }
+    Assert-Equal -Name 'Desktopcheckbox.Type' -Actual $desktopCheckBox[0][1] -Expected 'CheckBox'
+    Assert-Equal -Name 'Desktopcheckbox.Property' -Actual $desktopCheckBox[0][2] -Expected 'INSTALLDESKTOPSHORTCUT'
+    Assert-Equal -Name 'Desktopcheckbox.Text' -Actual $desktopCheckBox[0][3] -Expected 'Desktop-Verknüpfung erstellen'
+
+    $checkBoxRows = @(
+        Get-MsiRows -Database $database `
+            -Query "SELECT ``Property``,``Value`` FROM ``CheckBox`` WHERE ``Property``='INSTALLDESKTOPSHORTCUT'" `
+            -FieldCount 2
+    )
+    if ($checkBoxRows.Count -ne 1) {
+        throw "Die CheckBox-Tabelle enthält $($checkBoxRows.Count) statt genau einer Desktopoption."
+    }
+    Assert-Equal -Name 'Desktopcheckbox.Value' -Actual $checkBoxRows[0][1] -Expected '1'
+
+    $controlEvents = @(
+        Get-MsiRows -Database $database `
+            -Query 'SELECT `Dialog_`,`Control_`,`Event`,`Argument`,`Condition`,`Ordering` FROM `ControlEvent`' `
+            -FieldCount 6 |
+            ForEach-Object {
+                [pscustomobject]@{
+                    Dialog = $_[0]
+                    Control = $_[1]
+                    Event = $_[2]
+                    Argument = $_[3]
+                    Condition = $_[4]
+                    Ordering = $_[5]
+                }
+            }
+    )
+    $desktopFeatureEvents = @(
+        $controlEvents | Where-Object {
+            $_.Dialog -eq 'DesktopShortcutDlg' -and $_.Control -eq 'Next' `
+                -and $_.Event -in @('AddLocal', 'Remove')
+        }
+    )
+    if ($desktopFeatureEvents.Count -ne 2) {
+        throw "Der Desktopdialog enthält $($desktopFeatureEvents.Count) statt genau zwei nativen Featureereignissen."
+    }
+    $addLocal = @($desktopFeatureEvents | Where-Object Event -eq 'AddLocal')
+    $remove = @($desktopFeatureEvents | Where-Object Event -eq 'Remove')
+    if ($addLocal.Count -ne 1 -or $remove.Count -ne 1) {
+        throw 'AddLocal und Remove müssen jeweils genau einmal vorhanden sein.'
+    }
+    Assert-Equal -Name 'Desktop.AddLocal.Argument' -Actual $addLocal[0].Argument -Expected $desktopFeatureId
+    Assert-Equal -Name 'Desktop.AddLocal.Condition' -Actual $addLocal[0].Condition -Expected 'INSTALLDESKTOPSHORTCUT = "1"'
+    Assert-Equal -Name 'Desktop.Remove.Argument' -Actual $remove[0].Argument -Expected $desktopFeatureId
+    Assert-Equal -Name 'Desktop.Remove.Condition' -Actual $remove[0].Condition -Expected 'NOT INSTALLDESKTOPSHORTCUT'
+
+    $desktopDialogEntrances = @($controlEvents | Where-Object Argument -eq 'DesktopShortcutDlg')
+    if ($desktopDialogEntrances.Count -ne 2) {
+        throw "Der Desktopdialog besitzt $($desktopDialogEntrances.Count) statt genau zwei Navigationspfaden."
+    }
+    $desktopForward = @($desktopDialogEntrances | Where-Object {
+            $_.Dialog -eq 'InstallDirDlg' -and $_.Control -eq 'Next' -and $_.Event -eq 'NewDialog'
+        })
+    $desktopBackward = @($desktopDialogEntrances | Where-Object {
+            $_.Dialog -eq 'VerifyReadyDlg' -and $_.Control -eq 'Back' -and $_.Event -eq 'NewDialog'
+        })
+    if ($desktopForward.Count -ne 1 -or $desktopBackward.Count -ne 1) {
+        throw 'Der Desktopdialog darf nur zwischen InstallDirDlg und VerifyReadyDlg liegen.'
+    }
+    foreach ($entrance in @($desktopForward[0], $desktopBackward[0])) {
+        if (-not $entrance.Condition.Contains('NOT Installed AND NOT WIX_UPGRADE_DETECTED', [StringComparison]::Ordinal)) {
+            throw "Der Pfad $($entrance.Dialog).$($entrance.Control) zeigt die Desktopoption nicht ausschließlich bei echter Erstinstallation: $($entrance.Condition)"
+        }
+    }
+
+    $requiredStandardNavigation = @(
+        @('ExitDialog', 'Finish', 'EndDialog', 'Return', '1'),
+        @('WelcomeDlg', 'Next', 'NewDialog', 'LicenseAgreementDlg', 'NOT Installed'),
+        @('WelcomeDlg', 'Next', 'NewDialog', 'VerifyReadyDlg', 'Installed AND PATCH'),
+        @('LicenseAgreementDlg', 'Back', 'NewDialog', 'WelcomeDlg', '1'),
+        @('LicenseAgreementDlg', 'Next', 'NewDialog', 'InstallDirDlg', 'LicenseAccepted = "1"'),
+        @('InstallDirDlg', 'Back', 'NewDialog', 'LicenseAgreementDlg', '1'),
+        @('MaintenanceWelcomeDlg', 'Next', 'NewDialog', 'MaintenanceTypeDlg', '1'),
+        @('MaintenanceTypeDlg', 'RepairButton', 'NewDialog', 'VerifyReadyDlg', '1'),
+        @('MaintenanceTypeDlg', 'RemoveButton', 'NewDialog', 'VerifyReadyDlg', '1'),
+        @('MaintenanceTypeDlg', 'Back', 'NewDialog', 'MaintenanceWelcomeDlg', '1'),
+        @('VerifyReadyDlg', 'Back', 'NewDialog', 'MaintenanceTypeDlg', 'Installed AND NOT PATCH'),
+        @('VerifyReadyDlg', 'Back', 'NewDialog', 'WelcomeDlg', 'Installed AND PATCH')
+    )
+    foreach ($expectedNavigation in $requiredStandardNavigation) {
+        $matchingNavigation = @(
+            $controlEvents | Where-Object {
+                $_.Dialog -eq $expectedNavigation[0] `
+                    -and $_.Control -eq $expectedNavigation[1] `
+                    -and $_.Event -eq $expectedNavigation[2] `
+                    -and $_.Argument -eq $expectedNavigation[3] `
+                    -and $_.Condition -eq $expectedNavigation[4]
+            }
+        )
+        if ($matchingNavigation.Count -ne 1) {
+            throw "Der Standarddialogpfad $($expectedNavigation -join ' | ') ist $($matchingNavigation.Count)-mal statt genau einmal vorhanden."
+        }
+    }
 
     $msiFiles = @(
         Get-MsiRows -Database $database -Query 'SELECT `File`,`Component_`,`FileName` FROM `File`' -FieldCount 3 |
@@ -474,6 +679,11 @@ try {
         throw 'Die Downgrade-Zeile muss ausschließlich der Erkennung dienen.'
     }
 
+    $migrateFeatures = 1
+    if (([int]$upgrade[0][3] -band $migrateFeatures) -eq 0) {
+        throw 'Das Major Upgrade muss den vorhandenen Desktop-Featurezustand migrieren.'
+    }
+
     $sequences = @{}
     Get-MsiRows -Database $database `
         -Query 'SELECT `Action`,`Sequence` FROM `InstallExecuteSequence`' `
@@ -505,6 +715,7 @@ try {
     Write-Host "  Runtimepatch:   $expectedRuntimeFrameworkVersion"
     Write-Host "  Hinweisdatei:   $($mainNotice[0].Name)"
     Write-Host "  Lizenzdateien:  $($expectedLicenseNames.Count) vorgesehen und im MSI gefunden"
+    Write-Host '  Desktopoption:   Level 1, standardmäßig aktiviert, native AddLocal/Remove-Ereignisse'
 }
 finally {
     foreach ($comObject in @($summary, $database, $installer)) {

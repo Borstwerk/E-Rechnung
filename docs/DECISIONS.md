@@ -247,4 +247,52 @@ Buildframework.
 - Code Signing kann später vor ZIP und Prüfsummenerzeugung ergänzt werden,
   gehört aber nicht zu dieser Entscheidung.
 
+## DEC-005 – Desktopverknüpfung als natives optionales MSI-Feature
+
+**Status:** gültig
+
+**Bezug:** ER-020-INS-02
+
+### Kontext
+
+Die Desktopverknüpfung war bereits ein eigenes WiX-Feature, stand aber auf
+Installationslevel 2 und war im verwendeten `WixUI_InstallDir`-Dialogsatz
+nicht sichtbar. Eine normale Installation wählte sie deshalb weder aus noch
+bot sie verständlich an. Ein generischer Featurebaum wäre für die einzige
+Anwenderoption unnötig technisch gewesen.
+
+### Entscheidung
+
+Das vorhandene Feature für die Desktopverknüpfung bleibt getrennt von der
+`Hauptfunktion` und steht wie diese auf Level 1. Dadurch ist es auch bei einer
+stillen Erstinstallation standardmäßig ausgewählt. Eine native MSI-Checkbox
+„Desktop-Verknüpfung erstellen“ kann ausschließlich dieses Feature über die
+Windows-Installer-ControlEvents `AddLocal` und `Remove` ab- oder anwählen.
+
+Der zusätzliche Dialog ist Teil einer eigenen vollständigen, an
+`WixUI_InstallDir` aus WiX 5.0.2 angelehnten UI-Sequenz. Er erscheint nur bei
+`NOT Installed AND NOT WIX_UPGRADE_DETECTED`. Repair und Major Upgrade zeigen
+die Option nicht erneut; dort bleibt der vorhandene beziehungsweise über
+`MigrateFeatureStates` übernommene Featurezustand maßgeblich.
+
+### Grund
+
+Die Lösung bietet Nicht-IT-Anwendern genau die eine verständliche Auswahl,
+ohne Bootstrapper, Custom Action oder Shortcutverwaltung in der Anwendung.
+Der unabhängige Startmenüeintrag und die vorhandenen MSI-Komponenten bleiben
+unverändert. Eine vollständige eigene Sequenz vermeidet konkurrierende
+Publish-Ereignisse am eingebauten WiX-Dialogsatz.
+
+### Konsequenzen
+
+- Feature-, Component-, Shortcut- und Registry-Identitäten bleiben stabil.
+- Änderungen an der WiX-Version erfordern einen Abgleich der eigenen Sequenz
+  mit dem dann aktuellen `WixUI_InstallDir`-Ablauf.
+- Ein Upgrade übernimmt den bisherigen Desktop-Featurezustand und erzwingt
+  nicht den neuen Erstinstallationsdefault.
+- Per-user- und per-machine-Verhalten der profilbezogenen Verknüpfungen bleibt
+  unverändert.
+- Quelltests und die Prüfung der gebauten MSI-Tabellen sichern Featurezustand,
+  Dialogpfade und native ControlEvents ab.
+
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

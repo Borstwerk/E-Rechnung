@@ -138,7 +138,8 @@ Unter Windows:
 
 - Das Zusammenspiel mit echten Fenstern, Dateidialogen, Drag-and-drop und der
   PDF-Vorschau zur Laufzeit.
-- Der Installer: Neuinstallation, Startmenü, Upgrade, Deinstallation.
+- Der Installer zur Laufzeit: Neuinstallation, sichtbare Checkbox,
+  Verknüpfungen, Repair, Upgrade und Deinstallation.
 - Das Verhalten der `.eml`-Datei im klassischen und im neuen Outlook.
 - Der DPAPI-Schutz der IBAN, der nur unter Windows greift.
 
@@ -158,6 +159,14 @@ demselben zentralen `VersionPrefix` stammen. Geprüft werden insbesondere:
 - ein gültiger PackageCode,
 - die Dual-Purpose-Eigenschaften `ALLUSERS=2` und `MSIINSTALLPERUSER=1`,
 - Upgrade- und Downgradezeilen ohne Same-Version-Major-Upgrade,
+- die getrennten Features für Hauptfunktion und Desktopverknüpfung mit
+  Installationslevel 1,
+- die standardmäßig aktivierte native Checkbox und ihre ausschließliche
+  Zuordnung zum Desktopfeature über `AddLocal` und `Remove`,
+- die Dialogpfade, die die Desktopoption nur bei
+  `NOT Installed AND NOT WIX_UPGRADE_DETECTED` erreichen,
+- die unveränderten Shortcutziele, Symbole und HKCU-KeyPaths,
+- das Migrationsbit für den vorhandenen Featurezustand,
 - die Reihenfolge von `FindRelatedProducts`, `MigrateFeatureStates`,
   `RemoveExistingProducts` und `InstallInitialize`,
 - den Paketbestand des gebauten `EInvoiceSender.deps.json` gegen die
@@ -176,7 +185,10 @@ Plattformneutrale Quelltextprüfungen sichern zusätzlich ab, dass
 `Directory.Build.props` die einzige aktive Produktversionsquelle bleibt, CI
 und Buildskripte keinen ProductVersion-Override einführen, jede veröffentlichte
 Version genau einen gültigen ProductCode besitzt und die Über-Anzeige ihre
-Fassung aus der gebauten Assembly liest.
+Fassung aus der gebauten Assembly liest. Die Strukturprüfung der
+Desktopoption besitzt Negativfälle für einen falschen Installationslevel,
+fehlenden Default, Kopplung des Startmenüs, fehlende Upgradebedingung,
+abweichende Feature-ControlEvents und eine unzulässige Custom Action.
 
 ## Drittanbieterhinweise
 
