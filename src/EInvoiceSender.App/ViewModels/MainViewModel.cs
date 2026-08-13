@@ -58,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         PdfSelection.PropertyChanged += (_, _) => GoForwardCommand.NotifyCanExecuteChanged();
         Review.PropertyChanged += (_, _) => GoForwardCommand.NotifyCanExecuteChanged();
+        InvoiceData.CompanyTemplateSaved += OnCompanyTemplateSaved;
     }
 
     /// <summary>Schritt 1.</summary>
@@ -245,6 +246,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         => _appliedTemplate is null
            || template with { LastOutputDirectory = null }
               != _appliedTemplate with { LastOutputDirectory = null };
+
+    /// <summary>
+    /// Synchronisiert nur den bekannten Speicherstand. Die laufende Rechnung
+    /// wird nach dem ausdrücklichen Speichern weder verändert noch neu befüllt.
+    /// </summary>
+    private void OnCompanyTemplateSaved(CompanyTemplate template)
+    {
+        _appliedTemplate = template;
+    }
 
     /// <summary>Geht einen Schritt zurück.</summary>
     [RelayCommand(CanExecute = nameof(CanGoBack))]
@@ -451,6 +461,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private bool CanStartOver() => !IsBusy;
 
-    /// <summary>Gibt die Abbruchquelle der Erzeugung frei.</summary>
-    public void Dispose() => Generation.Dispose();
+    /// <summary>Gibt Ereignisverbindungen und die Abbruchquelle der Erzeugung frei.</summary>
+    public void Dispose()
+    {
+        InvoiceData.CompanyTemplateSaved -= OnCompanyTemplateSaved;
+        Generation.Dispose();
+    }
 }

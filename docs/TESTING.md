@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 433 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
-| `tests/EInvoiceSender.IntegrationTests` | 48 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **481** | |
+| `tests/EInvoiceSender.Core.Tests` | 747 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.IntegrationTests` | 91 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
+| **Summe** | **838** | |
 
 ## Ebenen
 
@@ -263,3 +263,27 @@ Schutzschicht: verdächtige Platzhalternamen, rohe Exceptiontexte,
 Quelldatei-Stacks, abweichende Pfad-/Grenzdefinitionen und Netzwerk- oder
 Uploadbausteine werden abgewiesen. Diese Quellregeln ersetzen den Test der
 tatsächlich persistierten Dateien nicht.
+
+## Unternehmensvorlage aus manuellen Angaben
+
+`CompanyTemplateSavePlannerTests` prüft die feste Allowlist und den Merge gegen
+markante Daten. Manuell geänderte Verkäufer- und Bankfelder werden übernommen;
+zuverlässig oder unsicher erkannte Verkäuferdaten, IBAN und BIC werden
+verworfen. Markante Käufer-, Rechnungs-, Zahlungs- und Positionswerte dürfen
+weder im Kandidaten noch in der gespeicherten JSON-Datei erscheinen.
+
+Gemischte Zustände sind ausdrücklich abgedeckt: Bei vorhandener Vorlage und
+genau einem manuell geänderten Feld bleibt jedes andere Unternehmensfeld
+erhalten. Währung, Zahlungsziel, Zahlungsbedingungen, E-Mail-Vorgaben und
+`LastOutputDirectory` werden wertgleich weitergeführt. `Template` und
+`TemplateDefault` zählen nicht als Benutzereingabe. Das unberührte
+Programmstandardland `DE` wird nur mit Herkunft `Default` zugelassen, nie mit
+einer Erkennungsherkunft.
+
+`JsonSettingsStoreRecoveryTests` prüft fehlende und beschädigte
+`firmenvorlage.json` sowie den anschließenden ausdrücklichen Schreib- und
+Ladevorgang. `CompanyTemplateSaveFlowTests` sichert die WPF-Verdrahtung:
+Property-Changes, Reset, Navigation, Erzeugung und Abbruch rufen den neuen
+Schreibweg nicht auf. Eine vorhandene Vorlage wird inline bestätigt, ein
+identischer Kandidat wird nicht geschrieben und `MainViewModel` synchronisiert
+nach Erfolg ausschließlich seinen Vorlagen-Snapshot.

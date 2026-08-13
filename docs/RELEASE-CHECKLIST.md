@@ -65,7 +65,13 @@ aussieht.
 - [ ] Einstellungen ändern und schließen: neue Vorgaben gelten ohne Neustart für den nächsten Vorgang.
 - [ ] Ein bereits ausgefülltes Formular bleibt durch bloßes Speichern der Einstellungen unberührt.
 - [ ] Ist Schritt 2 bereits offen, erscheint die vorgesehene Rückfrage; „Für diese Rechnung übernehmen“ aktualisiert ausschließlich Verkäufer- und Bankangaben.
-- [ ] Für Version 0.2.0: Verhalten von `ER-020-SET-01` praktisch prüfen, sofern die Anforderung umgesetzt wurde.
+- [ ] Ohne Firmenvorlage Verkäuferdaten von Hand erfassen und „Als eigene Unternehmensdaten speichern“ verwenden; es erscheint keine zweite Bestätigung.
+- [ ] Neue Rechnung starten: Die gespeicherten Unternehmensdaten werden als normale Firmenvorlage vorbelegt.
+- [ ] Erkannte fremde Verkäuferdaten sowie erkannte IBAN/BIC bleiben von der Speicheraktion ausgeschlossen.
+- [ ] Bei vorhandener Firmenvorlage genau ein Verkäuferfeld manuell ändern: Vor dem Aktualisieren erscheint die Inline-Bestätigung.
+- [ ] Inline-Bestätigung abbrechen: Die gespeicherte Vorlage bleibt unverändert.
+- [ ] Nach erfolgreichem Speichern bleiben Inhalt und Herkunftshinweise der laufenden Rechnung unverändert.
+- [ ] Firmenvorlage anschließend in den regulären Einstellungen öffnen und bearbeiten.
 
 ## Summen während der Eingabe
 

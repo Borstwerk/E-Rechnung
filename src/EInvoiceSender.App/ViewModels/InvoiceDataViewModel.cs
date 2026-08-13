@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EInvoiceSender.Core.Calculation;
@@ -24,16 +25,26 @@ namespace EInvoiceSender.App.ViewModels;
 public sealed partial class InvoiceDataViewModel : StepViewModel
 {
     private readonly IEInvoiceService _service;
+    private readonly ISettingsStore _settingsStore;
+    private CompanyTemplateSavePlan? _pendingCompanyTemplateSave;
 
-    public InvoiceDataViewModel(IEInvoiceService service)
+    public InvoiceDataViewModel(IEInvoiceService service, ISettingsStore settingsStore)
     {
         _service = service;
+        _settingsStore = settingsStore;
 
         // Die Summen sollen von selbst stimmen. Eine Positionsänderung meldet
         // sich, sobald die Zelle bestätigt ist – nicht bei jedem Tastendruck.
         // Mehr Ereignisse braucht es dafür nicht.
         Draft.Lines.CollectionChanged += OnLinesChanged;
+        Draft.PropertyChanged += OnDraftPropertyChanged;
     }
+
+    /// <summary>
+    /// Meldet eine ausdrücklich gespeicherte Vorlage an die Ablaufsteuerung.
+    /// Der laufende Entwurf wird dabei nicht erneut mit der Vorlage befüllt.
+    /// </summary>
+    public event Action<CompanyTemplate>? CompanyTemplateSaved;
 
     /// <summary>Das Eingabeformular.</summary>
     public InvoiceDraft Draft { get; } = new();
@@ -75,6 +86,17 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         RecalculateTotals();
     }
 
+    private void OnDraftPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(InvoiceDraft.Origins))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(ShowsCompanyTemplateSaveOffer));
+        SaveOwnCompanyDataCommand.NotifyCanExecuteChanged();
+    }
+
     [ObservableProperty]
     private InvoiceTotals? _totals;
 
@@ -113,6 +135,25 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
 
     /// <summary>Gibt es einen Hinweis zur Vorbefüllung?</summary>
     public bool HasPrefillMessage => PrefillMessage.Length > 0;
+
+    /// <summary>
+    /// Wird angeboten, sobald mindestens ein erlaubtes Unternehmensfeld vom
+    /// Anwender selbst bearbeitet wurde. PDF-Erkennung allein reicht nie aus.
+    /// </summary>
+    public bool ShowsCompanyTemplateSaveOffer => CompanyTemplateSavePlanner.HasManualInput(Draft);
+
+    /// <summary>Status der ausdrücklichen Vorlagenspeicherung.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCompanyTemplateSaveMessage))]
+    private string _companyTemplateSaveMessage = string.Empty;
+
+    /// <summary>Gibt es eine Status- oder Validierungsmeldung?</summary>
+    public bool HasCompanyTemplateSaveMessage => CompanyTemplateSaveMessage.Length > 0;
+
+    /// <summary>Wartet eine vorhandene Firmenvorlage auf Bestätigung?</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveOwnCompanyDataCommand))]
+    private bool _hasCompanyTemplateOverwriteQuestion;
 
     /// <summary>
     /// Übernimmt ein Erkennungsergebnis in das Formular.
@@ -246,7 +287,139 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
         SelectedLine = null;
         Totals = null;
         ChangedTemplate = null;
+        _pendingCompanyTemplateSave = null;
+        HasCompanyTemplateOverwriteQuestion = false;
+        CompanyTemplateSaveMessage = string.Empty;
         ClearFindings();
+    }
+
+    /// <summary>
+    /// Plant die Speicherung aus einer unmittelbar zuvor frisch geladenen
+    /// Vorlage. Ohne diesen ausdrücklichen Befehl findet kein Schreibzugriff statt.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSaveOwnCompanyData))]
+    public async Task SaveOwnCompanyDataAsync(CancellationToken cancellationToken = default)
+    {
+        ClearPendingCompanyTemplateSave();
+
+        try
+        {
+            CompanyTemplate existing = await _settingsStore.LoadTemplateAsync(cancellationToken)
+                .ConfigureAwait(true);
+            CompanyTemplateSavePlan plan = CompanyTemplateSavePlanner.Plan(Draft, existing);
+
+            if (!plan.HasManualInput)
+            {
+                CompanyTemplateSaveMessage = plan.Errors[0];
+                return;
+            }
+
+            if (!plan.IsChanged)
+            {
+                CompanyTemplateSaveMessage = "Diese Unternehmensdaten sind bereits gespeichert.";
+                return;
+            }
+
+            if (plan.Errors.Count > 0)
+            {
+                CompanyTemplateSaveMessage = string.Join(" ", plan.Errors);
+                return;
+            }
+
+            if (plan.RequiresConfirmation)
+            {
+                _pendingCompanyTemplateSave = plan;
+                HasCompanyTemplateOverwriteQuestion = true;
+                CompanyTemplateSaveMessage = string.Empty;
+                return;
+            }
+
+            await PersistCompanyTemplateAsync(plan, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            CompanyTemplateSaveMessage =
+                "Die Unternehmensdaten konnten nicht lokal gespeichert werden.";
+        }
+    }
+
+    private bool CanSaveOwnCompanyData()
+        => ShowsCompanyTemplateSaveOffer && !HasCompanyTemplateOverwriteQuestion;
+
+    /// <summary>
+    /// Bestätigt die Änderung einer vorhandenen Vorlage. Vor dem Schreiben wird
+    /// erneut frisch gelesen; eine zwischenzeitliche Änderung bricht sicher ab.
+    /// </summary>
+    [RelayCommand]
+    public async Task ConfirmCompanyTemplateOverwriteAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (_pendingCompanyTemplateSave is not { } pending)
+        {
+            return;
+        }
+
+        try
+        {
+            CompanyTemplate current = await _settingsStore.LoadTemplateAsync(cancellationToken)
+                .ConfigureAwait(true);
+
+            if (current != pending.Existing)
+            {
+                ClearPendingCompanyTemplateSave();
+                CompanyTemplateSaveMessage = "Die gespeicherte Vorlage wurde zwischenzeitlich geändert. "
+                                             + "Bitte prüfen und speichern Sie erneut.";
+                return;
+            }
+
+            CompanyTemplateSavePlan freshPlan = CompanyTemplateSavePlanner.Plan(Draft, current);
+
+            if (!freshPlan.CanSave)
+            {
+                ClearPendingCompanyTemplateSave();
+                CompanyTemplateSaveMessage = freshPlan.IsChanged
+                    ? string.Join(" ", freshPlan.Errors)
+                    : "Diese Unternehmensdaten sind bereits gespeichert.";
+                return;
+            }
+
+            await PersistCompanyTemplateAsync(freshPlan, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            ClearPendingCompanyTemplateSave();
+            CompanyTemplateSaveMessage =
+                "Die Unternehmensdaten konnten nicht lokal gespeichert werden.";
+        }
+    }
+
+    /// <summary>Verwirft die ausstehende Bestätigung ohne Schreibzugriff.</summary>
+    [RelayCommand]
+    public void CancelCompanyTemplateOverwrite()
+    {
+        ClearPendingCompanyTemplateSave();
+        CompanyTemplateSaveMessage = "Die gespeicherte Firmenvorlage wurde nicht geändert.";
+    }
+
+    private async Task PersistCompanyTemplateAsync(
+        CompanyTemplateSavePlan plan, CancellationToken cancellationToken)
+    {
+        await _settingsStore.SaveTemplateAsync(plan.Candidate, cancellationToken)
+            .ConfigureAwait(true);
+
+        ClearPendingCompanyTemplateSave();
+        CompanyTemplateSaveMessage = plan.Warnings.Count == 0
+            ? "Die Unternehmensdaten wurden lokal gespeichert."
+            : "Die Unternehmensdaten wurden lokal gespeichert. Hinweis: "
+              + string.Join(" ", plan.Warnings);
+        CompanyTemplateSaved?.Invoke(plan.Candidate);
+    }
+
+    private void ClearPendingCompanyTemplateSave()
+    {
+        _pendingCompanyTemplateSave = null;
+        HasCompanyTemplateOverwriteQuestion = false;
+        SaveOwnCompanyDataCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>

@@ -348,4 +348,59 @@ ist belastbarer als eine unvollständige Liste regulärer Ausdrücke.
   gibt keinen Upload, Versand oder Freigabemechanismus.
 - Die Anwendung bleibt bei jedem Fehler des Loggings uneingeschränkt nutzbar.
 
+## DEC-007 – Unternehmensvorlage nur aus ausdrücklich manuellen Angaben
+
+**Status:** gültig
+
+**Bezug:** ER-020-SET-01
+
+### Kontext
+
+Ohne gespeicherte Firmenvorlage kann die Anwendung den Rechnungsteller
+absichtlich nicht aus einer PDF erraten. Anwender erfassen ihre Verkäuferdaten
+dann in Schritt 2, mussten dieselben Angaben bisher aber noch einmal in den
+Einstellungen eingeben. Der aktuelle Formularinhalt kann zugleich erkannte
+Verkäufer-, Bank-, Käufer- und Rechnungsdaten enthalten und darf deshalb nicht
+pauschal zur Unternehmensvorlage werden.
+
+### Entscheidung
+
+Eine ausdrückliche Aktion „Als eigene Unternehmensdaten speichern“ plant die
+Speicherung über eine feste Allowlist aus Verkäufer- und Bankfeldern. Neu
+übernommen werden nur Felder mit Herkunft `Manual`. Das sichtbare
+Programmstandardland `DE` ist die einzige Ausnahme, solange es nicht aus einer
+PDF-Erkennung stammt. Zuverlässig und unsicher erkannte Werte werden
+gleichermaßen ausgeschlossen; Käufer- und Rechnungsfelder kommen in der
+Allowlist nicht vor.
+
+Vor jedem Plan wird `firmenvorlage.json` frisch gelesen. Die Existenz der Datei
+gilt nicht als Unternehmensvorlage: Maßgeblich sind inhaltliche Verkäufer- oder
+Bankdaten. Beim Merge bleiben nicht manuell geänderte Unternehmensfelder,
+Komfortvorgaben und das letzte Ausgabeverzeichnis unverändert. Eine vorhandene
+inhaltliche Vorlage verlangt eine Inline-Bestätigung; Abbruch und identische
+Kandidaten schreiben nichts.
+
+Nach erfolgreichem Speichern synchronisiert die Ablaufsteuerung nur ihren
+Vorlagen-Snapshot. Der laufende Rechnungsentwurf und seine Feldherkünfte werden
+nicht erneut befüllt oder verändert. Die regulären Einstellungen bleiben der
+zentrale Ort für spätere Bearbeitung.
+
+### Grund
+
+Die bestehende Herkunftsverfolgung liefert eine belastbare technische Grenze
+zwischen eigener Eingabe und PDF-Erkennung. Eine kleine reine Planerfunktion
+ist einfacher zu prüfen als eine allgemeine Objektkopie oder automatisches
+Lernen und benötigt weder Datenbank noch neue Synchronisationsinfrastruktur.
+
+### Konsequenzen
+
+- Neue Unternehmensfelder müssen bewusst in Modell, Allowlist, Merge und Tests
+  aufgenommen werden; unbeabsichtigt werden sie nicht mitgespeichert.
+- Die Speicheraktion darf ausschließlich an den sichtbaren Benutzerbefehl und
+  seine Bestätigung gebunden sein.
+- Erkannte Werte müssen vom Anwender tatsächlich bearbeitet werden, bevor sie
+  als eigene Unternehmensangabe gelten können.
+- Eine beschädigte oder fehlende Vorlagendatei bleibt ein kontrollierter leerer
+  Ausgangszustand und kann durch die ausdrückliche Aktion neu angelegt werden.
+
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

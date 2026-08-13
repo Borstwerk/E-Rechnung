@@ -442,6 +442,45 @@
                    Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BankBic}" />
       </Grid>
 
+      <!--
+        Ausschließlich eine ausdrückliche Aktion speichert Unternehmensdaten.
+        Der Speicherplaner übernimmt nur von Hand bearbeitete Allowlist-Felder;
+        erkannte PDF-Werte und Käuferdaten gelangen nicht in die Vorlage.
+      -->
+      <Border Style="{StaticResource BorstWerk.Status.Info}" Margin="0,12,0,8"
+              Visibility="{Binding ShowsCompanyTemplateSaveOffer, Converter={StaticResource BoolToVisibility}}">
+        <StackPanel>
+          <TextBlock FontWeight="SemiBold" Text="Eigene Unternehmensdaten" />
+          <TextBlock Margin="0,3,0,8" TextWrapping="Wrap"
+                     Text="Speichern Sie Ihre von Hand eingegebenen Verkäufer- und Bankangaben lokal als Vorlage für neue Rechnungen. Aus der PDF erkannte Angaben werden nicht übernommen." />
+          <Button Content="Als eigene Unternehmensdaten _speichern"
+                  Command="{Binding SaveOwnCompanyDataCommand}"
+                  HorizontalAlignment="Left" MinWidth="280" TabIndex="45"
+                  AutomationProperties.Name="Als eigene Unternehmensdaten speichern" />
+
+          <Border Style="{StaticResource BorstWerk.Status.Warning}" Margin="0,10,0,0"
+                  Visibility="{Binding HasCompanyTemplateOverwriteQuestion, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+              <TextBlock TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"
+                         Text="Eine Firmenvorlage ist bereits gespeichert. Möchten Sie deren Unternehmensdaten mit den von Hand geänderten Angaben aktualisieren? Nicht geänderte Firmenangaben und alle Komfortvorgaben bleiben erhalten." />
+              <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="Vorlage _aktualisieren"
+                        Command="{Binding ConfirmCompanyTemplateOverwriteCommand}"
+                        MinWidth="180" TabIndex="46" />
+                <Button Content="_Abbrechen"
+                        Command="{Binding CancelCompanyTemplateOverwriteCommand}"
+                        MinWidth="120" TabIndex="47" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Margin="0,8,0,0" TextWrapping="Wrap"
+                     Text="{Binding CompanyTemplateSaveMessage}"
+                     Visibility="{Binding HasCompanyTemplateSaveMessage, Converter={StaticResource BoolToVisibility}}"
+                     AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+      </Border>
+
       <!-- Positionen -->
       <TextBlock Style="{StaticResource Abschnitt}" Text="Positionen" />
       <DataGrid x:Name="Positionen"
