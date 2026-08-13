@@ -290,6 +290,48 @@ Wenn keine Firmenvorlage vorhanden ist und Verkäuferdaten manuell erfasst wurde
 - Test, dass Käuferdaten nicht übernommen werden,
 - Windows-UI-Abnahme.
 
+## ER-020-DET-01 – Verkäufer ohne Firmenvorlage konservativ erkennen
+
+### Problem / Grund
+
+Ohne vorhandene Firmenvorlage bleiben Verkäuferdaten derzeit leer, obwohl typische Rechnungen Rechnungsaussteller und Rechnungsempfänger ausreichend eindeutig voneinander trennen. Gerade kleine Unternehmen und Einzelunternehmer sollen die eigene Rechnung deshalb als Ausgangspunkt für ihre Unternehmensvorlage nutzen können, ohne Käufer und Verkäufer zu vertauschen oder erkannte Daten automatisch dauerhaft zu speichern.
+
+### Anforderung
+
+Die Anwendung soll einen Verkäufer auch ohne vorhandene Firmenvorlage nur dann vorausfüllen, wenn feste belastbare Signalkombinationen, der Ausschluss von Käufer- und Lieferblöcken sowie eine Eindeutigkeitsprüfung zusammen einen einzigen Seller ergeben. Die erkannten Verkäuferdaten bleiben ihrer PDF-Herkunft zugeordnet. Ein konkretes `DetectedOwnCompanyProposal` enthält ausschließlich die zusammengehörigen Verkäufer- und eindeutig zuordenbaren Bankfelder samt Werten, Confidence und Evidenz.
+
+Mit der ausdrücklichen Aktion „Als meine Unternehmensdaten speichern“ bestätigt der Benutzer gleichzeitig, dass der vorgeschlagene Seller das eigene Unternehmen ist, und stößt die bestehende lokale Speicherung als Unternehmensvorlage an. Eine Ablehnung verwirft nur das Angebot und verändert weder den aktuellen Rechnungsentwurf noch den lokalen Store.
+
+### Akzeptanzkriterien
+
+- Es gibt keine automatische Speicherung und kein stilles Lernen aus Rechnungen.
+- `FieldOrigin` bleibt unverändert; erkannte Werte werden nicht zu manuellen Werten umetikettiert.
+- Ohne Firmenvorlage wird ein eindeutiger Seller aus einer typischen Rechnung mit getrenntem Käuferblock sinnvoll vorausgefüllt.
+- Die Erkennung verwendet keine erste-Adresse-Regel und keine reine Punktesumme aus schwachen Signalen.
+- Käufer- und Lieferblöcke sind als Sellerquelle ausgeschlossen.
+- Bei mehreren gleich belastbaren Seller-Kandidaten bleibt der Seller leer.
+- Einzelunternehmer ohne Rechtsform können bei einer belastbaren Signalkombination erkannt werden.
+- Zweispaltige Layouts sowie Käuferblöcke oben oder links führen nicht zur Vertauschung von Seller und Buyer.
+- Verkäufer- und Käufer-USt-IdNr. beziehungsweise Steuernummer werden nicht vertauscht.
+- Bankdaten identifizieren keinen Seller. Sie dürfen nur einem bereits eindeutig erkannten Seller-Proposal hinzugefügt werden.
+- Bei mehreren gültigen IBANs wird keine eigene Bankverbindung automatisch vorgeschlagen.
+- Das Proposal enthält nur die konkret erkannten und bestätigbaren Allowlist-Felder mit ihrem unveränderten Wert, ihrer Confidence und ihrer Evidenz.
+- Die Speicheraktion übernimmt weiterhin manuelle Allowlist-Felder und zusätzlich unveränderte Felder des aktuellen Proposal.
+- Beliebige andere erkannte Werte, Käuferdaten, nicht zum Proposal gehörende Bankdaten und gegenüber dem Proposal veränderte erkannte Werte werden nicht gespeichert.
+- „Nicht als eigene Daten speichern“ verursacht keinen Store-Schreibzugriff und löscht keine erkannten Werte aus dem Rechnungsentwurf.
+- Nach erfolgreicher ausdrücklicher Speicherung verwendet eine neue Rechnung die gespeicherte Unternehmensvorlage.
+- Es werden weder eine zusätzliche Herkunftsstufe noch eine neue Layout- oder Installertechnologie eingeführt.
+
+### Nachweis
+
+- automatisierte Regression für eine typische Rechnung ohne Firmenvorlage mit eindeutigem Seller und Käuferblock,
+- Tests für eindeutigen Seller, Einzelunternehmer, zweispaltiges Layout, Käufer oben/links und Lieferanschrift,
+- Negativtest mit zwei gleich starken Firmen,
+- Tests gegen Vertauschung von Seller-/Buyer-Steuermerkmalen und gegen mehrere IBANs,
+- Tests für die Proposal-Allowlist, unveränderte PDF-Herkünfte, ausdrückliche Speicherung und Ablehnung ohne Schreibzugriff,
+- Test, dass eine neue Rechnung anschließend die gespeicherte Vorlage verwendet,
+- Windows-UI-Abnahme der Aktionen zum Speichern und Ablehnen.
+
 ## ER-020-BUY-01 – Käuferland erkennen
 
 ### Problem / Grund
