@@ -6,7 +6,7 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      artefakte_veroeffentlichen:
+      publish_artifacts:
         description: >-
           MSI, tragbare ZIP-Fassung und Prüfsummen dauerhaft als
           GitHub-Artefakt ablegen. Nur für Auslieferungsläufe nötig.
@@ -123,7 +123,7 @@ jobs:
       # Dauerhaft auf GitHub gespeichert wird es aber nur bei einem bewusst
       # manuell gestarteten Auslieferungslauf.
       - name: Artefakte für die Auslieferung bereitstellen
-        if: inputs.artefakte_veroeffentlichen
+        if: inputs.publish_artifacts
         uses: actions/upload-artifact@v4
         with:
           name: borstwerk-e-rechnung-win-x64
