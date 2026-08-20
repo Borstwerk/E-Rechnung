@@ -5,6 +5,13 @@ on:
     branches: ["**"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_artifacts:
+        description: >-
+          MSI, tragbare ZIP-Fassung und Prüfsummen dauerhaft als
+          GitHub-Artefakt ablegen. Nur für Auslieferungsläufe nötig.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -58,8 +65,12 @@ jobs:
       - name: Gegenprüfung der Golden Master mit CEN-Schematron und veraPDF
         run: ./build/validate-golden-masters.sh
 
-      - name: Testergebnisse veröffentlichen
-        if: always()
+      # Bei einem roten Lauf sind die .trx-Dateien für die Fehlersuche nützlich.
+      # Grüne Läufe müssen sie nicht dauerhaft im GitHub-Artefaktspeicher ablegen.
+      # Zusätzlich kann der Upload zentral über die Repository-Variable
+      # ARTEFAKT_UPLOAD abgeschaltet bleiben, solange Speicher knapp ist.
+      - name: Testergebnisse bei rotem Lauf sichern
+        if: failure() && vars.ARTEFAKT_UPLOAD == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: test-results
@@ -108,7 +119,11 @@ jobs:
         shell: pwsh
         run: ./build/Build-Release.ps1
 
-      - name: Artefakte bereitstellen
+      # Das Releasepaket wird weiterhin bei jedem CI-Lauf gebaut und geprüft.
+      # Dauerhaft auf GitHub gespeichert wird es aber nur bei einem bewusst
+      # manuell gestarteten Auslieferungslauf.
+      - name: Artefakte für die Auslieferung bereitstellen
+        if: inputs.publish_artifacts
         uses: actions/upload-artifact@v4
         with:
           name: borstwerk-e-rechnung-win-x64
