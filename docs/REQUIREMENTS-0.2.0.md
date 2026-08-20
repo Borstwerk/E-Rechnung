@@ -332,6 +332,95 @@ Mit der ausdrücklichen Aktion „Als meine Unternehmensdaten speichern“ best�
 - Test, dass eine neue Rechnung anschließend die gespeicherte Vorlage verwendet,
 - Windows-UI-Abnahme der Aktionen zum Speichern und Ablehnen.
 
+## ER-020-DET-02 – Typische Kleinunternehmer-Rechnungen robuster erkennen
+
+### Problem / Grund
+
+Reale, einfach aufgebaute Rechnungen kleiner Unternehmen verwenden häufig keine
+vollständig beschrifteten Metadaten- und Empfängerblöcke. Rechnungsnummern stehen
+als Überschrift, Empfängeranschriften ohne ausdrücklichen Buyer-Anker und
+Verkäuferangaben verteilt über mehrere Briefkopfbereiche. Positionsnahe
+Preisangaben können außerdem vor den eigentlichen Summen stehen. Dadurch bleiben
+eindeutige Angaben leer oder werden falsch vorausgefüllt.
+
+Eine anonymisierte Referenzrechnung aus dem Zielanwender-Umfeld belegt diese
+Fälle. Ihre relevanten räumlichen und semantischen Eigenschaften sollen durch
+eine synthetische Test-PDF reproduziert werden, ohne die Originaldatei in das
+Repository aufzunehmen.
+
+### Anforderung
+
+Die bestehende lokale PDF-Erkennung soll typische Kleinunternehmer-Rechnungen
+mit deterministischen, konservativen Regeln robuster auswerten. Dafür werden die
+vorhandenen Rechnungsnummer-, Summen-, Buyer-, Seller- und Datumsdetektoren
+gezielt erweitert. `PageNumber`, `Top`, `Left` und die bestehenden Segmente
+bleiben die maßgeblichen räumlichen Informationen; es entsteht keine allgemeine
+Layout-, OCR- oder KI-Engine.
+
+Der bereits vorhandene fachliche Zeitraumspfad über `BillingPeriodStart` und
+`BillingPeriodEnd` wird für ausdrücklich beschriftete Leistungszeiträume durch
+DetectionResult, Übersicht, DraftPrefiller und Schritt 2 geführt. Ein Zeitraum
+wird nicht in ein einzelnes `DeliveryDate` umgedeutet.
+
+### Akzeptanzkriterien
+
+- Klassische beschriftete Rechnungsnummern bleiben unverändert unterstützt.
+- Eine eindeutige Überschrift `RECHNUNG <Referenz>` kann die Rechnungsnummer
+  liefern; unterschiedliche gleich plausible Referenzen führen zu keiner
+  automatischen Auswahl.
+- Explizite Summenbegriffe wie `Gesamt Netto` haben Vorrang vor positionsnahen
+  Einzelpreis- oder Rechenangaben. Räumliche Nähe und arithmetische Kohärenz
+  dienen nur als Zusatzsignale.
+- Gleich starke widersprüchliche Summenkandidaten leeren nur das jeweils
+  betroffene Summenfeld.
+- Positionskontext wird ausschließlich zum Ausschluss falscher Summenkandidaten
+  verwendet; Rechnungspositionen werden nicht übernommen.
+- Ein ankerloser Buyer wird nur ohne vorhandenen expliziten Buyeranker und nur
+  aus einer eindeutigen vollständigen Empfängeranschrift vorgeschlagen.
+- Explizite Buyerregionen behalten Vorrang. Ein mehrdeutiger expliziter Buyer
+  wird nicht durch den Fallback ersetzt.
+- Lieferanschrift und Sellerkopf bleiben als Buyerquelle ausgeschlossen. Zwei
+  plausible ankerlose Empfänger führen zu einem leeren Buyer.
+- Ein mehrspaltiger Seller bleibt an die DET-01-Mindestkombination aus
+  eindeutigem Namen, vollständiger Anschrift und Steuermerkmal gebunden.
+- Ein Namenspräfix vor einem Semikolon gilt nur innerhalb eines plausiblen
+  oberen Briefkopfkontexts und bei genau einem zuordenbaren vollständigen
+  Seller-Kontaktblock als Kandidat.
+- Kombinierte Zeilen aus Straße und PLZ/Ort werden nur bei zwei eindeutig
+  validierbaren Teilmustern und unabhängig vom konkreten Trennzeichen zerlegt.
+- Ein ausdrücklich beschriftetes Rechnungsdatum bleibt `High`. Genau eine
+  plausible Orts-/Datumszeile darf als `Medium` verwendet werden; Leistungs-,
+  Liefer-, Fälligkeits-, Vertrags- und Bestelldaten sind ausgeschlossen.
+- Ein ausdrücklich beschrifteter Leistungszeitraum wird als BT-73/BT-74
+  übernommen. Bei `01.04. - 07.04. 2026` darf das eindeutige Jahr auf beide
+  Grenzen übertragen werden, sofern ein gültiger Zeitraum im selben Jahr
+  entsteht. Jahresübergreifende Kurzformen werden nicht geraten.
+- Eine ungültige IBAN bleibt leer. Die bestehenden räumlichen Regeln für die
+  Aufnahme von IBAN und BIC in das `DetectedOwnCompanyProposal` bleiben
+  unverändert.
+- `FieldOrigin`, CompanyTemplate, SET-01, DET-01 sowie Buyer-/Liefertrennung und
+  die feldweise Mehrdeutigkeit aus BUY-01/02/03 bleiben unverändert gültig.
+- Es gibt keine automatische Speicherung, kein OCR, keine KI und keine Änderung
+  der XML-/PDF-A-Einbettung, Produktversion, Installer- oder Releaseprozesse.
+
+### Nachweis
+
+- synthetische positionierbare PDF mit den relevanten Top-/Left-/
+  Segmentverhältnissen der anonymisierten Referenzstruktur,
+- Gesamtregression für Rechnungsnummer `04-2026`, Rechnungsdatum `09.06.2026`
+  mit `Medium`, Zeitraum `01.04.2026` bis `07.04.2026`, vollständig getrennten
+  Seller und Buyer sowie Netto `1.020,00`, Steuer `193,80`, Brutto `1.213,80`
+  und Steuersatz `19 %`,
+- Nachweis, dass Buyerland, Buyer-USt-ID und Buyer-E-Mail ohne PDF-Angabe leer
+  bleiben,
+- Nachweis, dass die ungültige Referenz-IBAN leer bleibt und die erkannte BIC
+  nicht ohne zugeordnete gültige IBAN in das OwnCompanyProposal gelangt,
+- Positiv- und Negativtests für Rechnungsnummern, Summenkandidaten, ankerlose
+  Empfänger, mehrspaltige Seller, Ortsdaten und Leistungszeiträume,
+- vollständige Regressionen für DET-01, BUY-01/02/03 und SET-01,
+- vollständige Core- und Integrationstests einschließlich externer Validatoren,
+  Solution-Build, Formatprüfung und Diff-Prüfung.
+
 ## ER-020-BUY-01 – Käuferland erkennen
 
 ### Problem / Grund
