@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf.Detection;
+using EInvoiceSender.Core.Validation;
 
 namespace EInvoiceSender.App.ViewModels;
 
@@ -75,6 +76,25 @@ public sealed partial class ReviewViewModel : StepViewModel
         ? string.Empty
         : $"{Invoice.Buyer.Name}, {Invoice.Buyer.Address.PostalCode} {Invoice.Buyer.Address.City}";
 
+    /// <summary>Käuferland als ISO-Code und verständlicher Ländername.</summary>
+    public string BuyerCountryText
+    {
+        get
+        {
+            string code = Invoice?.Buyer.Address.Country.Value ?? string.Empty;
+
+            return CountryCodeList.TryGetName(code, out string? name)
+                ? $"{code} – {name}"
+                : code;
+        }
+    }
+
+    /// <summary>USt-IdNr. des Käufers.</summary>
+    public string BuyerVatIdText => Invoice?.Buyer.VatId ?? string.Empty;
+
+    /// <summary>E-Mail-Adresse des Käufers.</summary>
+    public string BuyerEmailText => Invoice?.Buyer.Email ?? string.Empty;
+
     /// <summary>Rechnungsnummer.</summary>
     public string InvoiceNumberText => Invoice?.InvoiceNumber ?? string.Empty;
 
@@ -110,6 +130,9 @@ public sealed partial class ReviewViewModel : StepViewModel
 
         OnPropertyChanged(nameof(SellerText));
         OnPropertyChanged(nameof(BuyerText));
+        OnPropertyChanged(nameof(BuyerCountryText));
+        OnPropertyChanged(nameof(BuyerVatIdText));
+        OnPropertyChanged(nameof(BuyerEmailText));
         OnPropertyChanged(nameof(InvoiceNumberText));
         OnPropertyChanged(nameof(IssueDateText));
         OnPropertyChanged(nameof(DueDateText));

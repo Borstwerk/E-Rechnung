@@ -103,6 +103,32 @@ public sealed class CodeListTests
         Assert.Null(name);
     }
 
+    [Theory]
+    [InlineData("AT", "AT")]
+    [InlineData(" at ", "AT")]
+    [InlineData("Österreich", "AT")]
+    [InlineData("deutschland", "DE")]
+    public void CountryCodeList_TryGetCode_ResolvesCodeOrExactGermanName(
+        string input, string expected)
+    {
+        bool found = CountryCodeList.TryGetCode(input, out string? code);
+
+        Assert.True(found);
+        Assert.Equal(expected, code);
+    }
+
+    [Theory]
+    [InlineData("Austria")]
+    [InlineData("Deutschl")]
+    [InlineData("")]
+    public void CountryCodeList_TryGetCode_DoesNotGuessTranslationsOrPartialNames(string input)
+    {
+        bool found = CountryCodeList.TryGetCode(input, out string? code);
+
+        Assert.False(found);
+        Assert.Null(code);
+    }
+
     [Fact]
     public void CountryCodeList_ContainsFullIsoRange()
     {

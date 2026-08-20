@@ -22,6 +22,25 @@ internal static class VatRules
             return;
         }
 
+        if (totals.VatBreakdown.Any(entry => entry.Category == VatCategory.ReverseCharge)
+            && string.IsNullOrWhiteSpace(invoice.Buyer.VatId))
+        {
+            report.Error(
+                "APP-VAT-014",
+                "Bei Reverse Charge ist die USt-IdNr. des Rechnungsempfängers erforderlich.",
+                "Buyer.VatId", normRule: "BR-AE-02");
+        }
+
+        if (totals.VatBreakdown.Any(entry => entry.Category == VatCategory.IntraCommunitySupply)
+            && string.IsNullOrWhiteSpace(invoice.Buyer.VatId))
+        {
+            report.Error(
+                "APP-VAT-015",
+                "Bei einer innergemeinschaftlichen Lieferung ist die USt-IdNr. "
+                + "des Rechnungsempfängers erforderlich.",
+                "Buyer.VatId", normRule: "BR-IC-02");
+        }
+
         foreach (VatBreakdownEntry entry in totals.VatBreakdown)
         {
             string label = $"Steuersatz {SharedRules.Format(entry.Rate)} Prozent, Kategorie {entry.Category.ToCode()}";

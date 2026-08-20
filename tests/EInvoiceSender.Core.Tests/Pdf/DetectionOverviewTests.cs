@@ -34,6 +34,9 @@ public sealed class DetectionOverviewTests : IDisposable
 
         Assert.Contains("Rechnungsnummer erkannt: RE-2026-0815", zeilen);
         Assert.Contains("Empfänger erkannt: Nordlicht Handel GmbH", zeilen);
+        Assert.Contains("Land des Empfängers erkannt: AT", zeilen);
+        Assert.Contains("USt-IdNr. des Empfängers erkannt: ATU12345678", zeilen);
+        Assert.Contains("E-Mail des Empfängers erkannt: einkauf@nordlicht.example", zeilen);
         Assert.Contains("Währung erkannt: EUR", zeilen);
         Assert.Contains("Rechnungsdatum erkannt: 09.08.2026", zeilen);
         Assert.Contains("Gesamtbetrag erkannt: 714,00", zeilen);
@@ -150,6 +153,10 @@ public sealed class DetectionOverviewTests : IDisposable
         {
             Name = new DetectedValue<string>("Nordlicht Handel GmbH", DetectionConfidence.High),
             City = new DetectedValue<string>("Hamburg", DetectionConfidence.High),
+            Country = new DetectedValue<string>("AT", DetectionConfidence.High),
+            VatId = new DetectedValue<string>("ATU12345678", DetectionConfidence.High),
+            Email = new DetectedValue<string>(
+                "einkauf@nordlicht.example", DetectionConfidence.High),
         },
         Iban = new DetectedValue<string>("DE89370400440532013000", DetectionConfidence.High),
         Bic = new DetectedValue<string>("COBADEFFXXX", DetectionConfidence.High),

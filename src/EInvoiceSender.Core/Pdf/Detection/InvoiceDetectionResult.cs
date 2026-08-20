@@ -15,7 +15,7 @@ public sealed record DetectedParty
     /// <summary>Wurde überhaupt etwas erkannt?</summary>
     public bool HasAnything =>
         Name is not null || Street is not null || PostalCode is not null || City is not null
-        || VatId is not null || TaxNumber is not null || Email is not null;
+        || Country is not null || VatId is not null || TaxNumber is not null || Email is not null;
 }
 
 /// <summary>

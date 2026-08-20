@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 771 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
-| `tests/EInvoiceSender.IntegrationTests` | 91 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **862** | |
+| `tests/EInvoiceSender.Core.Tests` | 809 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.IntegrationTests` | 92 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
+| **Summe** | **901** | |
 
 ## Ebenen
 
@@ -298,3 +298,19 @@ ausdrücklicher Seller-Block. Eine bloße erste Adresse, zwei gleich starke Firm
 und mehrere gültige IBANs sind Negativfälle: Seller beziehungsweise eigene
 Bankverbindung bleiben dann leer. Proposal-Tests sichern konkrete Werte,
 Confidence, Evidenz und unveränderte PDF-Herkünfte.
+
+## Buyer-Land, -USt-ID und -E-Mail
+
+`BuyerDetectionTests` erzeugt echte ein- und zweispaltige Text-PDFs. Geprüft
+werden ISO-Land und exakter deutscher Ländername, sechs Zeilen im Buyerblock,
+unterschiedliche Seller-/Buyer-Steuer- und Mailangaben, ein vorgelagerter
+Lieferblock sowie globale Kopf-/Fußangaben. Zwei plausible Buyerblöcke liefern
+keine erfundene Zuordnung. Zwei unterschiedliche Werte desselben Zusatzfelds
+leeren nur dieses Feld und lassen die übrige eindeutige Buyeranschrift stehen.
+
+Die Validierungstests sichern bekannte VAT-Länderpräfixe einschließlich `EL`,
+ein vom Buyerland abweichendes Präfix und die Pflichtangabe bei `AE` und `K`.
+Die bisherige Seller-Formprüfung wird dabei ausdrücklich regressionsgesichert.
+Quelltests für Schritt 2, Schritt 3 und den bestehenden `.eml`-Empfängerweg
+ergänzen DraftPrefiller-, CII-Golden-Master-, E-Mail- und externe
+Mustang-/veraPDF-Prüfungen. Die SET-Allowlist bleibt frei von Buyerfeldern.

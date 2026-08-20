@@ -318,6 +318,91 @@ public sealed class En16931RuleValidatorTests
         ErwarteWarnung(Prüfe(kaputt), "APP-BUY-006");
     }
 
+    [Theory]
+    [InlineData("DE1234")]
+    [InlineData("ATU12345678")]
+    [InlineData("EL123456789")]
+    [InlineData("GR123456789")]
+    public void Käufer_GültigeUstIdAllgemeinUndElSonderpräfixWerdenAkzeptiert(string vatId)
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Buyer = BaseInvoice.Buyer with { VatId = vatId },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-BUY-007");
+    }
+
+    [Theory]
+    [InlineData("12345")]
+    [InlineData("QQ12345")]
+    [InlineData("DE-12345")]
+    public void Käufer_UngültigesUstIdFormatLöstFehlerAus(string vatId)
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Buyer = BaseInvoice.Buyer with { VatId = vatId },
+        };
+
+        ErwarteFehler(Prüfe(invoice), "APP-BUY-007");
+    }
+
+    [Fact]
+    public void Käufer_UstIdPräfixWirdNichtMitBuyerlandGleichgesetzt()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Buyer = BaseInvoice.Buyer with
+            {
+                Address = BaseInvoice.Buyer.Address with { Country = CountryCode.Parse("AT") },
+                VatId = "DE987654321",
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-BUY-007");
+    }
+
+    [Fact]
+    public void BuyerPräfixprüfungVerschärftBestehendeSellerregelNicht()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with { VatId = "QQ12345" },
+        };
+
+        ErwarteKeineWarnung(Prüfe(invoice), "APP-SEL-005");
+    }
+
+    [Theory]
+    [InlineData(VatCategory.ReverseCharge, "APP-VAT-014")]
+    [InlineData(VatCategory.IntraCommunitySupply, "APP-VAT-015")]
+    public void AeUndKOhneBuyerUstIdLösenFehlerAus(VatCategory category, string ruleId)
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Buyer = BaseInvoice.Buyer with { VatId = null },
+            Lines = [BaseInvoice.Lines[0] with { VatCategory = category, VatRate = 0m }],
+            ExemptionReasons = [new VatExemptionReason(category, "Steuerfreie Testkonstellation")],
+        };
+
+        ErwarteFehler(Prüfe(invoice), ruleId);
+    }
+
+    [Theory]
+    [InlineData(VatCategory.ReverseCharge, "APP-VAT-014")]
+    [InlineData(VatCategory.IntraCommunitySupply, "APP-VAT-015")]
+    public void AeUndKMitBuyerUstIdErfüllenDieZusatzregel(VatCategory category, string ruleId)
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Buyer = BaseInvoice.Buyer with { VatId = "ATU12345678" },
+            Lines = [BaseInvoice.Lines[0] with { VatCategory = category, VatRate = 0m }],
+            ExemptionReasons = [new VatExemptionReason(category, "Steuerfreie Testkonstellation")],
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), ruleId);
+    }
+
     // --------------------------------------------------------------- Positionen
 
     [Fact]

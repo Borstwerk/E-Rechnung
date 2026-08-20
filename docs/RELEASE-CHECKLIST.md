@@ -78,6 +78,21 @@ aussieht.
 - [ ] Nach erfolgreichem Speichern bleiben Inhalt und Herkunftshinweise der laufenden Rechnung unverändert.
 - [ ] Firmenvorlage anschließend in den regulären Einstellungen öffnen und bearbeiten.
 
+## Buyer-Land, -USt-ID und -E-Mail
+
+- [ ] PDF mit eindeutigem Rechnungsempfänger einlesen: Land, USt-IdNr. und
+  E-Mail erscheinen in Schritt 2 mit PDF-Herkunft.
+- [ ] Rechnung mit Seller- und Buyerangaben in zwei Spalten prüfen: Land,
+  USt-IdNr. und E-Mail bleiben den richtigen Parteien zugeordnet.
+- [ ] Vorgelagerte Lieferanschrift prüfen: Sie wird nicht zum Rechnungsempfänger.
+- [ ] PDF ohne Buyerland prüfen: Das Feld bleibt leer und wird nicht als `DE` vorbelegt.
+- [ ] Zwei plausible Buyerblöcke prüfen: Es wird keine erste Fundstelle geraten.
+- [ ] Schritt 3 zeigt Buyerland, Buyer-USt-IdNr. und Buyer-E-Mail vollständig.
+- [ ] Gültige Buyer-E-Mail erzeugt einen `.eml`-Entwurf mit dieser Adresse als
+  Empfänger; ungültige E-Mail stoppt vorher mit einem Validierungsbefund.
+- [ ] Reverse-Charge- und innergemeinschaftliche Rechnung ohne Buyer-USt-ID
+  werden verständlich blockiert; mit gültiger ID bestehen sie die Prüfung.
+
 ## Summen während der Eingabe
 
 1. Drei Positionen eintragen – 4 × 85,00, 2 × 95,00, 1 × 70,00, jeweils 19 %.

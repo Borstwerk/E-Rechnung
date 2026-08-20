@@ -269,6 +269,9 @@ public static class CountryCodeList
         ["ZW"] = "Simbabwe",
     }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
+    private static readonly FrozenDictionary<string, string> CodesByGermanName = Names
+        .ToFrozenDictionary(entry => entry.Value, entry => entry.Key, StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Alle Länder als Auswahlliste, nach dem deutschen Namen sortiert.
     /// Für die Auswahlfelder der Oberfläche.
@@ -305,5 +308,39 @@ public static class CountryCodeList
         }
 
         return Names.TryGetValue(code.Trim(), out germanName);
+    }
+
+    /// <summary>
+    /// Löst entweder einen ISO-3166-1-alpha-2-Code oder einen exakten deutschen
+    /// Ländernamen aus derselben Codeliste in den normalisierten Code auf.
+    ///
+    /// Die Funktion ist bewusst kein unscharfer Übersetzer: Abkürzungen,
+    /// fremdsprachige Namen und bloß ähnliche Schreibweisen werden nicht
+    /// geraten.
+    /// </summary>
+    public static bool TryGetCode(string? codeOrGermanName, [MaybeNullWhen(false)] out string code)
+    {
+        if (string.IsNullOrWhiteSpace(codeOrGermanName))
+        {
+            code = null;
+            return false;
+        }
+
+        string candidate = codeOrGermanName.Trim();
+
+        if (Names.ContainsKey(candidate))
+        {
+            code = candidate.ToUpperInvariant();
+            return true;
+        }
+
+        if (CodesByGermanName.TryGetValue(candidate, out string? found))
+        {
+            code = found.ToUpperInvariant();
+            return true;
+        }
+
+        code = null;
+        return false;
     }
 }

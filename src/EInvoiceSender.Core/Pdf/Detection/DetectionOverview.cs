@@ -87,6 +87,9 @@ public static class DetectionOverview
         yield return Entry("Rechnungssteller", d.Seller.Name, v => v);
         yield return Entry("Empfänger", d.Buyer.Name, v => v);
         yield return Entry("Ort des Empfängers", d.Buyer.City, v => v);
+        yield return Entry("Land des Empfängers", d.Buyer.Country, v => v);
+        yield return Entry("USt-IdNr. des Empfängers", d.Buyer.VatId, v => v);
+        yield return Entry("E-Mail des Empfängers", d.Buyer.Email, v => v);
     }
 
     private static IEnumerable<DetectionEntry> AmountEntries(InvoiceDetectionResult d)

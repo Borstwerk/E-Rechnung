@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Settings;
+using EInvoiceSender.Core.Validation;
+using EInvoiceSender.Core.Validation.Rules;
 
 namespace EInvoiceSender.Core.Pdf.Detection;
 
@@ -33,8 +35,14 @@ internal static class PartyDetector
 {
     private static readonly string[] BuyerKeywords =
     [
-        "rechnung an", "rechnungsempfänger", "rechnungsempfänger", "kunde:", "empfänger",
-        "empfänger", "bill to", "invoice to", "lieferanschrift", "rechnungsadresse",
+        "rechnung an", "rechnungsempfänger", "rechnungsempf\u0061enger", "kunde:", "empfänger",
+        "empf\u0061enger", "bill to", "invoice to", "rechnungsadresse",
+    ];
+
+    private static readonly string[] DeliveryKeywords =
+    [
+        "lieferanschrift", "lieferadresse", "lieferempfänger", "lieferempf\u0061enger",
+        "ship to", "delivery address",
     ];
 
     private static readonly string[] SellerKeywords =
@@ -42,9 +50,6 @@ internal static class PartyDetector
         "rechnungssteller", "rechnungsaussteller", "aussteller", "verkäufer", "verkaufer",
         "lieferant", "leistungserbringer", "seller", "invoice from",
     ];
-
-    /// <summary>Mehr Zeilen sind erfahrungsgemäß schon der nächste Abschnitt.</summary>
-    private const int AddressBlockLines = 5;
 
     /// <summary>Waagerechte Toleranz für dieselbe Spalte.</summary>
     private const double SameColumnToleranceInPoints = 40;
@@ -83,12 +88,30 @@ internal static class PartyDetector
         "steuernummer", "steuer-nr", "steuer nr", "tax number", "tax no",
     ];
 
+    private static readonly string[] BuyerBlockBoundaryTerms =
+    [
+        "rechnungsnummer", "rechnungs-nr", "rechnungsnr", "rechnungsdatum",
+        "leistungsdatum", "lieferdatum", "leistungszeitraum", "fällig", "zahlbar",
+        "zahlungsziel", "währung", "currency", "netto", "brutto", "umsatzsteuer",
+        "mehrwertsteuer", "mwst", "steuersatz", "gesamtbetrag", "rechnungsbetrag",
+        "gesamtsumme", "zwischensumme", "zahlbetrag", "iban", "bic", "swift",
+        "invoice no", "invoice date", "belegnummer", "position", "bezeichnung", "menge",
+    ];
+
     private static readonly Regex VatIdPattern = new(
         @"\b[A-Z]{2}\s?[A-Z0-9]{8,12}\b",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+    private static readonly Regex BuyerVatIdPattern = new(
+        @"\b[A-Z]{2}\s?[A-Z0-9]{2,12}\b",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
     private static readonly Regex EmailPattern = new(
         @"\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static readonly Regex CountryLabelPattern = new(
+        @"^(?:land|country)\s*[:\-]\s*(?<value>.+)$",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     public static DetectedParties Detect(
@@ -97,7 +120,7 @@ internal static class PartyDetector
         DetectedPayment payment)
     {
         IReadOnlyList<RecipientRegion> recipientRegions = FindRecipientRegions(lines);
-        DetectedParty buyer = DetectBuyer(lines, ownCompany);
+        DetectedParty buyer = DetectBuyer(Entries(lines), recipientRegions, ownCompany);
 
         if (ownCompany is not null && CompanyTemplateSavePlanner.HasCompanyData(ownCompany))
         {
@@ -420,40 +443,262 @@ internal static class PartyDetector
     }
 
     private static DetectedParty DetectBuyer(
-        IReadOnlyList<PdfTextLine> lines, CompanyTemplate? ownCompany)
+        IReadOnlyList<SegmentEntry> entries,
+        IReadOnlyList<RecipientRegion> recipientRegions,
+        CompanyTemplate? ownCompany)
     {
-        for (int index = 0; index < lines.Count; index++)
-        {
-            PdfTextSegment? keywordSegment = SegmentWithKeyword(lines[index], BuyerKeywords);
+        BuyerCandidate[] candidates =
+        [
+            .. recipientRegions
+                .Where(region => region.Kind == RecipientRegionKind.Buyer)
+                .Select(region => BuildBuyerCandidate(entries, region, ownCompany))
+                .Where(candidate => candidate is not null)
+                .Select(candidate => candidate!),
+        ];
 
-            if (keywordSegment is null)
+        BuyerCandidate[][] identities =
+        [
+            .. candidates
+                .GroupBy(candidate => candidate.Identity, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.ToArray()),
+        ];
+
+        // Mehrere plausible Empfänger sind fachlich mehrdeutig. Es gewinnt
+        // ausdrücklich weder die erste Region noch ein schwaches Punktesystem.
+        if (identities.Length != 1)
+        {
+            return new DetectedParty();
+        }
+
+        BuyerCandidate[] sameIdentity = identities[0];
+        DetectedParty first = sameIdentity[0].Party;
+
+        return first with
+        {
+            Country = UniqueDetected(sameIdentity.Select(candidate => candidate.Party.Country)),
+            VatId = UniqueDetected(sameIdentity.Select(candidate => candidate.Party.VatId)),
+            Email = UniqueDetected(sameIdentity.Select(candidate => candidate.Party.Email)),
+        };
+    }
+
+    private static BuyerCandidate? BuildBuyerCandidate(
+        IReadOnlyList<SegmentEntry> entries,
+        RecipientRegion region,
+        CompanyTemplate? ownCompany)
+    {
+        SegmentEntry[] regionEntries =
+        [
+            .. entries
+                .Where(entry => region.Contains(entry.PageNumber, entry.Top, entry.Left)
+                                && entry.Top > region.StartTop)
+                .OrderBy(entry => entry.Top),
+        ];
+        SegmentEntry[] block = BuyerBlock(regionEntries, ownCompany);
+
+        string reason =
+            $"Eindeutiger Empfängerblock unter \"{region.AnchorText}\"; Lieferbereiche ausgeschlossen.";
+        SegmentEntry? street = block.FirstOrDefault(entry =>
+            DetectionParsers.Street().IsMatch(entry.Text));
+        (SegmentEntry? place, Match? placeMatch) = FindPlace(block);
+        SegmentEntry? name = block.FirstOrDefault(entry =>
+            IsPlausibleBuyerName(entry.Text, ownCompany));
+
+        // Ein bloßer Name oder eine bloße Adresse genügt nicht. Diese feste
+        // Mindestkombination verhindert die frühere "erste Zeile gewinnt"-Logik.
+        if (name is null || (street is null && place is null))
+        {
+            return null;
+        }
+
+        var party = new DetectedParty
+        {
+            Name = Value(name.Text.Trim(), DetectionConfidence.Medium, name.Text, reason),
+            Street = street is null
+                ? null
+                : Value(street.Text.Trim(), DetectionConfidence.Medium, street.Text, reason),
+            PostalCode = placeMatch is null
+                ? null
+                : Value(placeMatch.Groups["plz"].Value, DetectionConfidence.Medium, place?.Text, reason),
+            City = placeMatch is null
+                ? null
+                : Value(placeMatch.Groups["ort"].Value.Trim(), DetectionConfidence.Medium, place?.Text, reason),
+            Country = UniqueDetected(block.Select(entry => DetectBuyerCountry(entry, reason))),
+            VatId = UniqueDetected(block.SelectMany(entry => DetectBuyerVatIds(entry, reason))),
+            Email = UniqueDetected(block.SelectMany(entry => DetectBuyerEmails(entry, reason))),
+        };
+
+        string identity = string.Join('|',
+            party.Name?.Value,
+            party.Street?.Value,
+            party.PostalCode?.Value,
+            party.City?.Value);
+
+        return new BuyerCandidate(party, identity);
+    }
+
+    private static SegmentEntry[] BuyerBlock(
+        IReadOnlyList<SegmentEntry> regionEntries, CompanyTemplate? ownCompany)
+    {
+        var result = new List<SegmentEntry>();
+        bool addressStarted = false;
+
+        foreach (SegmentEntry entry in regionEntries)
+        {
+            if (IsBuyerBlockBoundary(entry.Text))
             {
+                if (addressStarted)
+                {
+                    break;
+                }
+
                 continue;
             }
 
-            List<string> block =
-            [
-                .. lines.Skip(index + 1).Take(AddressBlockLines)
-                    .Select(line => TextInColumn(line, keywordSegment.Left))
-                    .Where(text => text is { Length: > 0 })
-                    .Select(text => text!),
-            ];
-
-            return BuildFromAddressBlock(block, keywordSegment.Text.Trim(), ownCompany);
+            result.Add(entry);
+            addressStarted |= IsPlausibleBuyerName(entry.Text, ownCompany)
+                              || DetectionParsers.Street().IsMatch(entry.Text)
+                              || DetectionParsers.PostalCodeAndCity().IsMatch(entry.Text);
         }
 
-        return new DetectedParty();
+        return [.. result];
+    }
+
+    private static bool IsPlausibleBuyerName(string text, CompanyTemplate? ownCompany)
+        => IsPlausibleName(text)
+           && !IsOwnCompany(text, ownCompany)
+           && !TryBuyerCountry(text, out _)
+           && !ContainsValidBuyerVatId(text);
+
+    private static bool ContainsValidBuyerVatId(string text)
+        => BuyerVatMatches(text)
+            .Select(match => match.Value.Replace(" ", string.Empty, StringComparison.Ordinal))
+            .Any(value => SharedRules.LooksLikeVatId(value)
+                          && VatIdSyntax.HasKnownCountryPrefix(value));
+
+    private static DetectedValue<string>? DetectBuyerCountry(SegmentEntry entry, string reason)
+        => TryBuyerCountry(entry.Text, out string? country)
+            ? Value(country!, DetectionConfidence.Medium, entry.Text, reason)
+            : null;
+
+    private static bool TryBuyerCountry(string text, out string? country)
+    {
+        string candidate = text.Trim();
+        Match labelled = CountryLabelPattern.Match(candidate);
+
+        if (labelled.Success)
+        {
+            candidate = labelled.Groups["value"].Value.Trim();
+        }
+
+        return CountryCodeList.TryGetCode(candidate, out country);
+    }
+
+    private static IEnumerable<DetectedValue<string>> DetectBuyerVatIds(
+        SegmentEntry entry, string reason)
+    {
+        if (!ContainsKeyword(entry.Text, VatTerms))
+        {
+            yield break;
+        }
+
+        foreach (Match match in BuyerVatMatches(entry.Text))
+        {
+            string value = match.Value
+                .Replace(" ", string.Empty, StringComparison.Ordinal)
+                .ToUpperInvariant();
+
+            if (SharedRules.LooksLikeVatId(value)
+                && VatIdSyntax.HasKnownCountryPrefix(value))
+            {
+                yield return Value(value, DetectionConfidence.Medium, entry.Text, reason);
+            }
+        }
+    }
+
+    private static IEnumerable<Match> BuyerVatMatches(string text)
+    {
+        string? keyword = DetectionParsers.FirstKeywordIn(text, VatTerms);
+
+        if (keyword is null)
+        {
+            yield break;
+        }
+
+        string candidate = DetectionParsers.AfterKeyword(text, keyword);
+
+        foreach (Match match in BuyerVatIdPattern.Matches(candidate))
+        {
+            yield return match;
+        }
+    }
+
+    private static bool IsBuyerBlockBoundary(string text)
+        => ContainsKeyword(text, BuyerBlockBoundaryTerms)
+           && !(ContainsKeyword(text, VatTerms) && ContainsValidBuyerVatId(text));
+
+    private static IEnumerable<DetectedValue<string>> DetectBuyerEmails(
+        SegmentEntry entry, string reason)
+    {
+        foreach (Match match in EmailPattern.Matches(entry.Text))
+        {
+            if (SharedRules.LooksLikeEmail(match.Value))
+            {
+                yield return Value(match.Value, DetectionConfidence.Medium, entry.Text, reason);
+            }
+        }
+    }
+
+    private static DetectedValue<string>? UniqueDetected(
+        IEnumerable<DetectedValue<string>?> values)
+    {
+        DetectedValue<string>[] distinct =
+        [
+            .. values
+                .Where(value => value is not null)
+                .Select(value => value!)
+                .GroupBy(value => value.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First()),
+        ];
+
+        return distinct.Length == 1 ? distinct[0] : null;
     }
 
     private static IReadOnlyList<RecipientRegion> FindRecipientRegions(
         IReadOnlyList<PdfTextLine> lines)
-        => [.. Entries(lines)
-            .Where(entry => ContainsKeyword(entry.Text, BuyerKeywords))
-            .Select(entry => new RecipientRegion(
-                entry.PageNumber,
-                entry.Left,
-                entry.Top,
-                entry.Top + RecipientBlockHeightInPoints))];
+    {
+        SegmentEntry[] anchors =
+        [
+            .. Entries(lines).Where(entry =>
+                ContainsKeyword(entry.Text, BuyerKeywords)
+                || ContainsKeyword(entry.Text, DeliveryKeywords)),
+        ];
+
+        return
+        [
+            .. anchors.Select(anchor =>
+            {
+                double nextAnchorTop = anchors
+                    .Where(next => next.PageNumber == anchor.PageNumber
+                                   && SameColumn(next.Left, anchor.Left)
+                                   && next.Top > anchor.Top)
+                    .Select(next => next.Top)
+                    .DefaultIfEmpty(anchor.Top + RecipientBlockHeightInPoints)
+                    .Min();
+
+                RecipientRegionKind kind = ContainsKeyword(anchor.Text, DeliveryKeywords)
+                    ? RecipientRegionKind.Delivery
+                    : RecipientRegionKind.Buyer;
+
+                return new RecipientRegion(
+                    anchor.PageNumber,
+                    anchor.Left,
+                    anchor.Top,
+                    Math.Min(anchor.Top + RecipientBlockHeightInPoints, nextAnchorTop),
+                    kind,
+                    anchor.Text.Trim());
+            }),
+        ];
+    }
 
     private static IReadOnlyList<SegmentEntry> Entries(IReadOnlyList<PdfTextLine> lines)
         => [.. lines.SelectMany(line => line.Segments.Select(segment => new SegmentEntry(
@@ -466,64 +711,6 @@ internal static class PartyDetector
     private static bool IsRecipient(
         LocatedPaymentValue value, IReadOnlyList<RecipientRegion> regions)
         => regions.Any(region => region.Contains(value.PageNumber, value.Top, value.Left));
-
-    private static PdfTextSegment? SegmentWithKeyword(PdfTextLine line, string[] keywords)
-        => line.Segments.FirstOrDefault(segment =>
-            DetectionParsers.FirstKeywordIn(segment.Text, keywords) is not null);
-
-    private static string? TextInColumn(PdfTextLine line, double columnLeft)
-        => line.Segments
-            .Where(segment => SameColumn(segment.Left, columnLeft))
-            .Select(segment => segment.Text)
-            .FirstOrDefault();
-
-    private static DetectedParty BuildFromAddressBlock(
-        IReadOnlyList<string> block, string keywordLine, CompanyTemplate? ownCompany)
-    {
-        DetectedValue<string>? name = null;
-        DetectedValue<string>? street = null;
-        DetectedValue<string>? postalCode = null;
-        DetectedValue<string>? city = null;
-        string reason = $"Adressblock unter \"{keywordLine}\".";
-
-        foreach (string line in block)
-        {
-            if (IsMetadata(line))
-            {
-                continue;
-            }
-
-            Match place = DetectionParsers.PostalCodeAndCity().Match(line);
-
-            if (place.Success && postalCode is null)
-            {
-                postalCode = Value(place.Groups["plz"].Value, DetectionConfidence.Medium, line, reason);
-                city = Value(place.Groups["ort"].Value.Trim(), DetectionConfidence.Medium, line, reason);
-                continue;
-            }
-
-            if (street is null && DetectionParsers.Street().IsMatch(line))
-            {
-                street = Value(line.Trim(), DetectionConfidence.Medium, line, reason);
-                continue;
-            }
-
-            if (name is null && line.Trim().Length > 2 && !IsOwnCompany(line, ownCompany))
-            {
-                name = Value(
-                    line.Trim(), DetectionConfidence.Medium, line,
-                    $"Erste Zeile unter \"{keywordLine}\".");
-            }
-        }
-
-        return new DetectedParty
-        {
-            Name = name,
-            Street = street,
-            PostalCode = postalCode,
-            City = city,
-        };
-    }
 
     private static (SegmentEntry? Entry, Match? Match) FindPlace(
         IEnumerable<SegmentEntry> entries)
@@ -589,6 +776,7 @@ internal static class PartyDetector
                && !char.IsDigit(value[0])
                && !IsMetadata(value)
                && !ContainsKeyword(value, BuyerKeywords)
+               && !ContainsKeyword(value, DeliveryKeywords)
                && !ContainsKeyword(value, SellerKeywords)
                && !DetectionParsers.Street().IsMatch(value)
                && !DetectionParsers.PostalCodeAndCity().IsMatch(value)
@@ -662,16 +850,26 @@ internal static class PartyDetector
         DetectionConfidence Confidence,
         string Identity);
 
+    private sealed record BuyerCandidate(DetectedParty Party, string Identity);
+
+    private enum RecipientRegionKind
+    {
+        Buyer,
+        Delivery,
+    }
+
     private sealed record RecipientRegion(
         int PageNumber,
         double Left,
         double StartTop,
-        double EndTop)
+        double EndTop,
+        RecipientRegionKind Kind,
+        string AnchorText)
     {
         public bool Contains(int pageNumber, double top, double left)
             => pageNumber == PageNumber
                && SameColumn(left, Left)
                && top >= StartTop
-               && top <= EndTop;
+               && top < EndTop;
     }
 }

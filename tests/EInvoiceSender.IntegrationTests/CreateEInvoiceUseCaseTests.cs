@@ -140,6 +140,29 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.Equal(PipelineStep.ValidateInvoiceData, failed.Step);
     }
 
+    [Fact]
+    public async Task UngültigeBuyerEmailStopptKontrolliertVorDerErzeugung()
+    {
+        string source = TempPdf(TestPdfFactory.CreateSimplePdf());
+        Invoice baseline = BaseInvoice();
+        Invoice invalid = baseline with
+        {
+            Buyer = baseline.Buyer with { Email = "kaputt" },
+        };
+
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
+            Request(source) with { Invoice = invalid },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Succeeded);
+        Assert.Null(result.OutputFile);
+        Assert.Contains(result.Report.Findings, finding => finding.RuleId == "APP-BUY-004");
+
+        PipelineProgress failed = Assert.Single(
+            result.CompletedSteps, step => step.State == StepState.Failed);
+        Assert.Equal(PipelineStep.ValidateInvoiceData, failed.Step);
+    }
+
     /// <summary>
     /// Eine nicht eingebettete Schrift hält den Vorgang weiterhin an – aber aus
     /// einem anderen Grund als früher: Es fehlt nicht der Weg, es fehlt die

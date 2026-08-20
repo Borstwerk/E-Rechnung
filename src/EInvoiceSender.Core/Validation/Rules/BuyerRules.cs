@@ -37,6 +37,16 @@ internal static class BuyerRules
                 "Buyer.Email");
         }
 
+        if (!string.IsNullOrWhiteSpace(buyer.VatId)
+            && (!SharedRules.LooksLikeVatId(buyer.VatId)
+                || !VatIdSyntax.HasKnownCountryPrefix(buyer.VatId)))
+        {
+            report.Error(
+                "APP-BUY-007",
+                "Die USt-IdNr. des Rechnungsempfängers hat kein gültiges Format.",
+                "Buyer.VatId");
+        }
+
         if (string.IsNullOrWhiteSpace(buyer.Email) && string.IsNullOrWhiteSpace(buyer.ElectronicAddress))
         {
             report.Warning(

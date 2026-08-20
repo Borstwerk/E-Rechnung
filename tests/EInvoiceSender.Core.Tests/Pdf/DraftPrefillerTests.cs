@@ -163,6 +163,35 @@ public sealed class DraftPrefillerTests
         Assert.DoesNotContain(FieldOrigin.Manual, draft.Origins.Values);
     }
 
+    [Fact]
+    public void BuyerlandVatUndMailWerdenFeldweiseMitPdfHerkunftÜbernommen()
+    {
+        var draft = new InvoiceDraft();
+        var detection = new InvoiceDetectionResult
+        {
+            HasUsableText = true,
+            Buyer = new DetectedParty
+            {
+                Country = new DetectedValue<string>("AT", DetectionConfidence.Medium),
+                VatId = new DetectedValue<string>("ATU12345678", DetectionConfidence.Medium),
+                Email = new DetectedValue<string>(
+                    "buyer@example.invalid", DetectionConfidence.Medium),
+            },
+        };
+
+        DraftPrefiller.Apply(draft, detection);
+
+        Assert.Equal("AT", draft.BuyerCountry);
+        Assert.Equal("ATU12345678", draft.BuyerVatId);
+        Assert.Equal("buyer@example.invalid", draft.BuyerEmail);
+        Assert.Equal(FieldOrigin.DetectedUncertain,
+            draft.OriginOf(nameof(draft.BuyerCountry)));
+        Assert.Equal(FieldOrigin.DetectedUncertain,
+            draft.OriginOf(nameof(draft.BuyerVatId)));
+        Assert.Equal(FieldOrigin.DetectedUncertain,
+            draft.OriginOf(nameof(draft.BuyerEmail)));
+    }
+
 }
 
 /// <summary>

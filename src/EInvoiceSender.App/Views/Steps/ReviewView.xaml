@@ -38,6 +38,12 @@
           <TextBlock Text="{Binding SellerText}" TextWrapping="Wrap" FontWeight="SemiBold" />
           <TextBlock Text="Käufer" />
           <TextBlock Text="{Binding BuyerText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBlock Text="Käuferland" />
+          <TextBlock Text="{Binding BuyerCountryText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBlock Text="Käufer-USt-IdNr." />
+          <TextBlock Text="{Binding BuyerVatIdText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+          <TextBlock Text="Käufer-E-Mail" />
+          <TextBlock Text="{Binding BuyerEmailText}" TextWrapping="Wrap" FontWeight="SemiBold" />
           <TextBlock Text="Rechnungsnummer" />
           <TextBlock Text="{Binding InvoiceNumberText}" FontWeight="SemiBold" />
           <TextBlock Text="Rechnungsdatum" />

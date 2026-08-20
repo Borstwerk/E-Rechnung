@@ -417,4 +417,58 @@ Synchronisationsinfrastruktur.
 - Eine beschädigte oder fehlende Vorlagendatei bleibt ein kontrollierter leerer
   Ausgangszustand und kann durch die ausdrückliche Aktion neu angelegt werden.
 
+## DEC-008 – Buyer-Zusatzfelder nur aus eindeutiger Empfängerregion
+
+**Status:** gültig
+
+**Bezug:** ER-020-BUY-01, ER-020-BUY-02, ER-020-BUY-03
+
+### Kontext
+
+Käuferland, Käufer-USt-IdNr. und Käufer-E-Mail sind im Entwurfs-, Domänen- und
+CII-Modell bereits vorhanden. Die bisherige PDF-Erkennung las jedoch nur die
+ersten fünf Zeilen nach dem ersten Empfängerschlüssel und behandelte eine
+Lieferanschrift wie einen Rechnungsempfänger. Globale Steuer- oder Mailfunde
+wären wegen der Sellerangaben in Kopf und Fuß keine sichere Ergänzung.
+
+### Entscheidung
+
+Buyer- und Lieferanker erzeugen getrennte räumliche Regionen aus Seite, oberer
+Position und linker Spalte. Nur eine Buyer-Region mit Name und Anschrift oder
+Ort ist ein Kandidat. Mehrere unterschiedliche plausible Buyer-Identitäten
+führen zu keinem Ergebnis; es gewinnt nicht die erste Fundstelle.
+
+Land, USt-IdNr. und E-Mail werden ausschließlich innerhalb des eindeutigen
+Buyer-Bereichs gelesen. Der Bereich endet an einem folgenden Empfängeranker,
+der bestehenden Höhengrenze oder einer fachlichen Rechnungsmetadaten-Grenze.
+Mehrdeutigkeit wird je Zusatzfeld behandelt: Zwei unterschiedliche Länder,
+USt-IdNrn. oder Mailadressen leeren nur dieses Feld. Lieferregionen, andere
+Spalten sowie Seller-Kopf und -Fuß sind keine Quellen.
+
+Länder werden nur als ISO-3166-1-alpha-2-Code oder exakter deutscher Name aus
+der bestehenden `CountryCodeList` aufgelöst; es gibt kein Standardland und
+keine zusätzliche Übersetzungstabelle. Die Buyer-USt-ID verwendet die
+bisherige allgemeine Formprüfung plus ein getrenntes bekanntes Länderpräfix;
+`EL` ist ausdrücklich zugelassen. Das Präfix muss nicht dem Buyerland
+entsprechen. Die bestehende Seller-Prüfung bleibt unverändert.
+
+### Grund
+
+Die vorhandenen PDF-Segmente liefern bereits die notwendige Geometrie. Eine
+zweite Layoutarchitektur oder globale Suche würde mehr Fehlzuordnungen als
+Nutzen erzeugen. Feldweise Eindeutigkeit erhält sichere Angaben, ohne aus einem
+einzigen unklaren Zusatzwert einen vollständig leeren Empfänger zu machen.
+
+### Konsequenzen
+
+- Käuferland bleibt ohne eindeutige PDF-Angabe leer; `DE` wird nie geraten.
+- Bei Reverse Charge und innergemeinschaftlicher Lieferung ist die
+  Buyer-USt-ID eine verständlich gemeldete Pflichtangabe.
+- BuyerEmail bleibt der vorhandene Empfänger des lokalen `.eml`-Entwurfs; es
+  gibt weder automatischen Versand noch Kundenstammspeicherung.
+- `FieldOrigin`, CompanyTemplate, Seller-Proposal, CII-Writer und EML-Service
+  benötigen keine neue Sonderlogik.
+- Änderungen an Schlüsselwörtern oder Regionsgrenzen brauchen Positiv- und
+  Vertauschungs-Negativtests für ein- und zweispaltige Rechnungen.
+
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.
