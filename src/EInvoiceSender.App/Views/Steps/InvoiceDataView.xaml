@@ -92,6 +92,7 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Grid.Column="0" Style="{StaticResource Rasterzelle}">
@@ -150,6 +151,26 @@
           <TextBox Style="{StaticResource Feld}" TabIndex="15"
                    Text="{Binding Draft.PaymentTerms, UpdateSourceTrigger=PropertyChanged}"
                    AutomationProperties.Name="Zahlungsbedingungen" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="0" Style="{StaticResource Rasterzelle}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Leistungszeitraum von" />
+          <DatePicker Style="{StaticResource Datumsfeld}" TabIndex="16"
+                      SelectedDate="{Binding Draft.BillingPeriodStart, Converter={StaticResource DateOnly}}"
+                      AutomationProperties.Name="Beginn des Leistungszeitraums" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BillingPeriodStart}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BillingPeriodStart}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="1" Style="{StaticResource Rasterzelle}">
+          <TextBlock Style="{StaticResource Feldbeschriftung}" Text="Leistungszeitraum bis" />
+          <DatePicker Style="{StaticResource Datumsfeld}" TabIndex="17"
+                      SelectedDate="{Binding Draft.BillingPeriodEnd, Converter={StaticResource DateOnly}}"
+                      AutomationProperties.Name="Ende des Leistungszeitraums" />
+          <TextBlock Style="{StaticResource Herkunftshinweis}"
+                     Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=BillingPeriodEnd}"
+                     Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=BillingPeriodEnd}" />
         </StackPanel>
       </Grid>
 

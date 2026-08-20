@@ -94,6 +94,8 @@ public sealed partial class InvoiceDataDetector(
             InvoiceNumber = document.InvoiceNumber,
             IssueDate = document.IssueDate,
             DeliveryDate = document.DeliveryDate,
+            BillingPeriodStart = document.BillingPeriodStart,
+            BillingPeriodEnd = document.BillingPeriodEnd,
             DueDate = document.DueDate,
             Currency = document.Currency,
             Seller = parties.Seller,

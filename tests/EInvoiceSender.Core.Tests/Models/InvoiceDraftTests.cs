@@ -1,6 +1,8 @@
+using System.Text;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Validation;
+using EInvoiceSender.Core.Zugferd;
 using Xunit;
 
 namespace EInvoiceSender.Core.Tests.Models;
@@ -41,6 +43,29 @@ public sealed class InvoiceDraftTests
         Assert.Equal(1000.00m, totals.LineTotal);
         Assert.Equal(190.00m, totals.TaxTotal);
         Assert.Equal(1190.00m, totals.GrandTotal);
+    }
+
+    [Fact]
+    public void LeistungszeitraumGelangtVomEntwurfBisBt73UndBt74()
+    {
+        InvoiceDraft draft = FilledDraft();
+        draft.BillingPeriodStart = new DateOnly(2025, 12, 20);
+        draft.BillingPeriodEnd = new DateOnly(2026, 1, 5);
+
+        ValidationReport report = draft.TryBuildInvoice(out Invoice? invoice);
+
+        Assert.False(report.HasErrors, Describe(report));
+        Assert.NotNull(invoice);
+        Assert.Equal(draft.BillingPeriodStart, invoice.BillingPeriodStart);
+        Assert.Equal(draft.BillingPeriodEnd, invoice.BillingPeriodEnd);
+
+        byte[] cii = new CiiInvoiceWriter().Write(
+            invoice, InvoiceCalculator.Calculate(invoice));
+        string xml = Encoding.UTF8.GetString(cii);
+
+        Assert.Contains("<ram:BillingSpecifiedPeriod>", xml, StringComparison.Ordinal);
+        Assert.Contains(">20251220</udt:DateTimeString>", xml, StringComparison.Ordinal);
+        Assert.Contains(">20260105</udt:DateTimeString>", xml, StringComparison.Ordinal);
     }
 
     [Fact]

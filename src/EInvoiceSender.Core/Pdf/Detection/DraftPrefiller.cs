@@ -61,6 +61,10 @@ public static class DraftPrefiller
             detection.IssueDate, v => d.IssueDate = v);
         SetDate(d, log, "Leistungsdatum", nameof(d.DeliveryDate),
             detection.DeliveryDate, v => d.DeliveryDate = v);
+        SetDate(d, log, "Leistungszeitraum von", nameof(d.BillingPeriodStart),
+            detection.BillingPeriodStart, v => d.BillingPeriodStart = v);
+        SetDate(d, log, "Leistungszeitraum bis", nameof(d.BillingPeriodEnd),
+            detection.BillingPeriodEnd, v => d.BillingPeriodEnd = v);
         SetDate(d, log, "Fälligkeitsdatum", nameof(d.DueDate),
             detection.DueDate, v => d.DueDate = v);
     }

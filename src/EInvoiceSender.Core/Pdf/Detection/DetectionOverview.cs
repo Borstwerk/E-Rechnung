@@ -78,6 +78,8 @@ public static class DetectionOverview
         yield return Entry("Rechnungsnummer", d.InvoiceNumber, v => v);
         yield return Entry("Rechnungsdatum", d.IssueDate, Date);
         yield return Entry("Leistungsdatum", d.DeliveryDate, Date);
+        yield return Entry("Leistungszeitraum von", d.BillingPeriodStart, Date);
+        yield return Entry("Leistungszeitraum bis", d.BillingPeriodEnd, Date);
         yield return Entry("Fälligkeitsdatum", d.DueDate, Date);
         yield return Entry("Währung", d.Currency, v => v);
     }

@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 809 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.Core.Tests` | 847 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
 | `tests/EInvoiceSender.IntegrationTests` | 92 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **901** | |
+| **Summe** | **939** | |
 
 ## Ebenen
 
@@ -98,6 +98,33 @@ Standardschrift Helvetica – so braucht der Build-Agent keine Schriftausstattun
 und es kommt keine Schriftdatei fremder Lizenz ins Repository. Für die
 Textextraktion ist eine nicht eingebettete Schrift gleichgültig, und diese
 Dateien durchlaufen die PDF/A-Aufwertung nie.
+
+### Typische Kleinunternehmer-Rechnungen
+
+`SmallBusinessInvoiceDetectionTests` bildet die anonymisierte Referenzstruktur
+mit synthetisch positionierten Textsegmenten nach. Die echte Kunden-PDF ist
+nicht Bestandteil des Repositorys. Geprüft werden gemeinsam die abgesetzte
+Rechnungsüberschrift, das nachgestellte Ortsdatum, der Leistungszeitraum, ein
+mehrspaltiger Sellerkopf, ein ankerloser Empfängerblock, ein räumlicher
+Summenblock sowie eine ungültige IBAN.
+
+Die Negativfälle sind ebenso verbindlich: Mehrere gleich plausible
+Rechnungsreferenzen, Summen, Ortsdaten, Empfänger- oder Sellerblöcke bleiben im
+jeweils betroffenen Feld leer. Explizite Buyeranker haben immer Vorrang vor dem
+ankerlosen Fallback. Positions- und Einzelpreiszeilen dürfen nicht zu
+Gesamtsummen werden. Kurzzeiträume ohne eindeutig übertragbares gemeinsames
+Jahr werden nicht geraten. Ungewöhnliche Trennzeichen werden nur dann zur
+Adresszerlegung verwendet, wenn Straße sowie PLZ und Ort jeweils vollständig
+validiert werden können.
+
+Heuristische Seller- und ankerlose Buyerkandidaten entstehen unabhängig; eine
+vorläufige Empfängerregion darf den konkurrierenden Seller nicht selbst
+ausblenden. Seller-spezifische Signale, eine eindeutige Empfängerrolle und
+echte Mehrdeutigkeit werden erst danach über feste Regeln aufgelöst. Land,
+USt-IdNr. und E-Mail gelten dabei ausdrücklich nicht als rollenentscheidend.
+Der begrenzte ankerlose Buyerbereich kann diese Zusatzfelder bis zur
+Rechnungsüberschrift übernehmen, schließt aber Liefer- und
+Leistungsortbereiche weiterhin aus.
 
 ## Externe Validatoren sind das Freigabegate
 

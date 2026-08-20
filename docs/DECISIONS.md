@@ -471,4 +471,76 @@ einzigen unklaren Zusatzwert einen vollständig leeren Empfänger zu machen.
 - Änderungen an Schlüsselwörtern oder Regionsgrenzen brauchen Positiv- und
   Vertauschungs-Negativtests für ein- und zweispaltige Rechnungen.
 
+## DEC-009 – Deterministische Erkennung typischer Kleinunternehmer-Rechnungen
+
+**Status:** gültig
+
+**Bezug:** ER-020-DET-02
+
+### Kontext
+
+Typische Rechnungen kleiner Unternehmen verwenden nicht immer die klassischen
+Schlüssel-Wert-Zeilen. Rechnungsreferenzen können direkt in einer Überschrift
+stehen, das Rechnungsdatum nach einer Grußformel folgen, Sellerkontakte über
+mehrere Kopfspalten verteilt sein und Empfänger ohne ausdrücklichen Buyeranker
+erscheinen. Eine erste Fundstelle oder die bloße Summe schwacher Signale würde
+Seller, Buyer und Beträge leicht vertauschen.
+
+### Entscheidung
+
+Die bestehenden klassischen Erkennungswege bleiben erhalten. Ergänzende Wege
+sammeln je Feld plausible Kandidaten, deduplizieren sie und übernehmen nur ein
+eindeutiges Ergebnis. Gleich starke widersprüchliche Kandidaten leeren nur das
+betroffene Feld. Bei Summen haben ausdrückliche Gesamtbegriffe Vorrang;
+räumliche Nähe und arithmetische Kohärenz dürfen Gleichstände stützen, sind
+aber allein kein Nachweis.
+
+Ein ankerloser Buyer ist ausschließlich Fallback, wenn überhaupt kein
+ausdrücklicher Buyeranker vorhanden ist. Er benötigt einen eindeutigen,
+vollständigen und räumlich plausiblen Empfängerblock außerhalb von Sellerkopf
+und Lieferregion. Ein vorhandener mehrdeutiger Buyeranker wird nicht durch den
+Fallback ersetzt.
+
+Heuristische ankerlose Buyer- und unbeschriftete Sellerkandidaten werden ohne
+gegenseitigen Vorabausschluss ermittelt. Erst danach wird ein räumlich und
+inhaltlich identischer Block aufgelöst: Ein ausdrücklicher Selleranker oder
+eine Steuernummer ist Seller-spezifisch. Land, USt-ID und E-Mail sind dagegen
+generische Kontaktdaten und beweisen weder die Seller- noch die Buyerrolle.
+Fehlt ein wirklich rollenspezifisches Signal, bleiben bei derselben plausiblen
+Identität Seller und Buyer leer. Leistungsortbereiche sind unabhängig von
+ihrer Geometrie vom ankerlosen Buyer ausgeschlossen.
+
+Mehrspaltige Sellerköpfe verwenden weiterhin die DET-01-Mindestkombinationen.
+Ein Namenspräfix vor einem Semikolon gilt nur im oberen Briefkopf und nur bei
+genau einem zugehörigen vollständigen Kontaktblock. Kombinierte Adresszeilen
+werden unabhängig vom konkreten Trennzeichen ausschließlich zerlegt, wenn
+Straße sowie PLZ und Ort eindeutig validiert werden.
+
+Ein ausdrücklich beschriftetes Rechnungsdatum bleibt hoch sicher. Das
+Fallbackmuster `Ort, dd.MM.yyyy` bleibt mittlere Sicherheit und wird nur bei
+genau einer nicht fachfremd beschrifteten Fundstelle übernommen. Ein
+ausdrücklich benannter Leistungszeitraum wird in die bereits vorhandenen
+Felder `BillingPeriodStart` und `BillingPeriodEnd` geführt. Eine Kurzform darf
+das am Ende angegebene Jahr nur innerhalb desselben gültigen, nicht
+rückwärtslaufenden Zeitraums auf beide Grenzen übertragen.
+
+### Grund
+
+Die vorhandenen Seiten-, Zeilen-, Segment- und Spalteninformationen reichen
+für die konkreten Rechnungsstrukturen aus. Feldweise Kandidatenauswahl hält die
+Erkennung konservativ, ohne eine allgemeine Layoutengine, Positionsübernahme,
+OCR oder KI einzuführen. Sichere Felder bleiben erhalten, wenn nur ein anderes
+Feld mehrdeutig ist.
+
+### Konsequenzen
+
+- Die anonymisierte Referenzstruktur bleibt als synthetische positionierbare
+  Gesamtfixture ohne Kunden-PDF im Repository.
+- Neue Heuristiken benötigen Positivfälle und gleich starke Negativfälle.
+- Buyer-/Liefertrennung, DET-01-Seller-Proposal, `FieldOrigin`,
+  CompanyTemplate und SET-01-Speichergrenzen bleiben unverändert.
+- Eine ungültige IBAN wird weiterhin verworfen; eine BIC ohne eindeutig
+  zugehörige gültige IBAN gelangt nicht in das OwnCompanyProposal.
+- Leistungszeiträume werden nicht in ein Lieferdatum umgedeutet.
+
 Entscheidungen werden erst ergänzt, wenn sie im Rahmen der Planung oder Umsetzung tatsächlich getroffen und freigegeben wurden.

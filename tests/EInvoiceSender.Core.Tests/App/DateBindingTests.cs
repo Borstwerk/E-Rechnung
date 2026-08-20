@@ -30,6 +30,8 @@ public sealed class DateBindingTests
     [InlineData(nameof(InvoiceDraft.IssueDate))]
     [InlineData(nameof(InvoiceDraft.DueDate))]
     [InlineData(nameof(InvoiceDraft.DeliveryDate))]
+    [InlineData(nameof(InvoiceDraft.BillingPeriodStart))]
+    [InlineData(nameof(InvoiceDraft.BillingPeriodEnd))]
     public void EineDatumsänderungWirdGemeldet(string property)
     {
         var draft = new InvoiceDraft();
@@ -56,6 +58,8 @@ public sealed class DateBindingTests
 
         Assert.Equal(ErkanntesRechnungsdatum, draft.IssueDate);
         Assert.Equal(ErkanntesLeistungsdatum, draft.DeliveryDate);
+        Assert.Equal(ErkannterZeitraumbeginn, draft.BillingPeriodStart);
+        Assert.Equal(ErkanntesZeitraumende, draft.BillingPeriodEnd);
         Assert.Equal(ErkanntesFälligkeitsdatum, draft.DueDate);
     }
 
@@ -72,6 +76,8 @@ public sealed class DateBindingTests
 
         Assert.Contains(nameof(draft.IssueDate), gemeldet);
         Assert.Contains(nameof(draft.DeliveryDate), gemeldet);
+        Assert.Contains(nameof(draft.BillingPeriodStart), gemeldet);
+        Assert.Contains(nameof(draft.BillingPeriodEnd), gemeldet);
         Assert.Contains(nameof(draft.DueDate), gemeldet);
     }
 
@@ -89,6 +95,10 @@ public sealed class DateBindingTests
 
     private static DateOnly ErkanntesLeistungsdatum => ErkanntesRechnungsdatum.AddDays(-1);
 
+    private static DateOnly ErkannterZeitraumbeginn => ErkanntesRechnungsdatum.AddDays(-8);
+
+    private static DateOnly ErkanntesZeitraumende => ErkanntesRechnungsdatum.AddDays(-2);
+
     private static DateOnly ErkanntesFälligkeitsdatum => ErkanntesRechnungsdatum.AddDays(14);
 
     private static InvoiceDetectionResult ErkannteDaten() => new()
@@ -96,6 +106,10 @@ public sealed class DateBindingTests
         HasUsableText = true,
         IssueDate = new DetectedValue<DateOnly>(ErkanntesRechnungsdatum, DetectionConfidence.High),
         DeliveryDate = new DetectedValue<DateOnly>(ErkanntesLeistungsdatum, DetectionConfidence.High),
+        BillingPeriodStart = new DetectedValue<DateOnly>(
+            ErkannterZeitraumbeginn, DetectionConfidence.High),
+        BillingPeriodEnd = new DetectedValue<DateOnly>(
+            ErkanntesZeitraumende, DetectionConfidence.High),
         DueDate = new DetectedValue<DateOnly>(ErkanntesFälligkeitsdatum, DetectionConfidence.High),
     };
 

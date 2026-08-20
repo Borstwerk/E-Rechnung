@@ -98,6 +98,8 @@ public sealed record InvoiceDetectionResult
     public DetectedValue<string>? InvoiceNumber { get; init; }
     public DetectedValue<DateOnly>? IssueDate { get; init; }
     public DetectedValue<DateOnly>? DeliveryDate { get; init; }
+    public DetectedValue<DateOnly>? BillingPeriodStart { get; init; }
+    public DetectedValue<DateOnly>? BillingPeriodEnd { get; init; }
     public DetectedValue<DateOnly>? DueDate { get; init; }
     public DetectedValue<string>? Currency { get; init; }
 

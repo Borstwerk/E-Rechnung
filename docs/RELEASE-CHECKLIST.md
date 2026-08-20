@@ -93,6 +93,23 @@ aussieht.
 - [ ] Reverse-Charge- und innergemeinschaftliche Rechnung ohne Buyer-USt-ID
   werden verständlich blockiert; mit gültiger ID bestehen sie die Prüfung.
 
+## Typische Kleinunternehmer-Rechnung
+
+- [ ] Anonymisierte Referenzrechnung ohne Firmenvorlage einlesen:
+  Rechnungsnummer, Rechnungsdatum, Leistungszeitraum, Seller, Buyer und Summen
+  entsprechen der sichtbaren Rechnung.
+- [ ] Das nachgestellte Ortsdatum wird als mittlere Erkennungssicherheit
+  gekennzeichnet; ein ausdrücklich beschriftetes Rechnungsdatum bleibt hoch.
+- [ ] Leistungszeitraum ist in Schritt 2 vollständig sichtbar und wird als
+  Zeitraum, nicht als Lieferdatum, übernommen.
+- [ ] Sellerkopf und ankerloser Buyer bleiben trotz mehrspaltigem Layout sauber
+  getrennt; Lieferanschriften werden nicht zum Buyer.
+- [ ] Positionsnahe Nettoangaben werden nicht mit `Gesamt Netto` verwechselt.
+- [ ] Die ungültige Referenz-IBAN bleibt leer. Eine einzeln erkannte BIC wird
+  ohne gültige zugehörige IBAN nicht als eigene Bankverbindung angeboten.
+- [ ] Bei zwei gleich plausiblen Referenzen, Empfänger- oder Sellerblöcken wird
+  kein erster Fund geraten.
+
 ## Summen während der Eingabe
 
 1. Drei Positionen eintragen – 4 × 85,00, 2 × 95,00, 1 × 70,00, jeweils 19 %.

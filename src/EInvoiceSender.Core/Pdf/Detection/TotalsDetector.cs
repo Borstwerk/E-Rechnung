@@ -5,71 +5,212 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// <summary>
 /// Erkennt Netto, Umsatzsteuer, Brutto, Zahlbetrag und die Steuersätze.
 ///
-/// Beträge werden ausschließlich über Schlüsselwörter zugeordnet. Ein
-/// Prozentwert gilt nur dann als Steuersatz, wenn die Zeile einen echten
-/// Steuerbezug hat - sonst würde jeder Rabatt zur Umsatzsteuer.
+/// Beträge werden ausschließlich über Schlüsselwörter zugeordnet. Alle
+/// Fundstellen werden zunächst als Kandidaten gesammelt. Dadurch kann ein
+/// ausdrückliches "Gesamt Netto" einen früheren Einzelpreis schlagen, ohne
+/// pauschal den letzten Betrag der Seite zu wählen.
 /// </summary>
-internal static class TotalsDetector
+internal static partial class TotalsDetector
 {
-    /// <summary>
-    /// Reihenfolge zählt: Die spezifischeren Begriffe stehen oben. "Zahlbetrag"
-    /// muss vor "Betrag" greifen, sonst landet er in der falschen Summe.
-    /// </summary>
-    private static readonly (string[] Keywords, TotalKind Kind)[] Keywords =
+    private const double TotalsBlockMaximumHeightInPoints = 50;
+    private const decimal ArithmeticTolerance = 0.02m;
+
+    private static readonly TotalLabel[] Labels =
     [
-        (["zahlbetrag", "zu zahlen", "zahlungsbetrag"], TotalKind.Payable),
-        (["gesamtbetrag", "rechnungsbetrag", "gesamtsumme", "brutto", "endbetrag", "gesamt brutto"], TotalKind.Gross),
-        (["umsatzsteuer", "mehrwertsteuer", "mwst", "ust."], TotalKind.Tax),
-        (["nettobetrag", "netto", "zwischensumme", "summe netto", "gesamt netto"], TotalKind.Net),
+        new("zahlbetrag", TotalKind.Payable, LabelStrength.Explicit),
+        new("zu zahlen", TotalKind.Payable, LabelStrength.Explicit),
+        new("zahlungsbetrag", TotalKind.Payable, LabelStrength.Explicit),
+
+        new("gesamt brutto", TotalKind.Gross, LabelStrength.Explicit),
+        new("gesamtbetrag", TotalKind.Gross, LabelStrength.Explicit),
+        new("rechnungsbetrag", TotalKind.Gross, LabelStrength.Explicit),
+        new("gesamtsumme", TotalKind.Gross, LabelStrength.Explicit),
+        new("endbetrag", TotalKind.Gross, LabelStrength.Explicit),
+        new("brutto", TotalKind.Gross, LabelStrength.Normal),
+
+        new("umsatzsteuer", TotalKind.Tax, LabelStrength.Explicit),
+        new("mehrwertsteuer", TotalKind.Tax, LabelStrength.Explicit),
+        new("mwst", TotalKind.Tax, LabelStrength.Explicit),
+        new("ust.", TotalKind.Tax, LabelStrength.Explicit),
+
+        new("gesamt netto", TotalKind.Net, LabelStrength.Explicit),
+        new("summe netto", TotalKind.Net, LabelStrength.Explicit),
+        new("nettosumme", TotalKind.Net, LabelStrength.Explicit),
+        new("nettobetrag", TotalKind.Net, LabelStrength.Explicit),
+        new("zwischensumme", TotalKind.Net, LabelStrength.Normal),
+        new("netto", TotalKind.Net, LabelStrength.Weak),
     ];
 
     private enum TotalKind { Net, Tax, Gross, Payable }
 
+    private enum LabelStrength { Weak, Normal, Explicit }
+
     public static DetectedTotals Detect(IReadOnlyList<PdfTextLine> lines)
     {
-        var amounts = new Dictionary<TotalKind, DetectedValue<decimal>>();
+        var candidates = new List<TotalCandidate>();
         var rates = new List<DetectedValue<decimal>>();
 
         foreach (PdfTextLine line in lines)
         {
-            CollectAmount(line, amounts);
+            CollectAmount(line, candidates);
             CollectVatRates(line, rates);
         }
 
         return new DetectedTotals
         {
-            Net = Value(amounts, TotalKind.Net),
-            Tax = Value(amounts, TotalKind.Tax),
-            Gross = Value(amounts, TotalKind.Gross),
-            Payable = Value(amounts, TotalKind.Payable),
+            Net = Select(candidates, TotalKind.Net),
+            Tax = Select(candidates, TotalKind.Tax),
+            Gross = Select(candidates, TotalKind.Gross),
+            Payable = Select(candidates, TotalKind.Payable),
             VatRates = rates,
         };
     }
 
-    private static DetectedValue<decimal>? Value(
-        Dictionary<TotalKind, DetectedValue<decimal>> amounts, TotalKind kind)
-        => amounts.GetValueOrDefault(kind);
-
     private static void CollectAmount(
-        PdfTextLine line, Dictionary<TotalKind, DetectedValue<decimal>> amounts)
+        PdfTextLine line, List<TotalCandidate> candidates)
     {
-        foreach ((string[] keywords, TotalKind kind) in Keywords)
+        string lower = line.Text.ToLowerInvariant();
+        TotalLabel? label = Labels
+            .Where(candidate => lower.Contains(candidate.Text, StringComparison.Ordinal))
+            .OrderByDescending(candidate => candidate.Strength)
+            .ThenByDescending(candidate => candidate.Text.Length)
+            .FirstOrDefault();
+
+        if (label is null
+            || !DetectionParsers.TryParseLastAmount(line.Text, out decimal amount)
+            || HasPositionOrUnitPriceContext(line.Text))
         {
-            string? keyword = DetectionParsers.FirstKeywordIn(line.Text, keywords);
-
-            if (keyword is null || !DetectionParsers.TryParseLastAmount(line.Text, out decimal amount))
-            {
-                continue;
-            }
-
-            // Die erste Fundstelle gewinnt: Summen stehen in Rechnungen unten,
-            // spätere Wiederholungen sind meist Überträge.
-            amounts.TryAdd(kind, new DetectedValue<decimal>(
-                amount, DetectionConfidence.High, line.Text,
-                $"Stand in der Zeile mit \"{keyword}\"."));
-
             return;
         }
+
+        candidates.Add(new TotalCandidate(
+            label.Kind, amount, label.Text, label.Strength,
+            line.PageNumber, line.Top, line.Text));
+    }
+
+    private static DetectedValue<decimal>? Select(
+        IReadOnlyList<TotalCandidate> allCandidates, TotalKind kind)
+    {
+        TotalCandidate[] candidates = [.. allCandidates.Where(candidate => candidate.Kind == kind)];
+
+        if (candidates.Length == 0)
+        {
+            return null;
+        }
+
+        LabelStrength strongest = candidates.Max(candidate => candidate.Strength);
+        TotalCandidate[][] values =
+        [
+            .. candidates
+                .Where(candidate => candidate.Strength == strongest)
+                .GroupBy(candidate => candidate.Amount)
+                .Select(group => group.ToArray()),
+        ];
+
+        TotalCandidate? selected;
+
+        if (values.Length == 1)
+        {
+            selected = BestOccurrence(values[0], allCandidates);
+        }
+        else
+        {
+            var scored = values
+                .Select(group => new
+                {
+                    Candidate = BestOccurrence(group, allCandidates),
+                    Score = group.Max(candidate => CoherenceScore(candidate, allCandidates)),
+                })
+                .ToArray();
+            int best = scored.Max(item => item.Score);
+            var winners = scored.Where(item => item.Score == best).ToArray();
+
+            selected = winners.Length == 1 ? winners[0].Candidate : null;
+        }
+
+        if (selected is null)
+        {
+            return null;
+        }
+
+        DetectionConfidence confidence = selected.Strength == LabelStrength.Weak
+            ? DetectionConfidence.Medium
+            : DetectionConfidence.High;
+
+        return new DetectedValue<decimal>(
+            selected.Amount, confidence, selected.Source,
+            $"Deterministisch ausgewählte Summenfundstelle mit \"{selected.Keyword}\".");
+    }
+
+    private static TotalCandidate BestOccurrence(
+        IReadOnlyList<TotalCandidate> candidates,
+        IReadOnlyList<TotalCandidate> allCandidates)
+        => candidates
+            .OrderByDescending(candidate => CoherenceScore(candidate, allCandidates))
+            .ThenBy(candidate => candidate.PageNumber)
+            .ThenBy(candidate => candidate.Top)
+            .First();
+
+    private static int CoherenceScore(
+        TotalCandidate candidate, IReadOnlyList<TotalCandidate> allCandidates)
+    {
+        TotalCandidate[] nearby =
+        [
+            .. allCandidates.Where(other =>
+                other != candidate
+                && other.PageNumber == candidate.PageNumber
+                && other.Kind != candidate.Kind
+                && Math.Abs(other.Top - candidate.Top) <= TotalsBlockMaximumHeightInPoints),
+        ];
+
+        int distinctKinds = nearby.Select(other => other.Kind).Distinct().Count();
+        bool arithmetic = IsPartOfCoherentNetTaxGross(candidate, allCandidates);
+
+        return distinctKinds + (arithmetic ? 3 : 0);
+    }
+
+    private static bool IsPartOfCoherentNetTaxGross(
+        TotalCandidate candidate, IReadOnlyList<TotalCandidate> allCandidates)
+    {
+        TotalCandidate[] samePage =
+        [
+            .. allCandidates.Where(other => other.PageNumber == candidate.PageNumber),
+        ];
+
+        foreach (TotalCandidate net in samePage.Where(other => other.Kind == TotalKind.Net))
+        {
+            foreach (TotalCandidate tax in samePage.Where(other => other.Kind == TotalKind.Tax))
+            {
+                foreach (TotalCandidate gross in samePage.Where(other => other.Kind == TotalKind.Gross))
+                {
+                    double topSpan = new[] { net.Top, tax.Top, gross.Top }.Max()
+                                     - new[] { net.Top, tax.Top, gross.Top }.Min();
+
+                    if (topSpan <= TotalsBlockMaximumHeightInPoints
+                        && Math.Abs(net.Amount + tax.Amount - gross.Amount) <= ArithmeticTolerance
+                        && (candidate == net || candidate == tax || candidate == gross))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasPositionOrUnitPriceContext(string text)
+    {
+        string lower = text.ToLowerInvariant();
+
+        return lower.Contains("/ je", StringComparison.Ordinal)
+               || lower.Contains(" je ", StringComparison.Ordinal)
+               || lower.Contains(" pro ", StringComparison.Ordinal)
+               || lower.Contains("einzelpreis", StringComparison.Ordinal)
+               || lower.Contains("stückpreis", StringComparison.Ordinal)
+               || lower.Contains("stueckpreis", StringComparison.Ordinal)
+               || lower.Contains("stundenpreis", StringComparison.Ordinal)
+               || MultiplicationExpression().IsMatch(lower);
     }
 
     private static void CollectVatRates(PdfTextLine line, List<DetectedValue<decimal>> rates)
@@ -83,7 +224,7 @@ internal static class TotalsDetector
         {
             if (!DetectionParsers.TryParseGermanDecimal(match.Groups["satz"].Value, out decimal rate)
                 || rate is < 0 or > 30
-                || rates.Any(r => r.Value == rate))
+                || rates.Any(existing => existing.Value == rate))
             {
                 continue;
             }
@@ -94,10 +235,6 @@ internal static class TotalsDetector
         }
     }
 
-    /// <summary>
-    /// Ein Prozentwert ist nur im Steuerzusammenhang ein Steuersatz. Rabatt,
-    /// Skonto und Nachlass schließen die Zeile ausdrücklich aus.
-    /// </summary>
     private static bool HasTaxContext(string line)
     {
         string lower = line.ToLowerInvariant();
@@ -116,4 +253,19 @@ internal static class TotalsDetector
 
         return mentionsTax && !mentionsDiscount;
     }
+
+    private sealed record TotalLabel(
+        string Text, TotalKind Kind, LabelStrength Strength);
+
+    private sealed record TotalCandidate(
+        TotalKind Kind,
+        decimal Amount,
+        string Keyword,
+        LabelStrength Strength,
+        int PageNumber,
+        double Top,
+        string Source);
+
+    [GeneratedRegex(@"\b\d+(?:[.,]\d+)?\s*[x×]\s*\d", RegexOptions.CultureInvariant)]
+    private static partial Regex MultiplicationExpression();
 }

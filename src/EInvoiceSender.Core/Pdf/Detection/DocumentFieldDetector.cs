@@ -8,6 +8,8 @@ public sealed record DetectedDocument
     public DetectedValue<string>? InvoiceNumber { get; init; }
     public DetectedValue<DateOnly>? IssueDate { get; init; }
     public DetectedValue<DateOnly>? DeliveryDate { get; init; }
+    public DetectedValue<DateOnly>? BillingPeriodStart { get; init; }
+    public DetectedValue<DateOnly>? BillingPeriodEnd { get; init; }
     public DetectedValue<DateOnly>? DueDate { get; init; }
     public DetectedValue<string>? Currency { get; init; }
 }
@@ -19,7 +21,7 @@ public sealed record DetectedDocument
 /// Muster allein genügt nie: In einer Rechnung stehen Dutzende Ziffernfolgen,
 /// von denen genau eine die Rechnungsnummer ist.
 /// </summary>
-internal static class DocumentFieldDetector
+internal static partial class DocumentFieldDetector
 {
     private static readonly string[] InvoiceNumberKeywords =
     [
@@ -51,17 +53,39 @@ internal static class DocumentFieldDetector
     private static readonly string[] DueDateKeywords =
         ["fällig am", "fällig am", "zahlbar bis", "fälligkeit", "fälligkeit", "due date", "zahlungsziel"];
 
-    public static DetectedDocument Detect(IReadOnlyList<PdfTextLine> lines) => new()
+    private static readonly string[] BillingPeriodKeywords =
+        ["leistungszeitraum", "abrechnungszeitraum", "leistungsperiode", "service period"];
+
+    private static readonly string[] LocationDateBlockers =
+    [
+        "leistung", "liefer", "fällig", "zahlbar", "zahlungsziel",
+        "vertrag", "bestellung", "auftrag", "beleg", "gültig",
+    ];
+
+    public static DetectedDocument Detect(IReadOnlyList<PdfTextLine> lines)
     {
-        InvoiceNumber = DetectInvoiceNumber(lines),
-        IssueDate = DetectDate(lines, IssueDateKeywords),
-        DeliveryDate = DetectDate(lines, DeliveryDateKeywords),
-        DueDate = DetectDate(lines, DueDateKeywords),
-        Currency = DetectCurrency(lines),
-    };
+        DetectedValue<string>? invoiceNumber = DetectInvoiceNumber(lines);
+        DetectedValue<DateOnly>? issueDate = DetectDate(lines, IssueDateKeywords)
+            ?? DetectLocationDate(lines, invoiceNumber is not null);
+        (DetectedValue<DateOnly>? periodStart, DetectedValue<DateOnly>? periodEnd) =
+            DetectBillingPeriod(lines);
+
+        return new DetectedDocument
+        {
+            InvoiceNumber = invoiceNumber,
+            IssueDate = issueDate,
+            DeliveryDate = DetectDate(lines, DeliveryDateKeywords),
+            BillingPeriodStart = periodStart,
+            BillingPeriodEnd = periodEnd,
+            DueDate = DetectDate(lines, DueDateKeywords),
+            Currency = DetectCurrency(lines),
+        };
+    }
 
     private static DetectedValue<string>? DetectInvoiceNumber(IReadOnlyList<PdfTextLine> lines)
     {
+        var candidates = new List<DetectedValue<string>>();
+
         foreach (PdfTextLine line in lines)
         {
             string? keyword = DetectionParsers.FirstKeywordIn(line.Text, InvoiceNumberKeywords);
@@ -86,12 +110,84 @@ internal static class DocumentFieldDetector
                 continue;
             }
 
-            return new DetectedValue<string>(
+            candidates.Add(new DetectedValue<string>(
                 value, DetectionConfidence.High, line.Text,
-                $"Stand unmittelbar hinter \"{keyword}\".");
+                $"Stand unmittelbar hinter \"{keyword}\"."));
         }
 
-        return null;
+        foreach (PdfTextLine line in lines)
+        {
+            if (ContainsBlocker(line.Text))
+            {
+                continue;
+            }
+
+            foreach (PdfTextSegment segment in line.Segments)
+            {
+                string text = segment.Text.Trim();
+
+                if (!TryAfterInvoiceHeading(text, out string remainder))
+                {
+                    continue;
+                }
+
+                Match match = DetectionParsers.ReferenceNumber().Match(remainder);
+
+                if (!match.Success || match.Index != 0)
+                {
+                    continue;
+                }
+
+                string value = match.Groups["nr"].Value.Trim();
+                string trailing = remainder[match.Length..].Trim(' ', ':', '-', '.', '#');
+
+                if (trailing.Length > 0
+                    || !value.Any(char.IsDigit)
+                    || DetectionParsers.LooksLikeDate(value))
+                {
+                    continue;
+                }
+
+                candidates.Add(new DetectedValue<string>(
+                    value, DetectionConfidence.High, segment.Text,
+                    "Eindeutige Rechnungsüberschrift mit unmittelbar folgender Referenz."));
+            }
+        }
+
+        DetectedValue<string>[] distinct =
+        [
+            .. candidates
+                .GroupBy(candidate => candidate.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First()),
+        ];
+
+        return distinct.Length == 1 ? distinct[0] : null;
+    }
+
+    private static bool TryAfterInvoiceHeading(string text, out string remainder)
+    {
+        const string anchor = "rechnung";
+
+        if (!text.StartsWith(anchor, StringComparison.OrdinalIgnoreCase)
+            || text.Length == anchor.Length)
+        {
+            remainder = string.Empty;
+
+            return false;
+        }
+
+        char separator = text[anchor.Length];
+
+        if (!char.IsWhiteSpace(separator) && separator is not ':' and not '-' and not '#')
+        {
+            remainder = string.Empty;
+
+            return false;
+        }
+
+        remainder = text[anchor.Length..].TrimStart(' ', ':', '-', '#');
+
+        return remainder.Length > 0;
     }
 
     private static bool ContainsBlocker(string line)
@@ -136,6 +232,84 @@ internal static class DocumentFieldDetector
         return null;
     }
 
+    private static DetectedValue<DateOnly>? DetectLocationDate(
+        IReadOnlyList<PdfTextLine> lines, bool hasInvoiceAnchor)
+    {
+        if (!hasInvoiceAnchor)
+        {
+            return null;
+        }
+
+        var candidates = new List<(DateOnly Date, string Source)>();
+
+        foreach (PdfTextSegment segment in lines.SelectMany(line => line.Segments))
+        {
+            string text = segment.Text.Trim();
+            string lower = text.ToLowerInvariant();
+
+            if (LocationDateBlockers.Any(blocker => lower.Contains(blocker, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            Match match = LocationDateLine().Match(text);
+
+            if (match.Success
+                && DetectionParsers.TryParseFirstDate(match.Groups["date"].Value, out DateOnly date))
+            {
+                candidates.Add((date, segment.Text));
+            }
+        }
+
+        return candidates.Count == 1
+            ? new DetectedValue<DateOnly>(
+                candidates[0].Date, DetectionConfidence.Medium, candidates[0].Source,
+                "Einzige plausible Orts- und Datumszeile im Rechnungsdokument.")
+            : null;
+    }
+
+    private static (DetectedValue<DateOnly>? Start, DetectedValue<DateOnly>? End)
+        DetectBillingPeriod(IReadOnlyList<PdfTextLine> lines)
+    {
+        var candidates = new List<(DateOnly Start, DateOnly End, string Source, string Keyword)>();
+
+        foreach (PdfTextLine line in lines)
+        {
+            string? keyword = DetectionParsers.FirstKeywordIn(line.Text, BillingPeriodKeywords);
+
+            if (keyword is null
+                || !DetectionParsers.TryParseDateRange(
+                    DetectionParsers.AfterKeyword(line.Text, keyword),
+                    out DateOnly start, out DateOnly end))
+            {
+                continue;
+            }
+
+            candidates.Add((start, end, line.Text, keyword));
+        }
+
+        (DateOnly Start, DateOnly End, string Source, string Keyword)[] distinct =
+        [
+            .. candidates
+                .GroupBy(candidate => (candidate.Start, candidate.End))
+                .Select(group => group.First()),
+        ];
+
+        if (distinct.Length != 1)
+        {
+            return (null, null);
+        }
+
+        var candidate = distinct[0];
+        string reason = $"Stand unmittelbar hinter \"{candidate.Keyword}\".";
+
+        return (
+            new DetectedValue<DateOnly>(
+                candidate.Start, DetectionConfidence.High, candidate.Source, reason),
+            new DetectedValue<DateOnly>(
+                candidate.End, DetectionConfidence.High, candidate.Source, reason));
+    }
+
     private static DetectedValue<string>? DetectCurrency(IReadOnlyList<PdfTextLine> lines)
     {
         foreach (PdfTextLine line in lines)
@@ -151,4 +325,9 @@ internal static class DocumentFieldDetector
 
         return null;
     }
+
+    [GeneratedRegex(
+        @"^(?<place>[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß.'\-\s]{1,60}),\s*(?<date>\d{1,2}\.\d{1,2}\.\d{4})$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex LocationDateLine();
 }

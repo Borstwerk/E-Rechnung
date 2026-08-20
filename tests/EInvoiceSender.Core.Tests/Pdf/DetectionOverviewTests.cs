@@ -39,6 +39,8 @@ public sealed class DetectionOverviewTests : IDisposable
         Assert.Contains("E-Mail des Empfängers erkannt: einkauf@nordlicht.example", zeilen);
         Assert.Contains("Währung erkannt: EUR", zeilen);
         Assert.Contains("Rechnungsdatum erkannt: 09.08.2026", zeilen);
+        Assert.Contains("Leistungszeitraum von erkannt: 01.08.2026", zeilen);
+        Assert.Contains("Leistungszeitraum bis erkannt: 08.08.2026", zeilen);
         Assert.Contains("Gesamtbetrag erkannt: 714,00", zeilen);
         Assert.Contains("Umsatzsteuersatz erkannt: 19 %", zeilen);
     }
@@ -143,6 +145,10 @@ public sealed class DetectionOverviewTests : IDisposable
         InvoiceNumber = new DetectedValue<string>("RE-2026-0815", DetectionConfidence.High),
         IssueDate = new DetectedValue<DateOnly>(new DateOnly(2026, 8, 9), DetectionConfidence.High),
         DeliveryDate = new DetectedValue<DateOnly>(new DateOnly(2026, 8, 8), DetectionConfidence.High),
+        BillingPeriodStart = new DetectedValue<DateOnly>(
+            new DateOnly(2026, 8, 1), DetectionConfidence.High),
+        BillingPeriodEnd = new DetectedValue<DateOnly>(
+            new DateOnly(2026, 8, 8), DetectionConfidence.High),
         DueDate = new DetectedValue<DateOnly>(new DateOnly(2026, 8, 23), DetectionConfidence.High),
         Currency = new DetectedValue<string>("EUR", DetectionConfidence.High),
         Seller = new DetectedParty

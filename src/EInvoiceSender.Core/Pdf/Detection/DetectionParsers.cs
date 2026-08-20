@@ -60,6 +60,78 @@ internal static partial class DetectionParsers
         => GermanDate().IsMatch(text) || IsoDate().IsMatch(text);
 
     /// <summary>
+    /// Liest einen ausdrücklich dargestellten Zeitraum. Neben zwei
+    /// vollständigen Daten wird die in Rechnungen übliche Kurzform
+    /// <c>01.04. - 07.04. 2026</c> unterstützt. Das einzige angegebene Jahr
+    /// gilt dabei nur dann für beide Grenzen, wenn im selben Jahr ein
+    /// vorwärts laufender Zeitraum entsteht.
+    /// </summary>
+    public static bool TryParseDateRange(
+        string text, out DateOnly start, out DateOnly end)
+    {
+        Match full = FullDateRange().Match(text);
+
+        if (full.Success
+            && TryCreateDate(full, "sd", "sm", "sy", out start)
+            && TryCreateDate(full, "ed", "em", "ey", out end)
+            && start <= end)
+        {
+            return true;
+        }
+
+        Match sharedYear = SharedYearDateRange().Match(text);
+
+        if (sharedYear.Success
+            && int.TryParse(sharedYear.Groups["y"].Value, CultureInfo.InvariantCulture, out int year)
+            && TryCreateDate(sharedYear, "sd", "sm", year, out start)
+            && TryCreateDate(sharedYear, "ed", "em", year, out end)
+            && start <= end)
+        {
+            return true;
+        }
+
+        start = default;
+        end = default;
+
+        return false;
+    }
+
+    private static bool TryCreateDate(
+        Match match, string dayGroup, string monthGroup, string yearGroup,
+        out DateOnly value)
+    {
+        if (int.TryParse(
+                match.Groups[yearGroup].Value, CultureInfo.InvariantCulture, out int year))
+        {
+            return TryCreateDate(match, dayGroup, monthGroup, year, out value);
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    private static bool TryCreateDate(
+        Match match, string dayGroup, string monthGroup, int year,
+        out DateOnly value)
+    {
+        if (int.TryParse(match.Groups[dayGroup].Value, CultureInfo.InvariantCulture, out int day)
+            && int.TryParse(match.Groups[monthGroup].Value, CultureInfo.InvariantCulture, out int month)
+            && month is >= 1 and <= 12
+            && day >= 1
+            && day <= DateTime.DaysInMonth(year, month))
+        {
+            value = new DateOnly(year, month, day);
+
+            return true;
+        }
+
+        value = default;
+
+        return false;
+    }
+
+    /// <summary>
     /// Liest den letzten Betrag einer Zeile.
     ///
     /// In Summenzeilen steht der Wert rechts. Prozentangaben werden vorher
@@ -129,6 +201,16 @@ internal static partial class DetectionParsers
 
     [GeneratedRegex(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.CultureInvariant)]
     public static partial Regex IsoDate();
+
+    [GeneratedRegex(
+        @"\b(?<sd>\d{1,2})\.(?<sm>\d{1,2})\.\s*(?<sy>\d{4})\s*[-–—]\s*(?<ed>\d{1,2})\.(?<em>\d{1,2})\.\s*(?<ey>\d{4})\b",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex FullDateRange();
+
+    [GeneratedRegex(
+        @"\b(?<sd>\d{1,2})\.(?<sm>\d{1,2})\.?\s*[-–—]\s*(?<ed>\d{1,2})\.(?<em>\d{1,2})\.\s*(?<y>\d{4})\b",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SharedYearDateRange();
 
     [GeneratedRegex(@"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}\s?[A-Z0-9]{0,4}\b", RegexOptions.CultureInvariant)]
     public static partial Regex Iban();

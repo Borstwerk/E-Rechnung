@@ -3,6 +3,9 @@ using System.Text;
 
 namespace EInvoiceSender.Core.Tests.Support;
 
+/// <summary>Ein Textfragment an einer festen Position auf einer Testseite.</summary>
+public sealed record PositionedPdfText(string Text, double Left, double Top);
+
 /// <summary>
 /// Baut PDF-Dateien mit echtem, maschinenlesbarem Text – die Vorgabe für die
 /// Tests der Rechnungserkennung.
@@ -118,9 +121,31 @@ public static class TextPdfBuilder
         return Assemble(SinglePageBody(stream.ToArray()));
     }
 
+    /// <summary>
+    /// Erzeugt eine Seite aus frei positionierten Textfragmenten. Damit lassen
+    /// sich reale Top-/Left-/Segmentverhältnisse nachbilden, ohne eine echte
+    /// Rechnung als Testdatei einzuchecken.
+    /// </summary>
+    public static byte[] CreatePositioned(IEnumerable<PositionedPdfText> fragments)
+    {
+        ArgumentNullException.ThrowIfNull(fragments);
+
+        var stream = new MemoryStream();
+        Write(stream, "BT\n/F1 10 Tf\n");
+
+        foreach (PositionedPdfText fragment in fragments)
+        {
+            WriteAt(stream, fragment.Left, PageHeight - fragment.Top, fragment.Text);
+        }
+
+        Write(stream, "ET");
+
+        return Assemble(SinglePageBody(stream.ToArray()));
+    }
+
     private const int RightColumn = 320;
 
-    private static void WriteAt(Stream stream, int x, int y, string text)
+    private static void WriteAt(Stream stream, double x, double y, string text)
     {
         Write(stream, string.Create(CultureInfo.InvariantCulture, $"1 0 0 1 {x} {y} Tm\n"));
         stream.WriteByte((byte)'(');
@@ -183,6 +208,7 @@ public static class TextPdfBuilder
                 '”' => 0x94,
                 '–' => 0x96,
                 '—' => 0x97,
+                '•' => 0x95,
                 _ => c <= 0xFF ? (byte)c : (byte)'?',
             };
 
