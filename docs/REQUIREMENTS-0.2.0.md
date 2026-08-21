@@ -421,6 +421,63 @@ wird nicht in ein einzelnes `DeliveryDate` umgedeutet.
 - vollständige Core- und Integrationstests einschließlich externer Validatoren,
   Solution-Build, Formatprüfung und Diff-Prüfung.
 
+## ER-020-DUE-01 – Fälligkeitsdatum an das Rechnungsdatum koppeln
+
+### Problem / Grund
+
+Das gespeicherte Standardzahlungsziel wurde bisher beim Laden der
+Unternehmensvorlage einmalig auf das zu diesem Zeitpunkt vorbelegte
+Rechnungsdatum angewendet. Ersetzte die PDF-Erkennung anschließend das
+Rechnungsdatum, blieb das zuvor berechnete Fälligkeitsdatum unverändert und
+gelangte falsch in die strukturierte Rechnung.
+
+Der reproduzierte Fall war: Programmstart am `20.08.2026`, Zahlungsziel 14
+Tage und erkanntes Rechnungsdatum `09.06.2026`. Statt `23.06.2026` blieb die
+zuvor aus dem Startdatum berechnete Fälligkeit `03.09.2026` stehen.
+
+### Anforderung
+
+Ein ausschließlich aus der Vorlage abgeleitetes Fälligkeitsdatum folgt der
+Beziehung `DueDate = IssueDate + DefaultPaymentTermDays`. Die Zahlungstage
+bleiben nicht persistierte Ableitungsinformation des aktuellen Entwurfs und
+sind kein eigenes Rechnungsfeld.
+
+### Akzeptanzkriterien
+
+- Die Ableitung läuft nur, solange `DueDate` die Herkunft `Default` oder
+  `TemplateDefault` besitzt.
+- Änderungen des Rechnungsdatums berechnen ein automatisches
+  Fälligkeitsdatum neu.
+- Erkannte, manuell gesetzte und manuell geleerte Fälligkeitsangaben werden
+  nicht automatisch überschrieben oder erneut erzeugt.
+- Ein leeres Rechnungsdatum und ein nicht positives Standardzahlungsziel
+  entfernen ausschließlich ein automatisch abgeleitetes Fälligkeitsdatum.
+- Wird ein Rechnungsdatum anschließend wieder gesetzt, entsteht die
+  automatische Fälligkeit erneut, sofern keine stärkere Herkunft sie schützt.
+- Reset beziehungsweise eine neue Rechnung verwerfen die bisherige
+  Ableitungsinformation.
+- Liegt `IssueDate + DefaultPaymentTermDays` außerhalb des gültigen
+  `DateOnly`-Bereichs, bleibt das automatische Fälligkeitsdatum leer. Das Datum
+  wird weder gekappt noch geraten, und der Property-Setter wirft keine
+  Ausnahme.
+- Zahlungsbedingungstext, erkanntes Rechnungsdatum und vorhandene
+  Herkunftsprioritäten bleiben unverändert.
+- Das korrekt abgeleitete Datum wird als BT-9 in die CII-Rechnung übernommen;
+  der CII-Writer benötigt dafür keine Sonderlogik.
+
+### Nachweis
+
+- Regression `20.08.2026 + 14 Tage = 03.09.2026`, danach erkanntes
+  Rechnungsdatum `09.06.2026` und neue Fälligkeit `23.06.2026` mit Herkunft
+  `TemplateDefault`,
+- Tests für manuelle und erkannte Rechnungs- und Fälligkeitsdaten, manuelles
+  Leeren, Löschen/Wiedersetzen des Rechnungsdatums, nicht positive
+  Zahlungstage sowie Reset,
+- Grenztests für `31.12.9999 + 14 Tage` und ein sehr großes Zahlungsziel,
+- Ende-zu-Ende-Nachweis Draft → Invoice → CII mit BT-9 `20260623`,
+- vollständige Core- und Integrationstests einschließlich externer
+  Validatoren, Solution-Build, Format- und Diff-Prüfung.
+
 ## ER-020-BUY-01 – Käuferland erkennen
 
 ### Problem / Grund

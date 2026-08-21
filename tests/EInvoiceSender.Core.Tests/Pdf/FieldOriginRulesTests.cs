@@ -13,6 +13,7 @@ public sealed class FieldOriginRulesTests
 {
     [Theory]
     // Ein Programmstandard weicht jeder Quelle.
+    [InlineData(FieldOrigin.Default, FieldOrigin.TemplateDefault, true)]
     [InlineData(FieldOrigin.Default, FieldOrigin.Template, true)]
     [InlineData(FieldOrigin.Default, FieldOrigin.DetectedReliably, true)]
     [InlineData(FieldOrigin.Default, FieldOrigin.DetectedUncertain, true)]
@@ -20,11 +21,20 @@ public sealed class FieldOriginRulesTests
     // Die Firmenvorlage steht über der Erkennung.
     [InlineData(FieldOrigin.Template, FieldOrigin.DetectedReliably, false)]
     [InlineData(FieldOrigin.Template, FieldOrigin.DetectedUncertain, false)]
+    [InlineData(FieldOrigin.Template, FieldOrigin.TemplateDefault, false)]
     [InlineData(FieldOrigin.Template, FieldOrigin.Manual, true)]
+    // Ein Komfort-Default darf neu berechnet und von jeder stärkeren Quelle ersetzt werden.
+    [InlineData(FieldOrigin.TemplateDefault, FieldOrigin.TemplateDefault, true)]
+    [InlineData(FieldOrigin.TemplateDefault, FieldOrigin.DetectedUncertain, true)]
+    [InlineData(FieldOrigin.TemplateDefault, FieldOrigin.DetectedReliably, true)]
+    [InlineData(FieldOrigin.TemplateDefault, FieldOrigin.Manual, true)]
     // Eine sichere Erkennung darf eine unsichere ersetzen, nicht umgekehrt.
     [InlineData(FieldOrigin.DetectedUncertain, FieldOrigin.DetectedReliably, true)]
+    [InlineData(FieldOrigin.DetectedUncertain, FieldOrigin.TemplateDefault, false)]
     [InlineData(FieldOrigin.DetectedReliably, FieldOrigin.DetectedUncertain, false)]
+    [InlineData(FieldOrigin.DetectedReliably, FieldOrigin.TemplateDefault, false)]
     // Eine Benutzereingabe bleibt unangetastet.
+    [InlineData(FieldOrigin.Manual, FieldOrigin.TemplateDefault, false)]
     [InlineData(FieldOrigin.Manual, FieldOrigin.Template, false)]
     [InlineData(FieldOrigin.Manual, FieldOrigin.DetectedReliably, false)]
     [InlineData(FieldOrigin.Manual, FieldOrigin.DetectedUncertain, false)]

@@ -341,3 +341,24 @@ Die bisherige Seller-Formprüfung wird dabei ausdrücklich regressionsgesichert.
 Quelltests für Schritt 2, Schritt 3 und den bestehenden `.eml`-Empfängerweg
 ergänzen DraftPrefiller-, CII-Golden-Master-, E-Mail- und externe
 Mustang-/veraPDF-Prüfungen. Die SET-Allowlist bleibt frei von Buyerfeldern.
+
+## Abgeleitetes Fälligkeitsdatum
+
+`DueDateDerivationTests` sichert ER-020-DUE-01 gegen den ursprünglichen
+Lebenszyklusfehler ab: Aus `20.08.2026` und 14 Tagen entsteht zunächst
+`03.09.2026`; übernimmt der DraftPrefiller danach das erkannte Rechnungsdatum
+`09.06.2026`, muss die automatische Fälligkeit auf `23.06.2026` wechseln und
+weiterhin die Herkunft `TemplateDefault` tragen.
+
+Weitere Regressionen prüfen manuelle Rechnungsdatumsänderungen, erkannte und
+manuelle Fälligkeiten, ein manuell geleertes Fälligkeitsfeld, das Löschen und
+erneute Setzen des Rechnungsdatums, nicht positive Zahlungstage sowie Reset.
+Der Zahlungsbedingungstext bleibt dabei unverändert. Origin-Matrixtests weisen
+zusätzlich nach, dass `TemplateDefault` nur `Default` oder sich selbst ersetzen
+darf und gegenüber erkannten oder manuellen Werten verliert.
+
+Die Bereichsgrenzen werden ohne Clamping geprüft: `31.12.9999` plus 14 Tage
+und ein normales Rechnungsdatum mit `int.MaxValue` Zahlungstagen ergeben kein
+automatisches DueDate und keine Ausnahme. Ein gezielter Draft→Invoice→CII-Test
+öffnet anschließend die erzeugte XML und bestätigt BT-9 `20260623` mit dem
+Datumsformat `102`; der Writer bleibt unverändert.

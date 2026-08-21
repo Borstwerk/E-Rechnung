@@ -50,43 +50,13 @@ public static class CompanyTemplateApplier
             SetDefault(d, changed, nameof(d.PaymentTerms), template.DefaultPaymentTerms, v => d.PaymentTerms = v);
             SetDefault(d, changed, nameof(d.Currency), template.DefaultCurrency, v => d.Currency = v);
 
-            ApplyPaymentTerm(d, changed, template);
+            if (d.ConfigureDefaultPaymentTermDays(template.DefaultPaymentTermDays))
+            {
+                changed.Add(nameof(d.DueDate));
+            }
         });
 
         return changed;
-    }
-
-    /// <summary>
-    /// Das Zahlungsziel ist kein eigener Rechnungswert, sondern eine
-    /// Komfortvorgabe: Aus Rechnungsdatum plus Tagen ergibt sich ein
-    /// Fälligkeitsdatum. Ein erkanntes oder von Hand gesetztes Datum steht
-    /// darüber und bleibt deshalb unangetastet.
-    /// </summary>
-    private static void ApplyPaymentTerm(
-        InvoiceDraft draft, List<string> changed, CompanyTemplate template)
-    {
-        if (template.DefaultPaymentTermDays <= 0 || draft.IssueDate is not { } issue)
-        {
-            return;
-        }
-
-        if (!FieldOriginRules.CanReplace(
-                draft.OriginOf(nameof(draft.DueDate)), FieldOrigin.TemplateDefault))
-        {
-            return;
-        }
-
-        DateOnly due = issue.AddDays(template.DefaultPaymentTermDays);
-
-        if (draft.DueDate == due
-            && draft.OriginOf(nameof(draft.DueDate)) == FieldOrigin.TemplateDefault)
-        {
-            return;
-        }
-
-        draft.DueDate = due;
-        draft.MarkOrigin(nameof(draft.DueDate), FieldOrigin.TemplateDefault);
-        changed.Add(nameof(draft.DueDate));
     }
 
     /// <summary>Übernimmt einen echten Stammdatenwert aus der Firmenvorlage.</summary>

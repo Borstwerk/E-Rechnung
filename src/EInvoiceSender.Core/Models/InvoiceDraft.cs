@@ -22,6 +22,7 @@ namespace EInvoiceSender.Core.Models;
 public sealed partial class InvoiceDraft : ObservableObject
 {
     private readonly FieldOriginTracker _origins = new();
+    private int _defaultPaymentTermDays;
 
     /// <summary>Woher der Inhalt eines Feldes stammt.</summary>
     public FieldOrigin OriginOf(string propertyName) => _origins.OriginOf(propertyName);
@@ -80,6 +81,85 @@ public sealed partial class InvoiceDraft : ObservableObject
 
     [ObservableProperty]
     private DateOnly? _dueDate;
+
+    /// <summary>
+    /// Merkt sich das Standardzahlungsziel ausschließlich für die Ableitung
+    /// des Fälligkeitsdatums im aktuellen Entwurf.
+    ///
+    /// Die Tage sind kein Rechnungsfeld und werden nicht in das strenge
+    /// Rechnungsmodell übernommen. Ein erkanntes oder vom Anwender gesetztes
+    /// Fälligkeitsdatum bleibt durch seine Herkunft geschützt.
+    /// </summary>
+    internal bool ConfigureDefaultPaymentTermDays(int days)
+    {
+        _defaultPaymentTermDays = Math.Max(0, days);
+
+        return SynchronizeTemplateDefaultDueDate();
+    }
+
+    /// <summary>
+    /// Hält ein automatisch aus der Vorlage abgeleitetes Fälligkeitsdatum am
+    /// Rechnungsdatum. Der Hook läuft sowohl bei PDF-Vorbefüllung als auch bei
+    /// einer manuellen Datumsänderung.
+    /// </summary>
+    partial void OnIssueDateChanged(DateOnly? value)
+        => SynchronizeTemplateDefaultDueDate();
+
+    private bool SynchronizeTemplateDefaultDueDate()
+    {
+        FieldOrigin currentOrigin = OriginOf(nameof(DueDate));
+
+        if (!FieldOriginRules.CanReplace(currentOrigin, FieldOrigin.TemplateDefault))
+        {
+            return false;
+        }
+
+        DateOnly? synchronized = CalculateTemplateDefaultDueDate();
+
+        // Ohne Rechnungsdatum oder positives Zahlungsziel gibt es noch gar
+        // keinen abgeleiteten Wert. Ein leeres Default-Feld muss deshalb auch
+        // nicht sichtbar als Vorlagenwert markiert werden.
+        if (DueDate == synchronized
+            && (synchronized is null || currentOrigin == FieldOrigin.TemplateDefault))
+        {
+            return false;
+        }
+
+        void Apply()
+        {
+            DueDate = synchronized;
+            MarkOrigin(nameof(DueDate), FieldOrigin.TemplateDefault);
+        }
+
+        // CompanyTemplateApplier und DraftPrefiller laufen bereits in einem
+        // Prefill. Der Tracker ist bewusst nicht verschachtelungssicher;
+        // deshalb wird in diesem Fall kein zweiter Prefill geöffnet.
+        if (_origins.IsPrefilling)
+        {
+            Apply();
+        }
+        else
+        {
+            Prefill(_ => Apply());
+        }
+
+        return true;
+    }
+
+    private DateOnly? CalculateTemplateDefaultDueDate()
+    {
+        if (_defaultPaymentTermDays <= 0 || IssueDate is not { } issueDate)
+        {
+            return null;
+        }
+
+        long targetDayNumber = (long)issueDate.DayNumber + _defaultPaymentTermDays;
+
+        return targetDayNumber >= DateOnly.MinValue.DayNumber
+            && targetDayNumber <= DateOnly.MaxValue.DayNumber
+                ? DateOnly.FromDayNumber((int)targetDayNumber)
+                : null;
+    }
 
     [ObservableProperty]
     private DateOnly? _deliveryDate;
@@ -244,6 +324,7 @@ public sealed partial class InvoiceDraft : ObservableObject
     /// </summary>
     public void Reset()
     {
+        _defaultPaymentTermDays = 0;
         Prefill(d => d.RestoreDefaults());
 
         _origins.Clear();
