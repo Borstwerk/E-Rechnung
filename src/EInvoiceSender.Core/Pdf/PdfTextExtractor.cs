@@ -19,9 +19,24 @@ public sealed record PdfTextLine(
     double Top,
     IReadOnlyList<PdfTextSegment> Segments)
 {
+    /// <summary>
+    /// Die einzelnen Wörter mit ihrer waagerechten Lage. Die bestehenden
+    /// Segmente bleiben die Grundlage der Dokument-, Partei- und
+    /// Summenerkennung; die feinere Geometrie steht ausschließlich
+    /// Detektoren zur Verfügung, die echte Tabellenspalten unterscheiden
+    /// müssen.
+    /// </summary>
+    public IReadOnlyList<PdfTextToken> Tokens { get; init; } = [];
+
     /// <summary>Der linke Rand des ersten Abschnitts.</summary>
     public double Left => Segments.Count > 0 ? Segments[0].Left : 0;
 }
+
+/// <summary>Ein einzelnes PDF-Wort mit seiner waagerechten Ausdehnung.</summary>
+/// <param name="Text">Der von PdfPig gelesene Wortinhalt.</param>
+/// <param name="Left">Linker Rand in PDF-Punkten.</param>
+/// <param name="Right">Rechter Rand in PDF-Punkten.</param>
+public sealed record PdfTextToken(string Text, double Left, double Right);
 
 /// <summary>
 /// Ein waagerecht zusammenhängender Textblock innerhalb einer Zeile.
@@ -179,7 +194,8 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
 
         foreach (IGrouping<double, Word> row in rows)
         {
-            List<PdfTextSegment> segments = SplitIntoSegments([.. row.OrderBy(w => w.BoundingBox.Left)]);
+            Word[] orderedWords = [.. row.OrderBy(w => w.BoundingBox.Left)];
+            List<PdfTextSegment> segments = SplitIntoSegments(orderedWords);
 
             if (segments.Count == 0)
             {
@@ -188,7 +204,14 @@ public sealed partial class PdfTextExtractor(ILogger<PdfTextExtractor> logger) :
 
             string text = string.Join(" ", segments.Select(s => s.Text));
 
-            yield return new PdfTextLine(text, page.Number, pageTop - row.Key, segments);
+            yield return new PdfTextLine(text, page.Number, pageTop - row.Key, segments)
+            {
+                Tokens =
+                [
+                    .. orderedWords.Select(word => new PdfTextToken(
+                        word.Text, word.BoundingBox.Left, word.BoundingBox.Right)),
+                ],
+            };
         }
     }
 

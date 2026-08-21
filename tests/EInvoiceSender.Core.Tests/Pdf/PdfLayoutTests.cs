@@ -54,6 +54,39 @@ public sealed class PdfLayoutTests : IDisposable
     }
 
     /// <summary>
+    /// Die Wortgeometrie ergänzt die bisherigen Abschnitte, ersetzt sie aber
+    /// nicht. Eng stehende Tabellenspalten bleiben nach der historischen
+    /// 60-Punkte-Regel ein Segment, während ihre einzelnen Grenzen für einen
+    /// spezialisierten Tabellendetektor erhalten bleiben.
+    /// </summary>
+    [Fact]
+    public async Task WortgrenzenÄndernDieBestehendeSegmentbildungNicht()
+    {
+        string path = Temp(TextPdfBuilder.CreatePositioned(
+        [
+            new("Menge", 260, 120),
+            new("Einheit", 300, 120),
+            new("Einzelpreis", 390, 120),
+            new("Gesamt", 500, 120),
+            new("Ausreichend langer maschinenlesbarer Fülltext für die PDF-Erkennung.", 56, 180),
+            new("Noch eine Zeile mit eindeutig verwertbarem eingebettetem Text.", 56, 194),
+        ]));
+
+        PdfTextResult result = await _extractor.ExtractAsync(
+            path, TestContext.Current.CancellationToken);
+        PdfTextLine header = Assert.Single(
+            result.Lines, line => line.Text.Contains("Einzelpreis", StringComparison.Ordinal));
+
+        Assert.Equal(
+            ["Menge Einheit Einzelpreis", "Gesamt"],
+            header.Segments.Select(segment => segment.Text));
+        Assert.Equal(["Menge", "Einheit", "Einzelpreis", "Gesamt"],
+            header.Tokens.Select(token => token.Text));
+        Assert.All(header.Tokens, token => Assert.True(token.Right > token.Left));
+        Assert.True(header.Tokens[1].Left > header.Tokens[0].Right);
+    }
+
+    /// <summary>
     /// Der Adressblock wird aus derselben Spalte gelesen wie das Schlüsselwort.
     /// Vorher lief hier der Text der rechten Spalte hinein.
     /// </summary>
