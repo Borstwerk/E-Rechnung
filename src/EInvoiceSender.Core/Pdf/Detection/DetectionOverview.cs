@@ -1,5 +1,6 @@
 using System.Globalization;
 using EInvoiceSender.Core.Models;
+using EInvoiceSender.Core.Text;
 
 namespace EInvoiceSender.Core.Pdf.Detection;
 
@@ -78,15 +79,25 @@ public static class DetectionOverview
     /// berechtigterweise zwei verschiedene Aussagen.
     /// </summary>
     private static DetectionEntry LineItemEntry(InvoiceDetectionResult detection)
-        => detection.Lines.Count > 0
-            ? new DetectionEntry(
-                DetectionEntryKind.Found,
-                $"Rechnungspositionen erkannt: {detection.Lines.Count} – "
-                + "bitte im nächsten Schritt prüfen")
-            : new DetectionEntry(
+    {
+        if (detection.Lines.Count == 0)
+        {
+            return new DetectionEntry(
                 DetectionEntryKind.Missing,
                 "Rechnungspositionen nicht sicher erkannt. "
                 + "Bitte erfassen Sie sie im nächsten Schritt von Hand.");
+        }
+
+        int missingUnit = detection.Lines.Count(line => line.UnitCode is null);
+
+        return new DetectionEntry(
+            DetectionEntryKind.Found,
+            $"Rechnungspositionen erkannt: {detection.Lines.Count} – "
+            + (missingUnit == 0
+                ? "bitte im nächsten Schritt prüfen"
+                : $"bei {Plural.Count(missingUnit, "Position", "Positionen")} ist keine "
+                  + "Mengeneinheit angegeben. Bitte im nächsten Schritt ergänzen."));
+    }
 
     private static IEnumerable<DetectionEntry> DocumentEntries(InvoiceDetectionResult d)
     {

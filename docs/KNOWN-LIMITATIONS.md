@@ -143,13 +143,29 @@ Quelle der Wahrheit.
   angezeigt, aber nicht eingetragen.
 - **Rechnungspositionen werden nur aus klar aufgebauten Tabellen erkannt.**
   Angenommen wird eine Tabelle nur, wenn sie auf einer Seite steht, einen
-  eindeutigen Kopf mit Beschreibung, Menge, Einheit und Einzelpreis hat, nur
-  bekannte Einheiten (Stück, Stunde, Kilogramm, Meter) und die Steuersätze 7 %
-  oder 19 % verwendet und ihre Summe die im Dokument gefundene Summe trifft.
-  Fehlt eine dieser Bedingungen, entsteht **keine einzige** Position, und die
-  Tabelle ist wie bisher von Hand zu erfassen. Eine teilweise übernommene
-  Tabelle gibt es nicht: Sie sähe vollständig aus und würde den
+  eindeutigen Kopf mit Beschreibung, Menge und Einzelpreis hat, nur die
+  Steuersätze 7 % oder 19 % verwendet und ihre Summe die im Dokument gefundene
+  Summe trifft. Fehlt eine dieser Bedingungen, entsteht **keine einzige**
+  Position, und die Tabelle ist wie bisher von Hand zu erfassen. Eine teilweise
+  übernommene Tabelle gibt es nicht: Sie sähe vollständig aus und würde den
   Rechnungsbetrag verändern.
+- **Eine genannte Mengeneinheit muss unterstützt sein.** Unterstützt sind
+  Stück, Stunde, Kilogramm und Meter – in einer eigenen Spalte oder direkt
+  hinter der Menge (`4,00 Std.`). Nennt die Rechnung eine andere Einheit, etwa
+  `Fass`, wird die **gesamte** Tabelle verworfen. Eine im Dokument stehende
+  Angabe stillschweigend zu übergehen wäre schlimmer, als gar nichts zu
+  erkennen.
+- **Nennt die Rechnung gar keine Mengeneinheit, bleibt das Feld leer.** Die
+  Positionen werden dann trotzdem übernommen; im Formular fehlt nur die
+  Einheit. Schritt 1 und Schritt 2 sagen ausdrücklich, bei wie vielen
+  Positionen das der Fall ist. Vor der Ausgabe muss die Einheit ergänzt
+  werden – ohne sie entsteht keine Rechnung. Ein stilles „Stück“ wäre bei einer
+  Stundenrechnung nicht aufgefallen und hätte eine falsche E-Rechnung ergeben.
+- **Jede Spalte der Tabelle muss benannt und verstanden sein.** Eine
+  unbekannte Zusatzspalte verwirft die Tabelle. Die einzige Ausnahme ist eine
+  Lieferdatumsspalte; sie wird erkannt, damit die Spaltengrenzen stimmen, und
+  erzeugt kein Rechnungsfeld. Spalten für Rabatt, Nachlass, Zuschlag oder
+  Preisbasismenge werden nicht unterstützt und verwerfen die Tabelle.
 - **Eine lange Beschreibungszeile kann die ganze Tabelle verwerfen.** Reicht
   ein Text über die aus dem Tabellenkopf abgeleitete Spaltenbreite hinaus, ist
   die Zeile nicht mehr eindeutig einer Spalte zuzuordnen. Die Erkennung lehnt

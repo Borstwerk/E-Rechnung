@@ -108,11 +108,21 @@ Jeder erkannte Wert bleibt sichtbar und änderbar. Unsichere Werte werden gekenn
 nicht erst übernommen.
 
 **Rechnungspositionen** werden aus klar aufgebauten Tabellen übernommen: eine Seite, ein
-eindeutiger Tabellenkopf, bekannte Einheiten, die Steuersätze 7 % oder 19 %, und die Summe der
-Positionen muss die Summe im Dokument treffen. Passt eine dieser Bedingungen nicht, wird **keine
-einzige** Position übernommen und die Tabelle ist von Hand zu erfassen – eine halb ausgefüllte
-Tabelle sähe fertig aus und wäre falsch. Haben Sie bereits selbst Positionen eingetragen, bleiben
-diese unangetastet.
+eindeutiger Tabellenkopf, die Steuersätze 7 % oder 19 %, und die Summe der Positionen muss die
+Summe im Dokument treffen. Passt eine dieser Bedingungen nicht, wird **keine einzige** Position
+übernommen und die Tabelle ist von Hand zu erfassen – eine halb ausgefüllte Tabelle sähe fertig
+aus und wäre falsch. Haben Sie bereits selbst Positionen eingetragen, bleiben diese unangetastet.
+
+Bei der **Mengeneinheit** kommt es darauf an, was in der Rechnung steht:
+
+- Steht dort eine unterstützte Einheit – Stück, Stunde, Kilogramm oder Meter, in einer eigenen
+  Spalte oder direkt hinter der Menge –, wird sie übernommen.
+- Nennt die Rechnung **gar keine** Einheit, werden die Positionen trotzdem übernommen und das
+  Feld bleibt leer. Beide Schritte sagen Ihnen, bei wie vielen Positionen das so ist. Bitte
+  ergänzen Sie die Einheit; ohne sie entsteht keine Rechnung. Ein stillschweigend eingesetztes
+  „Stück“ wäre bei einer Stundenrechnung nicht aufgefallen.
+- Steht dort eine Einheit, die diese Anwendung nicht kennt, wird die ganze Tabelle nicht
+  übernommen.
 
 ## Welche PDFs sich verwenden lassen
 

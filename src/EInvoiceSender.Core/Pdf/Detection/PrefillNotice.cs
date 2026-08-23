@@ -58,7 +58,8 @@ public static class PrefillNotice
             return string.Empty;
         }
 
-        return string.Join(" ", [.. parts, .. Uncertain(summary), Closing]);
+        return string.Join(
+            " ", [.. parts, .. MissingUnits(summary), .. Uncertain(summary), Closing]);
     }
 
     private static IEnumerable<string> Fields(PrefillSummary summary)
@@ -106,6 +107,31 @@ public static class PrefillNotice
             + Plural.Word(summary.SkippedExistingLines, "Rechnungsposition", "Rechnungspositionen")
             + $" {Plural.Word(summary.SkippedExistingLines, "wurde", "wurden")} nicht übernommen, "
             + "weil bereits Positionen erfasst sind.";
+    }
+
+    /// <summary>
+    /// Fehlende Mengeneinheiten gehören ausdrücklich in den Satz.
+    ///
+    /// Diese Positionen sind übernommen, ihr Einheitenfeld ist aber leer –
+    /// weil die Rechnung keine Einheit nennt. Ohne diesen Hinweis stünde der
+    /// Anwender vor leeren Feldern und hielte das für einen Fehler der
+    /// Anwendung. Es ist keiner, und die Lücke ist mit einem Handgriff
+    /// geschlossen.
+    ///
+    /// Gezählt werden nur übernommene Positionen. Eine Tabelle, die wegen
+    /// bereits erfasster Benutzerarbeit gar nicht übernommen wurde, hat im
+    /// Entwurf auch keine leere Einheit.
+    /// </summary>
+    private static IEnumerable<string> MissingUnits(PrefillSummary summary)
+    {
+        if (summary.LinesMissingUnit == 0)
+        {
+            yield break;
+        }
+
+        yield return $"Bei {Plural.Count(summary.LinesMissingUnit, "Position", "Positionen")} "
+            + $"fehlt die Mengeneinheit. Bitte ergänzen Sie "
+            + $"{Plural.Word(summary.LinesMissingUnit, "sie", "diese")}.";
     }
 
     private static IEnumerable<string> Uncertain(PrefillSummary summary)

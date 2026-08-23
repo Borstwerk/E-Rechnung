@@ -557,15 +557,29 @@ Eine Käufer-E-Mail-Adresse darf nur aus einem ausreichend eindeutig dem Käufer
 
 Diese Anforderung darf auf eine spätere Version verschoben werden, wenn keine ausreichend zuverlässige Lösung für 0.2.0 erreicht wird.
 
-Phase A (Erkennung) und Phase B (produktive Integration) sind umgesetzt und
-durch Tests belegt. Die Freigabeschranke bleibt bestehen, bis die
-Windows-Abnahme mit dem Testkoffer durchgeführt ist.
+Phase A (Erkennung), Phase B (produktive Integration) und Phase C (realistische
+Tabellenlayouts) sind umgesetzt und durch Tests belegt. Die Freigabeschranke
+bleibt bestehen, bis die Windows-Abnahme mit dem Testkoffer durchgeführt ist.
 
 Der erreichte Umfang ist bewusst eng: eine Seite, ein eindeutiger
 Tabellenkopf, die Einheiten C62, HUR, KGM und MTR, die Steuersätze 7 % und
 19 %, und ein Abgleich der Positionssumme gegen die im Dokument gefundene
 Netto- oder Steuer- und Bruttosumme. Alles andere ergibt null Positionen –
 nie eine Teilmenge.
+
+Phase C erweitert das um Tabellenaufbauten, die in echten Rechnungen
+vorkommen: ohne eigene Einheitsspalte, mit Einheit hinter der Menge, mit
+Lieferdatumsspalte, mit ausgeschriebenen Kontrollbeträgen je Position und mit
+den beobachteten Beschriftungsfamilien. Die Erkennung unterscheidet dabei
+ausdrücklich drei Zustände der Mengeneinheit: vorhanden und verstanden,
+im Dokument nicht vorhanden, vorhanden aber nicht unterstützt. Nur der letzte
+verwirft die Tabelle; der mittlere lässt die Einheit im Formular leer, und die
+bestehende Entwurfsprüfung hält die Rechnung auf, bis sie ergänzt wird.
+
+Führt eine Tabelle keine Steuerspalte, stammt der Satz aus dem Dokument –
+zweifelsfrei gelesen oder unsicher gelesen und durch die sicher gelesenen
+Dokumentsummen nachgerechnet. Erst danach greift unverändert das Summen-Gate
+über die Positionen.
 
 ### Problem / Grund
 

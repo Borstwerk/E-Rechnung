@@ -19,13 +19,23 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// Anzahl erkannter Positionen, die nicht übernommen wurden, weil der Entwurf
 /// bereits Positionen enthielt.
 /// </param>
+/// <param name="LinesMissingUnit">
+/// Anzahl **übernommener** Positionen, bei denen die Rechnung keine
+/// Mengeneinheit nennt und das Feld im Entwurf deshalb leer bleibt.
+///
+/// Ausdrücklich nur die übernommenen: Wurde wegen bereits erfasster
+/// Benutzerpositionen gar nichts übernommen, fehlt im Entwurf auch keine
+/// Einheit. Diese Zahl schickt den Anwender an eine Stelle im Formular –
+/// sie muss dorthin zeigen, wo tatsächlich etwas leer ist.
+/// </param>
 public sealed record PrefillSummary(
     int FilledFields,
     IReadOnlyList<string> UncertainFields,
     IReadOnlyList<string> SkippedLowConfidence,
     IReadOnlyList<string> SkippedProtected,
     int FilledLines = 0,
-    int SkippedExistingLines = 0);
+    int SkippedExistingLines = 0,
+    int LinesMissingUnit = 0);
 
 /// <summary>
 /// Trägt ein Erkennungsergebnis in das Eingabeformular ein.
@@ -113,7 +123,9 @@ public static class DraftPrefiller
             draft.Lines.Add(item);
         }
 
-        log.FilledLines(converted.Count);
+        log.FilledLines(
+            converted.Count,
+            converted.Count(item => item.Unit.Length == 0));
     }
 
     /// <summary>
@@ -130,15 +142,30 @@ public static class DraftPrefiller
     /// die Einheit überhaupt gibt. Das ist dieselbe Liste, an der später
     /// <c>InvoiceLineRules</c> misst: Was hier durchkommt und dort scheitert,
     /// wäre ein Entwurf, der erst beim Erzeugen der Rechnung auffliegt.
+    ///
+    /// **Nennt die Rechnung keine Einheit, wird die Einheit ausdrücklich
+    /// geleert.** <see cref="InvoiceLineDraft"/> beginnt mit <c>"C62"</c>;
+    /// dieses Feld unberührt zu lassen hieße, den Programmstandard als
+    /// erkannte Information auszugeben. Bei einer Stundenrechnung stünde dann
+    /// „Stück“ im Formular, ohne dass irgendetwas darauf hinwiese. Die
+    /// bestehende Entwurfsprüfung hält die Rechnung anschließend von selbst
+    /// auf, bis der Anwender die Einheit ergänzt.
     /// </summary>
     private static bool TryConvert(DetectedInvoiceLine line, out InvoiceLineDraft draft)
     {
         draft = null!;
 
-        if (!UnitCode.TryParse(line.UnitCode, out UnitCode unit)
-            || !UnitCodeList.IsValid(unit.Value))
+        string unit = string.Empty;
+
+        if (line.UnitCode is { } code)
         {
-            return false;
+            if (!UnitCode.TryParse(code, out UnitCode parsed)
+                || !UnitCodeList.IsValid(parsed.Value))
+            {
+                return false;
+            }
+
+            unit = parsed.Value;
         }
 
         draft = new InvoiceLineDraft
@@ -147,7 +174,7 @@ public static class DraftPrefiller
             Name = line.Name,
             Description = line.Description ?? string.Empty,
             Quantity = Number(line.Quantity, QuantityFormat),
-            Unit = unit.Value,
+            Unit = unit,
             NetUnitPrice = Number(line.NetUnitPrice, AmountFormat),
             VatCategory = line.VatCategory,
             VatRate = Number(line.VatRate, RateFormat),
@@ -319,6 +346,7 @@ public static class DraftPrefiller
         private int _filled;
         private int _filledLines;
         private int _skippedExistingLines;
+        private int _linesMissingUnit;
 
         public void Filled(string label, FieldOrigin origin)
         {
@@ -334,12 +362,16 @@ public static class DraftPrefiller
 
         public void Protected(string label) => _protectedFields.Add(label);
 
-        public void FilledLines(int count) => _filledLines = count;
+        public void FilledLines(int count, int missingUnit)
+        {
+            _filledLines = count;
+            _linesMissingUnit = missingUnit;
+        }
 
         public void SkippedExistingLines(int count) => _skippedExistingLines = count;
 
         public PrefillSummary ToSummary() => new(
             _filled, _uncertain, _skipped, _protectedFields,
-            _filledLines, _skippedExistingLines);
+            _filledLines, _skippedExistingLines, _linesMissingUnit);
     }
 }

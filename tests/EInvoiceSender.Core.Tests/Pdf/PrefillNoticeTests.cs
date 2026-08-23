@@ -146,10 +146,46 @@ public sealed class PrefillNoticeTests
         Assert.DoesNotContain("überschreiben", text, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Fehlt bei übernommenen Positionen die Mengeneinheit, sagt der Satz das
+    /// – mit Anzahl. Die leeren Felder im Formular sind sonst nicht erklärbar.
+    /// </summary>
+    [Fact]
+    public void FehlendeMengeneinheitenWerdenGenannt()
+    {
+        string text = PrefillNotice.Describe(Summary(filledLines: 4, linesMissingUnit: 4));
+
+        Assert.Contains("4 Rechnungspositionen", text, StringComparison.Ordinal);
+        Assert.Contains("Bei 4 Positionen fehlt die Mengeneinheit", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EineEinzelneFehlendeMengeneinheitStehtInDerEinzahl()
+    {
+        string text = PrefillNotice.Describe(Summary(filledLines: 1, linesMissingUnit: 1));
+
+        Assert.Contains("Bei 1 Position fehlt", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bei 1 Positionen", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Sind alle Einheiten da, entfällt der Satz. Ein Hinweis auf eine Lücke,
+    /// die es nicht gibt, macht die übrigen Hinweise unglaubwürdig.
+    /// </summary>
+    [Fact]
+    public void OhneFehlendeMengeneinheitEntfälltDerHinweis()
+        => Assert.DoesNotContain(
+            "Mengeneinheit",
+            PrefillNotice.Describe(Summary(filledLines: 4)),
+            StringComparison.Ordinal);
+
     private static PrefillSummary Summary(
         int filledFields = 0,
         int filledLines = 0,
         int skippedExistingLines = 0,
+        int linesMissingUnit = 0,
         IReadOnlyList<string>? uncertain = null)
-        => new(filledFields, uncertain ?? [], [], [], filledLines, skippedExistingLines);
+        => new(
+            filledFields, uncertain ?? [], [], [],
+            filledLines, skippedExistingLines, linesMissingUnit);
 }

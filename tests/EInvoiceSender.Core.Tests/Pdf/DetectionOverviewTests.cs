@@ -152,8 +152,74 @@ public sealed class DetectionOverviewTests : IDisposable
         Assert.Equal(DetectionEntryKind.Found, eintrag.Kind);
     }
 
-    private static DetectedInvoiceLine Line(int number, string name) => new(
-        number, name, null, 1m, "HUR", 100m, 100m,
+    /// <summary>
+    /// Nennt die Rechnung keine Mengeneinheit, sagt Schritt 1 das ausdrücklich
+    /// – mit Anzahl und mit dem, was zu tun ist.
+    ///
+    /// **Warum das nicht schweigen darf:** Die Positionen sind erkannt und
+    /// werden übernommen, aber die Einheit bleibt leer. Ohne diesen Satz
+    /// stünde der Anwender in Schritt 2 vor leeren Feldern und hielte das für
+    /// einen Fehler der Anwendung. Es ist keiner – die Rechnung sagt es
+    /// schlicht nicht.
+    /// </summary>
+    [Fact]
+    public void FehlendeMengeneinheitenWerdenBenannt()
+    {
+        string zeile = LineItemLine(
+            Line(1, "Beratung", unitCode: null), Line(2, "Schulung", unitCode: null));
+
+        Assert.Contains("erkannt: 2", zeile, StringComparison.Ordinal);
+        Assert.Contains("bei 2 Positionen ist keine Mengeneinheit angegeben", zeile, StringComparison.Ordinal);
+        Assert.Contains("ergänzen", zeile, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Gemischt gezählt wird nur, was tatsächlich fehlt – nicht die ganze
+    /// Tabelle.
+    /// </summary>
+    [Fact]
+    public void NurDieTatsächlichFehlendenEinheitenWerdenGezählt()
+    {
+        string zeile = LineItemLine(
+            Line(1, "Beratung"),
+            Line(2, "Schulung", unitCode: null),
+            Line(3, "Material", unitCode: null),
+            Line(4, "Kabel"));
+
+        Assert.Contains("erkannt: 4", zeile, StringComparison.Ordinal);
+        Assert.Contains("bei 2 Positionen", zeile, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EineEinzelneFehlendeEinheitStehtInDerEinzahl()
+    {
+        string zeile = LineItemLine(Line(1, "Beratung", unitCode: null));
+
+        Assert.Contains("bei 1 Position ist", zeile, StringComparison.Ordinal);
+        Assert.DoesNotContain("bei 1 Positionen", zeile, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Sind alle Einheiten da, bleibt der Satz so kurz wie bisher. Ein Hinweis
+    /// auf eine Lücke, die es nicht gibt, wäre Lärm.
+    /// </summary>
+    [Fact]
+    public void MitVollständigenEinheitenBleibtDerHinweisAus()
+    {
+        string zeile = LineItemLine(Line(1, "Beratung"), Line(2, "Schulung"));
+
+        Assert.Contains("erkannt: 2", zeile, StringComparison.Ordinal);
+        Assert.DoesNotContain("Mengeneinheit", zeile, StringComparison.Ordinal);
+    }
+
+    private static string LineItemLine(params DetectedInvoiceLine[] lines)
+        => Assert.Single(
+            Describe(Complete() with { Lines = lines }),
+            z => z.Contains("Rechnungspositionen", StringComparison.Ordinal));
+
+    private static DetectedInvoiceLine Line(
+        int number, string name, string? unitCode = "HUR") => new(
+        number, name, null, 1m, unitCode, 100m, 100m,
         EInvoiceSender.Core.Models.VatCategory.StandardRate, 19m, []);
 
     [Fact]

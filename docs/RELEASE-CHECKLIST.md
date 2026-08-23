@@ -123,7 +123,25 @@ genügen hier nicht: Zu prüfen ist, was der Anwender im Fenster sieht.
   der PDF überein und steht nicht pauschal auf „Stück“.
 - [ ] Die Meldung über der Tabelle nennt übernommene Felder und übernommene
   Positionen getrennt und endet mit der Aufforderung zu prüfen.
-- [ ] Jede vorbefüllte Zelle lässt sich ändern; die Summen rechnen danach neu.
+- [ ] Alle bearbeitbaren Positionsangaben lassen sich ändern; die Summen
+  rechnen danach neu. Die Positionsnummerierung verhält sich wie bisher.
+- [ ] Eine Rechnung **ohne** Mengeneinheit einlesen: Die Positionen werden
+  übernommen, das Einheitenfeld bleibt leer, und beide Schritte nennen die
+  Anzahl der betroffenen Positionen. Es steht dort ausdrücklich **nicht**
+  „Stück“.
+- [ ] „Weiter“ ist mit leerer Einheit nicht möglich; nach dem Ergänzen einer
+  gültigen Einheit läuft der Ablauf normal weiter.
+- [ ] Eine Rechnung mit einer nicht unterstützten Einheit (etwa „Fass“) ergibt
+  null Positionen – keine Teilmenge.
+- [ ] Eine Rechnung **ohne eigene Steuerspalte** wird nur dann erkannt, wenn
+  im Dokument **genau ein** Steuersatz von 7 % oder 19 % steht und dieser die
+  bestehenden Sicherheitsbedingungen erfüllt: Netto, Steuer und Brutto müssen
+  alle drei zweifelsfrei gelesen sein, die Steuer muss sich aus Netto und Satz
+  ergeben, und Brutto muss Netto plus Steuer sein. Fehlt eine dieser
+  Bedingungen – kein Satz, mehrere Sätze, ein anderer Satz, eine unsicher
+  gelesene Summe oder eine Summe, die nicht aufgeht –, ergibt die Rechnung
+  null Positionen.
+- [ ] Ein Aufbau mit widersprüchlichen Dokumentsummen ergibt null Positionen.
 - [ ] Eine Rechnung ohne Tabellenkopf ergibt null Positionen, und Schritt 1
   sagt ausdrücklich, dass von Hand zu erfassen ist.
 - [ ] Zuerst von Hand eine Position eintragen, dann die PDF einlesen: Die
