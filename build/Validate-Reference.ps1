@@ -8,7 +8,7 @@
     keine Rechnungsdaten übertragen.
 
     Zwei Aussagen müssen zutreffen:
-      - alle acht gültigen Golden Master werden als gültig bestätigt,
+      - alle als gültig geführten Golden Master werden als gültig bestätigt,
       - alle absichtlich fehlerhaften Dateien werden beanstandet.
 
     Fehlt Java oder die Mustang-JAR, sagt das Skript genau das - und meldet

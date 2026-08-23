@@ -29,13 +29,25 @@ internal static class SellerRules
                 "Seller.Address.Country", normRule: "BR-09");
         }
 
-        // BR-CO-26: Der Rechnungssteller muss steuerlich identifizierbar sein.
-        if (string.IsNullOrWhiteSpace(seller.VatId) && string.IsNullOrWhiteSpace(seller.TaxNumber))
+        // BR-CO-26: Der Empfänger muss den Rechnungssteller maschinell
+        // identifizieren können. Dafür zählt die USt-IdNr. (BT-31) oder die
+        // Handelsregisternummer (BT-30).
+        //
+        // **Die Steuernummer (BT-32) zählt ausdrücklich nicht.** Sie steht im
+        // CII als schemeID="FC"; das CEN-Schematron prüft für BR-CO-26 aber
+        // nur schemeID="VA", ram:ID, ram:GlobalID und
+        // SpecifiedLegalOrganization/ram:ID. Sie hier gelten zu lassen hieße,
+        // eine Rechnung durchzuwinken, die jeder externe Prüfer beanstandet –
+        // und der Anwender erführe es erst beim Empfänger.
+        if (string.IsNullOrWhiteSpace(seller.VatId)
+            && string.IsNullOrWhiteSpace(seller.LegalRegistrationId))
         {
             report.Error(
                 "APP-SEL-004",
-                "Es fehlt die Umsatzsteuer-Identifikationsnummer oder die Steuernummer "
-                + "des Rechnungsstellers. Eine der beiden Angaben ist erforderlich.",
+                "Der Rechnungssteller ist nicht eindeutig identifizierbar. Bitte "
+                + "hinterlegen Sie in Ihren Firmendaten die "
+                + "Umsatzsteuer-Identifikationsnummer. Eine Steuernummer allein "
+                + "genügt dafür nicht.",
                 "Seller.VatId", normRule: "BR-CO-26");
         }
 

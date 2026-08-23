@@ -31,11 +31,19 @@ public sealed record BankAccount(
 /// <param name="Address">Anschrift (BG-5).</param>
 /// <param name="Email">E-Mail-Adresse (BT-43).</param>
 /// <param name="VatId">Umsatzsteuer-Identifikationsnummer (BT-31).</param>
-/// <param name="TaxNumber">Steuernummer (BT-32), Alternative zur USt-IdNr.</param>
+/// <param name="TaxNumber">
+/// Steuernummer (BT-32). Eine zulässige zusätzliche steuerliche Angabe –
+/// **keine** Alternative zur USt-IdNr. Sie steht im CII als
+/// <c>schemeID="FC"</c> und erfüllt BR-CO-26 nicht: Für die maschinelle
+/// Identifikation des Verkäufers zählen nur <see cref="VatId"/> (BT-31) und
+/// <see cref="LegalRegistrationId"/> (BT-30).
+/// </param>
 /// <param name="TradingName">Abweichender Handelsname (BT-28).</param>
 /// <param name="ContactName">Ansprechpartner (BT-41).</param>
 /// <param name="ContactPhone">Telefon des Ansprechpartners (BT-42).</param>
-/// <param name="LegalRegistrationId">Handelsregisternummer (BT-30).</param>
+/// <param name="LegalRegistrationId">
+/// Handelsregisternummer (BT-30). Erfüllt BR-CO-26 ebenso wie die USt-IdNr.
+/// </param>
 public sealed record SellerParty(
     string Name,
     PostalAddress Address,

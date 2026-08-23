@@ -176,6 +176,22 @@ public static class InvoiceScenarios
             billingPeriodStart: new DateOnly(2026, 2, 1),
             billingPeriodEnd: new DateOnly(2026, 2, 28)),
             ExpectedToBeValid: true),
+
+        // BR-CO-26 verlangt eine maschinell auswertbare Verkäuferkennung,
+        // aber nicht zwingend eine USt-IdNr. Dieser Fall belegt die zweite
+        // zulässige Möglichkeit: Handelsregisternummer (BT-30) statt USt-IdNr.
+        //
+        // Er ist der Gegenpol zur ungültigen Vorgabe 93, in der nur eine
+        // Steuernummer steht. Ohne diesen Fall hieße die Regel faktisch
+        // „USt-IdNr. zwingend“ – und genau das wäre strenger als die Norm.
+        new("09-handelsregister",
+            "Verkäufer ohne USt-IdNr., dafür mit Handelsregisternummer",
+            Build("RE-2026-0009",
+            [
+                Line(1, "Schulung Rechnungswesen", 2m, UnitCode.Hour, 120.00m, VatCategory.StandardRate, 19m),
+            ],
+            sellerOverride: Seller with { VatId = null, LegalRegistrationId = "HRB 12345" }),
+            ExpectedToBeValid: true),
     ];
 
     /// <summary>Sucht einen Fall anhand seines Kurznamens.</summary>
@@ -223,7 +239,8 @@ public static class InvoiceScenarios
         decimal roundingAmount = 0m,
         DateOnly? billingPeriodStart = null,
         DateOnly? billingPeriodEnd = null,
-        BuyerParty? buyerOverride = null)
+        BuyerParty? buyerOverride = null,
+        SellerParty? sellerOverride = null)
         => new()
         {
             InvoiceNumber = invoiceNumber,
@@ -232,7 +249,7 @@ public static class InvoiceScenarios
             DeliveryDate = DeliveryDate,
             TypeCode = InvoiceTypeCode.CommercialInvoice,
             Currency = CurrencyCode.Euro,
-            Seller = Seller,
+            Seller = sellerOverride ?? Seller,
             Buyer = buyerOverride ?? Buyer,
             Lines = lines,
             AllowancesAndCharges = allowancesAndCharges ?? [],
