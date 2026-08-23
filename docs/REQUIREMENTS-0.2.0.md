@@ -553,9 +553,19 @@ Eine Käufer-E-Mail-Adresse darf nur aus einem ausreichend eindeutig dem Käufer
 
 ## ER-020-POS-01 – Rechnungspositionen aus digitalen PDFs erkennen
 
-**Status:** Feature mit Freigabeschranke
+**Status:** Feature mit Freigabeschranke – umgesetzt, Windows-Abnahme steht aus
 
 Diese Anforderung darf auf eine spätere Version verschoben werden, wenn keine ausreichend zuverlässige Lösung für 0.2.0 erreicht wird.
+
+Phase A (Erkennung) und Phase B (produktive Integration) sind umgesetzt und
+durch Tests belegt. Die Freigabeschranke bleibt bestehen, bis die
+Windows-Abnahme mit dem Testkoffer durchgeführt ist.
+
+Der erreichte Umfang ist bewusst eng: eine Seite, ein eindeutiger
+Tabellenkopf, die Einheiten C62, HUR, KGM und MTR, die Steuersätze 7 % und
+19 %, und ein Abgleich der Positionssumme gegen die im Dokument gefundene
+Netto- oder Steuer- und Bruttosumme. Alles andere ergibt null Positionen –
+nie eine Teilmenge.
 
 ### Problem / Grund
 

@@ -79,7 +79,13 @@ public sealed partial class InvoiceDataDetector(
         DetectedParties parties = PartyDetector.Detect(text.Lines, ownCompany, payment);
         DetectedTotals totals = TotalsDetector.Detect(text.Lines);
 
-        return Combine(text, document, parties, payment, totals);
+        // Zuletzt und nur lesend: Der Positionsdetektor benutzt die bereits
+        // unabhängig erkannten Summen als Gate. Er verändert sie nicht und
+        // korrigiert auch keine Dokumentsumme aus Positionswerten – sonst
+        // würde sich die Tabelle ihr eigenes Prüfmaß schreiben.
+        PositionDetectionResult positions = PositionDetector.Detect(text.Lines, totals);
+
+        return Combine(text, document, parties, payment, totals, positions);
     }
 
     private static InvoiceDetectionResult Combine(
@@ -87,7 +93,8 @@ public sealed partial class InvoiceDataDetector(
         DetectedDocument document,
         DetectedParties parties,
         DetectedPayment payment,
-        DetectedTotals totals) => new()
+        DetectedTotals totals,
+        PositionDetectionResult positions) => new()
         {
             HasUsableText = true,
             PageCount = text.PageCount,
@@ -104,6 +111,7 @@ public sealed partial class InvoiceDataDetector(
             Iban = payment.Iban,
             Bic = payment.Bic,
             Totals = totals,
+            Lines = positions.Lines,
         };
 
     [LoggerMessage(

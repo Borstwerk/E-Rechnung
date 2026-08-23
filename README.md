@@ -49,7 +49,8 @@ Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
 - keine Buchhaltung, keine Kundenverwaltung, kein Mahnwesen
 - kein automatischer E-Mail-Versand – der Entwurf wird vorbereitet, abgeschickt wird er von Hand
 - keine Texterkennung (OCR) für eingescannte Rechnungen
-- keine zuverlässige automatische Übernahme von Rechnungspositionen aus beliebigen Tabellen
+- keine Übernahme von Rechnungspositionen aus beliebigen Tabellen – nur aus klar aufgebauten,
+  und dann geschlossen oder gar nicht
 - keine Steuer- oder Rechtsberatung: Ob eine Rechnung inhaltlich und steuerlich richtig ist,
   kann die Anwendung nicht beurteilen
 - keine Zusicherung, dass sich jede beliebige PDF verarbeiten lässt
@@ -104,8 +105,14 @@ gespeicherten Firmenvorlage, IBAN und BIC sowie Netto-, Steuer-, Brutto- und Zah
 Steuersätzen.
 
 Jeder erkannte Wert bleibt sichtbar und änderbar. Unsichere Werte werden gekennzeichnet oder gar
-nicht erst übernommen. **Rechnungspositionen werden derzeit noch nicht zuverlässig aus Tabellen
-übernommen** und müssen häufig von Hand erfasst werden.
+nicht erst übernommen.
+
+**Rechnungspositionen** werden aus klar aufgebauten Tabellen übernommen: eine Seite, ein
+eindeutiger Tabellenkopf, bekannte Einheiten, die Steuersätze 7 % oder 19 %, und die Summe der
+Positionen muss die Summe im Dokument treffen. Passt eine dieser Bedingungen nicht, wird **keine
+einzige** Position übernommen und die Tabelle ist von Hand zu erfassen – eine halb ausgefüllte
+Tabelle sähe fertig aus und wäre falsch. Haben Sie bereits selbst Positionen eingetragen, bleiben
+diese unangetastet.
 
 ## Welche PDFs sich verwenden lassen
 

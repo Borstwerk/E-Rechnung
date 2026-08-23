@@ -92,6 +92,38 @@ Ausdrücklich abgedeckte Fehlzuordnungen:
 - unsichere Werte und Positionen füllen das Formular nicht aus,
 - eine PDF ohne Text bleibt von Hand erfassbar.
 
+### Rechnungspositionen
+
+Die Erkennung selbst prüft `PositionDetectorTests` isoliert. Der produktive Weg
+– von der PDF bis in die CII-Datei – ist getrennt davon belegt:
+
+- `PositionTransportTests` – die gegatete Tabelle erreicht das
+  Erkennungsergebnis, und nur sie. Die Musterrechnung ohne Tabellenkopf und
+  eine Tabelle mit unbekannter Einheit ergeben null Positionen.
+- `PositionPrefillTests` – die Übernahme in den Entwurf geschieht geschlossen
+  oder gar nicht. Jeder fachliche Wert wird ausdrücklich gesetzt, insbesondere
+  die Einheit: Der Programmstandard `C62` darf nie als erkannte Information
+  durchgehen. Die geschriebenen Zahlen lesen die Draft-Parser verlustfrei
+  zurück, ohne Tausendertrennzeichen.
+- `PrefillNoticeTests` – die Meldung in Schritt 2 unterscheidet Felder,
+  übernommene Positionen und Positionen, die wegen bereits erfasster Arbeit
+  nicht übernommen wurden. Eine Position zählt nie als mehrere Felder.
+- `PrefilledLineEditingTests` – Bearbeiten, Ergänzen, Löschen, Neunummerieren
+  und „Neue Rechnung“ verhalten sich bei vorbefüllten Positionen wie bei
+  getippten.
+- `PositionEndToEndTests` – der ganze Weg an einem Stück, mit vier Einheiten
+  (HUR, C62, KGM, MTR), zwei Steuersätzen (7 % und 19 %) und einer
+  Fortsetzungszeile als Beschreibung (BT-154). Geprüft wird bis zu den
+  gerechneten Summen, dem Regelwerk EN 16931 und der CII-Datei.
+- `PositionColumnTests` – die Beschreibung hat eine eigene, bearbeitbare
+  Spalte. Ein Wert, der in die E-Rechnung geht, muss vorher sichtbar gewesen
+  sein.
+
+Die gemeinsame Testseite baut `PositionTablePdf`. Sie steht im Support-Ordner
+und nicht im jeweiligen Test, weil Phase A und Phase B dieselbe
+Spaltengeometrie brauchen: Phase A mit von Hand gesetzten Summen, Phase B mit
+Summen, die der `TotalsDetector` selbst aus der Seite liest.
+
 Die Testvorgaben entstehen mit `TextPdfBuilder`, der PDF-Dateien mit echtem,
 maschinenlesbarem Text erzeugt. Er baut die Datei von Hand mit der
 Standardschrift Helvetica – so braucht der Build-Agent keine Schriftausstattung

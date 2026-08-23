@@ -110,6 +110,29 @@ aussieht.
 - [ ] Bei zwei gleich plausiblen Referenzen, Empfänger- oder Sellerblöcken wird
   kein erster Fund geraten.
 
+## Positionserkennung – Freigabeschranke ER-020-POS-01
+
+Diese Punkte sind vor der Freigabe auf Windows durchzuführen. Grüne Unittests
+genügen hier nicht: Zu prüfen ist, was der Anwender im Fenster sieht.
+
+- [ ] Eine digitale Rechnung mit klar aufgebauter Positionstabelle einlesen:
+  Schritt 1 meldet „Rechnungspositionen erkannt: N“ – **nur die Anzahl**, keine
+  Beschreibungen, Mengen oder Preise.
+- [ ] Schritt 2 zeigt alle N Positionen mit Bezeichnung, Beschreibung, Menge,
+  Einheit, Einzelpreis, Steuersatz und Steuerkategorie. Die Einheit stimmt mit
+  der PDF überein und steht nicht pauschal auf „Stück“.
+- [ ] Die Meldung über der Tabelle nennt übernommene Felder und übernommene
+  Positionen getrennt und endet mit der Aufforderung zu prüfen.
+- [ ] Jede vorbefüllte Zelle lässt sich ändern; die Summen rechnen danach neu.
+- [ ] Eine Rechnung ohne Tabellenkopf ergibt null Positionen, und Schritt 1
+  sagt ausdrücklich, dass von Hand zu erfassen ist.
+- [ ] Zuerst von Hand eine Position eintragen, dann die PDF einlesen: Die
+  eigene Zeile bleibt unverändert stehen, es kommt keine erkannte hinzu, und
+  die Meldung nennt die nicht übernommenen Positionen mit Grund.
+- [ ] „Neue Rechnung“ räumt auch vorbefüllte Positionen weg.
+- [ ] Die fertige E-Rechnung besteht Mustang/CEN-Schematron und veraPDF, und
+  die Beschreibung steht als BT-154 in der CII-Datei.
+
 ## Summen während der Eingabe
 
 1. Drei Positionen eintragen – 4 × 85,00, 2 × 95,00, 1 × 70,00, jeweils 19 %.

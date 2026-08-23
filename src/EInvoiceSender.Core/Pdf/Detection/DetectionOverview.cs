@@ -59,19 +59,34 @@ public static class DetectionOverview
             .. PartyEntries(detection),
             .. AmountEntries(detection),
             .. PaymentEntries(detection),
-            LineItemNote,
+            LineItemEntry(detection),
         ];
     }
 
     /// <summary>
-    /// Die Positionserkennung ist nicht umgesetzt und soll es auch nicht
-    /// vortäuschen. Der Hinweis sagt das ausdrücklich, damit niemand auf eine
-    /// Automatik wartet, die es nicht gibt.
+    /// Was die Positionserkennung gefunden hat – **nur die Anzahl**.
+    ///
+    /// Beschreibungen, Mengen und Preise gehören nicht hierher. Die Übersicht
+    /// steht offen im Fenster, oft während einer Bildschirmübertragung; zum
+    /// Prüfen genügt die Zahl. Die Werte selbst stehen in Schritt 2, wo sie
+    /// ohnehin zu bestätigen sind.
+    ///
+    /// Diese Zeile beantwortet ausschließlich die Frage „was steht sicher in
+    /// der PDF?“. Ob die Positionen tatsächlich in den Entwurf übernommen
+    /// wurden, entscheidet erst die Vorbefüllung und meldet die Zusammenfassung
+    /// in Schritt 2 – bei bereits erfassten Positionen sind das
+    /// berechtigterweise zwei verschiedene Aussagen.
     /// </summary>
-    private static DetectionEntry LineItemNote { get; } = new(
-        DetectionEntryKind.Missing,
-        "Rechnungspositionen werden nicht aus der PDF übernommen. "
-        + "Bitte erfassen Sie sie im nächsten Schritt von Hand.");
+    private static DetectionEntry LineItemEntry(InvoiceDetectionResult detection)
+        => detection.Lines.Count > 0
+            ? new DetectionEntry(
+                DetectionEntryKind.Found,
+                $"Rechnungspositionen erkannt: {detection.Lines.Count} – "
+                + "bitte im nächsten Schritt prüfen")
+            : new DetectionEntry(
+                DetectionEntryKind.Missing,
+                "Rechnungspositionen nicht sicher erkannt. "
+                + "Bitte erfassen Sie sie im nächsten Schritt von Hand.");
 
     private static IEnumerable<DetectionEntry> DocumentEntries(InvoiceDetectionResult d)
     {

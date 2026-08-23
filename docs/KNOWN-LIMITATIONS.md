@@ -141,10 +141,23 @@ Quelle der Wahrheit.
 - **Unsichere Werte füllen nichts aus.** Jeder gelesene Wert trägt eine
   Vertrauensstufe. Was nicht mindestens mittlere Sicherheit hat, wird
   angezeigt, aber nicht eingetragen.
-- **Rechnungspositionen werden gar nicht erkannt.** Sie müssen von Hand
-  erfasst werden. Rechnungstabellen sind zwischen Vorlagen zu uneinheitlich,
-  um sie mit zeilenbasierten Regeln zuverlässig zu treffen, und eine falsche
-  Position würde den Rechnungsbetrag verändern.
+- **Rechnungspositionen werden nur aus klar aufgebauten Tabellen erkannt.**
+  Angenommen wird eine Tabelle nur, wenn sie auf einer Seite steht, einen
+  eindeutigen Kopf mit Beschreibung, Menge, Einheit und Einzelpreis hat, nur
+  bekannte Einheiten (Stück, Stunde, Kilogramm, Meter) und die Steuersätze 7 %
+  oder 19 % verwendet und ihre Summe die im Dokument gefundene Summe trifft.
+  Fehlt eine dieser Bedingungen, entsteht **keine einzige** Position, und die
+  Tabelle ist wie bisher von Hand zu erfassen. Eine teilweise übernommene
+  Tabelle gibt es nicht: Sie sähe vollständig aus und würde den
+  Rechnungsbetrag verändern.
+- **Eine lange Beschreibungszeile kann die ganze Tabelle verwerfen.** Reicht
+  ein Text über die aus dem Tabellenkopf abgeleitete Spaltenbreite hinaus, ist
+  die Zeile nicht mehr eindeutig einer Spalte zuzuordnen. Die Erkennung lehnt
+  dann die gesamte Tabelle ab, statt zu raten.
+- **Bereits erfasste Positionen werden nie überschrieben.** Steht schon eine
+  Zeile im Formular, bleibt die erkannte Tabelle draußen – vollständig. Die
+  Meldung in Schritt 2 sagt dann ausdrücklich, wie viele erkannte Positionen
+  aus diesem Grund nicht übernommen wurden.
 - **Verkäufer und Käufer** werden nur zugeordnet, wenn es ein belastbares
   Signal gibt: die gespeicherte eigene Firmenvorlage oder ein Schlüsselwort
   wie "Rechnung an". Ohne beides bleiben die Felder leer. Vertauschte Parteien

@@ -123,7 +123,20 @@ Drei Eigenschaften machen das ungefährlich:
    der Anwender es anfasst, gilt es als von Hand erfasst und die Kennzeichnung
    verschwindet.
 
-**Rechnungspositionen werden noch nicht erkannt** – siehe `docs/BACKLOG.md`.
+**Rechnungspositionen werden erkannt, aber nur geschlossen.** Die Erkennung
+nimmt eine Positionstabelle nur an, wenn sie auf einer Seite steht, einen
+eindeutigen Tabellenkopf hat, ausschließlich bekannte Einheiten und Steuersätze
+verwendet und ihre Summe die im Dokument gefundene Netto- oder Steuer- und
+Bruttosumme trifft. Hält eine dieser Bedingungen nicht, entsteht **keine
+einzige** Position – nie eine Teilmenge. Eine halb übernommene Tabelle sähe
+vollständig aus und wäre falsch.
+
+Die erkannten Positionen wandern über eine bewusst **interne** Eigenschaft von
+`InvoiceDetectionResult` zur Vorbefüllung. Eine öffentliche Erkennungs-API
+entsteht dafür nicht; alle Verbraucher liegen im Kern.
+
+Enthält das Formular bereits Positionen, wird keine erkannte übernommen –
+weder ergänzt noch ersetzt noch vermischt. Gemeldet wird das trotzdem.
 
 Kein OCR, keine externen Dienste. Der Text wird im Arbeitsspeicher ausgewertet
 und danach verworfen.

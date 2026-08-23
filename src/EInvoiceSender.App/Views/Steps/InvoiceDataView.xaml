@@ -520,6 +520,12 @@
         <DataGrid.Columns>
           <DataGridTextColumn Header="Nr." Binding="{Binding Number}" IsReadOnly="True" Width="46" />
           <DataGridTextColumn Header="Bezeichnung" Binding="{Binding Name}" Width="*" />
+          <!--
+            Die Beschreibung (BT-154) geht in die E-Rechnung; die Erkennung
+            füllt sie aus Fortsetzungszeilen. Ohne Spalte stünde damit ein Wert
+            in der Rechnung, den niemand gesehen und bestätigt hat.
+          -->
+          <DataGridTextColumn Header="Beschreibung" Binding="{Binding Description}" Width="*" />
           <DataGridTextColumn Header="Menge" Binding="{Binding Quantity}" Width="80" />
           <DataGridComboBoxColumn Header="Einheit" Width="130"
                                   SelectedValueBinding="{Binding Unit}"

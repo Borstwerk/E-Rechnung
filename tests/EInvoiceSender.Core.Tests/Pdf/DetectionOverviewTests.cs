@@ -109,15 +109,52 @@ public sealed class DetectionOverviewTests : IDisposable
     }
 
     /// <summary>
-    /// Die Positionserkennung gibt es nicht, und die Übersicht sagt das. Sonst
-    /// wartet jemand auf eine Automatik, die nie kommt.
+    /// Ohne sichere Tabelle bleibt der manuelle Hinweis. Wer nichts erkannt
+    /// bekommt, soll nicht auf eine Automatik warten, die hier nicht greift.
     /// </summary>
     [Fact]
-    public void DieFehlendePositionserkennungWirdBenannt()
+    public void OhneSicherePositionenBleibtDerManuelleHinweis()
         => Assert.Contains(
             Describe(Complete()),
             z => z.Contains("Rechnungspositionen", StringComparison.Ordinal)
                  && z.Contains("von Hand", StringComparison.Ordinal));
+
+    /// <summary>
+    /// Mit sicherer Tabelle meldet Schritt 1 **nur die Anzahl**.
+    ///
+    /// Beschreibungen, Mengen und Preise gehören nicht in die Übersicht: Sie
+    /// steht offen im Fenster, oft während einer Bildschirmübertragung, und
+    /// zum Prüfen genügt die Zahl. Die Werte selbst sieht der Anwender in
+    /// Schritt 2, wo er sie ohnehin bestätigen muss.
+    /// </summary>
+    [Fact]
+    public void SicherePositionenWerdenNurGezählt()
+    {
+        string zeile = Assert.Single(
+            Describe(Complete() with { Lines = [Line(1, "Beratung"), Line(2, "Schulung")] }),
+            z => z.Contains("Rechnungspositionen", StringComparison.Ordinal));
+
+        Assert.Contains("2", zeile, StringComparison.Ordinal);
+        Assert.DoesNotContain("von Hand", zeile, StringComparison.Ordinal);
+        Assert.DoesNotContain("Beratung", zeile, StringComparison.Ordinal);
+        Assert.DoesNotContain("Schulung", zeile, StringComparison.Ordinal);
+        Assert.DoesNotContain("100", zeile, StringComparison.Ordinal);
+    }
+
+    /// <summary>Eine erkannte Tabelle ist ein Fund, keine Lücke.</summary>
+    [Fact]
+    public void SicherePositionenGeltenAlsGefunden()
+    {
+        DetectionEntry eintrag = Assert.Single(
+            DetectionOverview.Describe(Complete() with { Lines = [Line(1, "Beratung")] }),
+            e => e.Text.Contains("Rechnungspositionen", StringComparison.Ordinal));
+
+        Assert.Equal(DetectionEntryKind.Found, eintrag.Kind);
+    }
+
+    private static DetectedInvoiceLine Line(int number, string name) => new(
+        number, name, null, 1m, "HUR", 100m, 100m,
+        EInvoiceSender.Core.Models.VatCategory.StandardRate, 19m, []);
 
     [Fact]
     public void EineFehlendeAngabeWirdAlsFehlendGemeldet()
