@@ -2,11 +2,9 @@
 
 ## Status
 
-**Planung**
+**Umsetzung und Windows-Abnahme abgeschlossen – Releasevorbereitung**
 
-Diese Datei beschreibt die verbindlichen Anforderungen für Version 0.2.0.
-
-Sie ist keine Implementierungsanweisung. Die technische Umsetzung wird pro Anforderung separat geplant und erst nach Freigabe des jeweiligen Plans begonnen.
+Diese Datei dokumentiert die verbindlichen Anforderungen für Version 0.2.0 sowie deren Nachweise. Die Umsetzung und Windows-Abnahme der verpflichtenden Anforderungen sind abgeschlossen. Tag und Veröffentlichung von Version 0.2.0 erfolgen erst nach dem abschließenden RC-/Release-Gate.
 
 ## Produktgrenzen
 
@@ -65,13 +63,22 @@ Version 0.2.0 muss eine vorhandene Installation von Version 0.1.0 regulär erken
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
 
-- automatisierte Installer-Prüfungen soweit sinnvoll,
-- Windows-Abnahme 0.1.0 → 0.2.0,
+- `InstallerProjectTests` und `InstallerScopeTests` prüfen die WiX-Definition
+  auf UpgradeCode, ProductCode-Zuordnung und Installationsbereich.
+- `build/Test-InstallerMetadata.ps1` öffnet die erzeugte MSI-Datenbank und
+  prüft Assembly-, Produkt- und Featureangaben. Es läuft im Installerbau und
+  damit in jedem CI-Lauf unter Windows mit.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
+
+- Upgrade 0.1.0 → 0.2.0,
 - Same-Version-Test,
 - Downgrade-Test,
-- Deinstallationstest.
+- Deinstallationstest,
+- Erhalt der Firmendaten und von `%LOCALAPPDATA%\EInvoiceSender`.
 
 ## ER-020-INS-02 – Desktopverknüpfung optional anbieten
 
@@ -104,11 +111,20 @@ Die Option soll standardmäßig aktiviert sein, aber vom Benutzer abgewählt wer
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
 
-- automatisierte WiX-/Strukturprüfung,
-- Windows-Erstinstallation mit aktivierter Option,
-- Windows-Erstinstallation mit abgewählter Option,
+- `InstallerProjectTests` und `InstallerScopeTests` prüfen die WiX-Definition
+  des Erstinstallationsdialogs samt getrenntem Feature für die
+  Desktopverknüpfung.
+- `build/Test-InstallerMetadata.ps1` prüft in der erzeugten MSI-Datenbank die
+  Vorgabe `INSTALLDESKTOPSHORTCUT` sowie das Vorhandensein genau eines
+  Hauptfeatures und genau eines Desktopfeatures.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
+
+- Erstinstallation mit aktivierter Option,
+- Erstinstallation mit abgewählter Option,
 - Repair-Test,
 - Upgrade-Test,
 - Deinstallationstest.
@@ -163,12 +179,19 @@ Die mit Installer und portabler Fassung ausgelieferten Drittanbieterhinweise mü
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
 
-- Abgleich gegen Paketdefinitionen und veröffentlichte `deps.json`,
-- Prüfung der ausgelieferten Markdown-/RTF-Hinweise,
-- Prüfung von MSI und portabler ZIP,
-- automatisierte Konsistenzprüfung, sofern mit vertretbarem Aufwand möglich.
+- `ThirdPartyNoticeTests` gleicht die ausgelieferten Hinweise gegen die
+  tatsächlichen Paketdefinitionen ab und hält Markdown- und RTF-Fassung
+  gegeneinander konsistent.
+- Der gemeinsame Releaseweg übernimmt die Hinweise aus einer einzigen Quelle in
+  portable ZIP und MSI.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
+
+- Sichtung der Hinweise in der ausgelieferten MSI,
+- Sichtung der Hinweise in der portablen ZIP.
 
 ## ER-020-REL-01 – Einheitlichen und reproduzierbaren Release-Paketbau herstellen
 
@@ -197,11 +220,22 @@ Lokaler Releasebau und CI müssen einen klar definierten, möglichst gemeinsamen
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
+
+- `ReleasePackagingTests` prüfen die Paketierungsregeln auf Quelltextebene.
+- `build/Test-ReleasePackaging.ps1` prüft die Paketierungslogik selbst,
+  darunter den Abbruch bei Altartefakten im Ausgabeverzeichnis. Es läuft in
+  jedem CI-Lauf unter Windows.
+- `build/Build-Release.ps1` ist derselbe maßgebliche Weg für lokalen Bau und
+  CI; er räumt vor dem Bau auf, verifiziert die Prüfsummen und meldet ein
+  unvollständiges Paket als Fehler.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
 
 - lokaler Releasebau aus sauberem Zustand,
-- zweiter lokaler Releasebau über vorhandenen Buildartefakten zur Prüfung auf Altlasten,
-- CI-Artefakte gegen lokalen Build vergleichen,
+- zweiter lokaler Releasebau über vorhandenen Buildartefakten zur Prüfung auf
+  Altlasten,
 - Inhalt der portablen ZIP prüfen,
 - MSI-Inhalt beziehungsweise installierte Drittanbieterhinweise prüfen,
 - `SHA256SUMS.txt` vollständig gegen die erzeugten Dateien verifizieren.
@@ -553,13 +587,14 @@ Eine Käufer-E-Mail-Adresse darf nur aus einem ausreichend eindeutig dem Käufer
 
 ## ER-020-POS-01 – Rechnungspositionen aus digitalen PDFs erkennen
 
-**Status:** Feature mit Freigabeschranke – umgesetzt, Windows-Abnahme steht aus
-
-Diese Anforderung darf auf eine spätere Version verschoben werden, wenn keine ausreichend zuverlässige Lösung für 0.2.0 erreicht wird.
+**Status:** Umgesetzt und Windows-abgenommen
 
 Phase A (Erkennung), Phase B (produktive Integration) und Phase C (realistische
 Tabellenlayouts) sind umgesetzt und durch Tests belegt. Die Freigabeschranke
-bleibt bestehen, bis die Windows-Abnahme mit dem Testkoffer durchgeführt ist.
+verlangte zusätzlich eine Windows-Abnahme mit dem Testkoffer; sie wurde am
+24.08.2026 durchgeführt und bestanden – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md), Abschnitt D.
+**Die Freigabeschranke ist damit erfüllt.**
 
 Der erreichte Umfang ist bewusst eng: eine Seite, ein eindeutiger
 Tabellenkopf, die Einheiten C62, HUR, KGM und MTR, die Steuersätze 7 % und
@@ -640,11 +675,13 @@ Mindestens:
 
 Die Funktion wird in 0.2.0 nur aktiviert beziehungsweise veröffentlicht, wenn die Tests und manuelle Abnahme ausreichende Zuverlässigkeit zeigen.
 
-Andernfalls bleibt das Verhalten von 0.1.0 bestehen und die Anforderung wird verschoben.
+**Erfüllt.** Tests und manuelle Abnahme am 24.08.2026 zeigen die geforderte
+Zuverlässigkeit; die Funktion bleibt in 0.2.0 aktiviert. Ein Rückfall auf das
+Verhalten von 0.1.0 ist damit gegenstandslos.
 
 ## ER-020-SELL-ID-01 – Verkäufer ohne USt-IdNr. EN-16931-konform identifizieren
 
-**Status:** Umgesetzt – Windows-Abnahme ausstehend
+**Status:** Umgesetzt und Windows-abgenommen
 
 ### Problem / Grund
 
@@ -720,13 +757,19 @@ Rechnung mit falscher Absenderangabe.
 - Nur Steuernummer: `93-ohne-kennung.xml` – ungültig mit BR-CO-26.
 - Writer-, Reader-, Echo-, Einstellungs- und Entwurfstests.
 
-**Windows-Abnahme (ausstehend):**
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md), Abschnitt C:
 
-1. Verkäufer mit USt-IdNr.
-2. Verkäufer ohne USt-IdNr., mit Steuernummer und Registerkennung.
+1. Verkäufer mit USt-IdNr. – bestanden, extern valid.
+2. Verkäufer ohne USt-IdNr., mit Steuernummer und Registerkennung – bestanden,
+   extern valid.
 3. Verkäufer ohne USt-IdNr., mit Steuernummer und Lieferanten- beziehungsweise
-   Kreditorennummer.
-4. Verkäufer nur mit Steuernummer – wird verständlich blockiert.
+   Kreditorennummer – bestanden, extern valid.
+4. Verkäufer nur mit Steuernummer – wird verständlich blockiert, bestanden.
+
+Zusätzlich bestätigt: Die Registerkennung wird als Firmenstamm gespeichert und
+steht nach „Neue Rechnung“ wieder bereit; die Lieferanten- beziehungsweise
+Kreditorennummer wird nicht global gespeichert und bleibt dann leer.
 
 ## ER-020-SIGN-01 – Öffentliche Binärdateien signieren
 

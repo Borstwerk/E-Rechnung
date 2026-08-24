@@ -178,8 +178,11 @@ Quelle der Wahrheit.
   Signal gibt: die gespeicherte eigene Firmenvorlage oder ein Schlüsselwort
   wie "Rechnung an". Ohne beides bleiben die Felder leer. Vertauschte Parteien
   wären schlimmer als leere Felder.
-- **Das Land des Käufers wird nicht erkannt** und auch nicht angenommen. Es
-  bleibt leer, bis Sie es auswählen – ein stilles "DE" würde bei einem
+- **Das Land des Käufers wird nur aus einem eindeutigen Käuferkontext
+  gelesen.** Steht es im Adressblock des Rechnungsempfängers, wird es
+  vorgeschlagen; lässt es sich nicht belastbar zuordnen, bleibt das Feld leer,
+  bis Sie es auswählen. Das Land des Verkäufers wird dabei nicht ersatzweise
+  übernommen, und ein stilles "DE" gibt es nicht – es würde bei einem
   ausländischen Kunden eine formal gültige, inhaltlich falsche Rechnung
   ergeben.
 - **Der aus der PDF gelesene Gesamtbetrag** dient dem Abgleich mit den
@@ -188,6 +191,38 @@ Quelle der Wahrheit.
 - **Alles bleibt örtlich.** Der Text wird im Arbeitsspeicher ausgewertet und
   danach verworfen. Er wird nicht gespeichert, nicht protokolliert und nicht
   übertragen. Es gibt keine Cloud-Auswertung und keinen externen Dienst.
+
+## Ohne eindeutige Verkäuferkennung entsteht keine Rechnung
+
+EN 16931 verlangt, dass der Empfänger den Rechnungssteller maschinell
+identifizieren kann (BR-CO-26). Dafür genügt **eine** dieser drei Angaben:
+
+- **USt-IdNr. (BT-31)**,
+- **Registerkennung (BT-30)** – etwa die Handelsregisternummer,
+- **Lieferanten- oder Kreditorennummer (BT-29)**, die Ihr Kunde Ihnen
+  zugeteilt hat.
+
+**Die Steuernummer (BT-32) genügt dafür nicht.** Sie ist eine zulässige
+zusätzliche Angabe, aber keine Ersatzkennung – die Norm zählt sie an dieser
+Stelle nicht mit. Fehlen alle drei, wird die Rechnung vor der Ausgabe
+angehalten, statt eine Datei zu erzeugen, die erst der Empfänger beanstandet.
+
+Die beiden zusätzlichen Kennungen werden unterschiedlich behandelt, und zwar
+mit Absicht:
+
+- Die **Registerkennung** gehört zum Firmenstamm. Sie steht in den
+  Einstellungen und wird aus der gespeicherten Firmenvorlage vorbelegt.
+- Die **Lieferanten- oder Kreditorennummer** gehört nicht dazu. Sie ist die
+  Nummer, unter der ein bestimmter Kunde Sie führt; beim nächsten Kunden ist
+  es eine andere. Sie wird deshalb je Rechnung eingetragen und **nicht**
+  dauerhaft gespeichert – global hinterlegt stünde sie sonst unbemerkt auf der
+  Rechnung an jemand anderen.
+
+**Keine der beiden wird aus der PDF erkannt.** Sie stehen auf Rechnungen an
+wechselnden Stellen, oft ohne Beschriftung, und sind von Kunden-, Auftrags-
+oder Bestellnummern nicht sicher zu unterscheiden. Eine geratene Kennung wäre
+schlimmer als keine: Sie ginge unbemerkt in eine Rechnung, die formal gültig
+aussieht und den falschen Absender ausweist.
 
 ## Keine Steuerberatung
 

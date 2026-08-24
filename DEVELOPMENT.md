@@ -228,6 +228,7 @@ zusätzlich gegen die Golden Master und die externen Referenzvalidatoren zu prü
 | [`docs/E-INVOICE-STANDARD.md`](docs/E-INVOICE-STANDARD.md) | Norm, Profil und verwendete Fassungen |
 | [`docs/TESTING.md`](docs/TESTING.md) | Testebenen und Referenzvalidatoren |
 | [`docs/RELEASE-CHECKLIST.md`](docs/RELEASE-CHECKLIST.md) | Wiederkehrende manuelle Windows- und Release-Abnahme |
+| [`docs/ACCEPTANCE-0.2.0-WINDOWS.md`](docs/ACCEPTANCE-0.2.0-WINDOWS.md) | Protokoll der manuellen Windows- und Release-Abnahme für Version 0.2.0 |
 | [`docs/KNOWN-LIMITATIONS.md`](docs/KNOWN-LIMITATIONS.md) | Bekannte Grenzen |
 | [`docs/BACKLOG.md`](docs/BACKLOG.md) | Echte noch offene Arbeit außerhalb verbindlicher Versionsanforderungen |
 | [`docs/SPIKE-RASTER-FALLBACK.md`](docs/SPIKE-RASTER-FALLBACK.md) | Messungen zum Rasterweg |
