@@ -8,16 +8,21 @@ Requirements-Datei, aktuell in [`REQUIREMENTS-0.2.0.md`](REQUIREMENTS-0.2.0.md).
 Wiederkehrende manuelle Release- und Windows-Prüfungen stehen getrennt in
 [`RELEASE-CHECKLIST.md`](RELEASE-CHECKLIST.md).
 
-## Installer / Bedienung
+## Bedienung
 
-- **ER-020-INS-02 – Optionale Desktopverknüpfung.** Der Installer soll eine
-  verständliche Auswahl „Desktop-Verknüpfung erstellen“ anbieten, bevorzugt
-  standardmäßig aktiviert, aber vom Benutzer abwählbar. Die vorhandene
-  Startmenü-Verknüpfung bleibt unabhängig davon bestehen. Upgrade, Repair und
-  Deinstallation dürfen keine doppelten oder verwaisten Desktopverknüpfungen
-  hinterlassen. Vor der Umsetzung wird die Anforderung in die verbindliche
-  Requirements-Datei übernommen und regulär geplant. Vorgesehen nach
-  `ER-020-REL-01`; kein Anlass, den laufenden Release-Umbau damit zu vermischen.
+- **Steuernummer und EN-16931-Verkäuferkennung im Rechnungsformular deutlicher
+  voneinander abgrenzen.** Bei der Windows-Abnahme am 24.08.2026 fiel auf, dass
+  beide Angaben im Verkäuferblock nebeneinanderstehen und fachlich leicht zu
+  verwechseln sind: Die Steuernummer sieht aus wie eine Kennung, ist aber keine
+  im Sinne von BR-CO-26. Denkbar wäre eine sichtbare Trennung, etwa
+  „Steuerliche Angaben“ gegenüber „Verkäuferidentifikation für die
+  E-Rechnung“.
+
+  Das ist ausdrücklich **keine** fachliche Änderung: BT-29, BT-30 und BT-31
+  bleiben die drei Wege, BR-CO-26 zu erfüllen, BT-32 bleibt eine separate
+  steuerliche Angabe, und die Prüfung bleibt unverändert. Es geht allein
+  darum, dem Anwender die Unterscheidung vor dem Befund sichtbar zu machen
+  statt erst durch ihn.
 
 ## Code
 

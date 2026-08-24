@@ -31,11 +31,33 @@ public sealed record BankAccount(
 /// <param name="Address">Anschrift (BG-5).</param>
 /// <param name="Email">E-Mail-Adresse (BT-43).</param>
 /// <param name="VatId">Umsatzsteuer-Identifikationsnummer (BT-31).</param>
-/// <param name="TaxNumber">Steuernummer (BT-32), Alternative zur USt-IdNr.</param>
+/// <param name="TaxNumber">
+/// Steuernummer (BT-32). Eine zulässige zusätzliche steuerliche Angabe –
+/// **keine** Alternative zur USt-IdNr. Sie steht im CII als
+/// <c>schemeID="FC"</c> und erfüllt BR-CO-26 nicht: Für die maschinelle
+/// Identifikation des Verkäufers zählen nur <see cref="SellerIdentifier"/>
+/// (BT-29), <see cref="LegalRegistrationId"/> (BT-30) und
+/// <see cref="VatId"/> (BT-31).
+/// </param>
 /// <param name="TradingName">Abweichender Handelsname (BT-28).</param>
 /// <param name="ContactName">Ansprechpartner (BT-41).</param>
 /// <param name="ContactPhone">Telefon des Ansprechpartners (BT-42).</param>
-/// <param name="LegalRegistrationId">Handelsregisternummer (BT-30).</param>
+/// <param name="LegalRegistrationId">
+/// Handelsregisternummer (BT-30). Erfüllt BR-CO-26 ebenso wie die USt-IdNr.
+/// Sie ist Firmenstamm und wird deshalb in der Firmenvorlage gespeichert.
+/// </param>
+/// <param name="SellerIdentifier">
+/// Verkäuferkennung (BT-29) – etwa die Lieferanten- oder Kreditorennummer,
+/// die der Käufer vergeben hat. Erfüllt BR-CO-26 ebenfalls.
+///
+/// **Sie ist bewusst rechnungs- und käuferbezogen, kein Firmenstamm.**
+/// Derselbe Rechnungssteller trägt bei jedem Kunden eine andere Nummer; sie
+/// global zu speichern hieße, sie der falschen Rechnung mitzugeben. Deshalb
+/// steht sie nicht in der Firmenvorlage und wird auch nicht aus PDFs erkannt.
+///
+/// Für 0.2.0 genau eine Kennung ohne Schemakennzeichen: Ein Schema zu wählen,
+/// dessen Bedeutung niemand geprüft hat, wäre eine erfundene Angabe.
+/// </param>
 public sealed record SellerParty(
     string Name,
     PostalAddress Address,
@@ -45,7 +67,8 @@ public sealed record SellerParty(
     string? TradingName = null,
     string? ContactName = null,
     string? ContactPhone = null,
-    string? LegalRegistrationId = null);
+    string? LegalRegistrationId = null,
+    string? SellerIdentifier = null);
 
 /// <summary>Käufer (BG-7).</summary>
 /// <param name="Name">Firmen- oder Personenname (BT-44).</param>

@@ -30,6 +30,15 @@ public sealed partial class SettingsViewModel(ISettingsStore store) : Observable
     [ObservableProperty] private string _sellerEmail = string.Empty;
     [ObservableProperty] private string _sellerVatId = string.Empty;
     [ObservableProperty] private string _sellerTaxNumber = string.Empty;
+
+    /// <summary>
+    /// Registerkennung (BT-30). Sie identifiziert den Rechnungssteller nach
+    /// BR-CO-26 ebenso wie die USt-IdNr. und gehört zum Firmenstamm.
+    ///
+    /// Die Verkäuferkennung (BT-29) steht bewusst nicht hier: Sie gilt nur
+    /// gegenüber einem bestimmten Kunden und wird je Rechnung eingetragen.
+    /// </summary>
+    [ObservableProperty] private string _sellerLegalRegistrationId = string.Empty;
     [ObservableProperty] private string _bankAccountHolder = string.Empty;
     [ObservableProperty] private string _bankIban = string.Empty;
     [ObservableProperty] private string _bankBic = string.Empty;
@@ -118,6 +127,7 @@ public sealed partial class SettingsViewModel(ISettingsStore store) : Observable
         SellerEmail = template.SellerEmail ?? string.Empty;
         SellerVatId = template.SellerVatId ?? string.Empty;
         SellerTaxNumber = template.SellerTaxNumber ?? string.Empty;
+        SellerLegalRegistrationId = template.SellerLegalRegistrationId ?? string.Empty;
         BankAccountHolder = template.BankAccountHolder ?? string.Empty;
         BankIban = template.BankIban ?? string.Empty;
         BankBic = template.BankBic ?? string.Empty;
@@ -139,6 +149,7 @@ public sealed partial class SettingsViewModel(ISettingsStore store) : Observable
         SellerEmail = Blank(SellerEmail),
         SellerVatId = Blank(SellerVatId),
         SellerTaxNumber = Blank(SellerTaxNumber),
+        SellerLegalRegistrationId = Blank(SellerLegalRegistrationId),
         BankAccountHolder = Blank(BankAccountHolder),
         BankIban = Blank(BankIban),
         BankBic = Blank(BankBic),

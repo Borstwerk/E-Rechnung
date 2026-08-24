@@ -110,29 +110,14 @@ public sealed partial class InvoiceDataViewModel : StepViewModel
     [NotifyPropertyChangedFor(nameof(HasPrefillMessage))]
     private PrefillSummary? _prefill;
 
-    /// <summary>Ein Satz darüber, was vorausgefüllt wurde.</summary>
-    public string PrefillMessage
-    {
-        get
-        {
-            if (Prefill is not { FilledFields: > 0 } summary)
-            {
-                return string.Empty;
-            }
-
-            int count = summary.FilledFields;
-
-            string text = $"{Plural.Count(count, "Feld", "Felder")} "
-                          + $"{Plural.Word(count, "wurde", "wurden")} aus der PDF vorausgefüllt.";
-
-            if (summary.UncertainFields.Count > 0)
-            {
-                text += $" Bitte prüfen Sie besonders: {string.Join(", ", summary.UncertainFields)}.";
-            }
-
-            return text + " Jeder Wert lässt sich überschreiben.";
-        }
-    }
+    /// <summary>
+    /// Ein Satz darüber, was vorausgefüllt wurde.
+    ///
+    /// Formuliert wird er im Kern (<see cref="PrefillNotice"/>) und nicht
+    /// hier: Was gemeldet wird, ist eine fachliche Frage und damit ohne WPF
+    /// prüfbar. Hier bleibt nur die Anzeige.
+    /// </summary>
+    public string PrefillMessage => PrefillNotice.Describe(Prefill);
 
     /// <summary>Gibt es einen Hinweis zur Vorbefüllung?</summary>
     public bool HasPrefillMessage => PrefillMessage.Length > 0;

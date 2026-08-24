@@ -220,17 +220,190 @@ public sealed class En16931RuleValidatorTests
         ErwarteFehler(Prüfe(kaputt), "APP-SEL-003");
     }
 
+    /// <summary>
+    /// BR-CO-26 verlangt eine Kennung, mit der ein Empfänger den Verkäufer
+    /// **maschinell** identifizieren kann: USt-IdNr. (BT-31) oder
+    /// Handelsregisternummer (BT-30) – im Modell dieser Anwendung.
+    ///
+    /// **Die Steuernummer (BT-32) genügt ausdrücklich nicht.** Sie steht im
+    /// CII als <c>schemeID="FC"</c>; das CEN-Schematron prüft für BR-CO-26
+    /// aber nur <c>schemeID="VA"</c>, <c>ram:ID</c>, <c>ram:GlobalID</c> und
+    /// <c>SpecifiedLegalOrganization/ram:ID</c>.
+    ///
+    /// **Warum diese Tests entstanden sind:** Die bisherige Regel ließ die
+    /// Steuernummer als Ersatz durchgehen. Eine Rechnung mit ausschließlich
+    /// Steuernummer kam damit intern durch, und der Anwender erfuhr erst vom
+    /// externen Validator, dass sie ungültig ist – wenn er ihn überhaupt
+    /// einsetzte. Genau so ist es in einer Windows-Abnahme passiert.
+    /// </summary>
     [Fact]
-    public void Verkäufer_WederVatIdNochSteuernummer_LöstFehlerAus()
+    public void Verkäufer_MitVatIdOhneSteuernummer_IstIdentifizierbar()
     {
-        ErwarteKeinenFehler(Prüfe(BaseInvoice), "APP-SEL-004");
-
-        Invoice kaputt = BaseInvoice with
+        Invoice invoice = BaseInvoice with
         {
-            Seller = BaseInvoice.Seller with { VatId = null, TaxNumber = null },
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = "DE123456789",
+                TaxNumber = null,
+                LegalRegistrationId = null,
+            },
         };
 
-        ErwarteFehler(Prüfe(kaputt), "APP-SEL-004");
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Die Handelsregisternummer allein trägt ebenfalls. BR-CO-26 verlangt
+    /// keine USt-IdNr., sondern **eine** zulässige Kennung.
+    /// </summary>
+    [Fact]
+    public void Verkäufer_NurMitHandelsregisternummer_IstIdentifizierbar()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = null,
+                LegalRegistrationId = "HRB 12345",
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Die dritte zulässige Kennung: eine Lieferanten- oder Kreditorennummer,
+    /// die der Käufer vergeben hat (BT-29).
+    ///
+    /// Sie ist die einzige Möglichkeit für Rechnungssteller, die weder eine
+    /// USt-IdNr. noch einen Registereintrag haben – etwa Kleinunternehmer, die
+    /// für einen Geschäftskunden arbeiten. Ohne sie hieße BR-CO-26 für diese
+    /// Gruppe faktisch „keine E-Rechnung möglich“.
+    /// </summary>
+    [Fact]
+    public void Verkäufer_NurMitLieferantennummer_IstIdentifizierbar()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = null,
+                LegalRegistrationId = null,
+                SellerIdentifier = "LIEF-4711",
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Steuernummer plus eine der zulässigen Kennungen ist der Regelfall für
+    /// Rechnungssteller ohne USt-IdNr.
+    /// </summary>
+    [Theory]
+    [InlineData("HRB 12345", null)]
+    [InlineData(null, "LIEF-4711")]
+    public void Verkäufer_MitSteuernummerUndZulässigerKennung_IstIdentifizierbar(
+        string? registration, string? identifier)
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = "079/123/45678",
+                LegalRegistrationId = registration,
+                SellerIdentifier = identifier,
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Der Befundtext nennt jetzt alle drei zulässigen Wege. Nur auf die
+    /// USt-IdNr. zu verweisen wäre ein Rat, der zwei gültige Möglichkeiten
+    /// verschweigt.
+    /// </summary>
+    [Fact]
+    public void DerBefundNenntAlleDreiZulässigenKennungen()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = "079/123/45678",
+                LegalRegistrationId = null,
+                SellerIdentifier = null,
+            },
+        };
+
+        ValidationFinding finding = Assert.Single(
+            Prüfe(invoice).Findings, f => f.RuleId == "APP-SEL-004");
+
+        Assert.Contains("USt-ID", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Registerkennung", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Kreditorennummer", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Steuernummer allein", finding.Message, StringComparison.Ordinal);
+        Assert.Equal("BR-CO-26", finding.NormRule);
+    }
+
+    /// <summary>
+    /// **Der Fall aus der Abnahme.** Nur eine Steuernummer – das reicht der
+    /// Norm nicht, und deshalb darf es auch dieser Anwendung nicht reichen.
+    /// </summary>
+    [Fact]
+    public void Verkäufer_NurMitSteuernummer_IstNichtIdentifizierbar()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = "079/123/45678",
+                LegalRegistrationId = null,
+            },
+        };
+
+        ErwarteFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    [Fact]
+    public void Verkäufer_OhneJedeKennung_IstNichtIdentifizierbar()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = null,
+                LegalRegistrationId = null,
+            },
+        };
+
+        ErwarteFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Die Steuernummer bleibt eine zulässige zusätzliche Angabe (BT-32). Sie
+    /// verliert nur ihre falsche Rolle als Ersatz für die Identifikation.
+    /// </summary>
+    [Fact]
+    public void Verkäufer_MitVatIdUndSteuernummer_BleibtZulässig()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = "DE123456789",
+                TaxNumber = "079/123/45678",
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
     }
 
     [Fact]

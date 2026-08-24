@@ -49,7 +49,29 @@ public sealed class NegativeFixtureTests
         Assert.NotEqual(valid, brokenTax);
         Write(invalidDirectory, "92-falscher-steuerbetrag.xml", brokenTax);
 
-        Assert.Equal(3, Directory.GetFiles(invalidDirectory, "*.xml").Length);
+        // Verkäufer ohne maschinell auswertbare Kennung: Die USt-IdNr.
+        // (schemeID="VA") fällt weg, die Steuernummer (schemeID="FC") bleibt
+        // stehen. Das muss BR-CO-26 beanstanden.
+        //
+        // **Warum gerade dieser Fall hier steht:** Genau er kam in einer
+        // Windows-Abnahme durch die eingebauten Prüfungen und wurde erst vom
+        // externen Validator beanstandet. Die interne Regel ließ die
+        // Steuernummer als Ersatz gelten, das CEN-Schematron nicht. Diese
+        // Datei hält den Unterschied künftig fest – sie ist die Gegenprobe
+        // dazu, dass beide wieder auseinanderlaufen.
+        string withoutVatRegistration = RemoveSellerVatRegistration(valid);
+
+        Assert.NotEqual(valid, withoutVatRegistration);
+
+        // Ausdrücklich nur im Verkäuferblock prüfen: Der Käufer trägt seine
+        // eigene USt-IdNr., und die soll hier gerade stehen bleiben.
+        string sellerBlock = SellerBlockOf(withoutVatRegistration);
+        Assert.DoesNotContain("schemeID=\"VA\"", sellerBlock, StringComparison.Ordinal);
+        Assert.Contains("schemeID=\"FC\"", sellerBlock, StringComparison.Ordinal);
+        Assert.Contains("schemeID=\"VA\"", withoutVatRegistration, StringComparison.Ordinal);
+        Write(invalidDirectory, "93-ohne-kennung.xml", withoutVatRegistration);
+
+        Assert.Equal(4, Directory.GetFiles(invalidDirectory, "*.xml").Length);
     }
 
     private static string GenerateValidXml(string key)
@@ -58,6 +80,51 @@ public sealed class NegativeFixtureTests
         InvoiceTotals totals = InvoiceCalculator.Calculate(scenario.Invoice);
 
         return Encoding.UTF8.GetString(Writer.Write(scenario.Invoice, totals)).ReplaceLineEndings("\n");
+    }
+
+    /// <summary>
+    /// Entfernt die gesamte <c>SpecifiedTaxRegistration</c> mit dem gesuchten
+    /// Schema – öffnendes Element, Kennung und schließendes Element.
+    ///
+    /// Nur die Kennungszeile herauszunehmen würde ein leeres
+    /// <c>SpecifiedTaxRegistration</c> hinterlassen und damit einen anderen
+    /// Fehler erzeugen als den, den diese Vorgabe zeigen soll.
+    /// </summary>
+    private static string RemoveSellerVatRegistration(string xml)
+    {
+        string[] lines = xml.Split('\n');
+
+        int sellerStart = Array.FindIndex(
+            lines, line => line.Contains("<ram:SellerTradeParty>", StringComparison.Ordinal));
+        int sellerEnd = Array.FindIndex(
+            lines, line => line.Contains("</ram:SellerTradeParty>", StringComparison.Ordinal));
+
+        if (sellerStart < 0 || sellerEnd <= sellerStart)
+        {
+            throw new InvalidOperationException("Kein Verkäuferblock gefunden.");
+        }
+
+        int id = Array.FindIndex(
+            lines,
+            sellerStart,
+            sellerEnd - sellerStart,
+            line => line.Contains("<ram:ID schemeID=\"VA\">", StringComparison.Ordinal));
+
+        if (id < 1)
+        {
+            throw new InvalidOperationException("Der Verkäufer trägt keine USt-IdNr.");
+        }
+
+        return string.Join('\n', lines.Where((_, index) => index < id - 1 || index > id + 1));
+    }
+
+    /// <summary>Schneidet den Verkäuferblock heraus, damit Prüfungen ihn nicht mit dem Käufer verwechseln.</summary>
+    private static string SellerBlockOf(string xml)
+    {
+        int start = xml.IndexOf("<ram:SellerTradeParty>", StringComparison.Ordinal);
+        int end = xml.IndexOf("</ram:SellerTradeParty>", start, StringComparison.Ordinal);
+
+        return xml[start..end];
     }
 
     /// <summary>Entfernt die erste Zeile, die das gesuchte Element mit dem Wert enthält.</summary>

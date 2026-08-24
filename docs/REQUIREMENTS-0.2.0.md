@@ -2,11 +2,9 @@
 
 ## Status
 
-**Planung**
+**Umsetzung und Windows-Abnahme abgeschlossen – Releasevorbereitung**
 
-Diese Datei beschreibt die verbindlichen Anforderungen für Version 0.2.0.
-
-Sie ist keine Implementierungsanweisung. Die technische Umsetzung wird pro Anforderung separat geplant und erst nach Freigabe des jeweiligen Plans begonnen.
+Diese Datei dokumentiert die verbindlichen Anforderungen für Version 0.2.0 sowie deren Nachweise. Die Umsetzung und Windows-Abnahme der verpflichtenden Anforderungen sind abgeschlossen. Tag und Veröffentlichung von Version 0.2.0 erfolgen erst nach dem abschließenden RC-/Release-Gate.
 
 ## Produktgrenzen
 
@@ -65,13 +63,22 @@ Version 0.2.0 muss eine vorhandene Installation von Version 0.1.0 regulär erken
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
 
-- automatisierte Installer-Prüfungen soweit sinnvoll,
-- Windows-Abnahme 0.1.0 → 0.2.0,
+- `InstallerProjectTests` und `InstallerScopeTests` prüfen die WiX-Definition
+  auf UpgradeCode, ProductCode-Zuordnung und Installationsbereich.
+- `build/Test-InstallerMetadata.ps1` öffnet die erzeugte MSI-Datenbank und
+  prüft Assembly-, Produkt- und Featureangaben. Es läuft im Installerbau und
+  damit in jedem CI-Lauf unter Windows mit.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
+
+- Upgrade 0.1.0 → 0.2.0,
 - Same-Version-Test,
 - Downgrade-Test,
-- Deinstallationstest.
+- Deinstallationstest,
+- Erhalt der Firmendaten und von `%LOCALAPPDATA%\EInvoiceSender`.
 
 ## ER-020-INS-02 – Desktopverknüpfung optional anbieten
 
@@ -104,11 +111,20 @@ Die Option soll standardmäßig aktiviert sein, aber vom Benutzer abgewählt wer
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
 
-- automatisierte WiX-/Strukturprüfung,
-- Windows-Erstinstallation mit aktivierter Option,
-- Windows-Erstinstallation mit abgewählter Option,
+- `InstallerProjectTests` und `InstallerScopeTests` prüfen die WiX-Definition
+  des Erstinstallationsdialogs samt getrenntem Feature für die
+  Desktopverknüpfung.
+- `build/Test-InstallerMetadata.ps1` prüft in der erzeugten MSI-Datenbank die
+  Vorgabe `INSTALLDESKTOPSHORTCUT` sowie das Vorhandensein genau eines
+  Hauptfeatures und genau eines Desktopfeatures.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
+
+- Erstinstallation mit aktivierter Option,
+- Erstinstallation mit abgewählter Option,
 - Repair-Test,
 - Upgrade-Test,
 - Deinstallationstest.
@@ -163,12 +179,19 @@ Die mit Installer und portabler Fassung ausgelieferten Drittanbieterhinweise mü
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
 
-- Abgleich gegen Paketdefinitionen und veröffentlichte `deps.json`,
-- Prüfung der ausgelieferten Markdown-/RTF-Hinweise,
-- Prüfung von MSI und portabler ZIP,
-- automatisierte Konsistenzprüfung, sofern mit vertretbarem Aufwand möglich.
+- `ThirdPartyNoticeTests` gleicht die ausgelieferten Hinweise gegen die
+  tatsächlichen Paketdefinitionen ab und hält Markdown- und RTF-Fassung
+  gegeneinander konsistent.
+- Der gemeinsame Releaseweg übernimmt die Hinweise aus einer einzigen Quelle in
+  portable ZIP und MSI.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
+
+- Sichtung der Hinweise in der ausgelieferten MSI,
+- Sichtung der Hinweise in der portablen ZIP.
 
 ## ER-020-REL-01 – Einheitlichen und reproduzierbaren Release-Paketbau herstellen
 
@@ -197,11 +220,22 @@ Lokaler Releasebau und CI müssen einen klar definierten, möglichst gemeinsamen
 
 ### Nachweis
 
-Noch festzulegen:
+**Automatisiert vorhanden:**
+
+- `ReleasePackagingTests` prüfen die Paketierungsregeln auf Quelltextebene.
+- `build/Test-ReleasePackaging.ps1` prüft die Paketierungslogik selbst,
+  darunter den Abbruch bei Altartefakten im Ausgabeverzeichnis. Es läuft in
+  jedem CI-Lauf unter Windows.
+- `build/Build-Release.ps1` ist derselbe maßgebliche Weg für lokalen Bau und
+  CI; er räumt vor dem Bau auf, verifiziert die Prüfsummen und meldet ein
+  unvollständiges Paket als Fehler.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md):
 
 - lokaler Releasebau aus sauberem Zustand,
-- zweiter lokaler Releasebau über vorhandenen Buildartefakten zur Prüfung auf Altlasten,
-- CI-Artefakte gegen lokalen Build vergleichen,
+- zweiter lokaler Releasebau über vorhandenen Buildartefakten zur Prüfung auf
+  Altlasten,
 - Inhalt der portablen ZIP prüfen,
 - MSI-Inhalt beziehungsweise installierte Drittanbieterhinweise prüfen,
 - `SHA256SUMS.txt` vollständig gegen die erzeugten Dateien verifizieren.
@@ -553,9 +587,34 @@ Eine Käufer-E-Mail-Adresse darf nur aus einem ausreichend eindeutig dem Käufer
 
 ## ER-020-POS-01 – Rechnungspositionen aus digitalen PDFs erkennen
 
-**Status:** Feature mit Freigabeschranke
+**Status:** Umgesetzt und Windows-abgenommen
 
-Diese Anforderung darf auf eine spätere Version verschoben werden, wenn keine ausreichend zuverlässige Lösung für 0.2.0 erreicht wird.
+Phase A (Erkennung), Phase B (produktive Integration) und Phase C (realistische
+Tabellenlayouts) sind umgesetzt und durch Tests belegt. Die Freigabeschranke
+verlangte zusätzlich eine Windows-Abnahme mit dem Testkoffer; sie wurde am
+24.08.2026 durchgeführt und bestanden – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md), Abschnitt D.
+**Die Freigabeschranke ist damit erfüllt.**
+
+Der erreichte Umfang ist bewusst eng: eine Seite, ein eindeutiger
+Tabellenkopf, die Einheiten C62, HUR, KGM und MTR, die Steuersätze 7 % und
+19 %, und ein Abgleich der Positionssumme gegen die im Dokument gefundene
+Netto- oder Steuer- und Bruttosumme. Alles andere ergibt null Positionen –
+nie eine Teilmenge.
+
+Phase C erweitert das um Tabellenaufbauten, die in echten Rechnungen
+vorkommen: ohne eigene Einheitsspalte, mit Einheit hinter der Menge, mit
+Lieferdatumsspalte, mit ausgeschriebenen Kontrollbeträgen je Position und mit
+den beobachteten Beschriftungsfamilien. Die Erkennung unterscheidet dabei
+ausdrücklich drei Zustände der Mengeneinheit: vorhanden und verstanden,
+im Dokument nicht vorhanden, vorhanden aber nicht unterstützt. Nur der letzte
+verwirft die Tabelle; der mittlere lässt die Einheit im Formular leer, und die
+bestehende Entwurfsprüfung hält die Rechnung auf, bis sie ergänzt wird.
+
+Führt eine Tabelle keine Steuerspalte, stammt der Satz aus dem Dokument –
+zweifelsfrei gelesen oder unsicher gelesen und durch die sicher gelesenen
+Dokumentsummen nachgerechnet. Erst danach greift unverändert das Summen-Gate
+über die Positionen.
 
 ### Problem / Grund
 
@@ -616,7 +675,101 @@ Mindestens:
 
 Die Funktion wird in 0.2.0 nur aktiviert beziehungsweise veröffentlicht, wenn die Tests und manuelle Abnahme ausreichende Zuverlässigkeit zeigen.
 
-Andernfalls bleibt das Verhalten von 0.1.0 bestehen und die Anforderung wird verschoben.
+**Erfüllt.** Tests und manuelle Abnahme am 24.08.2026 zeigen die geforderte
+Zuverlässigkeit; die Funktion bleibt in 0.2.0 aktiviert. Ein Rückfall auf das
+Verhalten von 0.1.0 ist damit gegenstandslos.
+
+## ER-020-SELL-ID-01 – Verkäufer ohne USt-IdNr. EN-16931-konform identifizieren
+
+**Status:** Umgesetzt und Windows-abgenommen
+
+### Problem / Grund
+
+BR-CO-26 verlangt, dass der Empfänger den Rechnungssteller maschinell
+identifizieren kann. Erfüllt ist das durch **eine** dieser drei Angaben:
+
+- Verkäuferkennung BT-29 (`SellerTradeParty/ram:ID`),
+- Registerkennung BT-30 (`SpecifiedLegalOrganization/ram:ID`),
+- USt-IdNr. BT-31 (`SpecifiedTaxRegistration/ram:ID` mit `schemeID="VA"`).
+
+Die Steuernummer BT-32 (`schemeID="FC"`) gehört ausdrücklich **nicht** dazu.
+
+Vor dieser Anforderung konnte der Anwender im Formular nur die USt-IdNr.
+eintragen. Wer keine hat – Kleinunternehmer nach § 19 UStG etwa –, hatte damit
+keinen Weg zu einer gültigen Rechnung, obwohl die Norm ihm zwei lässt. In einer
+Windows-Abnahme kam genau so eine Rechnung durch die eingebauten Prüfungen und
+wurde erst vom externen Validator beanstandet.
+
+### Anforderung
+
+Beide fehlenden Kennungen werden erfassbar, geschrieben und zurückgelesen:
+
+- `SellerParty.LegalRegistrationId` (BT-30) und `SellerParty.SellerIdentifier`
+  (BT-29) im Domänenmodell,
+- Felder „Registerkennung“ und „Lieferantennummer“ im Rechnungsformular,
+- `CiiInvoiceWriter` schreibt BT-29 als `ram:ID` **vor** `ram:Name` und ohne
+  Schemakennzeichen,
+- `CiiInvoiceReader` liest BT-29 in das bestehende Echo zurück; ein
+  abweichender Wert bricht die Erzeugung mit `APP-USE-014` ab,
+- die interne Regel `APP-SEL-004` lässt jede der drei Kennungen gelten und
+  benennt alle drei im Befund.
+
+### Wo die beiden Kennungen gespeichert werden – und wo nicht
+
+Die **Registerkennung** ist Firmenstamm: Sie steht in den Einstellungen, wird
+in der Firmenvorlage gespeichert und von dort vorbefüllt.
+
+Die **Verkäuferkennung** ist es nicht. Sie ist die Nummer, unter der ein
+bestimmter Kunde diesen Lieferanten führt; beim nächsten Kunden ist es eine
+andere. Global gespeichert stünde sie unbemerkt auf der falschen Rechnung.
+Sie wird deshalb je Rechnung eingetragen und nie in die Vorlage übernommen.
+
+Die Speicherregel der Firmenvorlage bleibt davon unberührt: Sie verlangt
+weiterhin eine USt-IdNr. oder eine Steuernummer. Das ist eine andere Frage als
+BR-CO-26 und wird nicht mit ihr vermischt.
+
+### Keine Erkennung aus der PDF
+
+Weder BT-29 noch BT-30 werden aus dem PDF erkannt. Beide stehen auf Rechnungen
+an wechselnden Stellen, oft ohne Beschriftung, und sind von Kunden-, Auftrags-
+oder Bestellnummern nicht sicher zu unterscheiden. Eine geratene Kennung wäre
+schlimmer als keine: Sie ginge unbemerkt in eine formal gültig aussehende
+Rechnung mit falscher Absenderangabe.
+
+### Akzeptanzkriterien
+
+- Eine Rechnung mit ausschließlich Steuernummer wird vor der Ausgabe mit
+  `BR-CO-26` beanstandet.
+- Eine Rechnung mit Registerkennung statt USt-IdNr. ist gültig
+  (Sollfassung `09-handelsregister`).
+- Eine Rechnung mit Verkäuferkennung und Steuernummer, ohne USt-IdNr. und ohne
+  Registerkennung, ist gültig (Sollfassung `10-lieferantennummer`).
+- Beide Sollfassungen bestehen die Gegenprüfung mit dem CEN-Schematron;
+  `93-ohne-kennung.xml` bleibt dort mit BR-CO-26 ungültig.
+- Die Verkäuferkennung gelangt auf keinem Weg in die Firmenvorlage.
+
+### Nachweis
+
+**Automatisiert:**
+
+- BT-29 Golden Master `10-lieferantennummer` – gültig.
+- BT-30 Golden Master `09-handelsregister` – gültig.
+- Nur Steuernummer: `93-ohne-kennung.xml` – ungültig mit BR-CO-26.
+- Writer-, Reader-, Echo-, Einstellungs- und Entwurfstests.
+
+**Windows-Abnahme am 24.08.2026 bestanden** – siehe
+[`ACCEPTANCE-0.2.0-WINDOWS.md`](ACCEPTANCE-0.2.0-WINDOWS.md), Abschnitt C:
+
+1. Verkäufer mit USt-IdNr. – bestanden, extern valid.
+2. Verkäufer ohne USt-IdNr., mit Steuernummer und Registerkennung – bestanden,
+   extern valid.
+3. Verkäufer ohne USt-IdNr., mit Steuernummer und Lieferanten- beziehungsweise
+   Kreditorennummer – bestanden, extern valid.
+4. Verkäufer nur mit Steuernummer – wird verständlich blockiert, bestanden.
+
+Zusätzlich bestätigt: Die Registerkennung wird als Firmenstamm gespeichert und
+steht nach „Neue Rechnung“ wieder bereit; die Lieferanten- beziehungsweise
+Kreditorennummer wird nicht global gespeichert und bleibt dann leer.
 
 ## ER-020-SIGN-01 – Öffentliche Binärdateien signieren
 
@@ -704,6 +857,7 @@ Erst nach vollständiger Abnahme wird `v0.2.0` erzeugt.
 6. `ER-020-SET-01` – Firmendaten-Onboarding
 7. `ER-020-BUY-01` bis `ER-020-BUY-03` – Käufererkennung
 8. `ER-020-POS-01` – Positionserkennung
-9. `ER-020-SIGN-01` – Signing, sofern verfügbar
-10. vollständige Release-Abnahme
-11. Dokumentation und Release
+9. `ER-020-SELL-ID-01` – Verkäuferkennungen nach BR-CO-26
+10. `ER-020-SIGN-01` – Signing, sofern verfügbar
+11. vollständige Release-Abnahme
+12. Dokumentation und Release

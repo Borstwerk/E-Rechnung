@@ -30,6 +30,15 @@ public sealed record CompanyTemplate
     /// <summary>Steuernummer.</summary>
     public string? SellerTaxNumber { get; init; }
 
+    /// <summary>
+    /// Registerkennung (BT-30), etwa eine Handelsregisternummer.
+    ///
+    /// Die Verkäuferkennung (BT-29) steht bewusst **nicht** hier: Sie ist die
+    /// Nummer, unter der ein bestimmter Kunde diesen Lieferanten führt, und
+    /// gehört damit zur einzelnen Rechnung, nicht zum Firmenstamm.
+    /// </summary>
+    public string? SellerLegalRegistrationId { get; init; }
+
     /// <summary>Kontoinhaber der Standardbankverbindung.</summary>
     public string? BankAccountHolder { get; init; }
 

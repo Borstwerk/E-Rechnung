@@ -141,16 +141,48 @@ Quelle der Wahrheit.
 - **Unsichere Werte füllen nichts aus.** Jeder gelesene Wert trägt eine
   Vertrauensstufe. Was nicht mindestens mittlere Sicherheit hat, wird
   angezeigt, aber nicht eingetragen.
-- **Rechnungspositionen werden gar nicht erkannt.** Sie müssen von Hand
-  erfasst werden. Rechnungstabellen sind zwischen Vorlagen zu uneinheitlich,
-  um sie mit zeilenbasierten Regeln zuverlässig zu treffen, und eine falsche
-  Position würde den Rechnungsbetrag verändern.
+- **Rechnungspositionen werden nur aus klar aufgebauten Tabellen erkannt.**
+  Angenommen wird eine Tabelle nur, wenn sie auf einer Seite steht, einen
+  eindeutigen Kopf mit Beschreibung, Menge und Einzelpreis hat, nur die
+  Steuersätze 7 % oder 19 % verwendet und ihre Summe die im Dokument gefundene
+  Summe trifft. Fehlt eine dieser Bedingungen, entsteht **keine einzige**
+  Position, und die Tabelle ist wie bisher von Hand zu erfassen. Eine teilweise
+  übernommene Tabelle gibt es nicht: Sie sähe vollständig aus und würde den
+  Rechnungsbetrag verändern.
+- **Eine genannte Mengeneinheit muss unterstützt sein.** Unterstützt sind
+  Stück, Stunde, Kilogramm und Meter – in einer eigenen Spalte oder direkt
+  hinter der Menge (`4,00 Std.`). Nennt die Rechnung eine andere Einheit, etwa
+  `Fass`, wird die **gesamte** Tabelle verworfen. Eine im Dokument stehende
+  Angabe stillschweigend zu übergehen wäre schlimmer, als gar nichts zu
+  erkennen.
+- **Nennt die Rechnung gar keine Mengeneinheit, bleibt das Feld leer.** Die
+  Positionen werden dann trotzdem übernommen; im Formular fehlt nur die
+  Einheit. Schritt 1 und Schritt 2 sagen ausdrücklich, bei wie vielen
+  Positionen das der Fall ist. Vor der Ausgabe muss die Einheit ergänzt
+  werden – ohne sie entsteht keine Rechnung. Ein stilles „Stück“ wäre bei einer
+  Stundenrechnung nicht aufgefallen und hätte eine falsche E-Rechnung ergeben.
+- **Jede Spalte der Tabelle muss benannt und verstanden sein.** Eine
+  unbekannte Zusatzspalte verwirft die Tabelle. Die einzige Ausnahme ist eine
+  Lieferdatumsspalte; sie wird erkannt, damit die Spaltengrenzen stimmen, und
+  erzeugt kein Rechnungsfeld. Spalten für Rabatt, Nachlass, Zuschlag oder
+  Preisbasismenge werden nicht unterstützt und verwerfen die Tabelle.
+- **Eine lange Beschreibungszeile kann die ganze Tabelle verwerfen.** Reicht
+  ein Text über die aus dem Tabellenkopf abgeleitete Spaltenbreite hinaus, ist
+  die Zeile nicht mehr eindeutig einer Spalte zuzuordnen. Die Erkennung lehnt
+  dann die gesamte Tabelle ab, statt zu raten.
+- **Bereits erfasste Positionen werden nie überschrieben.** Steht schon eine
+  Zeile im Formular, bleibt die erkannte Tabelle draußen – vollständig. Die
+  Meldung in Schritt 2 sagt dann ausdrücklich, wie viele erkannte Positionen
+  aus diesem Grund nicht übernommen wurden.
 - **Verkäufer und Käufer** werden nur zugeordnet, wenn es ein belastbares
   Signal gibt: die gespeicherte eigene Firmenvorlage oder ein Schlüsselwort
   wie "Rechnung an". Ohne beides bleiben die Felder leer. Vertauschte Parteien
   wären schlimmer als leere Felder.
-- **Das Land des Käufers wird nicht erkannt** und auch nicht angenommen. Es
-  bleibt leer, bis Sie es auswählen – ein stilles "DE" würde bei einem
+- **Das Land des Käufers wird nur aus einem eindeutigen Käuferkontext
+  gelesen.** Steht es im Adressblock des Rechnungsempfängers, wird es
+  vorgeschlagen; lässt es sich nicht belastbar zuordnen, bleibt das Feld leer,
+  bis Sie es auswählen. Das Land des Verkäufers wird dabei nicht ersatzweise
+  übernommen, und ein stilles "DE" gibt es nicht – es würde bei einem
   ausländischen Kunden eine formal gültige, inhaltlich falsche Rechnung
   ergeben.
 - **Der aus der PDF gelesene Gesamtbetrag** dient dem Abgleich mit den
@@ -159,6 +191,38 @@ Quelle der Wahrheit.
 - **Alles bleibt örtlich.** Der Text wird im Arbeitsspeicher ausgewertet und
   danach verworfen. Er wird nicht gespeichert, nicht protokolliert und nicht
   übertragen. Es gibt keine Cloud-Auswertung und keinen externen Dienst.
+
+## Ohne eindeutige Verkäuferkennung entsteht keine Rechnung
+
+EN 16931 verlangt, dass der Empfänger den Rechnungssteller maschinell
+identifizieren kann (BR-CO-26). Dafür genügt **eine** dieser drei Angaben:
+
+- **USt-IdNr. (BT-31)**,
+- **Registerkennung (BT-30)** – etwa die Handelsregisternummer,
+- **Lieferanten- oder Kreditorennummer (BT-29)**, die Ihr Kunde Ihnen
+  zugeteilt hat.
+
+**Die Steuernummer (BT-32) genügt dafür nicht.** Sie ist eine zulässige
+zusätzliche Angabe, aber keine Ersatzkennung – die Norm zählt sie an dieser
+Stelle nicht mit. Fehlen alle drei, wird die Rechnung vor der Ausgabe
+angehalten, statt eine Datei zu erzeugen, die erst der Empfänger beanstandet.
+
+Die beiden zusätzlichen Kennungen werden unterschiedlich behandelt, und zwar
+mit Absicht:
+
+- Die **Registerkennung** gehört zum Firmenstamm. Sie steht in den
+  Einstellungen und wird aus der gespeicherten Firmenvorlage vorbelegt.
+- Die **Lieferanten- oder Kreditorennummer** gehört nicht dazu. Sie ist die
+  Nummer, unter der ein bestimmter Kunde Sie führt; beim nächsten Kunden ist
+  es eine andere. Sie wird deshalb je Rechnung eingetragen und **nicht**
+  dauerhaft gespeichert – global hinterlegt stünde sie sonst unbemerkt auf der
+  Rechnung an jemand anderen.
+
+**Keine der beiden wird aus der PDF erkannt.** Sie stehen auf Rechnungen an
+wechselnden Stellen, oft ohne Beschriftung, und sind von Kunden-, Auftrags-
+oder Bestellnummern nicht sicher zu unterscheiden. Eine geratene Kennung wäre
+schlimmer als keine: Sie ginge unbemerkt in eine Rechnung, die formal gültig
+aussieht und den falschen Absender ausweist.
 
 ## Keine Steuerberatung
 

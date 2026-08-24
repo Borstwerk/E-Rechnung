@@ -120,11 +120,32 @@ public sealed record InvoiceDetectionResult
     // --- Summen ------------------------------------------------------------
     public DetectedTotals Totals { get; init; } = new();
 
+    // --- Positionen --------------------------------------------------------
+
+    /// <summary>
+    /// Die vollständig gegatete Positionstabelle, sofern Phase A eine
+    /// gefunden hat. Leer heißt: keine sichere Tabelle – nie „ein paar
+    /// Zeilen davon“.
+    ///
+    /// **Bewusst intern.** Alle Verbraucher – <c>InvoiceDataDetector</c>,
+    /// <c>DetectionOverview</c>, <c>DraftPrefiller</c> – liegen im Kern. Eine
+    /// öffentliche Erkennungs-API entsteht dafür nicht, und damit bleiben auch
+    /// <c>ExplicitLineTotal</c> und <c>Evidence</c> das, was sie sind: reine
+    /// Erkennungs- und Gate-Evidenz, die nach außen niemanden angeht.
+    /// </summary>
+    internal IReadOnlyList<DetectedInvoiceLine> Lines { get; init; } = [];
+
     /// <summary>Ein Ergebnis für eine Datei ohne auswertbaren Text.</summary>
     public static InvoiceDetectionResult WithoutText { get; } = new() { HasUsableText = false };
 
-    /// <summary>Wurde überhaupt etwas Brauchbares gefunden?</summary>
+    /// <summary>
+    /// Wurde überhaupt etwas Brauchbares gefunden?
+    ///
+    /// Positionen zählen mit: Das Phase-A-Gate kann über eine sichere
+    /// Nettosumme allein halten. Ohne diesen Term wäre eine erkannte Tabelle
+    /// vorhanden, während das Ergebnis meldet, es sei nichts gefunden worden.
+    /// </summary>
     public bool HasAnything =>
         InvoiceNumber is not null || IssueDate is not null || Totals.Gross is not null
-        || Seller.HasAnything || Buyer.HasAnything;
+        || Seller.HasAnything || Buyer.HasAnything || Lines.Count > 0;
 }

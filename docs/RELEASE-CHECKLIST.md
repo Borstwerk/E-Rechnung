@@ -110,6 +110,47 @@ aussieht.
 - [ ] Bei zwei gleich plausiblen Referenzen, Empfänger- oder Sellerblöcken wird
   kein erster Fund geraten.
 
+## Positionserkennung – Freigabeschranke ER-020-POS-01
+
+Diese Punkte sind vor der Freigabe auf Windows durchzuführen. Grüne Unittests
+genügen hier nicht: Zu prüfen ist, was der Anwender im Fenster sieht.
+
+- [ ] Eine digitale Rechnung mit klar aufgebauter Positionstabelle einlesen:
+  Schritt 1 meldet „Rechnungspositionen erkannt: N“ – **nur die Anzahl**, keine
+  Beschreibungen, Mengen oder Preise.
+- [ ] Schritt 2 zeigt alle N Positionen mit Bezeichnung, Beschreibung, Menge,
+  Einheit, Einzelpreis, Steuersatz und Steuerkategorie. Die Einheit stimmt mit
+  der PDF überein und steht nicht pauschal auf „Stück“.
+- [ ] Die Meldung über der Tabelle nennt übernommene Felder und übernommene
+  Positionen getrennt und endet mit der Aufforderung zu prüfen.
+- [ ] Alle bearbeitbaren Positionsangaben lassen sich ändern; die Summen
+  rechnen danach neu. Die Positionsnummerierung verhält sich wie bisher.
+- [ ] Eine Rechnung **ohne** Mengeneinheit einlesen: Die Positionen werden
+  übernommen, das Einheitenfeld bleibt leer, und beide Schritte nennen die
+  Anzahl der betroffenen Positionen. Es steht dort ausdrücklich **nicht**
+  „Stück“.
+- [ ] „Weiter“ ist mit leerer Einheit nicht möglich; nach dem Ergänzen einer
+  gültigen Einheit läuft der Ablauf normal weiter.
+- [ ] Eine Rechnung mit einer nicht unterstützten Einheit (etwa „Fass“) ergibt
+  null Positionen – keine Teilmenge.
+- [ ] Eine Rechnung **ohne eigene Steuerspalte** wird nur dann erkannt, wenn
+  im Dokument **genau ein** Steuersatz von 7 % oder 19 % steht und dieser die
+  bestehenden Sicherheitsbedingungen erfüllt: Netto, Steuer und Brutto müssen
+  alle drei zweifelsfrei gelesen sein, die Steuer muss sich aus Netto und Satz
+  ergeben, und Brutto muss Netto plus Steuer sein. Fehlt eine dieser
+  Bedingungen – kein Satz, mehrere Sätze, ein anderer Satz, eine unsicher
+  gelesene Summe oder eine Summe, die nicht aufgeht –, ergibt die Rechnung
+  null Positionen.
+- [ ] Ein Aufbau mit widersprüchlichen Dokumentsummen ergibt null Positionen.
+- [ ] Eine Rechnung ohne Tabellenkopf ergibt null Positionen, und Schritt 1
+  sagt ausdrücklich, dass von Hand zu erfassen ist.
+- [ ] Zuerst von Hand eine Position eintragen, dann die PDF einlesen: Die
+  eigene Zeile bleibt unverändert stehen, es kommt keine erkannte hinzu, und
+  die Meldung nennt die nicht übernommenen Positionen mit Grund.
+- [ ] „Neue Rechnung“ räumt auch vorbefüllte Positionen weg.
+- [ ] Die fertige E-Rechnung besteht Mustang/CEN-Schematron und veraPDF, und
+  die Beschreibung steht als BT-154 in der CII-Datei.
+
 ## Summen während der Eingabe
 
 1. Drei Positionen eintragen – 4 × 85,00, 2 × 95,00, 1 × 70,00, jeweils 19 %.

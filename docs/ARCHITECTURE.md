@@ -123,7 +123,61 @@ Drei Eigenschaften machen das ungefährlich:
    der Anwender es anfasst, gilt es als von Hand erfasst und die Kennzeichnung
    verschwindet.
 
-**Rechnungspositionen werden noch nicht erkannt** – siehe `docs/BACKLOG.md`.
+**Rechnungspositionen werden erkannt, aber nur geschlossen.** Die Erkennung
+nimmt eine Positionstabelle nur an, wenn sie auf einer Seite steht, einen
+eindeutigen Tabellenkopf hat, ausschließlich bekannte Einheiten und Steuersätze
+verwendet und ihre Summe die im Dokument gefundene Netto- oder Steuer- und
+Bruttosumme trifft. Hält eine dieser Bedingungen nicht, entsteht **keine
+einzige** Position – nie eine Teilmenge. Eine halb übernommene Tabelle sähe
+vollständig aus und wäre falsch.
+
+**Die Mengeneinheit kennt drei Zustände, und sie dürfen nie zusammenfallen:**
+
+1. *Vorhanden und verstanden* – die Einheit steht in einer eigenen Spalte oder
+   direkt hinter der Menge (`4,00 HUR`) und ist eine der unterstützten. Sie
+   wird übernommen.
+2. *Im Dokument nicht vorhanden* – die Rechnung nennt schlicht keine Einheit.
+   Das ist eine sichere Aussage über eine Lücke, keine unsichere Erkennung. Die
+   Position wird übernommen, das Einheitenfeld im Formular bleibt **leer**, und
+   die bestehende Entwurfsprüfung hält die Rechnung auf, bis der Anwender die
+   Einheit ergänzt.
+3. *Vorhanden, aber nicht unterstützt* – etwa `FASS`. Die gesamte Tabelle wird
+   verworfen. Eine im Dokument stehende Aussage zu unterschlagen wäre schlimmer
+   als gar nichts zu erkennen.
+
+Der zweite und der dritte Fall zu verwechseln wäre der teuerste Fehler dieser
+Erkennung: `InvoiceLineDraft` beginnt mit `C62` (Stück), und ein stillschweigend
+stehengelassener Programmstandard machte aus Stunden Stück, ohne dass etwas
+darauf hinwiese.
+
+**Der Steuersatz ohne eigene Steuerspalte.** Führt die Tabelle keine
+Steuerspalte, stammt der Satz aus dem Dokument – entweder zweifelsfrei gelesen
+oder unsicher gelesen **und** durch die sicher gelesenen Dokumentsummen
+nachgerechnet: Die Steuer muss sich aus Netto und Satz ergeben, Brutto muss
+Netto plus Steuer sein. Erst danach greift unverändert das Summen-Gate über die
+Positionen. Das ergibt eine zweistufige Beweiskette und ausdrücklich kein
+„unsicher genügt jetzt“.
+
+**Jede Spalte muss benannt sein.** Unbekannte Kopfbeschriftungen werden nicht
+übergangen – der Detektor leitet seine Spaltengrenzen aus dem Kopf ab, und ein
+unverstandener Kopfteil macht die ganze Zuordnung unsicher. Die einzige
+fachlich unbeteiligte Ausnahme ist `Lieferdatum`: bekannt, damit die Geometrie
+stimmt, ohne je ein Rechnungsfeld zu erzeugen. Beschriftungen werden exakt
+verglichen; es gibt kein unscharfes Vergleichen, keine Levenshtein-Distanz und
+kein „klingt ähnlich“.
+
+**Ausgeschriebene Kontrollbeträge je Position** (`Netto`, `USt in €`, `Brutto`)
+werden geprüft und danach verworfen. Sie werden nie zu einem zweiten
+Rechnungsfeld: Gerechnet wird weiterhin ausschließlich aus Menge, Einzelpreis
+und Steuersatz. Stimmt eine dieser Größen nicht, ist die Tabelle nicht
+verstanden und fällt vollständig.
+
+Die erkannten Positionen wandern über eine bewusst **interne** Eigenschaft von
+`InvoiceDetectionResult` zur Vorbefüllung. Eine öffentliche Erkennungs-API
+entsteht dafür nicht; alle Verbraucher liegen im Kern.
+
+Enthält das Formular bereits Positionen, wird keine erkannte übernommen –
+weder ergänzt noch ersetzt noch vermischt. Gemeldet wird das trotzdem.
 
 Kein OCR, keine externen Dienste. Der Text wird im Arbeitsspeicher ausgewertet
 und danach verworfen.

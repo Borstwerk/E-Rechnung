@@ -1,6 +1,7 @@
 using System.Globalization;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Services;
+using EInvoiceSender.Core.Validation;
 
 namespace EInvoiceSender.Core.Pdf.Detection;
 
@@ -9,11 +10,32 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// <param name="UncertainFields">Bezeichnungen der Felder, die zu prüfen sind.</param>
 /// <param name="SkippedLowConfidence">Werte, die zu unsicher zur Übernahme waren.</param>
 /// <param name="SkippedProtected">Felder, die bereits einen höherrangigen Wert trugen.</param>
+/// <param name="FilledLines">
+/// Anzahl übernommener Rechnungspositionen. Eine Position zählt als **eine**
+/// Position und nie als mehrere ausgefüllte Felder – sonst behauptete die
+/// Meldung in Schritt 2 eine Arbeitsersparnis, die es so nicht gab.
+/// </param>
+/// <param name="SkippedExistingLines">
+/// Anzahl erkannter Positionen, die nicht übernommen wurden, weil der Entwurf
+/// bereits Positionen enthielt.
+/// </param>
+/// <param name="LinesMissingUnit">
+/// Anzahl **übernommener** Positionen, bei denen die Rechnung keine
+/// Mengeneinheit nennt und das Feld im Entwurf deshalb leer bleibt.
+///
+/// Ausdrücklich nur die übernommenen: Wurde wegen bereits erfasster
+/// Benutzerpositionen gar nichts übernommen, fehlt im Entwurf auch keine
+/// Einheit. Diese Zahl schickt den Anwender an eine Stelle im Formular –
+/// sie muss dorthin zeigen, wo tatsächlich etwas leer ist.
+/// </param>
 public sealed record PrefillSummary(
     int FilledFields,
     IReadOnlyList<string> UncertainFields,
     IReadOnlyList<string> SkippedLowConfidence,
-    IReadOnlyList<string> SkippedProtected);
+    IReadOnlyList<string> SkippedProtected,
+    int FilledLines = 0,
+    int SkippedExistingLines = 0,
+    int LinesMissingUnit = 0);
 
 /// <summary>
 /// Trägt ein Erkennungsergebnis in das Eingabeformular ein.
@@ -44,10 +66,147 @@ public static class DraftPrefiller
             ApplyDocumentFields(d, detection, ownCompany, log);
             ApplyPartyFields(d, detection, ownCompany, log);
             ApplyPaymentFields(d, detection, ownCompany, log);
+            ApplyLines(d, detection, log);
         });
 
         return log.ToSummary();
     }
+
+    /// <summary>
+    /// Übernimmt die erkannte Positionstabelle – geschlossen oder gar nicht.
+    ///
+    /// **Zwei Regeln, beide unverhandelbar:**
+    ///
+    /// 1. Enthält der Entwurf bereits Positionen, wird nichts übernommen. Sie
+    ///    sind Benutzerarbeit; sie zu ergänzen, zu ersetzen oder mit erkannten
+    ///    Zeilen zu vermischen wäre in jeder Ausprägung falsch. Gemeldet wird
+    ///    das trotzdem – stillschweigend nichts zu tun wäre ebenso falsch.
+    /// 2. Erst wenn **alle** Zeilen umgewandelt sind, wandert die erste in die
+    ///    Collection. Ein Entwurf mit zwei von drei Positionen sieht
+    ///    vollständig aus und ist es nicht.
+    ///
+    /// Der Entwurf bekommt jeden fachlichen Wert ausdrücklich zugewiesen. Die
+    /// Vorgaben von <see cref="InvoiceLineDraft"/> – insbesondere
+    /// <c>Unit = "C62"</c> – dürfen nie als erkannte Information durchgehen.
+    /// Die Preisbasismenge bleibt beim technischen Standard 1: Phase A lehnt
+    /// Tabellen mit eigener Preisbasismengenspalte bereits am Kopf ab.
+    /// </summary>
+    private static void ApplyLines(
+        InvoiceDraft draft, InvoiceDetectionResult detection, PrefillLog log)
+    {
+        if (detection.Lines.Count == 0)
+        {
+            return;
+        }
+
+        if (draft.Lines.Count > 0)
+        {
+            log.SkippedExistingLines(detection.Lines.Count);
+
+            return;
+        }
+
+        var converted = new List<InvoiceLineDraft>(detection.Lines.Count);
+
+        foreach (DetectedInvoiceLine line in detection.Lines)
+        {
+            if (!TryConvert(line, out InvoiceLineDraft item))
+            {
+                return;
+            }
+
+            converted.Add(item);
+        }
+
+        foreach (InvoiceLineDraft item in converted)
+        {
+            draft.Lines.Add(item);
+        }
+
+        log.FilledLines(
+            converted.Count,
+            converted.Count(item => item.Unit.Length == 0));
+    }
+
+    /// <summary>
+    /// Wandelt eine erkannte Position in eine bearbeitbare um.
+    ///
+    /// Die Einheit wird gegen die Codeliste geprüft, obwohl Phase A das
+    /// bereits getan hat. Die Prüfung kostet nichts und hält die Zusicherung
+    /// „alles oder nichts“ auch dann, wenn jemand später einen anderen Weg zu
+    /// dieser Methode baut.
+    ///
+    /// **Beide Prüfungen sind nötig.** <see cref="UnitCode.TryParse"/> prüft
+    /// nur die Form – ein bis drei Buchstaben oder Ziffern; „XXX“ besteht sie
+    /// anstandslos. Erst <see cref="UnitCodeList.IsValid"/> entscheidet, ob es
+    /// die Einheit überhaupt gibt. Das ist dieselbe Liste, an der später
+    /// <c>InvoiceLineRules</c> misst: Was hier durchkommt und dort scheitert,
+    /// wäre ein Entwurf, der erst beim Erzeugen der Rechnung auffliegt.
+    ///
+    /// **Nennt die Rechnung keine Einheit, wird die Einheit ausdrücklich
+    /// geleert.** <see cref="InvoiceLineDraft"/> beginnt mit <c>"C62"</c>;
+    /// dieses Feld unberührt zu lassen hieße, den Programmstandard als
+    /// erkannte Information auszugeben. Bei einer Stundenrechnung stünde dann
+    /// „Stück“ im Formular, ohne dass irgendetwas darauf hinwiese. Die
+    /// bestehende Entwurfsprüfung hält die Rechnung anschließend von selbst
+    /// auf, bis der Anwender die Einheit ergänzt.
+    /// </summary>
+    private static bool TryConvert(DetectedInvoiceLine line, out InvoiceLineDraft draft)
+    {
+        draft = null!;
+
+        string unit = string.Empty;
+
+        if (line.UnitCode is { } code)
+        {
+            if (!UnitCode.TryParse(code, out UnitCode parsed)
+                || !UnitCodeList.IsValid(parsed.Value))
+            {
+                return false;
+            }
+
+            unit = parsed.Value;
+        }
+
+        draft = new InvoiceLineDraft
+        {
+            Number = line.Number,
+            Name = line.Name,
+            Description = line.Description ?? string.Empty,
+            Quantity = Number(line.Quantity, QuantityFormat),
+            Unit = unit,
+            NetUnitPrice = Number(line.NetUnitPrice, AmountFormat),
+            VatCategory = line.VatCategory,
+            VatRate = Number(line.VatRate, RateFormat),
+        };
+
+        return true;
+    }
+
+    /// <summary>
+    /// Mengen behalten bis zu vier Nachkommastellen – so weit rechnet
+    /// <c>InvoiceDraft</c> beim Zurücklesen.
+    /// </summary>
+    private const string QuantityFormat = "0.####";
+
+    /// <summary>Beträge stehen im Formular immer mit zwei Nachkommastellen.</summary>
+    private const string AmountFormat = "0.00";
+
+    /// <summary>Steuersätze ohne unnötige Nullen: 19, nicht 19,00.</summary>
+    private const string RateFormat = "0.##";
+
+    /// <summary>
+    /// Schreibt eine Zahl so, wie das Formular sie erwartet.
+    ///
+    /// **Ohne Tausendertrennzeichen, und das ist keine Geschmacksfrage.**
+    /// <see cref="InvoiceDraft.TryParseDecimal"/> ersetzt das Komma durch
+    /// einen Punkt und liest invariant; ein Tausenderpunkt würde aus
+    /// „1.234,56“ ein „1.234.56“ machen, das niemand mehr lesen kann. Deshalb
+    /// invariant formatieren und nur das Dezimaltrennzeichen tauschen – das
+    /// ergibt dieselbe Zeichenkette unter Linux wie unter Windows.
+    /// </summary>
+    private static string Number(decimal value, string format)
+        => value.ToString(format, CultureInfo.InvariantCulture).Replace('.', ',');
 
     private static void ApplyDocumentFields(
         InvoiceDraft d, InvoiceDetectionResult detection, CompanyTemplate? own, PrefillLog log)
@@ -185,6 +344,9 @@ public static class DraftPrefiller
         private readonly List<string> _skipped = [];
         private readonly List<string> _protectedFields = [];
         private int _filled;
+        private int _filledLines;
+        private int _skippedExistingLines;
+        private int _linesMissingUnit;
 
         public void Filled(string label, FieldOrigin origin)
         {
@@ -200,6 +362,16 @@ public static class DraftPrefiller
 
         public void Protected(string label) => _protectedFields.Add(label);
 
-        public PrefillSummary ToSummary() => new(_filled, _uncertain, _skipped, _protectedFields);
+        public void FilledLines(int count, int missingUnit)
+        {
+            _filledLines = count;
+            _linesMissingUnit = missingUnit;
+        }
+
+        public void SkippedExistingLines(int count) => _skippedExistingLines = count;
+
+        public PrefillSummary ToSummary() => new(
+            _filled, _uncertain, _skipped, _protectedFields,
+            _filledLines, _skippedExistingLines, _linesMissingUnit);
     }
 }

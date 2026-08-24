@@ -11,12 +11,24 @@ namespace EInvoiceSender.Core.Pdf.Detection;
 /// Eine vollständig erkannte Rechnungsposition. Der explizite Gesamtpreis
 /// bleibt reine Evidenz und wird nicht zu einem zweiten Rechnungsfeld.
 /// </summary>
+/// <param name="UnitCode">
+/// Die Mengeneinheit – oder <see langword="null"/>, wenn die Rechnung gar
+/// keine nennt.
+///
+/// **Diese drei Fälle dürfen nie zusammenfallen:** eine vorhandene und
+/// verstandene Einheit ergibt einen Code; eine im Dokument nicht vorhandene
+/// Einheit ergibt <see langword="null"/>; eine vorhandene, aber nicht
+/// unterstützte Einheit verwirft die gesamte Tabelle und erreicht diesen Typ
+/// nie. Ein Platzhalter wie <c>"XXX"</c> oder ein stiller <c>"C62"</c> würde
+/// den zweiten und den dritten Fall verwechseln – und zwar in der Richtung,
+/// die eine falsche Rechnung erzeugt.
+/// </param>
 internal sealed record DetectedInvoiceLine(
     int Number,
     string Name,
     string? Description,
     decimal Quantity,
-    string UnitCode,
+    string? UnitCode,
     decimal NetUnitPrice,
     decimal? ExplicitLineTotal,
     VatCategory VatCategory,
@@ -75,26 +87,47 @@ internal static partial class PositionDetector
         Alias(ColumnRole.Description, "beschreibung"),
         Alias(ColumnRole.Description, "bezeichnung"),
         Alias(ColumnRole.Description, "leistung"),
+        Alias(ColumnRole.Description, "artikelbeschreibung"),
+        Alias(ColumnRole.Description, "namebeschreibung"),
         Alias(ColumnRole.Quantity, "menge"),
         Alias(ColumnRole.Quantity, "anzahl"),
         Alias(ColumnRole.Unit, "einheit"),
         Alias(ColumnRole.Unit, "einh"),
+
+        // Lieferscheinnahe Rechnungen führen ein Lieferdatum je Position. Die
+        // Spalte erzeugt kein Rechnungsfeld – sie muss nur benannt sein, damit
+        // die Spaltengrenzen eindeutig bleiben. Das ist ausdrücklich keine
+        // allgemeine Nachsicht gegenüber unbekannten Spalten: Jede andere
+        // unbekannte Beschriftung verwirft die Tabelle weiterhin.
+        Alias(ColumnRole.DeliveryDate, "lieferdatum"),
+
         Alias(ColumnRole.UnitPrice, "einzelpreis"),
         Alias(ColumnRole.UnitPrice, "ep"),
+        Alias(ColumnRole.UnitPrice, "epreis"),
         Alias(ColumnRole.UnitPrice, "nettoeinzelpreis"),
         Alias(ColumnRole.UnitPrice, "netto", "einzelpreis"),
         Alias(ColumnRole.UnitPrice, "preis"),
+        Alias(ColumnRole.UnitPrice, "preis", "in", "€"),
         Alias(ColumnRole.LineTotal, "gesamt"),
         Alias(ColumnRole.LineTotal, "gesamtpreis"),
         Alias(ColumnRole.LineTotal, "gesamt", "preis"),
         Alias(ColumnRole.LineTotal, "betrag"),
+        Alias(ColumnRole.LineTotal, "netto"),
         Alias(ColumnRole.Vat, "mwst"),
         Alias(ColumnRole.Vat, "mwst", "%"),
         Alias(ColumnRole.Vat, "ust"),
         Alias(ColumnRole.Vat, "ust", "%"),
+        Alias(ColumnRole.Vat, "ust", "in", "%"),
+        Alias(ColumnRole.Vat, "mwst", "in", "%"),
         Alias(ColumnRole.Vat, "steuersatz"),
         Alias(ColumnRole.Vat, "steuersatz", "%"),
         Alias(ColumnRole.Vat, "%"),
+
+        // Kontrollbeträge je Position. Sie erzeugen kein Rechnungsfeld – sie
+        // müssen stimmen, sonst ist die Tabelle nicht verstanden.
+        Alias(ColumnRole.LineVatAmount, "ust", "in", "€"),
+        Alias(ColumnRole.LineVatAmount, "mwst", "in", "€"),
+        Alias(ColumnRole.LineGrossTotal, "brutto"),
     ];
 
     private static readonly string[][] UnsupportedHeaderAliases =
@@ -285,11 +318,20 @@ internal static partial class PositionDetector
             return null;
         }
 
+        HeaderSpan[] candidates =
+        [
+            .. Enum.GetValues<ColumnRole>()
+                .SelectMany(role => FindHeaderMatches(role, tokens, normalized)),
+        ];
+
         var selected = new List<HeaderSpan>();
 
         foreach (ColumnRole role in Enum.GetValues<ColumnRole>())
         {
-            HeaderSpan[] matches = FindHeaderMatches(role, tokens, normalized);
+            HeaderSpan[] matches =
+            [
+                .. candidates.Where(match => match.Role == role && !IsShadowed(match, candidates)),
+            ];
 
             if (matches.Length == 0)
             {
@@ -311,8 +353,12 @@ internal static partial class PositionDetector
             selected.Add(longestMatches[0]);
         }
 
+        // Die Einheitsspalte ist ausdrücklich **nicht** dabei. Sehr viele
+        // Rechnungen führen keine; die Menge steht dort ohne Einheit. Das ist
+        // eine Lücke im Dokument und kein unsicherer Aufbau – die Tabelle
+        // deswegen zu verwerfen hieß, eine sichere Aussage wegzuwerfen.
         ColumnRole[] mandatory =
-        [ColumnRole.Description, ColumnRole.Quantity, ColumnRole.Unit, ColumnRole.UnitPrice];
+        [ColumnRole.Description, ColumnRole.Quantity, ColumnRole.UnitPrice];
 
         if (mandatory.Any(role => selected.Count(span => span.Role == role) != 1))
         {
@@ -368,6 +414,27 @@ internal static partial class PositionDetector
         return new HeaderLayout(line, columns);
     }
 
+    /// <summary>
+    /// Die längere, genauere Beschriftung schlägt die kürzere.
+    ///
+    /// **Warum das nötig ist:** Mehrere Familien teilen sich ein Wort.
+    /// <c>Netto Einzelpreis</c> enthält <c>Netto</c>, <c>USt in €</c> enthält
+    /// <c>USt</c>. Ohne diese Regel meldeten zwei Rollen einen Anspruch auf
+    /// dieselben Tokens, und der Kopf gälte als mehrdeutig – obwohl er für
+    /// einen Menschen völlig eindeutig ist.
+    ///
+    /// Verdrängt wird nur, was **vollständig** in einer echt längeren
+    /// Beschriftung einer **anderen** Rolle steckt. Zwei gleich lange
+    /// Ansprüche bleiben beide stehen und führen weiterhin dazu, dass der Kopf
+    /// verworfen wird. Das ist die Absicht: Echte Mehrdeutigkeit soll auffallen.
+    /// </summary>
+    private static bool IsShadowed(HeaderSpan span, IReadOnlyList<HeaderSpan> candidates)
+        => candidates.Any(other
+            => other.Role != span.Role
+               && other.StartIndex <= span.StartIndex
+               && other.EndIndex >= span.EndIndex
+               && other.EndIndex - other.StartIndex > span.EndIndex - span.StartIndex);
+
     private static HeaderSpan[] FindHeaderMatches(
         ColumnRole role,
         PdfTextToken[] tokens,
@@ -415,12 +482,23 @@ internal static partial class PositionDetector
     {
         int description = IndexOf(columns, ColumnRole.Description);
         int quantity = IndexOf(columns, ColumnRole.Quantity);
-        int unit = IndexOf(columns, ColumnRole.Unit);
         int price = IndexOf(columns, ColumnRole.UnitPrice);
 
-        if (!(description < quantity && quantity < unit && unit < price))
+        if (!(description < quantity && quantity < price))
         {
             return false;
+        }
+
+        // Wenn es eine Einheitsspalte gibt, steht sie zwischen Menge und
+        // Preis. Fehlt sie, entfällt die Bedingung – nicht die Prüfung.
+        if (columns.Any(column => column.Role == ColumnRole.Unit))
+        {
+            int unit = IndexOf(columns, ColumnRole.Unit);
+
+            if (!(quantity < unit && unit < price))
+            {
+                return false;
+            }
         }
 
         if (columns.Any(column => (column.Role is ColumnRole.Position or ColumnRole.ArticleNumber)
@@ -429,8 +507,11 @@ internal static partial class PositionDetector
             return false;
         }
 
+        // Alle Ergebnisspalten stehen rechts vom Einzelpreis. Eine Summe
+        // links davon wäre kein bekannter Rechnungsaufbau.
         return columns
-            .Where(column => column.Role is ColumnRole.LineTotal or ColumnRole.Vat)
+            .Where(column => column.Role is ColumnRole.LineTotal or ColumnRole.Vat
+                             or ColumnRole.LineVatAmount or ColumnRole.LineGrossTotal)
             .All(column => IndexOf(columns, column.Role) > price);
     }
 
@@ -450,16 +531,17 @@ internal static partial class PositionDetector
 
         string name = Cell(cells, ColumnRole.Description);
         string quantityText = Cell(cells, ColumnRole.Quantity);
-        string unitText = Cell(cells, ColumnRole.Unit);
         string priceText = Cell(cells, ColumnRole.UnitPrice);
 
-        if (name.Length == 0 || quantityText.Length == 0
-            || unitText.Length == 0 || priceText.Length == 0
-            || !TryParseQuantity(quantityText, out decimal quantity)
-            || quantity <= 0m
-            || !TryMapUnit(unitText, out string unitCode)
+        if (name.Length == 0 || quantityText.Length == 0 || priceText.Length == 0
             || !TryParseMoneyCell(priceText, out decimal unitPrice)
             || unitPrice < 0m)
+        {
+            return false;
+        }
+
+        if (!TryReadQuantityAndUnit(
+                cells, header, quantityText, out decimal quantity, out string? unitCode))
         {
             return false;
         }
@@ -505,6 +587,11 @@ internal static partial class PositionDetector
             explicitTotal = parsedTotal;
         }
 
+        if (!PassesLineEvidence(cells, header, quantity, unitPrice, vatRate))
+        {
+            return false;
+        }
+
         detected = new DetectedInvoiceLine(
             number,
             name,
@@ -516,6 +603,114 @@ internal static partial class PositionDetector
             VatCategory.StandardRate,
             vatRate,
             [header.Line.Text, line.Text]);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Prüft die ausgeschriebenen Kontrollbeträge einer Position.
+    ///
+    /// **Diese Spalten werden geprüft und danach verworfen.** Sie wandern
+    /// nicht in <see cref="DetectedInvoiceLine"/> und werden nie zu einem
+    /// zweiten Rechnungsfeld – die fertige Rechnung entsteht weiterhin
+    /// ausschließlich aus Menge, Einzelpreis und Steuersatz über den
+    /// bestehenden Rechner.
+    ///
+    /// Ihr Wert liegt in der Gegenprobe: Eine Tabelle, deren eigene Beträge
+    /// nicht zu ihren eigenen Mengen passen, ist nicht verstanden. Eine
+    /// einzige Abweichung verwirft sie vollständig.
+    ///
+    /// Gerundet wird mit <see cref="Amounts.Round"/> – denselben Regeln wie in
+    /// der Rechnung. Eine eigene Rundungsdefinition an dieser Stelle wäre der
+    /// Anfang zweier Wahrheiten.
+    /// </summary>
+    private static bool PassesLineEvidence(
+        IReadOnlyDictionary<ColumnRole, string> cells,
+        HeaderLayout header,
+        decimal quantity,
+        decimal unitPrice,
+        decimal vatRate)
+    {
+        decimal lineNet = Amounts.Round(quantity * unitPrice);
+        decimal lineVat = Amounts.Round(lineNet * vatRate / 100m);
+
+        if (header.Has(ColumnRole.LineVatAmount)
+            && (!TryParseMoneyCell(Cell(cells, ColumnRole.LineVatAmount), out decimal parsedVat)
+                || parsedVat != lineVat))
+        {
+            return false;
+        }
+
+        if (header.Has(ColumnRole.LineGrossTotal)
+            && (!TryParseMoneyCell(Cell(cells, ColumnRole.LineGrossTotal), out decimal parsedGross)
+                || parsedGross != lineNet + lineVat))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Liest Menge und Mengeneinheit einer Zeile.
+    ///
+    /// Die Einheit kann auf drei Wegen im Dokument stehen: in einer eigenen
+    /// Spalte, unmittelbar hinter der Menge (<c>4,00 HUR</c>) oder gar nicht.
+    /// Der Rückgabewert unterscheidet ausdrücklich zwischen „nicht angegeben“
+    /// (<see langword="null"/>) und „angegeben, aber nicht verstanden“
+    /// (<see langword="false"/>, also Tabelle verwerfen).
+    ///
+    /// Die zusammengesetzte Schreibweise wird **nur** ausgewertet, wenn es
+    /// keine Einheitsspalte gibt. Gibt es eine, ist die Menge eine Menge; ein
+    /// Wortanhang wäre dort ein unerwarteter Aufbau und kein Fund.
+    /// </summary>
+    private static bool TryReadQuantityAndUnit(
+        IReadOnlyDictionary<ColumnRole, string> cells,
+        HeaderLayout header,
+        string quantityText,
+        out decimal quantity,
+        out string? unitCode)
+    {
+        quantity = 0m;
+        unitCode = null;
+
+        if (header.Has(ColumnRole.Unit))
+        {
+            string unitText = Cell(cells, ColumnRole.Unit);
+
+            if (unitText.Length == 0 || !TryMapUnit(unitText, out string mapped))
+            {
+                return false;
+            }
+
+            unitCode = mapped;
+
+            return TryParseQuantity(quantityText, out quantity) && quantity > 0m;
+        }
+
+        if (TryParseQuantity(quantityText, out quantity))
+        {
+            // Nur eine Zahl: Die Rechnung nennt keine Mengeneinheit.
+            return quantity > 0m;
+        }
+
+        Match combined = QuantityWithUnit().Match(quantityText.Trim());
+
+        if (!combined.Success
+            || !TryParseQuantity(combined.Groups["menge"].Value, out quantity)
+            || quantity <= 0m)
+        {
+            return false;
+        }
+
+        // Hier steht eine Einheit. Verstehen wir sie nicht, ist das kein
+        // Grund, sie für nicht vorhanden zu erklären – die Tabelle fällt.
+        if (!TryMapUnit(combined.Groups["einheit"].Value, out string suffix))
+        {
+            return false;
+        }
+
+        unitCode = suffix;
 
         return true;
     }
@@ -586,23 +781,75 @@ internal static partial class PositionDetector
         return true;
     }
 
+    /// <summary>
+    /// Der Steuersatz für Tabellen ohne eigene Steuerspalte.
+    ///
+    /// Es gibt genau zwei Wege, und beide verlangen **einen einzigen**
+    /// Dokumentsteuersatz von 7 oder 19 Prozent:
+    ///
+    /// * ein zweifelsfrei gelesener Satz, oder
+    /// * ein unsicher gelesener Satz, den die Dokumentsummen bestätigen.
+    ///
+    /// **Warum der zweite Weg nötig ist:** Der <c>TotalsDetector</c> vergibt
+    /// für Steuersätze nie die Stufe <c>High</c> – ein Prozentwert in einer
+    /// Zeile mit Steuerbezug ist für sich genommen eben nicht zweifelsfrei.
+    /// Ohne diesen Weg wäre der Rückfall unerreichbar und jede Rechnung ohne
+    /// Steuerspalte ergäbe null Positionen.
+    ///
+    /// **Warum das nichts lockert:** Ein unsicherer Satz genügt nach wie vor
+    /// nicht. Er wird nur verwendet, wenn er sich aus den sicher gelesenen
+    /// Dokumentsummen nachrechnen lässt. Danach greift unverändert
+    /// <see cref="PassesDocumentTotalsGate"/> und misst die erkannten
+    /// Positionen an denselben Summen. Beides zusammen ergibt eine
+    /// zweistufige Beweiskette – und nicht ein „Medium reicht jetzt“.
+    /// </summary>
     private static decimal? ResolveDocumentVatRate(
         HeaderLayout header,
         DetectedTotals totals)
     {
-        if (header.Has(ColumnRole.Vat))
+        if (header.Has(ColumnRole.Vat) || totals.VatRates.Count != 1)
         {
             return null;
         }
 
-        if (totals.VatRates.Count != 1
-            || totals.VatRates[0].Confidence != DetectionConfidence.High
-            || totals.VatRates[0].Value is not (7m or 19m))
+        DetectedValue<decimal> rate = totals.VatRates[0];
+
+        if (rate.Value is not (7m or 19m))
         {
             return null;
         }
 
-        return totals.VatRates[0].Value;
+        return rate.Confidence switch
+        {
+            DetectionConfidence.High => rate.Value,
+            DetectionConfidence.Medium when IsConfirmedByTotals(rate.Value, totals) => rate.Value,
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// Rechnet einen unsicher gelesenen Steuersatz gegen die Dokumentsummen
+    /// nach.
+    ///
+    /// Alle drei Summen müssen zweifelsfrei gelesen sein – eine Bestätigung
+    /// ist nur so viel wert wie die Zahlen, die sie tragen. Gerundet und
+    /// verglichen wird mit den vorhandenen Mitteln: <see cref="Amounts.Round"/>
+    /// und <see cref="DocumentTotalTolerance"/>. Eine eigene Rundungs- oder
+    /// Toleranzdefinition an dieser Stelle wäre der Anfang zweier Wahrheiten.
+    /// </summary>
+    private static bool IsConfirmedByTotals(decimal rate, DetectedTotals totals)
+    {
+        if (!IsHigh(totals.Net) || !IsHigh(totals.Tax) || !IsHigh(totals.Gross))
+        {
+            return false;
+        }
+
+        decimal net = totals.Net!.Value;
+        decimal tax = totals.Tax!.Value;
+        decimal gross = totals.Gross!.Value;
+
+        return Math.Abs(tax - Amounts.Round(net * rate / 100m)) <= DocumentTotalTolerance
+               && Math.Abs(gross - (net + tax)) <= DocumentTotalTolerance;
     }
 
     private static bool PassesDocumentTotalsGate(
@@ -613,7 +860,15 @@ internal static partial class PositionDetector
 
         foreach (DetectedInvoiceLine item in detected)
         {
-            if (!UnitCode.TryParse(item.UnitCode, out UnitCode unit))
+            // Für die reine Rechenprobe ist die Mengeneinheit bedeutungslos –
+            // gerechnet wird über Menge und Einzelpreis. Nennt die Rechnung
+            // keine Einheit, steht hier deshalb ein Platzhalter, der diese
+            // Methode nie verlässt. Er wird nirgends gespeichert, nirgends
+            // angezeigt und wandert nicht in den Entwurf; dort bleibt die
+            // Einheit ausdrücklich leer.
+            UnitCode unit = UnitCode.Piece;
+
+            if (item.UnitCode is { } code && !UnitCode.TryParse(code, out unit))
             {
                 return false;
             }
@@ -704,11 +959,21 @@ internal static partial class PositionDetector
     private static string Cell(IReadOnlyDictionary<ColumnRole, string> cells, ColumnRole role)
         => cells.GetValueOrDefault(role, string.Empty);
 
+    /// <summary>
+    /// Reduziert einen Kopf-Token auf seinen vergleichbaren Kern.
+    ///
+    /// Prozent- und Eurozeichen bleiben erhalten. Sie gehören zu
+    /// Beschriftungen wie <c>USt in %</c> oder <c>Preis in €</c> und sind dort
+    /// bedeutungstragend. Sie allgemein wegzuwerfen wäre bequem und falsch:
+    /// Ein weggeworfenes Zeichen macht einen unbekannten Kopf unauffällig, und
+    /// unauffällige unbekannte Köpfe sind genau das, was diese Erkennung
+    /// verhindern soll.
+    /// </summary>
     private static string NormalizeHeaderToken(string text)
     {
         string trimmed = text.Trim().ToLowerInvariant();
 
-        if (trimmed == "%")
+        if (trimmed is "%" or "€")
         {
             return trimmed;
         }
@@ -746,9 +1011,35 @@ internal static partial class PositionDetector
         Description,
         Quantity,
         Unit,
+
+        /// <summary>
+        /// Bekannt, aber fachlich unbeteiligt: Das Lieferdatum je Position
+        /// wird gelesen, damit die Spalte zugeordnet werden kann, und danach
+        /// verworfen. Es erzeugt kein Rechnungsfeld.
+        /// </summary>
+        DeliveryDate,
+
         UnitPrice,
+
+        /// <summary>
+        /// Der Nettogesamtpreis der Position. Er wird gegen Menge mal
+        /// Einzelpreis geprüft und nicht als eigener Wert weitergetragen.
+        /// </summary>
         LineTotal,
+
         Vat,
+
+        /// <summary>
+        /// Der ausgeschriebene Steuerbetrag der Position – reine Evidenz.
+        /// Stimmt er nicht, ist die Tabelle nicht verstanden.
+        /// </summary>
+        LineVatAmount,
+
+        /// <summary>
+        /// Der ausgeschriebene Bruttobetrag der Position – ebenfalls reine
+        /// Evidenz.
+        /// </summary>
+        LineGrossTotal,
     }
 
     private sealed record HeaderAlias(ColumnRole Role, string[] Tokens);
@@ -772,6 +1063,30 @@ internal static partial class PositionDetector
         @"^[+]?(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{1,4})?$",
         RegexOptions.CultureInvariant)]
     private static partial Regex GermanQuantity();
+
+    /// <summary>
+    /// Menge und unmittelbar folgende Mengeneinheit, etwa <c>4,00 HUR</c>,
+    /// <c>2,5 Stunden</c> oder <c>1,00 C62</c>. Die Einheit ist bewusst nur ein
+    /// einzelnes Wort: Alles darüber hinaus ist Fließtext und keine Einheit.
+    ///
+    /// **Der Einheitenteil ist alphanumerisch, nicht rein alphabetisch.**
+    /// UN/ECE-Codes tragen Ziffern – <c>C62</c> für Stück ist der häufigste
+    /// überhaupt. Nur Buchstaben zuzulassen ließ <c>HUR</c> durch und
+    /// <c>C62</c> auffliegen; weil eine nicht verstandene Zeile die ganze
+    /// Tabelle verwirft, fiel damit eine vollständige Rechnung an einer
+    /// einzigen Zeile.
+    ///
+    /// Dieses Muster entscheidet **nur über die Form**. Ob es die Einheit
+    /// überhaupt gibt, entscheidet unverändert <see cref="TryMapUnit"/> gegen
+    /// <see cref="UnitMappings"/> und <see cref="UnitCodeList"/>. Ein
+    /// alphanumerischer Token wird also bis zu dieser Allowlist durchgereicht
+    /// und dort abgelehnt, wenn er nicht dazugehört – die Form wird
+    /// durchlässiger, die fachliche Prüfung nicht.
+    /// </summary>
+    [GeneratedRegex(
+        @"^(?<menge>[+]?(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{1,4})?)\s+(?<einheit>[\p{L}\d]{1,12}\.?)$",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex QuantityWithUnit();
 
     [GeneratedRegex(
         @"^(?<betrag>(?:\d{1,3}(?:\.\d{3})+|\d+),\d{2})(?:\s*(?:€|EUR))?$",

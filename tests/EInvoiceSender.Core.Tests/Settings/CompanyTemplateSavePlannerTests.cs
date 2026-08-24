@@ -23,6 +23,7 @@ public sealed class CompanyTemplateSavePlannerTests
         nameof(InvoiceDraft.SellerEmail),
         nameof(InvoiceDraft.SellerVatId),
         nameof(InvoiceDraft.SellerTaxNumber),
+        nameof(InvoiceDraft.SellerLegalRegistrationId),
         nameof(InvoiceDraft.BankAccountHolder),
         nameof(InvoiceDraft.BankIban),
         nameof(InvoiceDraft.BankBic),

@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 847 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
-| `tests/EInvoiceSender.IntegrationTests` | 92 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **939** | |
+| `tests/EInvoiceSender.Core.Tests` | 1118 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.IntegrationTests` | 96 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
+| **Summe** | **1214** | |
 
 ## Ebenen
 
@@ -91,6 +91,76 @@ Ausdrücklich abgedeckte Fehlzuordnungen:
 - ohne belastbares Signal wird kein Verkäufer geraten,
 - unsichere Werte und Positionen füllen das Formular nicht aus,
 - eine PDF ohne Text bleibt von Hand erfassbar.
+
+### Rechnungspositionen
+
+Die Erkennung selbst prüft `PositionDetectorTests` isoliert. Der produktive Weg
+– von der PDF bis in die CII-Datei – ist getrennt davon belegt:
+
+- `PositionTransportTests` – die gegatete Tabelle erreicht das
+  Erkennungsergebnis, und nur sie. Die Musterrechnung ohne Tabellenkopf und
+  eine Tabelle mit unbekannter Einheit ergeben null Positionen.
+- `PositionPrefillTests` – die Übernahme in den Entwurf geschieht geschlossen
+  oder gar nicht. Jeder fachliche Wert wird ausdrücklich gesetzt, insbesondere
+  die Einheit: Der Programmstandard `C62` darf nie als erkannte Information
+  durchgehen. Die geschriebenen Zahlen lesen die Draft-Parser verlustfrei
+  zurück, ohne Tausendertrennzeichen.
+- `PrefillNoticeTests` – die Meldung in Schritt 2 unterscheidet Felder,
+  übernommene Positionen und Positionen, die wegen bereits erfasster Arbeit
+  nicht übernommen wurden. Eine Position zählt nie als mehrere Felder.
+- `PrefilledLineEditingTests` – Bearbeiten, Ergänzen, Löschen, Neunummerieren
+  und „Neue Rechnung“ verhalten sich bei vorbefüllten Positionen wie bei
+  getippten.
+- `PositionEndToEndTests` – der ganze Weg an einem Stück, mit vier Einheiten
+  (HUR, C62, KGM, MTR), zwei Steuersätzen (7 % und 19 %) und einer
+  Fortsetzungszeile als Beschreibung (BT-154). Geprüft wird bis zu den
+  gerechneten Summen, dem Regelwerk EN 16931 und der CII-Datei.
+- `PositionColumnTests` – die Beschreibung hat eine eigene, bearbeitbare
+  Spalte. Ein Wert, der in die E-Rechnung geht, muss vorher sichtbar gewesen
+  sein.
+
+Phase C erweitert das um reale Tabellenaufbauten:
+
+- `PositionUnitModelTests` – das Modell kann „keine Einheit angegeben“
+  ausdrücken. Diese Aussage darf nie mit „Einheit nicht verstanden“
+  zusammenfallen.
+- `PositionWithoutUnitColumnTests` – Tabellen ohne Einheitsspalte werden
+  erkannt; die Einheit bleibt leer, und das Summen-Gate gilt unverändert.
+- `PositionCombinedUnitTests` – `4,00 HUR`, `2,5 Stunden`, `10 m` werden
+  verstanden; `4,00 FASS` verwirft die ganze Tabelle.
+- `PositionMissingUnitPrefillTests` – ohne erkannte Einheit steht im Entwurf
+  ausdrücklich `""` und niemals der Programmstandard `C62`. Danach blockiert
+  die bestehende Entwurfsprüfung, bis der Anwender ergänzt.
+- `PositionDeliveryDateColumnTests` – eine Lieferdatumsspalte stört nicht und
+  erzeugt kein Rechnungsfeld; jede andere unbekannte Beschriftung verwirft die
+  Tabelle, auch dann, wenn ihre Zellen leer sind.
+- `PositionHeaderFamilyTests` – die beobachteten Beschriftungsfamilien, samt
+  der Gegenprobe, dass ähnlich klingende Unbekannte nicht erraten werden.
+- `PositionFinancialEvidenceTests` – ausgeschriebene Kontrollbeträge je
+  Position werden geprüft und verworfen; ein falscher Netto-, Steuer- oder
+  Bruttobetrag verwirft die Tabelle.
+- `PositionDocumentVatRateTests` – der arithmetisch bestätigte
+  Dokumentsteuersatz für Tabellen ohne Steuerspalte, mit allen Fällen, in
+  denen die Bestätigung nicht trägt.
+- `PositionLayoutFamilyTests` – vier reale Tabellenfamilien über den
+  produktiven Weg, plus die Musterstruktur ohne Tabellenkopf als
+  Gegenreferenz.
+- `PositionUnitEndToEndTests` – der ganze Weg für beide Phase-C-Fälle,
+  einschließlich: fehlende Einheit hält auf, Ergänzung durch den Anwender
+  macht den Weg frei.
+
+Die gemeinsamen Testseiten bauen `PositionTablePdf` und `LayoutTablePdf`. Sie
+stehen im Support-Ordner und nicht im jeweiligen Test, weil mehrere Phasen
+dieselbe Spaltengeometrie brauchen: teils mit von Hand gesetzten Summen, teils
+mit Summen, die der `TotalsDetector` selbst aus der Seite liest.
+`LayoutTablePdf` macht den Tabellenaufbau selbst zum Parameter – Phase C prüft
+mehrere Familien und nicht eine feste Spaltenfolge.
+
+**Zur Geometrie dieser Testseiten:** Der Detektor leitet die Spaltengrenzen aus
+dem Tabellenkopf ab, und eine Zelle muss vollständig in ihre Spalte passen. Der
+Abstand ist knapp – ein rechtsbündiger Betrag, der einen halben Punkt über die
+Grenze ragt, lässt die ganze Tabelle fallen. Wer eine Testseite ergänzt, sollte
+die Ankerwerte lieber großzügig wählen als knapp.
 
 Die Testvorgaben entstehen mit `TextPdfBuilder`, der PDF-Dateien mit echtem,
 maschinenlesbarem Text erzeugt. Er baut die Datei von Hand mit der
