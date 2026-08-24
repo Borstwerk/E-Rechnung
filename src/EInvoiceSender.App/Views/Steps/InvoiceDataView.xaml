@@ -213,6 +213,10 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
 
               <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
@@ -297,13 +301,48 @@
                          Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerTaxNumber}"
                          Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerTaxNumber}" />
 
+              <!--
+                Registerkennung (BT-30) und Verkäuferkennung (BT-29) stehen
+                unmittelbar hinter den steuerlichen Angaben, weil sie dieselbe
+                Frage beantworten: Woran erkennt der Empfänger den
+                Rechnungssteller? Nach BR-CO-26 genügt eine der drei – die
+                Steuernummer allein gehört ausdrücklich nicht dazu.
+              -->
               <TextBlock Grid.Row="12" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
-                         Text="E-Mail" Margin="0,6,8,0" />
+                         Text="Registerkennung" Margin="0,6,8,0" />
               <TextBox Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="3"
                        Style="{StaticResource Feld}" TabIndex="27" Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerLegalRegistrationId, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="Registerkennung des Rechnungsstellers, zum Beispiel die Handelsregisternummer" />
+              <TextBlock Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerLegalRegistrationId}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerLegalRegistrationId}" />
+
+              <!--
+                Die Lieferantennummer vergibt der Kunde. Sie steht deshalb nur
+                hier und nicht in den Einstellungen: Beim nächsten Kunden ist
+                es eine andere.
+              -->
+              <TextBlock Grid.Row="14" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="Lieferantennummer" Margin="0,6,8,0" />
+              <TextBox Grid.Row="14" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="28" Margin="0,6,0,0"
+                       Text="{Binding Draft.SellerIdentifier, UpdateSourceTrigger=PropertyChanged}"
+                       ToolTip="Nur verwenden, wenn Ihr Käufer Ihnen eine Lieferanten- oder Kreditorennummer mitgeteilt hat – also die Nummer, unter der er Sie in seiner Buchhaltung führt. Eine selbst vergebene Nummer gehört nicht hierher; lassen Sie das Feld dann leer."
+                       AutomationProperties.Name="Lieferanten- oder Kreditorennummer, die Ihr Kunde Ihnen zugeteilt hat" />
+              <TextBlock Grid.Row="15" Grid.Column="1" Grid.ColumnSpan="3"
+                         Style="{StaticResource Herkunftshinweis}"
+                         Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerIdentifier}"
+                         Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerIdentifier}" />
+
+              <TextBlock Grid.Row="16" Grid.Column="0" Style="{StaticResource Feldbeschriftung}"
+                         Text="E-Mail" Margin="0,6,8,0" />
+              <TextBox Grid.Row="16" Grid.Column="1" Grid.ColumnSpan="3"
+                       Style="{StaticResource Feld}" TabIndex="29" Margin="0,6,0,0"
                        Text="{Binding Draft.SellerEmail, UpdateSourceTrigger=PropertyChanged}"
                        AutomationProperties.Name="E-Mail des Rechnungsstellers" />
-              <TextBlock Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="3"
+              <TextBlock Grid.Row="17" Grid.Column="1" Grid.ColumnSpan="3"
                          Style="{StaticResource Herkunftshinweis}"
                          Text="{Binding Draft.Origins, Converter={StaticResource FieldOrigin}, ConverterParameter=SellerEmail}"
                          Visibility="{Binding Draft.Origins, Converter={StaticResource FieldOriginVisible}, ConverterParameter=SellerEmail}" />

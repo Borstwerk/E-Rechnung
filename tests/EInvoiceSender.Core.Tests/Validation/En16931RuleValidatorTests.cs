@@ -273,6 +273,85 @@ public sealed class En16931RuleValidatorTests
     }
 
     /// <summary>
+    /// Die dritte zulässige Kennung: eine Lieferanten- oder Kreditorennummer,
+    /// die der Käufer vergeben hat (BT-29).
+    ///
+    /// Sie ist die einzige Möglichkeit für Rechnungssteller, die weder eine
+    /// USt-IdNr. noch einen Registereintrag haben – etwa Kleinunternehmer, die
+    /// für einen Geschäftskunden arbeiten. Ohne sie hieße BR-CO-26 für diese
+    /// Gruppe faktisch „keine E-Rechnung möglich“.
+    /// </summary>
+    [Fact]
+    public void Verkäufer_NurMitLieferantennummer_IstIdentifizierbar()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = null,
+                LegalRegistrationId = null,
+                SellerIdentifier = "LIEF-4711",
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Steuernummer plus eine der zulässigen Kennungen ist der Regelfall für
+    /// Rechnungssteller ohne USt-IdNr.
+    /// </summary>
+    [Theory]
+    [InlineData("HRB 12345", null)]
+    [InlineData(null, "LIEF-4711")]
+    public void Verkäufer_MitSteuernummerUndZulässigerKennung_IstIdentifizierbar(
+        string? registration, string? identifier)
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = "079/123/45678",
+                LegalRegistrationId = registration,
+                SellerIdentifier = identifier,
+            },
+        };
+
+        ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
+    }
+
+    /// <summary>
+    /// Der Befundtext nennt jetzt alle drei zulässigen Wege. Nur auf die
+    /// USt-IdNr. zu verweisen wäre ein Rat, der zwei gültige Möglichkeiten
+    /// verschweigt.
+    /// </summary>
+    [Fact]
+    public void DerBefundNenntAlleDreiZulässigenKennungen()
+    {
+        Invoice invoice = BaseInvoice with
+        {
+            Seller = BaseInvoice.Seller with
+            {
+                VatId = null,
+                TaxNumber = "079/123/45678",
+                LegalRegistrationId = null,
+                SellerIdentifier = null,
+            },
+        };
+
+        ValidationFinding finding = Assert.Single(
+            Prüfe(invoice).Findings, f => f.RuleId == "APP-SEL-004");
+
+        Assert.Contains("USt-ID", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Registerkennung", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Kreditorennummer", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("Steuernummer allein", finding.Message, StringComparison.Ordinal);
+        Assert.Equal("BR-CO-26", finding.NormRule);
+    }
+
+    /// <summary>
     /// **Der Fall aus der Abnahme.** Nur eine Steuernummer – das reicht der
     /// Norm nicht, und deshalb darf es auch dieser Anwendung nicht reichen.
     /// </summary>
@@ -325,32 +404,6 @@ public sealed class En16931RuleValidatorTests
         };
 
         ErwarteKeinenFehler(Prüfe(invoice), "APP-SEL-004");
-    }
-
-    /// <summary>
-    /// Der Befundtext darf die Steuernummer nicht mehr als gleichwertige
-    /// Alternative anbieten – das wäre ein Rat, der zu einer extern
-    /// ungültigen Rechnung führt.
-    /// </summary>
-    [Fact]
-    public void DerBefundBietetDieSteuernummerNichtMehrAlsAusweg()
-    {
-        Invoice invoice = BaseInvoice with
-        {
-            Seller = BaseInvoice.Seller with
-            {
-                VatId = null,
-                TaxNumber = "079/123/45678",
-                LegalRegistrationId = null,
-            },
-        };
-
-        ValidationFinding finding = Assert.Single(
-            Prüfe(invoice).Findings, f => f.RuleId == "APP-SEL-004");
-
-        Assert.DoesNotContain("oder die Steuernummer", finding.Message, StringComparison.Ordinal);
-        Assert.Contains("Umsatzsteuer-Identifikationsnummer", finding.Message, StringComparison.Ordinal);
-        Assert.Equal("BR-CO-26", finding.NormRule);
     }
 
     [Fact]

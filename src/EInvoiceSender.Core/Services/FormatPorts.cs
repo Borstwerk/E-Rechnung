@@ -54,6 +54,12 @@ public interface IInvoiceXmlReader
 /// <param name="IssueDate">Rechnungsdatum (BT-2).</param>
 /// <param name="TypeCode">Rechnungsart (BT-3).</param>
 /// <param name="Currency">Währung (BT-5).</param>
+/// <param name="SellerIdentifier">
+/// Verkäuferkennung (BT-29). Eine der drei Kennungen, mit denen BR-CO-26 den
+/// Rechnungssteller maschinell identifizierbar macht – und die einzige, die
+/// der Anwender je Rechnung einträgt. Deshalb gehört sie in die Gegenprüfung:
+/// Was hier steht, hat der Empfänger vor sich.
+/// </param>
 /// <param name="LineTotal">Summe der Positionen (BT-106).</param>
 /// <param name="TaxBasisTotal">Nettosumme (BT-109).</param>
 /// <param name="TaxTotal">Gesamtsteuer (BT-110).</param>
@@ -66,6 +72,7 @@ public sealed record InvoiceEcho(
     DateOnly? IssueDate,
     string? TypeCode,
     string? Currency,
+    string? SellerIdentifier,
     decimal? LineTotal,
     decimal? TaxBasisTotal,
     decimal? TaxTotal,

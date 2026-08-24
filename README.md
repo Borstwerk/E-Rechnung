@@ -61,7 +61,14 @@ Die Original-PDF wird dabei ausschließlich gelesen und niemals verändert.
 
 Bitte öffnen Sie nach dem ersten Start zunächst **Einstellungen** und hinterlegen Sie dort Ihre
 eigenen Firmendaten. Dazu gehören insbesondere Firmenname und Anschrift sowie – soweit vorhanden –
-USt-IdNr. oder Steuernummer, E-Mail-Adresse und Bankverbindung.
+USt-IdNr. oder Steuernummer, Registerkennung, E-Mail-Adresse und Bankverbindung.
+
+**Wenn Sie keine USt-IdNr. haben:** Eine E-Rechnung muss den Rechnungssteller eindeutig
+ausweisen. Dafür genügt eine dieser drei Angaben – USt-IdNr., Registerkennung (etwa die
+Handelsregisternummer) oder die Lieferanten- beziehungsweise Kreditorennummer, die Ihr Kunde
+Ihnen mitgeteilt hat. Eine Steuernummer allein reicht dafür nicht aus; sie ist eine zulässige
+zusätzliche Angabe, aber keine Ersatzkennung. Die Lieferantennummer tragen Sie je Rechnung im
+Formular ein, weil sie bei jedem Kunden eine andere ist.
 
 Diese Angaben dienen nicht nur als Vorlage für wiederkehrende Felder. Sie helfen der Anwendung
 auch dabei, in einer PDF zuverlässig zu unterscheiden, **wer Rechnungsteller und wer
@@ -171,7 +178,7 @@ Die gesamte Verarbeitung läuft auf Ihrem Rechner.
 ## Eigene Firmendaten
 
 Wiederkehrende Angaben lassen sich einmalig hinterlegen: Firmenname und Anschrift, USt-IdNr. oder
-Steuernummer, E-Mail-Adresse, Kontoinhaber mit IBAN und BIC, Standardwährung,
+Steuernummer, Registerkennung, E-Mail-Adresse, Kontoinhaber mit IBAN und BIC, Standardwährung,
 Zahlungsbedingungen, ein Standardtext für die E-Mail und das Ausgabeverzeichnis. Sensible Angaben
 wie die IBAN werden unter Windows geschützt abgelegt.
 

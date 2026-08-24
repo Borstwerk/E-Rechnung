@@ -598,6 +598,28 @@ public sealed partial class EInvoiceService : IEInvoiceService
             ok = false;
         }
 
+        // BT-29: Die Verkäuferkennung ist eine der drei Angaben, mit denen der
+        // Empfänger den Rechnungssteller maschinell identifiziert. Ginge sie
+        // beim Schreiben verloren oder landete sie an der falschen Stelle,
+        // beanstandete das erst der Empfänger – hier fällt es vorher auf.
+        //
+        // Leer und nicht vorhanden sind dabei dasselbe: Der Schreiber lässt
+        // eine leere Kennung weg, also darf der Vergleich sie nicht vermissen.
+        string? expectedSellerIdentifier =
+            string.IsNullOrWhiteSpace(request.Invoice.Seller.SellerIdentifier)
+                ? null
+                : request.Invoice.Seller.SellerIdentifier;
+
+        if (echo.SellerIdentifier != expectedSellerIdentifier)
+        {
+            report.Error(
+                "APP-USE-014",
+                "Die Verkäuferkennung in den erzeugten Daten weicht von der Eingabe ab.",
+                "Xml",
+                $"Erwartet {expectedSellerIdentifier}, gelesen {echo.SellerIdentifier}");
+            ok = false;
+        }
+
         foreach ((string label, decimal expected, decimal? actual) in new[]
                  {
                      ("Summe der Positionen", totals.LineTotal, echo.LineTotal),

@@ -222,6 +222,28 @@ public sealed partial class InvoiceDraft : ObservableObject
     [ObservableProperty]
     private string _sellerTaxNumber = string.Empty;
 
+    /// <summary>
+    /// Registerkennung (BT-30), etwa eine Handelsregisternummer. Sie
+    /// identifiziert den Rechnungssteller nach BR-CO-26 ebenso wie die
+    /// USt-IdNr. – anders als die Steuernummer.
+    ///
+    /// Sie gehört zum Firmenstamm und wird deshalb aus der Firmenvorlage
+    /// vorbefüllt.
+    /// </summary>
+    [ObservableProperty]
+    private string _sellerLegalRegistrationId = string.Empty;
+
+    /// <summary>
+    /// Verkäuferkennung (BT-29) – die Lieferanten- oder Kreditorennummer, die
+    /// der Kunde vergeben hat. Auch sie erfüllt BR-CO-26.
+    ///
+    /// **Sie steht bewusst nicht in der Firmenvorlage.** Derselbe
+    /// Rechnungssteller trägt bei jedem Kunden eine andere Nummer; global
+    /// gespeichert käme sie an die falsche Rechnung.
+    /// </summary>
+    [ObservableProperty]
+    private string _sellerIdentifier = string.Empty;
+
     [ObservableProperty]
     private string _sellerContactName = string.Empty;
 
@@ -362,6 +384,8 @@ public sealed partial class InvoiceDraft : ObservableObject
         SellerEmail = string.Empty;
         SellerVatId = string.Empty;
         SellerTaxNumber = string.Empty;
+        SellerLegalRegistrationId = string.Empty;
+        SellerIdentifier = string.Empty;
         SellerContactName = string.Empty;
         SellerContactPhone = string.Empty;
 
@@ -530,7 +554,9 @@ public sealed partial class InvoiceDraft : ObservableObject
             VatId: Blank(SellerVatId),
             TaxNumber: Blank(SellerTaxNumber),
             ContactName: Blank(SellerContactName),
-            ContactPhone: Blank(SellerContactPhone));
+            ContactPhone: Blank(SellerContactPhone),
+            LegalRegistrationId: Blank(SellerLegalRegistrationId),
+            SellerIdentifier: Blank(SellerIdentifier));
     }
 
     private BuyerParty? BuildBuyer(ValidationReportBuilder report)

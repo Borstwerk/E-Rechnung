@@ -232,6 +232,15 @@ public sealed class CiiInvoiceWriter : IInvoiceXmlWriter
         // URIUniversalCommunication, SpecifiedTaxRegistration
         Ram(w, "SellerTradeParty", () =>
         {
+            if (!string.IsNullOrWhiteSpace(seller.SellerIdentifier))
+            {
+                // BT-29 ohne Schemakennzeichen: Welche Liste eine vom Kunden
+                // vergebene Lieferanten- oder Kreditorennummer führt, fragt
+                // diese Anwendung nicht ab. Ein geratenes schemeID wäre eine
+                // erfundene Angabe in einer Rechnung.
+                RamText(w, "ID", seller.SellerIdentifier);
+            }
+
             RamText(w, "Name", seller.Name);
 
             if (!string.IsNullOrWhiteSpace(seller.LegalRegistrationId)

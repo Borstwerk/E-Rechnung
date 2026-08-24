@@ -29,6 +29,11 @@ public static class CompanyTemplateSavePlanner
         nameof(InvoiceDraft.SellerEmail),
         nameof(InvoiceDraft.SellerVatId),
         nameof(InvoiceDraft.SellerTaxNumber),
+
+        // BT-30 gehört zum Firmenstamm. BT-29 fehlt hier ausdrücklich: Die vom
+        // Kunden vergebene Lieferantennummer gilt nur für dessen Rechnungen und
+        // stünde global gespeichert auf der nächsten Rechnung an einen anderen.
+        nameof(InvoiceDraft.SellerLegalRegistrationId),
         nameof(InvoiceDraft.BankAccountHolder),
         nameof(InvoiceDraft.BankIban),
         nameof(InvoiceDraft.BankBic),
@@ -76,6 +81,11 @@ public static class CompanyTemplateSavePlanner
             SellerTaxNumber = Approved(
                 draft, nameof(draft.SellerTaxNumber), draft.SellerTaxNumber, existing.SellerTaxNumber,
                 proposal, DetectedOwnCompanyFieldKind.SellerTaxNumber),
+            // Nur von Hand: Es gibt keine PDF-Erkennung für die Registerkennung,
+            // also auch keinen Vorschlag, den der Anwender bestätigen könnte.
+            SellerLegalRegistrationId = Manual(
+                draft, nameof(draft.SellerLegalRegistrationId),
+                draft.SellerLegalRegistrationId, existing.SellerLegalRegistrationId),
             BankAccountHolder = Manual(
                 draft, nameof(draft.BankAccountHolder), draft.BankAccountHolder, existing.BankAccountHolder),
             BankIban = Approved(
@@ -294,6 +304,8 @@ public static class CompanyTemplateSavePlanner
             nameof(InvoiceDraft.SellerEmail) => existing.SellerEmail != candidate.SellerEmail,
             nameof(InvoiceDraft.SellerVatId) => existing.SellerVatId != candidate.SellerVatId,
             nameof(InvoiceDraft.SellerTaxNumber) => existing.SellerTaxNumber != candidate.SellerTaxNumber,
+            nameof(InvoiceDraft.SellerLegalRegistrationId) =>
+                existing.SellerLegalRegistrationId != candidate.SellerLegalRegistrationId,
             nameof(InvoiceDraft.BankAccountHolder) => existing.BankAccountHolder != candidate.BankAccountHolder,
             nameof(InvoiceDraft.BankIban) => existing.BankIban != candidate.BankIban,
             nameof(InvoiceDraft.BankBic) => existing.BankBic != candidate.BankBic,
@@ -309,6 +321,7 @@ public static class CompanyTemplateSavePlanner
         yield return template.SellerEmail;
         yield return template.SellerVatId;
         yield return template.SellerTaxNumber;
+        yield return template.SellerLegalRegistrationId;
         yield return template.BankAccountHolder;
         yield return template.BankIban;
         yield return template.BankBic;

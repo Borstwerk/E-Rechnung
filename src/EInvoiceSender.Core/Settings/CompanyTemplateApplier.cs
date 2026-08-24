@@ -43,6 +43,12 @@ public static class CompanyTemplateApplier
             Set(d, changed, nameof(d.SellerVatId), template.SellerVatId, v => d.SellerVatId = v);
             Set(d, changed, nameof(d.SellerTaxNumber), template.SellerTaxNumber, v => d.SellerTaxNumber = v);
 
+            // BT-30 ist Firmenstamm und kommt aus der Vorlage. BT-29 – die vom
+            // Kunden vergebene Lieferantennummer – steht hier bewusst nicht:
+            // Sie gehört zur einzelnen Rechnung.
+            Set(d, changed, nameof(d.SellerLegalRegistrationId), template.SellerLegalRegistrationId,
+                v => d.SellerLegalRegistrationId = v);
+
             Set(d, changed, nameof(d.BankAccountHolder), template.BankAccountHolder, v => d.BankAccountHolder = v);
             Set(d, changed, nameof(d.BankIban), template.BankIban, v => d.BankIban = v);
             Set(d, changed, nameof(d.BankBic), template.BankBic, v => d.BankBic = v);

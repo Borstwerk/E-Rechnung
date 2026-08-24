@@ -60,6 +60,7 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
 
         XElement? exchangedDocument = root.Element(Rsm + "ExchangedDocument");
         XElement? transaction = root.Element(Rsm + "SupplyChainTradeTransaction");
+        XElement? agreement = transaction?.Element(Ram + "ApplicableHeaderTradeAgreement");
         XElement? settlement = transaction?.Element(Ram + "ApplicableHeaderTradeSettlement");
         XElement? summation = settlement?.Element(Ram + "SpecifiedTradeSettlementHeaderMonetarySummation");
 
@@ -74,6 +75,13 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
             IssueDate: ReadDate(exchangedDocument?.Element(Ram + "IssueDateTime")),
             TypeCode: exchangedDocument?.Element(Ram + "TypeCode")?.Value,
             Currency: settlement?.Element(Ram + "InvoiceCurrencyCode")?.Value,
+            // BT-29 ausdrücklich nur unterhalb von SellerTradeParty: Ein
+            // ram:ID gibt es im Dokument mehrfach – als Rechnungsnummer, in
+            // den Steuerregistrierungen und möglicherweise beim Käufer. Ein
+            // Leser ohne diese Eingrenzung läse je nach Datei etwas anderes.
+            SellerIdentifier: agreement?
+                .Element(Ram + "SellerTradeParty")?
+                .Element(Ram + "ID")?.Value,
             LineTotal: ReadDecimal(summation?.Element(Ram + "LineTotalAmount")),
             TaxBasisTotal: ReadDecimal(summation?.Element(Ram + "TaxBasisTotalAmount")),
             TaxTotal: ReadDecimal(summation?.Element(Ram + "TaxTotalAmount")),

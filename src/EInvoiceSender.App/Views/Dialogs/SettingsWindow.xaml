@@ -48,6 +48,14 @@
           <TextBlock Text="Steuernummer" />
           <TextBox Text="{Binding SellerTaxNumber, UpdateSourceTrigger=PropertyChanged}" TabIndex="8"
                    AutomationProperties.Name="Steuernummer" />
+          <!--
+            BT-30. Sie identifiziert den Rechnungssteller nach BR-CO-26 ebenso
+            wie die USt-IdNr. Die Verkäuferkennung (BT-29) steht dagegen nur im
+            Rechnungsformular: Sie gilt gegenüber einem bestimmten Kunden.
+          -->
+          <TextBlock Text="Registerkennung" />
+          <TextBox Text="{Binding SellerLegalRegistrationId, UpdateSourceTrigger=PropertyChanged}" TabIndex="9"
+                   AutomationProperties.Name="Registerkennung, zum Beispiel die Handelsregisternummer" />
         </UniformGrid>
 
         <TextBlock Style="{StaticResource Abschnitt}" Text="Bankverbindung" />
@@ -56,13 +64,13 @@
                    Margin="0,0,0,6" />
         <UniformGrid Columns="2">
           <TextBlock Text="Kontoinhaber" />
-          <TextBox Text="{Binding BankAccountHolder, UpdateSourceTrigger=PropertyChanged}" TabIndex="9"
+          <TextBox Text="{Binding BankAccountHolder, UpdateSourceTrigger=PropertyChanged}" TabIndex="10"
                    AutomationProperties.Name="Kontoinhaber" />
           <TextBlock Text="IBAN" />
-          <TextBox Text="{Binding BankIban, UpdateSourceTrigger=PropertyChanged}" TabIndex="10"
+          <TextBox Text="{Binding BankIban, UpdateSourceTrigger=PropertyChanged}" TabIndex="11"
                    AutomationProperties.Name="IBAN" />
           <TextBlock Text="BIC" />
-          <TextBox Text="{Binding BankBic, UpdateSourceTrigger=PropertyChanged}" TabIndex="11"
+          <TextBox Text="{Binding BankBic, UpdateSourceTrigger=PropertyChanged}" TabIndex="12"
                    AutomationProperties.Name="BIC" />
         </UniformGrid>
 
@@ -70,25 +78,25 @@
         <UniformGrid Columns="2">
           <TextBlock Text="Währung" />
           <ComboBox ItemsSource="{Binding Currencies}" DisplayMemberPath="Display"
-                    SelectedValuePath="Code" SelectedValue="{Binding DefaultCurrency}" TabIndex="12"
+                    SelectedValuePath="Code" SelectedValue="{Binding DefaultCurrency}" TabIndex="13"
                     AutomationProperties.Name="Standardwährung" />
           <TextBlock Text="Zahlungsziel (Tage)" />
-          <TextBox Text="{Binding DefaultPaymentTermDays, UpdateSourceTrigger=PropertyChanged}" TabIndex="13"
+          <TextBox Text="{Binding DefaultPaymentTermDays, UpdateSourceTrigger=PropertyChanged}" TabIndex="14"
                    AutomationProperties.Name="Standardzahlungsziel in Tagen" />
           <TextBlock Text="Zahlungsbedingungen" />
-          <TextBox Text="{Binding DefaultPaymentTerms, UpdateSourceTrigger=PropertyChanged}" TabIndex="14"
+          <TextBox Text="{Binding DefaultPaymentTerms, UpdateSourceTrigger=PropertyChanged}" TabIndex="15"
                    AutomationProperties.Name="Standardtext der Zahlungsbedingungen" />
           <TextBlock Text="Ausgabeverzeichnis" />
-          <TextBox Text="{Binding LastOutputDirectory, UpdateSourceTrigger=PropertyChanged}" TabIndex="15"
+          <TextBox Text="{Binding LastOutputDirectory, UpdateSourceTrigger=PropertyChanged}" TabIndex="16"
                    AutomationProperties.Name="Ausgabeverzeichnis" />
         </UniformGrid>
 
         <TextBlock Style="{StaticResource Abschnitt}" Text="Vorgaben des E-Mail-Entwurfs" />
         <TextBlock Text="Betreff" />
-        <TextBox Text="{Binding DefaultEmailSubject, UpdateSourceTrigger=PropertyChanged}" TabIndex="16"
+        <TextBox Text="{Binding DefaultEmailSubject, UpdateSourceTrigger=PropertyChanged}" TabIndex="17"
                  AutomationProperties.Name="Standardbetreff" />
         <TextBlock Text="Nachricht" Margin="0,8,0,0" />
-        <TextBox Text="{Binding DefaultEmailBody, UpdateSourceTrigger=PropertyChanged}" TabIndex="17"
+        <TextBox Text="{Binding DefaultEmailBody, UpdateSourceTrigger=PropertyChanged}" TabIndex="18"
                  AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90"
                  VerticalScrollBarVisibility="Auto"
                  AutomationProperties.Name="Standardnachricht" />
@@ -99,11 +107,11 @@
                AutomationProperties.LiveSetting="Polite" />
 
     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-      <Button Content="_Zurücksetzen" Command="{Binding ResetCommand}" TabIndex="20" />
+      <Button Content="_Zurücksetzen" Command="{Binding ResetCommand}" TabIndex="21" />
       <!-- Die Primäraktion dieses Dialogs. -->
-      <Button Content="_Speichern" Command="{Binding SaveCommand}" TabIndex="21" IsDefault="True"
+      <Button Content="_Speichern" Command="{Binding SaveCommand}" TabIndex="22" IsDefault="True"
               Style="{StaticResource BorstWerk.Button.Primary}" />
-      <Button Content="Schließen" Click="OnCloseClicked" TabIndex="22" IsCancel="True" />
+      <Button Content="Schließen" Click="OnCloseClicked" TabIndex="23" IsCancel="True" />
     </StackPanel>
   </Grid>
 </Window>

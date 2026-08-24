@@ -30,24 +30,28 @@ internal static class SellerRules
         }
 
         // BR-CO-26: Der Empfänger muss den Rechnungssteller maschinell
-        // identifizieren können. Dafür zählt die USt-IdNr. (BT-31) oder die
-        // Handelsregisternummer (BT-30).
+        // identifizieren können. Dafür zählt jede der drei Kennungen, die das
+        // CEN-Schematron an dieser Stelle prüft: die Verkäuferkennung (BT-29,
+        // ram:ID), die Handelsregisternummer (BT-30,
+        // SpecifiedLegalOrganization/ram:ID) und die USt-IdNr. (BT-31,
+        // SpecifiedTaxRegistration/ram:ID mit schemeID="VA").
         //
         // **Die Steuernummer (BT-32) zählt ausdrücklich nicht.** Sie steht im
-        // CII als schemeID="FC"; das CEN-Schematron prüft für BR-CO-26 aber
-        // nur schemeID="VA", ram:ID, ram:GlobalID und
-        // SpecifiedLegalOrganization/ram:ID. Sie hier gelten zu lassen hieße,
-        // eine Rechnung durchzuwinken, die jeder externe Prüfer beanstandet –
-        // und der Anwender erführe es erst beim Empfänger.
-        if (string.IsNullOrWhiteSpace(seller.VatId)
-            && string.IsNullOrWhiteSpace(seller.LegalRegistrationId))
+        // CII als schemeID="FC" und ist im Kriterium von BR-CO-26 nicht
+        // enthalten. Sie hier gelten zu lassen hieße, eine Rechnung
+        // durchzuwinken, die jeder externe Prüfer beanstandet – und der
+        // Anwender erführe es erst beim Empfänger.
+        if (string.IsNullOrWhiteSpace(seller.SellerIdentifier)
+            && string.IsNullOrWhiteSpace(seller.LegalRegistrationId)
+            && string.IsNullOrWhiteSpace(seller.VatId))
         {
             report.Error(
                 "APP-SEL-004",
-                "Der Rechnungssteller ist nicht eindeutig identifizierbar. Bitte "
-                + "hinterlegen Sie in Ihren Firmendaten die "
-                + "Umsatzsteuer-Identifikationsnummer. Eine Steuernummer allein "
-                + "genügt dafür nicht.",
+                "Für die elektronische Rechnung fehlt eine eindeutige "
+                + "Verkäuferkennung. Hinterlegen Sie eine USt-ID, eine "
+                + "Registerkennung oder – falls Ihr Kunde Ihnen eine mitgeteilt "
+                + "hat – eine Lieferanten-/Kreditorennummer. Eine Steuernummer "
+                + "allein genügt hierfür nicht.",
                 "Seller.VatId", normRule: "BR-CO-26");
         }
 

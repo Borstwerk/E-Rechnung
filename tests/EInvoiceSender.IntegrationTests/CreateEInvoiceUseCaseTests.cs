@@ -1,5 +1,6 @@
 using System.Runtime.Versioning;
 using System.Text;
+using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Diagnostics;
 using EInvoiceSender.Core.Mail;
 using EInvoiceSender.Core.Models;
@@ -314,6 +315,82 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
         Assert.Contains("NICHT AUSGEFÜHRT", text, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// **Der Nachweis, dass die Gegenprüfung die Verkäuferkennung wirklich
+    /// prüft.** Ein Schreibfehler bei BT-29 fiele sonst erst beim Empfänger
+    /// auf: Die Datei bliebe wohlgeformt, die Summen stimmten, und nur die
+    /// Angabe, mit der der Empfänger den Rechnungssteller identifiziert, wäre
+    /// eine andere als die bestätigte.
+    ///
+    /// Der Schreiber wird dafür nicht nachgebaut, sondern der echte mit einer
+    /// veränderten Kennung gefüttert. So entsteht genau die Datei, die ein
+    /// solcher Fehler erzeugen würde – gültig in allem übrigen.
+    /// </summary>
+    [Fact]
+    public async Task EineVertauschteVerkäuferkennungStopptDieErzeugung()
+    {
+        string source = TempPdf(TestPdfFactory.CreateSimplePdf());
+
+        Invoice invoice = BaseInvoice();
+        invoice = invoice with
+        {
+            Seller = invoice.Seller with { SellerIdentifier = "LIEF-4711" },
+        };
+
+        var request = new CreateEInvoiceRequest(
+            SourcePdfPath: source,
+            Invoice: invoice,
+            ContentMatchConfirmed: true,
+            OutputDirectory: _outputDirectory);
+
+        CreateEInvoiceResult result = await BuildUseCase(
+                new SellerIdentifierTamperingWriter(_writer, "LIEF-0000"))
+            .CreateAsync(request, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Report.Findings, f => f.RuleId == "APP-USE-014");
+
+        // Eine halb fertige Datei wäre schlimmer als gar keine.
+        Assert.Null(result.OutputFile);
+        Assert.False(
+            Directory.Exists(_outputDirectory) && Directory.GetFiles(_outputDirectory).Length > 0);
+    }
+
+    /// <summary>
+    /// Gegenprobe: Ohne Verfälschung trägt derselbe Weg die Kennung durch bis
+    /// in die erzeugte Datei. Ohne sie bewiese der Test oben nur, dass
+    /// irgendetwas scheitert.
+    /// </summary>
+    [Fact]
+    public async Task DieVerkäuferkennungStehtInDerErzeugtenDatei()
+    {
+        string source = TempPdf(TestPdfFactory.CreateSimplePdf());
+
+        Invoice invoice = BaseInvoice();
+        invoice = invoice with
+        {
+            Seller = invoice.Seller with { SellerIdentifier = "LIEF-4711" },
+        };
+
+        CreateEInvoiceResult result = await BuildUseCase().CreateAsync(
+            new CreateEInvoiceRequest(
+                SourcePdfPath: source,
+                Invoice: invoice,
+                ContentMatchConfirmed: true,
+                OutputDirectory: _outputDirectory),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(result.Succeeded, Describe(result));
+
+        PdfAnalysisResult reopened = await _analyzer.AnalyzeAsync(
+            result.OutputFile!.FullPath, TestContext.Current.CancellationToken);
+
+        InvoiceEcho? echo = _reader.ReadEcho(reopened.ExistingInvoiceXml!);
+
+        Assert.NotNull(echo);
+        Assert.Equal("LIEF-4711", echo.SellerIdentifier);
+    }
+
     [Fact]
     public async Task BenutzerabbruchHinterlässtKeineDatei()
     {
@@ -521,12 +598,21 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
     private EInvoiceService BuildUseCase(params IExternalDocumentValidator[] validators)
         => BuildUseCase(new TemporaryWorkspaceFactory(), validators);
 
+    private EInvoiceService BuildUseCase(IInvoiceXmlWriter writer)
+        => BuildUseCase(new TemporaryWorkspaceFactory(), writer);
+
     private EInvoiceService BuildUseCase(
         ITemporaryWorkspaceFactory workspaceFactory, params IExternalDocumentValidator[] validators)
+        => BuildUseCase(workspaceFactory, _writer, validators);
+
+    private EInvoiceService BuildUseCase(
+        ITemporaryWorkspaceFactory workspaceFactory,
+        IInvoiceXmlWriter writer,
+        params IExternalDocumentValidator[] validators)
         => new(
             PipelineParts.Preflight(_analyzer),
             new En16931RuleValidator(new FixedClock(FixedNow)),
-            _writer,
+            writer,
             _reader,
             new PdfAInvoiceComposer(_analyzer, NullLogger<PdfAInvoiceComposer>.Instance),
             PipelineParts.RasterComposer(),
@@ -670,6 +756,26 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
 internal sealed class StubClock(DateTimeOffset now) : IClock
 {
     public DateTimeOffset Now => now;
+}
+
+/// <summary>
+/// Schreibt mit dem echten Schreiber, tauscht aber vorher die Verkäuferkennung
+/// aus. Das bildet einen Schreibfehler bei BT-29 nach, ohne den Schreiber
+/// nachzubauen: Die erzeugte Datei ist in allem übrigen die richtige.
+/// </summary>
+internal sealed class SellerIdentifierTamperingWriter(
+    IInvoiceXmlWriter inner, string? identifier) : IInvoiceXmlWriter
+{
+    public string ProfileId => inner.ProfileId;
+
+    public string FormatDescription => inner.FormatDescription;
+
+    public InvoiceAttachmentDescriptor Attachment => inner.Attachment;
+
+    public byte[] Write(Invoice invoice, InvoiceTotals totals)
+        => inner.Write(
+            invoice with { Seller = invoice.Seller with { SellerIdentifier = identifier } },
+            totals);
 }
 
 /// <summary>

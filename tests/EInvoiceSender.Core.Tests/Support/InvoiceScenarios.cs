@@ -192,6 +192,32 @@ public static class InvoiceScenarios
             ],
             sellerOverride: Seller with { VatId = null, LegalRegistrationId = "HRB 12345" }),
             ExpectedToBeValid: true),
+
+        // Die dritte zulässige Möglichkeit: die Verkäuferkennung (BT-29), also
+        // die Lieferanten- oder Kreditorennummer, die der Kunde vergeben hat.
+        //
+        // Die Steuernummer steht bewusst daneben, weil sie den echten
+        // Anwendungsfall abbildet: Ein Verkäufer ohne USt-IdNr. führt in aller
+        // Regel eine Steuernummer, und genau so sieht seine Rechnung aus.
+        //
+        // Dass BT-32 allein BR-CO-26 nicht erfüllt, belegt dieser Fall nicht –
+        // das tut die Negativvorgabe 93-ohne-kennung. Zusammen ergeben beide
+        // die Aussage: Erst BT-29 liefert die Verkäuferidentifikation, die der
+        // Steuernummer fehlt.
+        new("10-lieferantennummer",
+            "Verkäufer ohne USt-IdNr., dafür mit Lieferantennummer",
+            Build("RE-2026-0010",
+            [
+                Line(1, "Wartung Ladesäulen", 3m, UnitCode.Hour, 95.00m, VatCategory.StandardRate, 19m),
+            ],
+            sellerOverride: Seller with
+            {
+                VatId = null,
+                LegalRegistrationId = null,
+                TaxNumber = "079/123/45678",
+                SellerIdentifier = "LIEF-4711",
+            }),
+            ExpectedToBeValid: true),
     ];
 
     /// <summary>Sucht einen Fall anhand seines Kurznamens.</summary>
