@@ -22,12 +22,25 @@ werden soll.
 
 ## Download
 
+**Aktuelle Version: 0.2.0**
+
 Für Windows 10 und Windows 11 (64 Bit):
 
-- **Empfohlen:** MSI-Installer für die normale Installation
-- **Alternativ:** portable ZIP-Fassung ohne Installation
+- **[MSI-Installer herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.2.0/BorstWerk-E-Rechnung-Setup.msi)** – empfohlen für die normale Installation und Updates
+- **[Portable ZIP herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.2.0/BorstWerk-E-Rechnung-portable-win-x64.zip)** – ohne Installation verwendbar
+- **[SHA-256-Prüfsummen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.2.0/SHA256SUMS.txt)**
 
-[**Aktuelle Version herunterladen**](https://github.com/Borstwerk/E-Rechnung/releases/latest)
+[**Release Notes zu Version 0.2.0**](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.2.0)
+
+## Neu in 0.2.0
+
+- Rechnungspositionen aus klar aufgebauten digitalen PDF-Tabellen erkennen
+- Mengeneinheiten wie Stunde und Stück übernehmen; fehlende Einheiten werden nicht geraten
+- Käuferland, Käufer-USt-ID und Käufer-E-Mail verbessert erkennen
+- EN16931-konforme Verkäuferidentifikation über BT-29, BT-30 oder BT-31
+- sauberer Upgradepfad von 0.1.0 auf 0.2.0
+
+Alle Einzelheiten stehen in den [Release Notes zu Version 0.2.0](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.2.0).
 
 ## Was die Anwendung kann
 
