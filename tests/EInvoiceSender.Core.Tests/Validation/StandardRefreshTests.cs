@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using EInvoiceSender.Core.Calculation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf;
@@ -117,95 +119,181 @@ public sealed class StandardRefreshTests
     // ------------------------------------------------- STD-01b Währungscodes
 
     /// <summary>
-    /// XCG (Karibischer Gulden) ist im Codebestand v17b neu hinzugekommen und
-    /// löst ANG ab.
+    /// **Der Bestand selbst, nicht bloß Stichproben.** Elf Kontrollwerte
+    /// belegen, dass die Trennung funktioniert – sie belegen nicht, dass die
+    /// übrigen 167 Kennungen richtig übernommen wurden. Genau dort sitzt aber
+    /// der gefährliche Fehler: Eine ausgelassene Kennung lehnt stillschweigend
+    /// gültige Rechnungen ab, eine hinzuerfundene lässt ungültige durch, und
+    /// beides fällt niemandem auf, bis es beim Empfänger auffällt.
+    ///
+    /// Deshalb wird hier der vollständige übernommene Bestand gegen die
+    /// Prüfsumme der Primärquelle gerechnet: ZUGFeRD 2.5.2 / Factur-X 1.09.2,
+    /// „EN16931 code lists values v17b“, veröffentlicht 2026-04-16, anzuwenden
+    /// ab 2026-05-15, Liste Currency mit 178 Codes. Kanonische Form: Codes
+    /// alphabetisch sortiert, je Code ein Zeilenvorschub.
     /// </summary>
     [Fact]
-    public void XcgIstNachAktuellemStandGültigUndWirdAngeboten()
+    public void DerÜbernommeneWährungsbestandEntsprichtDerPrimärquelle()
     {
-        Assert.True(CurrencyCodeList.IsOffered("XCG"));
-        Assert.False(CurrencyCodeList.IsWithdrawnFromEn16931("XCG"));
-        Assert.Contains(CurrencyCodeList.All, e => e.Code == "XCG");
+        Assert.Equal(178, CurrencyCodeList.NormCodes.Count);
+
+        string kanonisch = string.Concat(
+            CurrencyCodeList.NormCodes
+                .OrderBy(c => c, StringComparer.Ordinal)
+                .Select(c => c + "\n"));
+
+        string prüfsumme = Convert.ToHexStringLower(
+            SHA256.HashData(Encoding.UTF8.GetBytes(kanonisch)));
+
+        Assert.Equal(
+            "fb4f5fb74e80a59d37ace3a95b0ad1063db70a6e2fa582772e2c865e0f3610b2",
+            prüfsumme);
     }
 
     /// <summary>
-    /// BGN und ANG sind mit v17b aus dem EN-16931-Codebestand entfernt. Sie
-    /// werden nicht mehr angeboten – und, was hier der Punkt ist, sie gelten
-    /// nicht als bloß „unbekannt“, sondern als nachweislich zurückgezogen.
+    /// Nach EN 16931 gültige Kennungen. <c>XXX</c> (keine Währung) und
+    /// <c>STN</c> gehören ausdrücklich dazu – <c>STN</c> steht neben dem
+    /// zurückgezogenen <c>STD</c> und trennt sauber, wer den Bestand kennt und
+    /// wer rät.
     /// </summary>
     [Theory]
-    [InlineData("BGN")]
+    [InlineData("EUR")]
+    [InlineData("XCG")]
+    [InlineData("KZT")]
+    [InlineData("PEN")]
+    [InlineData("XXX")]
+    [InlineData("STN")]
+    public void NormgültigeWährungenWerdenAlsGültigErkannt(string code)
+        => Assert.True(CurrencyCodeList.IsValidPerEn16931(code));
+
+    /// <summary>
+    /// **Der Kern der Rückgabe.** Zurückgezogene Kennungen (<c>ANG</c>,
+    /// <c>BGN</c>, <c>HRK</c>, <c>STD</c>) und ein frei erfundener Code
+    /// (<c>XYZ</c>) fallen in dieselbe Klasse: nach dem abgeglichenen Stand
+    /// ungültig. Eine Negativliste bekannter Rückzüge könnte <c>XYZ</c> nicht
+    /// erfassen – die positive Prüfung gegen den vollständigen Bestand schon.
+    /// </summary>
+    [Theory]
     [InlineData("ANG")]
+    [InlineData("BGN")]
     [InlineData("HRK")]
-    public void ZurückgezogeneWährungenSindNichtMehrGültig(string code)
+    [InlineData("XYZ")]
+    [InlineData("STD")]
+    public void NichtNormgültigeWährungenWerdenAlsUngültigErkannt(string code)
     {
+        Assert.False(CurrencyCodeList.IsValidPerEn16931(code));
         Assert.False(CurrencyCodeList.IsOffered(code));
-        Assert.True(CurrencyCodeList.IsWithdrawnFromEn16931(code));
         Assert.DoesNotContain(CurrencyCodeList.All, e => e.Code == code);
     }
 
     /// <summary>
-    /// **Der Kern der Trennung.** Ein Code, den BorstWerk nicht anbietet, ist
-    /// deshalb nicht normwidrig. Über ihn trifft diese Anwendung schlicht
-    /// keine Aussage – die volle ISO-4217-Liste ist hier nicht abgebildet.
+    /// **Angebot und Norm sind wirklich unabhängig.** <c>XCG</c> ist nach
+    /// v17b gültig – und trotzdem nicht im Angebot, weil es keinen fachlichen
+    /// Grund gibt, es anzubieten. Dass ein Code neu in der Norm ist, ist für
+    /// sich genommen kein Grund, ihn in die Auswahl zu nehmen. Fiele beides
+    /// wieder zusammen, wäre die Trennung nur behauptet.
     /// </summary>
-    [Theory]
-    [InlineData("KZT")]
-    [InlineData("PEN")]
-    [InlineData("NGN")]
-    public void NichtAngeboteneWährungenGeltenNichtAlsZurückgezogen(string code)
+    [Fact]
+    public void XcgIstNormgültigAberNichtImAngebot()
     {
-        Assert.False(CurrencyCodeList.IsOffered(code));
-        Assert.False(CurrencyCodeList.IsWithdrawnFromEn16931(code));
+        Assert.True(CurrencyCodeList.IsValidPerEn16931("XCG"));
+        Assert.False(CurrencyCodeList.IsOffered("XCG"));
+        Assert.DoesNotContain(CurrencyCodeList.All, e => e.Code == "XCG");
+
+        ValidationReport bericht = Prüfe(MitWährung("XCG"));
+
+        Assert.DoesNotContain(bericht.Findings, f => f.RuleId == "APP-DOC-008");
+        Assert.Contains(bericht.Findings, f => f.RuleId == "APP-DOC-011");
     }
 
-    /// <summary>Die Auswahl der Oberfläche bleibt bewusst begrenzt.</summary>
+    /// <summary>
+    /// Die Auswahl der Oberfläche bleibt eine echte Teilmenge des Normbestands
+    /// – und zwar in beide Richtungen geprüft: klein genug, um kuratiert zu
+    /// bleiben, und ohne einen einzigen Eintrag, den die Norm nicht kennt.
+    /// Letzteres ist die eigentliche Absicherung: Ein angebotener Code, der
+    /// normwidrig ist, würde eine unbrauchbare Rechnung erzeugen, ohne dass
+    /// die Oberfläche warnt.
+    /// </summary>
     [Fact]
-    public void DieAngeboteneWährungsauswahlBleibtEineTeilmenge()
+    public void DasAngebotIstEineEchteTeilmengeDesNormbestands()
     {
-        // Rund 180 Währungen sind nach ISO 4217 aktiv. Die Auswahl hier ist
-        // eine kuratierte Teilmenge und soll es bleiben.
         Assert.InRange(CurrencyCodeList.All.Count, 20, 80);
         Assert.Contains(CurrencyCodeList.All, e => e.Code == "EUR");
+
+        foreach ((string code, _) in CurrencyCodeList.All)
+        {
+            Assert.True(
+                CurrencyCodeList.IsValidPerEn16931(code),
+                $"Angeboten, aber nicht im EN-16931-Codebestand v17b: {code}");
+        }
+    }
+
+    /// <summary>
+    /// Die Rückzugserläuterungen dürfen dem Bestand nie widersprechen: Was
+    /// hier als zurückgezogen erklärt wird, darf nicht gleichzeitig als
+    /// gültig geführt werden. Sonst stünde in einem Befund eine Begründung,
+    /// die das Regelwerk selbst widerlegt.
+    /// </summary>
+    [Theory]
+    [InlineData("ANG")]
+    [InlineData("BGN")]
+    [InlineData("HRK")]
+    public void RückzugserläuterungenWidersprechenDemBestandNicht(string code)
+    {
+        Assert.True(CurrencyCodeList.TryGetWithdrawalReason(code, out string? grund));
+        Assert.False(string.IsNullOrWhiteSpace(grund));
+        Assert.False(CurrencyCodeList.IsValidPerEn16931(code));
     }
 
     /// <summary>Der Regelfall bleibt unberührt.</summary>
     [Fact]
-    public void EuroBleibtUnverändertGültig()
+    public void EuroBleibtUnverändertGültigUndAngeboten()
     {
+        Assert.True(CurrencyCodeList.IsValidPerEn16931("EUR"));
         Assert.True(CurrencyCodeList.IsOffered("EUR"));
-        Assert.False(CurrencyCodeList.IsWithdrawnFromEn16931("EUR"));
         Assert.True(CurrencyCodeList.TryGetName("eur", out string? name));
         Assert.Equal("Euro", name);
+
+        Assert.DoesNotContain(
+            Prüfe(MitWährung("EUR")).Findings,
+            f => f.RuleId is "APP-DOC-008" or "APP-DOC-011");
     }
 
     // ------------------------------------- STD-01b Regelwerk: Währungsbefund
 
     /// <summary>
-    /// Eine zurückgezogene Währung ist ein echter Normbefund und bleibt ein
-    /// Fehler.
+    /// Eine nicht normgültige Währung ist ein Fehler – und trägt den
+    /// zutreffenden Normverweis.
+    ///
+    /// **Nicht BR-05.** Die Regel lautet im EN-16931-Schematron des gepinnten
+    /// Prüfwerkzeugs „An Invoice shall have an Invoice currency code (BT-5)“
+    /// und prüft damit nur das Vorhandensein. Für die Codeliste zuständig ist
+    /// `BR-CL-04`: „Invoice currency code MUST be coded using ISO code list
+    /// 4217 alpha-3“.
     /// </summary>
-    [Fact]
-    public void EineZurückgezogeneWährungBleibtEinFehler()
+    [Theory]
+    [InlineData("BGN")]
+    [InlineData("XYZ")]
+    public void EineUngültigeWährungIstEinFehlerMitBrCl04(string code)
     {
-        ValidationReport bericht = Prüfe(MitWährung("BGN"));
-
         ValidationFinding befund = Assert.Single(
-            bericht.Findings, f => f.RuleId == "APP-DOC-008");
+            Prüfe(MitWährung(code)).Findings, f => f.RuleId == "APP-DOC-008");
 
         Assert.Equal(FindingSeverity.Error, befund.Severity);
-        Assert.Equal("BR-05", befund.NormRule);
+        Assert.Equal("BR-CL-04", befund.NormRule);
     }
 
     /// <summary>
-    /// **Der eigentliche Fix.** Eine nicht angebotene, aber nirgends als
-    /// zurückgezogen belegte Währung darf kein Normverstoß mehr sein. Sie ist
-    /// ein Hinweis – und der Befund sagt ausdrücklich, wer das entscheidet.
+    /// **Der eigentliche Fix.** Eine normgültige, hier nur nicht angebotene
+    /// Währung ist kein Normverstoß mehr, sondern ein Hinweis – und der
+    /// Hinweis trägt keinen Normverweis, weil er über die Norm nichts sagt.
     /// </summary>
-    [Fact]
-    public void EineNichtAngeboteneWährungIstNurNochEinHinweis()
+    [Theory]
+    [InlineData("KZT")]
+    [InlineData("PEN")]
+    public void EineNormgültigeAberNichtAngeboteneWährungIstNurEinHinweis(string code)
     {
-        ValidationReport bericht = Prüfe(MitWährung("KZT"));
+        ValidationReport bericht = Prüfe(MitWährung(code));
 
         Assert.DoesNotContain(bericht.Findings, f => f.RuleId == "APP-DOC-008");
 
@@ -213,8 +301,6 @@ public sealed class StandardRefreshTests
             bericht.Findings, f => f.RuleId == "APP-DOC-011");
 
         Assert.Equal(FindingSeverity.Warning, befund.Severity);
-
-        // Kein Normverweis: Über die Normgültigkeit sagt dieser Befund nichts.
         Assert.Null(befund.NormRule);
         Assert.Contains("nicht", befund.Message, StringComparison.OrdinalIgnoreCase);
     }

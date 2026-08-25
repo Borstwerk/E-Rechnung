@@ -28,8 +28,14 @@ public sealed class CodeListTests
     public void CurrencyCodeList_IsOffered_TrimsWhitespace()
         => Assert.True(CurrencyCodeList.IsOffered("  EUR  "));
 
+    /// <summary>
+    /// XXX ist nach ISO 4217 vergeben („keine Währung“) und deshalb
+    /// normgültig – zur Auswahl angeboten wird es trotzdem nicht. Genau
+    /// diesen Unterschied hält <see cref="CurrencyCodeList.IsOffered"/>
+    /// offen; er wird in <c>StandardRefreshTests</c> vollständig geprüft.
+    /// </summary>
     [Fact]
-    public void CurrencyCodeList_IsOffered_RejectsUnknownCode()
+    public void CurrencyCodeList_IsOffered_RejectsCodeOutsideTheCuratedSelection()
         => Assert.False(CurrencyCodeList.IsOffered("XXX"));
 
     [Theory]
@@ -38,6 +44,21 @@ public sealed class CodeListTests
     [InlineData("   ")]
     public void CurrencyCodeList_IsOffered_RejectsNullOrEmpty(string? code)
         => Assert.False(CurrencyCodeList.IsOffered(code));
+
+    [Fact]
+    public void CurrencyCodeList_IsValidPerEn16931_IsCaseInsensitive()
+        => Assert.True(CurrencyCodeList.IsValidPerEn16931("eur"));
+
+    [Fact]
+    public void CurrencyCodeList_IsValidPerEn16931_TrimsWhitespace()
+        => Assert.True(CurrencyCodeList.IsValidPerEn16931("  EUR  "));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void CurrencyCodeList_IsValidPerEn16931_RejectsNullOrEmpty(string? code)
+        => Assert.False(CurrencyCodeList.IsValidPerEn16931(code));
 
     [Fact]
     public void CurrencyCodeList_TryGetName_ReturnsGermanName()
@@ -49,7 +70,7 @@ public sealed class CodeListTests
     }
 
     [Fact]
-    public void CurrencyCodeList_TryGetName_FailsForUnknownCode()
+    public void CurrencyCodeList_TryGetName_FailsForCodeOutsideTheCuratedSelection()
     {
         bool found = CurrencyCodeList.TryGetName("XXX", out string? name);
 

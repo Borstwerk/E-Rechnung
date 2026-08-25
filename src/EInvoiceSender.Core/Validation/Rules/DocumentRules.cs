@@ -101,33 +101,40 @@ internal static class DocumentRules
                 + "entscheidet die externe Prüfung (BR-CL-01).");
         }
 
-        // Zwei verschiedene Aussagen, und sie dürfen nicht zusammenfallen:
+        // Zwei verschiedene Aussagen, und sie dürfen nicht zusammenfallen.
+        // Die Reihenfolge ist deshalb keine Geschmacksfrage: Zuerst die Norm,
+        // dann das Angebot dieser Anwendung.
         //
-        // Ein aus dem gepinnten EN-16931-Codebestand entfernter Code ist ein
-        // echter Normbefund – BR-05 verlangt eine gültige ISO-4217-Kennung,
-        // und für diese wenigen Codes ist der Rückzug belegt.
+        // Der Normbefund beruht auf dem **vollständigen** Codebestand v17b,
+        // nicht auf einer Liste bekannter Ausfälle. Nur so lässt sich ein
+        // erfundener Code wie XYZ von einem gültigen, hier bloß nicht
+        // angebotenen wie KZT unterscheiden.
         //
-        // Ein Code dagegen, den diese Anwendung nur nicht anbietet, sagt über
-        // die Norm nichts. Rund 180 Währungen sind aktiv; die volle Liste ist
-        // hier nicht abgebildet. Ihn als Normverstoß auszugeben hieße, eine
-        // Grenze dieses Programms als Grenze der Norm auszugeben.
-        if (CurrencyCodeList.IsWithdrawnFromEn16931(invoice.Currency.Value))
+        // Der Normverweis lautet BR-CL-04 („Invoice currency code MUST be
+        // coded using ISO code list 4217 alpha-3“), nicht BR-05: BR-05
+        // verlangt nur, dass BT-5 überhaupt vorhanden ist. Beide Wortlaute
+        // sind im EN-16931-Schematron des gepinnten Prüfwerkzeugs belegt.
+        if (!CurrencyCodeList.IsValidPerEn16931(invoice.Currency.Value))
         {
             CurrencyCodeList.TryGetWithdrawalReason(invoice.Currency.Value, out string? reason);
 
             report.Error(
                 "APP-DOC-008",
-                $"'{invoice.Currency.Value}' ist keine gültige Währungskennung mehr. Bitte "
+                $"'{invoice.Currency.Value}' ist keine gültige Währungskennung. Bitte "
                 + "verwenden Sie eine aktuelle Kennung nach ISO 4217, zum Beispiel EUR.",
-                "Currency", reason, "BR-05");
+                "Currency",
+                reason ?? "Nicht im EN-16931-Codebestand v17b enthalten.",
+                "BR-CL-04");
         }
         else if (!CurrencyCodeList.IsOffered(invoice.Currency.Value))
         {
+            // Normgültig, nur nicht im Angebot. Das ist eine Grenze dieses
+            // Programms – sie als Grenze der Norm auszugeben wäre der Fehler,
+            // den dieser Zweig gerade vermeidet. Deshalb kein Normverweis.
             report.Warning(
                 "APP-DOC-011",
-                $"Die Währung '{invoice.Currency.Value}' wird von dieser Anwendung nicht "
-                + "angeboten. Ob sie nach ISO 4217 gültig ist, entscheidet die externe "
-                + "Prüfung – hier wird darüber keine Aussage getroffen.",
+                $"Die Währung '{invoice.Currency.Value}' ist nach ISO 4217 gültig, wird von "
+                + "dieser Anwendung aber nicht zur Auswahl angeboten.",
                 "Currency",
                 "Nicht in der kuratierten Auswahl dieser Anwendung enthalten.");
         }
