@@ -2,9 +2,9 @@
 
 ## Status
 
-**Umsetzung und Windows-Abnahme abgeschlossen – Releasevorbereitung**
+**Veröffentlicht**
 
-Diese Datei dokumentiert die verbindlichen Anforderungen für Version 0.2.0 sowie deren Nachweise. Die Umsetzung und Windows-Abnahme der verpflichtenden Anforderungen sind abgeschlossen. Tag und Veröffentlichung von Version 0.2.0 erfolgen erst nach dem abschließenden RC-/Release-Gate.
+Diese Datei dokumentiert die verbindlichen Anforderungen für Version 0.2.0 sowie deren Nachweise. Version 0.2.0 wurde nach bestandener automatisierter Prüfung, Windows-Abnahme und Releaseprüfung veröffentlicht.
 
 ## Produktgrenzen
 
