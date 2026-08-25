@@ -134,12 +134,23 @@ public sealed class En16931RuleValidatorTests
         ErwarteFehler(Prüfe(kaputt), "APP-DOC-006");
     }
 
+    /// <summary>
+    /// Nur eine nachweislich zurückgezogene Währung ist ein Normbefund.
+    ///
+    /// **Was dieser Test früher behauptete.** Er verlangte einen Fehler für
+    /// jeden Code außerhalb der kuratierten Auswahl – und schrieb damit die
+    /// Verwechslung fest, um die es in ER-030-STD-01b geht: „von BorstWerk
+    /// nicht angeboten“ ist keine Aussage über die Norm. Der frühere
+    /// Beispielcode XYZ ist nirgends als zurückgezogen belegt; er ist jetzt
+    /// ein Hinweis, kein Fehler. Die genaue Abgrenzung prüft
+    /// <c>StandardRefreshTests</c>.
+    /// </summary>
     [Fact]
-    public void Dokument_UnbekannteWährung_LöstFehlerAus()
+    public void Dokument_ZurückgezogeneWährung_LöstFehlerAus()
     {
         ErwarteKeinenFehler(Prüfe(BaseInvoice), "APP-DOC-008");
 
-        Invoice kaputt = BaseInvoice with { Currency = CurrencyCode.Parse("XYZ") };
+        Invoice kaputt = BaseInvoice with { Currency = CurrencyCode.Parse("BGN") };
 
         ErwarteFehler(Prüfe(kaputt), "APP-DOC-008");
     }

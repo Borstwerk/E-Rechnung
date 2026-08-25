@@ -18,27 +18,35 @@ Jede Angabe trägt eine Vertrauensangabe:
 
 | Eigenschaft | Festlegung |
 |---|---|
-| Format | ZUGFeRD 2.3.x / Factur-X 1.07.x (Hybridrechnung) |
+| Format | ZUGFeRD 2.5.2 / Factur-X 1.09.2 (Hybridrechnung) |
 | Profil | **EN 16931 (COMFORT)** |
-| Syntax | UN/CEFACT Cross Industry Invoice (CII), D16B |
+| Syntax | UN/CEFACT Cross Industry Invoice (CII), D22B |
 | Trägerformat | PDF/A-3, Konformitätsstufe **B** |
 | Anhangname | `factur-x.xml` |
 | Zeichensatz | UTF-8 |
 
-**Begründung der Versionswahl:** Der Profil-URN, der Dateiname des Anhangs und
-das XMP-Extension-Schema sind über ZUGFeRD 2.1 bis 2.5 hinweg unverändert. D16B
-wird von D22B-Verarbeitern (ZUGFeRD 2.4+) akzeptiert. Die Neuerungen in 2.4/2.5
-betreffen im Wesentlichen das Profil EXTENDED und französische CTC-Anforderungen
-und sind für diesen Anwendungsfall ohne Bedeutung. Eine erzeugte Datei ist damit
-für jeden Empfänger ab ZUGFeRD 2.0.1 lesbar.
+**Was der Versionssprung bedeutet – und was nicht.** Geändert hat sich allein
+die Fassung, gegen die abgeglichen wird. Der Profil-URN, die Namensräume, der
+Dateiname des Anhangs, MIME-Typ, Dateibeziehung und das XMP-Extension-Schema
+sind über ZUGFeRD 2.1 bis 2.5 hinweg unverändert; insbesondere bleibt
+`fx:Version` bei `1.0`, weil das die Fassung des Extension-Schemas bezeichnet
+und nicht die des Standards.
+
+Die erzeugten XML-Strukturen wurden gegen die Factur-X-1.09.2-EN16931-XSD
+stichprobenartig geprüft und waren gültig. Ein vorsorglicher Umbau des Writers
+von D16B auf D22B fand deshalb bewusst **nicht** statt: Er würde eine
+funktionierende Erzeugung ohne konkreten Befund anfassen. Eine Änderung am
+Writer erfolgt erst, wenn ein XSD- oder Schematron-Befund sie erzwingt.
+
+Eine erzeugte Datei bleibt für jeden Empfänger ab ZUGFeRD 2.0.1 lesbar.
 
 ### Versionslage (Kontext)
 
 | Version | Veröffentlichung | Bemerkung |
 |---|---|---|
-| ZUGFeRD 2.3.3 / Factur-X 1.07.3 | 2025-05-07 **[S]** | Erzeugungsziel dieser Anwendung |
+| ZUGFeRD 2.3.3 / Factur-X 1.07.3 | 2025-05-07 **[S]** | vorheriges Erzeugungsziel (bis 0.2.0) |
 | ZUGFeRD 2.4 / Factur-X 1.08 | 2025-12-04, anzuwenden ab 2026-01-15 **[S]** | Basis CII D22B, abwärtskompatibel |
-| ZUGFeRD 2.5 / Factur-X 1.09 | 2026-06-10 (Teil 1) **[S]** | Zweite Teilveröffentlichung angekündigt |
+| ZUGFeRD 2.5.2 / Factur-X 1.09.2 | **[S]** | Erzeugungsziel dieser Anwendung ab 0.3.0 |
 
 Ältere Fassungen ab ZUGFeRD 2.0.1 bleiben umsatzsteuerlich gültig **[S]**.
 
@@ -199,15 +207,65 @@ Richtigkeit der Rechnung verantwortet der Benutzer.
 
 | Zweck | Liste | Umsetzung |
 |---|---|---|
-| Rechnungsart (BT-3) | UNTDID 1001 | Teilmenge: 380, 381, 384, 389 |
-| Währung (BT-5) | ISO 4217 | Prüfung gegen eingebettete Liste |
+| Rechnungsart (BT-3) | UNTDID 1001 | Teilmenge: 380, 381, 384, 386, 389, 875, 876, 877 |
+| Währung (BT-5) | ISO 4217 | kuratierte Auswahl, siehe unten |
 | Land (BT-40/BT-55) | ISO 3166-1 alpha-2 | Prüfung gegen eingebettete Liste |
-| Einheit (BT-130) | UN/ECE Rec. 20 + 21 | Teilmenge, siehe `UnitCodes.cs` |
+| Einheit (BT-130) | UN/ECE Rec. 20 + 21 | kuratierte Auswahl, siehe `UnitCodeList.cs` |
 | Steuerkategorie (BT-118/BT-151) | UNTDID 5305 | S, Z, E, AE, K, G, O |
 | Zahlungsart (BT-81) | UNTDID 4461 | 30 (Überweisung), 58 (SEPA), 42, 48, 49, 57, 68, 97, 1 |
 
-Die Listen sind als statische Daten im Projekt `EInvoiceSender.Validation`
-hinterlegt. Sie werden **nicht** zur Laufzeit aus dem Netz geladen.
+Die Listen sind als statische Daten hinterlegt. Sie werden **nicht** zur
+Laufzeit aus dem Netz geladen.
+
+### Angebot und Norm sind zweierlei
+
+Die Listen oben sind **kuratierte Auswahlen**: Aufgenommen ist nur, was diese
+Anwendung zur Erstellung anbietet und dessen Bedeutung hier geprüft ist. Sie
+sind ausdrücklich keine Abbildung der vollen Normlisten – ISO 4217 führt rund
+180 aktive Währungen, Rec. 20/21 mehrere hundert Einheiten.
+
+Daraus folgt eine Unterscheidung, die der Code seit 0.3.0 auch benennt:
+
+- **„von BorstWerk nicht angeboten"** ist eine Aussage über dieses Programm.
+- **„nach EN 16931 ungültig"** ist eine Aussage über die Norm.
+
+Das eine als das andere auszugeben wäre besonders im späteren Prüfmodus
+schädlich: Eine fremde, gültige E-Rechnung dürfte nie beanstandet werden, nur
+weil BorstWerk den betreffenden Wert selbst nicht zur Auswahl stellt.
+
+Umgesetzt ist das so:
+
+| Fall | Verhalten |
+|---|---|
+| Währung nachweislich aus dem Codebestand entfernt (`ANG`, `BGN`, `HRK`) | Fehler `APP-DOC-008` mit Normverweis `BR-05` |
+| Währung nur nicht angeboten | Hinweis `APP-DOC-011`, **ohne** Normverweis |
+| Einheit nicht unterstützt | Fehler `APP-LIN-005` ohne Normverweis – die Erzeugung wird angehalten, ein Normverstoß wird nicht behauptet |
+| Steuerkategorie `L`, `M` | im Modell nicht vorhanden; normgerecht, aber nicht erzeugbar |
+
+Der gepinnte Codebestand ist der EN-16931-Stand v17b. Gegenüber dem vorigen
+Stand ist `XCG` (Karibischer Gulden) neu; `ANG` und `BGN` sind entfallen.
+
+### Bekannte Lücken
+
+Diese Punkte sind erkannt und bewusst **nicht** in diesem Slice umgesetzt:
+
+- **ISO/IEC 6523 ICD und EAS.** Beide Listen sind im Repository nicht
+  modelliert. `BT-49-1` wird als freier Text geführt, mit `EM` als einzigem
+  benannten Wert. Die Neuzugänge des Stands v17b – ICD `0245`–`0248`, EAS
+  `0242`, `0245`, `0246` (German Electronic Business Address), `0248` – sind
+  damit weder abgebildet noch geprüft. Eine eigene Identifikationsarchitektur
+  dafür gehört in einen eigenen Codelisten-Slice, nicht hierher.
+- **CII-SR-470** (vormals `BR-CO-27`): Im Factur-X-1.09.2-Schematron
+  umbenannt, fachlich unverändert – bei den Zahlungsarten 30 und 58 darf für
+  BT-84 entweder eine IBAN oder eine proprietäre Kennung stehen, nicht beides.
+  Im Repository gibt es zu dieser Regel bisher **keine** Fundstelle: Weder die
+  alte noch die neue Bezeichnung kommt vor, und die Ausschlussregel selbst ist
+  nicht umgesetzt. Es war also nichts umzubenennen. Die Regel bleibt der
+  externen Prüfung überlassen.
+- **Rechnungsart (BT-3).** `APP-DOC-007` meldet eine nicht unterstützte
+  Rechnungsart weiterhin mit dem Normverweis `BR-CO-03` und wiederholt damit
+  dieselbe Verwechslung, die bei Währung und Einheit aufgelöst wurde. Der Fall
+  war nicht Teil dieses Auftrags und ist unverändert geblieben.
 
 ---
 

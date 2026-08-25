@@ -17,27 +17,27 @@ public sealed class CodeListTests
     [InlineData("EUR")]
     [InlineData("USD")]
     [InlineData("CHF")]
-    public void CurrencyCodeList_IsValid_AcceptsKnownCodes(string code)
-        => Assert.True(CurrencyCodeList.IsValid(code));
+    public void CurrencyCodeList_IsOffered_AcceptsKnownCodes(string code)
+        => Assert.True(CurrencyCodeList.IsOffered(code));
 
     [Fact]
-    public void CurrencyCodeList_IsValid_IsCaseInsensitive()
-        => Assert.True(CurrencyCodeList.IsValid("eur"));
+    public void CurrencyCodeList_IsOffered_IsCaseInsensitive()
+        => Assert.True(CurrencyCodeList.IsOffered("eur"));
 
     [Fact]
-    public void CurrencyCodeList_IsValid_TrimsWhitespace()
-        => Assert.True(CurrencyCodeList.IsValid("  EUR  "));
+    public void CurrencyCodeList_IsOffered_TrimsWhitespace()
+        => Assert.True(CurrencyCodeList.IsOffered("  EUR  "));
 
     [Fact]
-    public void CurrencyCodeList_IsValid_RejectsUnknownCode()
-        => Assert.False(CurrencyCodeList.IsValid("XXX"));
+    public void CurrencyCodeList_IsOffered_RejectsUnknownCode()
+        => Assert.False(CurrencyCodeList.IsOffered("XXX"));
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void CurrencyCodeList_IsValid_RejectsNullOrEmpty(string? code)
-        => Assert.False(CurrencyCodeList.IsValid(code));
+    public void CurrencyCodeList_IsOffered_RejectsNullOrEmpty(string? code)
+        => Assert.False(CurrencyCodeList.IsOffered(code));
 
     [Fact]
     public void CurrencyCodeList_TryGetName_ReturnsGermanName()
@@ -162,27 +162,27 @@ public sealed class CodeListTests
     [InlineData("C62")]
     [InlineData("HUR")]
     [InlineData("KGM")]
-    public void UnitCodeList_IsValid_AcceptsKnownCodes(string code)
-        => Assert.True(UnitCodeList.IsValid(code));
+    public void UnitCodeList_IsSupported_AcceptsKnownCodes(string code)
+        => Assert.True(UnitCodeList.IsSupported(code));
 
     [Fact]
-    public void UnitCodeList_IsValid_IsCaseInsensitive()
-        => Assert.True(UnitCodeList.IsValid("hur"));
+    public void UnitCodeList_IsSupported_IsCaseInsensitive()
+        => Assert.True(UnitCodeList.IsSupported("hur"));
 
     [Fact]
-    public void UnitCodeList_IsValid_TrimsWhitespace()
-        => Assert.True(UnitCodeList.IsValid(" HUR "));
+    public void UnitCodeList_IsSupported_TrimsWhitespace()
+        => Assert.True(UnitCodeList.IsSupported(" HUR "));
 
     [Fact]
-    public void UnitCodeList_IsValid_RejectsUnknownCode()
-        => Assert.False(UnitCodeList.IsValid("ZZZ"));
+    public void UnitCodeList_IsSupported_RejectsUnknownCode()
+        => Assert.False(UnitCodeList.IsSupported("ZZZ"));
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void UnitCodeList_IsValid_RejectsNullOrEmpty(string? code)
-        => Assert.False(UnitCodeList.IsValid(code));
+    public void UnitCodeList_IsSupported_RejectsNullOrEmpty(string? code)
+        => Assert.False(UnitCodeList.IsSupported(code));
 
     [Fact]
     public void UnitCodeList_TryGetName_ReturnsGermanName()
@@ -207,7 +207,7 @@ public sealed class CodeListTests
     {
         foreach ((string code, string _) in UnitCodeList.CommonUnits)
         {
-            Assert.True(UnitCodeList.IsValid(code), $"CommonUnits-Code '{code}' ist nicht in UnitCodeList gültig.");
+            Assert.True(UnitCodeList.IsSupported(code), $"CommonUnits-Code '{code}' ist nicht in UnitCodeList gültig.");
         }
     }
 

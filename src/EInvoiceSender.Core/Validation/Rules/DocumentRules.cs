@@ -89,13 +89,35 @@ internal static class DocumentRules
                 $"Code {(int)invoice.TypeCode}", "BR-CO-03");
         }
 
-        if (!CurrencyCodeList.IsValid(invoice.Currency.Value))
+        // Zwei verschiedene Aussagen, und sie dürfen nicht zusammenfallen:
+        //
+        // Ein aus dem gepinnten EN-16931-Codebestand entfernter Code ist ein
+        // echter Normbefund – BR-05 verlangt eine gültige ISO-4217-Kennung,
+        // und für diese wenigen Codes ist der Rückzug belegt.
+        //
+        // Ein Code dagegen, den diese Anwendung nur nicht anbietet, sagt über
+        // die Norm nichts. Rund 180 Währungen sind aktiv; die volle Liste ist
+        // hier nicht abgebildet. Ihn als Normverstoß auszugeben hieße, eine
+        // Grenze dieses Programms als Grenze der Norm auszugeben.
+        if (CurrencyCodeList.IsWithdrawnFromEn16931(invoice.Currency.Value))
         {
+            CurrencyCodeList.TryGetWithdrawalReason(invoice.Currency.Value, out string? reason);
+
             report.Error(
                 "APP-DOC-008",
-                $"'{invoice.Currency.Value}' ist keine bekannte Währung. Bitte verwenden "
-                + "Sie eine Währungskennung nach ISO 4217, zum Beispiel EUR.",
-                "Currency", normRule: "BR-05");
+                $"'{invoice.Currency.Value}' ist keine gültige Währungskennung mehr. Bitte "
+                + "verwenden Sie eine aktuelle Kennung nach ISO 4217, zum Beispiel EUR.",
+                "Currency", reason, "BR-05");
+        }
+        else if (!CurrencyCodeList.IsOffered(invoice.Currency.Value))
+        {
+            report.Warning(
+                "APP-DOC-011",
+                $"Die Währung '{invoice.Currency.Value}' wird von dieser Anwendung nicht "
+                + "angeboten. Ob sie nach ISO 4217 gültig ist, entscheidet die externe "
+                + "Prüfung – hier wird darüber keine Aussage getroffen.",
+                "Currency",
+                "Nicht in der kuratierten Auswahl dieser Anwendung enthalten.");
         }
 
         ValidatePeriod(

@@ -9,16 +9,29 @@ namespace EInvoiceSender.Core.Validation;
 /// einen Fehler macht, gehört in die Validierungsregeln, nicht hierher.
 /// </summary>
 /// <remarks>
-/// Diese Liste ist eine <b>kuratierte Teilmenge</b> von ISO 4217: der
-/// Euro-Raum, die übrigen EU-/EWR-Währungen sowie die im internationalen
-/// Zahlungsverkehr gängigsten Währungen. Sie erhebt keinen Anspruch auf
-/// Vollständigkeit gegenüber der vollen ISO-4217-Liste (rund 180 aktive
-/// Währungen). Ein Code, der hier nicht enthalten ist, ist deshalb
-/// <b>nicht automatisch ungültig</b> – aufrufender Code sollte einen
-/// unbekannten Code als Warnung behandeln, nicht als harten Fehler.
-/// HRK (Kroatische Kuna) ist seit der Euro-Einführung Kroatiens 2023 in
-/// ISO 4217 zurückgezogen; sie ist hier trotzdem als historischer Wert
-/// geführt, da Altbelege damit referenziert sein können.
+/// <para>
+/// Diese Liste kennt <b>zwei verschiedene Aussagen</b>, und das ist ihr
+/// eigentlicher Zweck:
+/// </para>
+/// <list type="bullet">
+///   <item><see cref="IsOffered"/> – „diesen Code bietet BorstWerk zur
+///   Erstellung an“. Eine <b>kuratierte Teilmenge</b> von ISO 4217: der
+///   Euro-Raum, die übrigen EU-/EWR-Währungen und die im internationalen
+///   Zahlungsverkehr gängigsten Währungen. Rund 180 Währungen sind nach
+///   ISO 4217 aktiv; die volle Liste ist hier bewusst nicht abgebildet.</item>
+///   <item><see cref="IsWithdrawnFromEn16931"/> – „dieser Code ist aus dem
+///   gepinnten EN-16931-Codebestand entfernt“. Das ist eine Aussage über die
+///   Norm und trifft nur auf die wenigen Codes zu, deren Rückzug hier belegt
+///   ist.</item>
+/// </list>
+/// <para>
+/// Ein Code, der <b>weder</b> angeboten <b>noch</b> als zurückgezogen geführt
+/// wird, ist damit ausdrücklich <b>nicht</b> als normwidrig gekennzeichnet –
+/// über ihn trifft diese Anwendung schlicht keine Aussage. Beides zu
+/// vermengen wäre besonders im späteren Prüfmodus fatal: Eine fremde, gültige
+/// E-Rechnung dürfte nie beanstandet werden, nur weil BorstWerk ihre Währung
+/// selbst nicht zur Auswahl stellt.
+/// </para>
 /// </remarks>
 public static class CurrencyCodeList
 {
@@ -41,8 +54,6 @@ public static class CurrencyCodeList
         ["CZK"] = "Tschechische Krone",
         ["HUF"] = "Ungarischer Forint",
         ["RON"] = "Rumänischer Leu",
-        ["BGN"] = "Bulgarischer Lew",
-        ["HRK"] = "Kroatische Kuna (zurückgezogen seit 2023)",
         ["TRY"] = "Türkische Lira",
         ["RUB"] = "Russischer Rubel",
         ["UAH"] = "Ukrainische Hrywnja",
@@ -68,6 +79,20 @@ public static class CurrencyCodeList
         ["PHP"] = "Philippinischer Peso",
         ["VND"] = "Vietnamesischer Dong",
         ["TWD"] = "Neuer Taiwan-Dollar",
+        ["XCG"] = "Karibischer Gulden",
+    }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Codes, die aus dem von BorstWerk gepinnten EN-16931-Codebestand
+    /// entfernt sind. Anders als bei einem schlicht nicht angebotenen Code ist
+    /// hier belegt, dass er nicht mehr gilt – deshalb darf das Regelwerk ihn
+    /// als Normbefund behandeln.
+    /// </summary>
+    private static readonly FrozenDictionary<string, string> Withdrawn = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["ANG"] = "Niederländische-Antillen-Gulden, abgelöst durch XCG",
+        ["BGN"] = "Bulgarischer Lew, mit dem Codebestand v17b entfernt",
+        ["HRK"] = "Kroatische Kuna, seit der Euro-Einführung Kroatiens 2023 zurückgezogen",
     }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -79,12 +104,19 @@ public static class CurrencyCodeList
                  .OrderBy(e => e.Code, StringComparer.Ordinal)];
 
     /// <summary>
-    /// Prüft, ob <paramref name="code"/> in der kuratierten Teilmenge
-    /// enthalten ist. Gross-/Kleinschreibung und umgebende Leerzeichen
-    /// spielen keine Rolle. Liefert <see langword="false"/> bei
-    /// <see langword="null"/>, leerem oder reinem Leerraum-Text – wirft nie.
+    /// Prüft, ob BorstWerk <paramref name="code"/> zur Erstellung anbietet.
+    ///
+    /// **Das ist keine Aussage über die Norm.** Ein Code, für den dies
+    /// <see langword="false"/> liefert, kann nach ISO 4217 vollkommen gültig
+    /// sein – er steht nur nicht in der kuratierten Auswahl dieser Anwendung.
+    /// Wer wissen will, ob ein Code nachweislich nicht mehr gilt, fragt
+    /// <see cref="IsWithdrawnFromEn16931"/>.
+    ///
+    /// Gross-/Kleinschreibung und umgebende Leerzeichen spielen keine Rolle.
+    /// Liefert <see langword="false"/> bei <see langword="null"/>, leerem oder
+    /// reinem Leerraum-Text – wirft nie.
     /// </summary>
-    public static bool IsValid(string? code)
+    public static bool IsOffered(string? code)
     {
         if (string.IsNullOrWhiteSpace(code))
         {
@@ -92,6 +124,40 @@ public static class CurrencyCodeList
         }
 
         return Names.ContainsKey(code.Trim());
+    }
+
+    /// <summary>
+    /// Prüft, ob <paramref name="code"/> aus dem gepinnten
+    /// EN-16931-Codebestand entfernt wurde.
+    ///
+    /// Nur für diese wenigen Codes ist der Rückzug belegt; für alles andere
+    /// liefert die Methode <see langword="false"/> – auch für Codes, die diese
+    /// Anwendung gar nicht kennt. <see langword="false"/> heißt hier also
+    /// „nicht als zurückgezogen belegt“, nicht „gültig“.
+    /// </summary>
+    public static bool IsWithdrawnFromEn16931(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return false;
+        }
+
+        return Withdrawn.ContainsKey(code.Trim());
+    }
+
+    /// <summary>
+    /// Liefert die Begründung, weshalb ein Code nicht mehr gilt – für den
+    /// technischen Teil eines Befunds.
+    /// </summary>
+    public static bool TryGetWithdrawalReason(string? code, [MaybeNullWhen(false)] out string reason)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            reason = null;
+            return false;
+        }
+
+        return Withdrawn.TryGetValue(code.Trim(), out reason);
     }
 
     /// <summary>
