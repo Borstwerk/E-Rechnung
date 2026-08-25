@@ -18,7 +18,7 @@ Gedacht ist sie für den Fall, dass die Rechnung schon fertig ist – geschriebe
 LibreOffice, einer Branchenlösung oder sonst einem Programm – und daraus jetzt eine E-Rechnung
 werden soll.
 
-> **Status:** Version 0.1.0 ist veröffentlicht.
+> **Status:** Version 0.2.0 ist veröffentlicht.
 
 ## Download
 
