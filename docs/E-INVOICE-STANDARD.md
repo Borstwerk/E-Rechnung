@@ -240,10 +240,18 @@ Umgesetzt ist das so:
 | Währung nachweislich aus dem Codebestand entfernt (`ANG`, `BGN`, `HRK`) | Fehler `APP-DOC-008` mit Normverweis `BR-05` |
 | Währung nur nicht angeboten | Hinweis `APP-DOC-011`, **ohne** Normverweis |
 | Einheit nicht unterstützt | Fehler `APP-LIN-005` ohne Normverweis – die Erzeugung wird angehalten, ein Normverstoß wird nicht behauptet |
+| Rechnungsart nicht unterstützt | Fehler `APP-DOC-007` ohne Normverweis; über UNTDID 1001 wacht `BR-CL-01` extern |
 | Steuerkategorie `L`, `M` | im Modell nicht vorhanden; normgerecht, aber nicht erzeugbar |
 
-Der gepinnte Codebestand ist der EN-16931-Stand v17b. Gegenüber dem vorigen
-Stand ist `XCG` (Karibischer Gulden) neu; `ANG` und `BGN` sind entfallen.
+Gegenüber dem vorigen Stand ist `XCG` (Karibischer Gulden) neu; `ANG` und
+`BGN` sind entfallen.
+
+**Was hier noch fehlt.** Die positive Aussage „dieser Code ist nach dem
+gepinnten EN-16931-Codebestand v17b gültig" lässt sich derzeit **nicht**
+treffen. Das Modell kennt nur „von BorstWerk angeboten" und „nachweislich
+zurückgezogen"; ein erfundener Code wie `XYZ` fällt damit in dieselbe Klasse
+wie ein gültiger, aber nicht angebotener Code wie `KZT`. Der Grund und der Weg
+dorthin stehen unten bei den bekannten Lücken.
 
 ### Bekannte Lücken
 
@@ -262,10 +270,24 @@ Diese Punkte sind erkannt und bewusst **nicht** in diesem Slice umgesetzt:
   alte noch die neue Bezeichnung kommt vor, und die Ausschlussregel selbst ist
   nicht umgesetzt. Es war also nichts umzubenennen. Die Regel bleibt der
   externen Prüfung überlassen.
-- **Rechnungsart (BT-3).** `APP-DOC-007` meldet eine nicht unterstützte
-  Rechnungsart weiterhin mit dem Normverweis `BR-CO-03` und wiederholt damit
-  dieselbe Verwechslung, die bei Währung und Einheit aufgelöst wurde. Der Fall
-  war nicht Teil dieses Auftrags und ist unverändert geblieben.
+- **Vollständiger Währungscodebestand v17b.** Um zu sagen, ob ein Code
+  *normgültig* ist, braucht es die vollständige Liste – eine Liste
+  zurückgezogener Codes kann diese Frage nicht beantworten. Diese Liste liegt
+  hier nicht vor: Das einzige gepinnte Artefakt des Repositorys ist die
+  Mustang-CLI 2.24.0, und die enthält als Währungsliste ausschließlich
+  `ISO_ISO3AlphaCurrencyCode_2012-08-31.xsd` – 178 Codes mit Stand 2012, ohne
+  `XCG` und noch mit `ANG`, `BGN` und `HRK`. Ein FeRD-2.5.2- oder
+  EN-16931-v17b-Codelistenartefakt ist im Repository nicht vorhanden.
+
+  Die Liste aus dem Gedächtnis zu schreiben wäre der gefährlichste denkbare
+  Weg: Ein vergessener Code lehnt stillschweigend gültige Rechnungen ab, ein
+  erfundener lässt ungültige durch – und beides fiele keinem Test auf, der aus
+  derselben Quelle stammt.
+
+  **Vorgeschlagener Weg:** Das Codelistenartefakt wie die Prüfwerkzeuge über
+  `build/fetch-validators.sh` mit Version und Prüfsumme pinnen und
+  `CurrencyCodeList` daraus erzeugen. Erst dann lässt sich `IsValidPerEn16931`
+  belastbar anbieten und `DocumentRules` sauber dreiteilen.
 
 ---
 

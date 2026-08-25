@@ -260,6 +260,33 @@ public sealed class StandardRefreshTests
         Assert.Contains("unterstützt", befund.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    // ------------------------------------------------ STD-01a Rechnungsart
+
+    /// <summary>
+    /// **Ein falscher Normverweis, belegt am Primärartefakt.** `APP-DOC-007`
+    /// trug bisher `BR-CO-03`. Diese Regel lautet im EN-16931-Schematron des
+    /// gepinnten Prüfwerkzeugs aber: „Value added tax point date (BT-7) and
+    /// Value added tax point date code (BT-8) are mutually exclusive.“ Sie hat
+    /// mit der Rechnungsart nichts zu tun.
+    ///
+    /// Ersetzt wird sie durch keinen anderen Verweis. Über die Zugehörigkeit
+    /// zu UNTDID 1001 wacht `BR-CL-01`; die Liste hier ist nur die Teilmenge,
+    /// die diese Anwendung beherrscht. Es gilt dasselbe wie bei Währung und
+    /// Einheit: nicht unterstützt ist nicht ungültig.
+    /// </summary>
+    [Fact]
+    public void DieRechnungsartTrägtKeinenFalschenNormverweisMehr()
+    {
+        Invoice rechnung = BasisRechnung() with { TypeCode = (InvoiceTypeCode)999 };
+
+        ValidationFinding befund = Assert.Single(
+            Prüfe(rechnung).Findings, f => f.RuleId == "APP-DOC-007");
+
+        Assert.Equal(FindingSeverity.Error, befund.Severity);
+        Assert.Null(befund.NormRule);
+        Assert.Contains("BR-CL-01", befund.TechnicalDetail ?? string.Empty, StringComparison.Ordinal);
+    }
+
     // ------------------------------------------------- Unveränderte Zusagen
 
     /// <summary>

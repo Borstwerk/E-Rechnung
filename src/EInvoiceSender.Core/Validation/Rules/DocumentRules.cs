@@ -80,13 +80,25 @@ internal static class DocumentRules
                 "DueDate", normRule: "BR-CO-25");
         }
 
+        // Der frühere Normverweis BR-CO-03 war schlicht falsch. Im
+        // EN-16931-Schematron des gepinnten Prüfwerkzeugs lautet die Regel:
+        // „Value added tax point date (BT-7) and Value added tax point date
+        // code (BT-8) are mutually exclusive.“ Mit der Rechnungsart hat sie
+        // nichts zu tun.
+        //
+        // Ersetzt wird sie durch keinen anderen Verweis, und das mit Absicht:
+        // Über die Zugehörigkeit zu UNTDID 1001 wacht BR-CL-01, und die
+        // Liste hier ist nur die Teilmenge, die diese Anwendung beherrscht.
+        // Ein hier abgelehnter Code kann in UNTDID 1001 stehen – dasselbe
+        // Verhältnis wie bei Währung und Mengeneinheit.
         if (!InvoiceTypeCodes.IsValid((int)invoice.TypeCode))
         {
             report.Error(
                 "APP-DOC-007",
                 "Die gewählte Rechnungsart wird von dieser Anwendung nicht unterstützt.",
                 "TypeCode",
-                $"Code {(int)invoice.TypeCode}", "BR-CO-03");
+                $"Code {(int)invoice.TypeCode}; über die Zugehörigkeit zu UNTDID 1001 "
+                + "entscheidet die externe Prüfung (BR-CL-01).");
         }
 
         // Zwei verschiedene Aussagen, und sie dürfen nicht zusammenfallen:
