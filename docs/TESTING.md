@@ -347,6 +347,11 @@ sind insbesondere:
 - vollständige Übernahme der Drittanbieterhinweise und Lizenztexte,
 - fehlender Lizenztext,
 - exakte ZIP-Struktur ohne zusätzlichen obersten Ordner,
+- Abweisung eines fremden Veröffentlichungsverzeichnisses, belegt an einer
+  Sentinel-Datei, die den Aufruf überleben muss – eine Prüfung im Quelltext
+  allein sagt nicht, dass tatsächlich nichts gelöscht wurde,
+- Abweisung auch dann, wenn der Pfad erst über `..` aus dem Repository
+  herausführt,
 - exakt zwei Prüfsummenzeilen in fester Reihenfolge,
 - manipuliertes MSI und manipuliertes ZIP.
 

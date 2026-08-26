@@ -31,9 +31,44 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
+
+# Das einzige Verzeichnis, in das dieses Skript veröffentlichen darf.
+$canonicalPublishDirectory = [IO.Path]::GetFullPath(
+    (Join-Path $root 'artifacts' 'publish' 'win-x64'))
+
 if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
-    $PublishDirectory = Join-Path $root 'artifacts' 'publish' 'win-x64'
+    $PublishDirectory = $canonicalPublishDirectory
 }
+
+# Publish.ps1 löscht sein Zielverzeichnis vor dem Veröffentlichen rekursiv.
+# Ein von außen frei wählbarer Pfad wäre damit ein frei adressierbarer
+# Löschbefehl im normalen Installer-Einstieg – ein Tippfehler oder ein falsch
+# gesetzter Parameter genügte. Der Parameter existiert nur, damit
+# Build-Release.ps1 dasselbe Verzeichnis benennen kann, das es anschließend
+# weiterverwendet; er ist keine Einladung, woanders hin zu veröffentlichen.
+#
+# Verglichen wird vollständig normalisiert, damit weder ".." noch gemischte
+# Trennzeichen noch ein angehängter Schrägstrich daran vorbeikommen.
+#
+# Diese Prüfung steht bewusst **vor** der Windows-Prüfung: Ein falscher Pfad
+# ist ein falscher Pfad, gleich auf welchem System – und so lässt sich die
+# Sperre auch dort nachweisen, wo gar kein MSI entstehen kann.
+$requestedPublishDirectory = [IO.Path]::GetFullPath($PublishDirectory)
+$separators = [char[]]@([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+
+if (-not [string]::Equals(
+        $requestedPublishDirectory.TrimEnd($separators),
+        $canonicalPublishDirectory.TrimEnd($separators),
+        [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Unzulässiges Veröffentlichungsverzeichnis: $requestedPublishDirectory. " +
+        "Zulässig ist ausschließlich $canonicalPublishDirectory. Der Zielordner wird " +
+        "vor dem Veröffentlichen vollständig gelöscht; ein anderer Pfad wird deshalb " +
+        "abgewiesen, bevor irgendetwas entfernt wird."
+}
+
+# Ab hier gilt der geprüfte, normalisierte Pfad.
+$PublishDirectory = $canonicalPublishDirectory
+
 $setupProject = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'EInvoiceSender.Setup.wixproj'
 $msi = Join-Path $root 'installer' 'EInvoiceSender.Setup' 'bin' 'Release' `
     'BorstWerk-E-Rechnung-Setup.msi'

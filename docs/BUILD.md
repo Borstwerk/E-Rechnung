@@ -137,6 +137,17 @@ Abgesichert ist das doppelt:
 
 Einen Schalter zum Überspringen des Publish gibt es nicht mehr.
 
+**Wohin veröffentlicht wird, steht fest.** `Build-Installer.ps1` nimmt zwar
+ein `-PublishDirectory` entgegen – aber nur, damit `Build-Release.ps1`
+dasselbe Verzeichnis benennen kann, das es anschließend für ZIP und
+Prüfsummen weiterverwendet. Jeder andere Pfad wird abgewiesen, und zwar
+bevor irgendetwas gelöscht wird: `Publish.ps1` räumt sein Zielverzeichnis
+rekursiv leer, ein frei wählbarer Pfad wäre damit ein frei adressierbarer
+Löschbefehl im normalen Installer-Einstieg. Verglichen wird vollständig
+normalisiert, sodass weder `..` noch gemischte Trennzeichen daran
+vorbeikommen. Zulässig ist ausschließlich `artifacts/publish/win-x64` im
+Repository.
+
 Die Versionsnummer steht zentral in `Directory.Build.props` (`VersionPrefix`)
 und wird von Anwendung, lokalem Installerbau und CI gemeinsam verwendet. Das
 WiX-Projekt gibt sie unmittelbar als MSI-ProductVersion weiter; Buildaufrufe
