@@ -198,7 +198,7 @@ public sealed class RasterFallbackSpikeTests(ExternalValidatorFixture external) 
 
         PdfAnalysisResult reopened = await _analyzer.AnalyzeAsync(outputPath);
 
-        Assert.True(reopened.HasExistingInvoiceXml);
+        Assert.True(reopened.HasReadableExistingInvoiceXml);
         Assert.Equal(request.InvoiceXml, reopened.ExistingInvoiceXml);
         Assert.Equal(CiiConstants.ProfileEn16931, reopened.ExistingInvoiceProfile);
         Assert.Equal("3", reopened.DeclaredPdfAPart);

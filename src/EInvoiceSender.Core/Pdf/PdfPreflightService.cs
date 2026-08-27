@@ -410,7 +410,10 @@ public sealed partial class PdfPreflightService : IPdfPreflightService
     private static void AddInformationalFindings(
         PdfAnalysisResult analysis, ValidationReportBuilder findings, PdfProcessingRoute route)
     {
-        if (analysis.HasExistingInvoiceXml)
+        // **Anwesenheit, nicht Lesbarkeit.** Die Warnung hängt am Anhang, nicht
+        // daran, ob er sich auswerten ließ. Ein unlesbarer Anhang ist eher ein
+        // Grund mehr, den Benutzer zu fragen, als einer weniger.
+        if (analysis.HasExistingInvoiceAttachment)
         {
             // Bewusst eine Warnung, kein stiller Ersatz: Der Benutzer muss
             // wissen, dass hier bereits Rechnungsdaten stecken.

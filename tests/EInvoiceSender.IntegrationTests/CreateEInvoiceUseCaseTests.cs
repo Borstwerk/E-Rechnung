@@ -5,6 +5,7 @@ using EInvoiceSender.Core.Diagnostics;
 using EInvoiceSender.Core.Mail;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Pdf;
+using EInvoiceSender.Core.Security;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Storage;
 using EInvoiceSender.Core.Tests.Support;
@@ -228,6 +229,66 @@ public sealed class CreateEInvoiceUseCaseTests : IDisposable
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.True(third.Succeeded, Describe(third));
+    }
+
+    /// <summary>
+    /// **Die Sperre hält auch bei einem unlesbaren Rechnungsanhang.**
+    ///
+    /// Der vorige Test verwendet eine wohlgeformte, lesbare E-Rechnung. Genau
+    /// dieser Fall verdeckte eine Lücke: Solange die Anwesenheit einer
+    /// vorhandenen Rechnung am erfolgreich gelesenen Profil hing, öffnete ein
+    /// Anhang, der sich nicht auswerten lässt, die Sperre – und der Anwender
+    /// hätte seine einzige Ausfertigung überschrieben, ohne gefragt worden zu
+    /// sein.
+    ///
+    /// Geprüft werden die drei Gründe, aus denen der begrenzte Leser einen
+    /// Anhang nicht auswertet: ungewöhnlich gepackt, zu groß, beschädigt.
+    /// </summary>
+    [Theory]
+    [InlineData("gepackt")]
+    [InlineData("zu-gross")]
+    [InlineData("kaputt")]
+    public async Task EinUnlesbarerRechnungsanhangBrauchtEbenfallsEineBestätigung(string fall)
+    {
+        string source = TempPdf(AttachedPdfFactory.Create(UnlesbarerAnhang(fall)));
+
+        CreateEInvoiceResult ohneBestätigung = await BuildUseCase().CreateAsync(
+            Request(source), cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.False(ohneBestätigung.Succeeded);
+        Assert.Contains(ohneBestätigung.Report.Findings, f => f.RuleId == "APP-USE-002");
+
+        // Mit ausdrücklicher Bestätigung läuft der bestehende Weg weiter.
+        CreateEInvoiceResult mitBestätigung = await BuildUseCase().CreateAsync(
+            Request(source) with { ExistingInvoiceReplacementConfirmed = true },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.True(mitBestätigung.Succeeded, Describe(mitBestätigung));
+    }
+
+    /// <summary>
+    /// Ein Rechnungsanhang, den der begrenzte Leser nicht auswerten kann –
+    /// jeweils aus einem anderen Grund.
+    /// </summary>
+    private static AttachedPdfFactory.Attachment UnlesbarerAnhang(string fall) => fall switch
+    {
+        "gepackt" => new AttachedPdfFactory.Attachment(
+            "factur-x.xml", "<rsm:CrossIndustryInvoice/>"u8.ToArray(),
+            Compress: true, WithDecodeParms: true),
+
+        "zu-gross" => new AttachedPdfFactory.Attachment(
+            "factur-x.xml", Füllung(SecureXml.MaxXmlSizeInBytes + 1024), Compress: true),
+
+        _ => new AttachedPdfFactory.Attachment(
+            "factur-x.xml", "<rsm:CrossIndustryInvoice><abgeschnitten"u8.ToArray()),
+    };
+
+    private static byte[] Füllung(int größe)
+    {
+        byte[] daten = new byte[größe];
+        Array.Fill(daten, (byte)'A');
+
+        return daten;
     }
 
     [Fact]

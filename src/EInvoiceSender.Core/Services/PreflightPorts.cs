@@ -99,8 +99,34 @@ public sealed record PdfPreflightReport(
     /// </summary>
     public bool RequiresRasterFallback => Route == PdfProcessingRoute.RasterFallback;
 
-    /// <summary>Enthält die Datei bereits eine Rechnungs-XML?</summary>
-    public bool HasExistingInvoice => ExistingInvoiceProfile is not null;
+    /// <summary>
+    /// Enthält die Datei bereits einen Anhang, dessen Name auf eine Rechnung
+    /// hindeutet?
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Abgeleitet aus den Anhangsnamen, nicht aus dem gelesenen Inhalt.</b>
+    /// Früher stand hier <c>ExistingInvoiceProfile is not null</c>. Das setzte
+    /// „eine Rechnung ist vorhanden“ mit „eine Rechnung wurde erfolgreich
+    /// gelesen“ gleich – und daran hängt die Sperre in <c>APP-USE-002</c>:
+    /// Eine vorhandene Rechnung wird nie stillschweigend ersetzt.
+    /// </para>
+    /// <para>
+    /// Ein Anhang, der sich nicht auswerten lässt – zu groß, ungewöhnlich
+    /// gepackt, beschädigt oder ohne Profilangabe –, hätte die Sperre damit
+    /// geöffnet. Ausgerechnet die verdächtigste Datei wäre am Schutz
+    /// vorbeigekommen, und der Anwender hätte seine einzige Ausfertigung
+    /// verloren, ohne gefragt worden zu sein.
+    /// </para>
+    /// <para>
+    /// <see cref="ExistingInvoiceProfile"/> bleibt davon unberührt: Es sagt,
+    /// <i>was</i> gefunden wurde, und ist <see langword="null"/>, wenn sich
+    /// das nicht feststellen ließ. Anwesenheit und Lesbarkeit sind zwei
+    /// verschiedene Aussagen.
+    /// </para>
+    /// </remarks>
+    public bool HasExistingInvoice
+        => EmbeddedFiles.Any(file => InvoiceAttachmentDescriptor.LooksLikeInvoiceFile(file.FileName));
 
     /// <summary>Dateigröße in Megabyte, gerundet für die Anzeige.</summary>
     public double FileSizeInMegabytes => Math.Round(FileSizeInBytes / 1024.0 / 1024.0, 2);

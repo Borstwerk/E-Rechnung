@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 1142 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
-| `tests/EInvoiceSender.IntegrationTests` | 96 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **1238** | |
+| `tests/EInvoiceSender.Core.Tests` | 1150 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.IntegrationTests` | 99 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
+| **Summe** | **1249** | |
 
 ## Ebenen
 
@@ -272,6 +272,14 @@ Entpacken greift – belegt am Befundtext, nicht nur an der Kennung, denn
 dieselbe Kennung käme auch nach einer zu späten Messung heraus. Die Gegenprobe
 mit einem komprimierten Anhang unter der Grenze verhindert, dass die Sperre
 einfach alles ablehnt.
+
+**Die Sperre gegen stillschweigendes Ersetzen hält auch bei unlesbaren
+Anhängen.** `ExistingInvoiceGateTests` und ein Theorie-Test am echten
+Erzeugungsdienst prüfen alle drei Gründe, aus denen ein Rechnungsanhang nicht
+ausgewertet werden kann – ungewöhnlich gepackt, zu groß, beschädigt. In jedem
+Fall muss `APP-USE-002` greifen und das Profil trotzdem als unbekannt
+erscheinen. Die Gegenprobe ohne Rechnungsanhang verhindert, dass die Sperre
+einfach immer zuschlägt.
 
 Weiter abgedeckt: die Kerndaten gegen das Szenario statt gegen sich selbst,
 fehlender Rechnungsanhang, beschädigte XML, XRechnung und Order-X als

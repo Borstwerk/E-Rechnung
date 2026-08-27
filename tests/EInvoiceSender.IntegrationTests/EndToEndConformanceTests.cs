@@ -103,7 +103,7 @@ public sealed class EndToEndConformanceTests : IDisposable
         Assert.Equal(scenario.Invoice.Lines.Count > 0, reopened.PageCount > 0);
 
         // --- 7. XML extrahieren und vergleichen -----------------------------
-        Assert.True(reopened.HasExistingInvoiceXml, "Die eingebettete XML fehlt.");
+        Assert.True(reopened.HasReadableExistingInvoiceXml, "Die eingebettete XML fehlt.");
         Assert.Equal(xml, reopened.ExistingInvoiceXml);
 
         // --- 8. Extrahierte XML erneut gegen das Schematron -----------------

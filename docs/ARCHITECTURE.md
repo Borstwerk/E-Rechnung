@@ -137,6 +137,33 @@ also proportional zur Dateigröße auf der Platte. Beseitigt ist die
 Vervielfachung, nicht die erste Grenze; die zöge nur ein PDF-Leser mit
 strömender Objektverarbeitung.
 
+#### Anwesenheit und Lesbarkeit sind zwei verschiedene Aussagen
+
+Die begrenzte Entpackung hatte eine Folge, die beinahe eine Sicherheitslücke
+geworden wäre. `PdfPreflightReport.HasExistingInvoice` war als
+`ExistingInvoiceProfile is not null` definiert und setzte damit „eine Rechnung
+ist vorhanden“ mit „eine Rechnung wurde erfolgreich gelesen“ gleich. Solange
+jeder Anhang bedingungslos entpackt wurde, fiel das kaum auf.
+
+An dieser Aussage hängt aber `APP-USE-002`: **Eine vorhandene Rechnung wird
+nie stillschweigend ersetzt.** Ein Anhang, der zu groß, ungewöhnlich gepackt
+oder beschädigt ist, liefert kein Profil – und hätte die Sperre geöffnet.
+Ausgerechnet die verdächtigste Datei wäre am Schutz vorbeigekommen, und der
+Anwender hätte seine einzige Ausfertigung überschrieben, ohne gefragt worden
+zu sein.
+
+Deshalb gilt jetzt:
+
+| Frage | Woher die Antwort kommt |
+|---|---|
+| Ist ein Rechnungsanhang **vorhanden**? | `HasExistingInvoice` – allein aus den Anhangsnamen, ohne einen Inhalt zu entpacken |
+| **Welche** Rechnung ist es? | `ExistingInvoiceProfile` – `null`, wenn sich das nicht feststellen ließ |
+| Ist der Inhalt **auswertbar**? | `PdfAnalysisResult.HasReadableExistingInvoiceXml` – nur für die Gegenprüfung erzeugter Dateien |
+
+Die Warnung an den Anwender hängt an der Anwesenheit, nicht am Lesen. Ein
+unlesbarer Anhang ist eher ein Grund mehr nachzufragen als einer weniger; das
+Profil erscheint dann als „unbekannt“.
+
 Das Ergebnis trägt bewusst **kein `Succeeded`**. Ein solches Feld würde als
 „die Rechnung ist gültig“ gelesen, und diese Aussage trifft der Slice nicht:
 Weder die EN-16931-Regelprüfung noch veraPDF laufen. `Completed` beantwortet

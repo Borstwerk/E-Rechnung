@@ -108,8 +108,42 @@ public sealed record PdfAnalysisResult(
     string? ExistingInvoiceProfile,
     IReadOnlyList<PdfUpgradeBlocker> UpgradeBlockers)
 {
-    /// <summary>Enthält die Datei bereits eine Rechnungs-XML?</summary>
-    public bool HasExistingInvoiceXml => ExistingInvoiceXml is { Length: > 0 };
+    /// <summary>
+    /// Trägt die Datei einen Anhang, dessen <b>Name</b> auf eine Rechnung
+    /// hindeutet?
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Anwesenheit, nicht Lesbarkeit.</b> Diese Frage wird ausschließlich
+    /// aus den Anhangsnamen beantwortet – ohne einen Inhalt zu entpacken. Sie
+    /// ist deshalb auch dann richtig, wenn sich der Anhang nicht auswerten
+    /// lässt: zu groß, ungewöhnlich gepackt, beschädigt oder ohne
+    /// Profilangabe.
+    /// </para>
+    /// <para>
+    /// <b>Warum das getrennt sein muss.</b> An dieser Aussage hängt die Sperre
+    /// „eine vorhandene Rechnung wird nie stillschweigend ersetzt“. Wäre sie
+    /// an das erfolgreiche Lesen gebunden, hätte ein unlesbarer Anhang die
+    /// Sperre geöffnet – ausgerechnet die verdächtigste Datei käme so am
+    /// Schutz vorbei. Ob eine Rechnung <i>da</i> ist, entscheidet der Anhang;
+    /// ob wir sie <i>verstehen</i>, steht getrennt in
+    /// <see cref="ExistingInvoiceProfile"/> und
+    /// <see cref="HasReadableExistingInvoiceXml"/>.
+    /// </para>
+    /// </remarks>
+    public bool HasExistingInvoiceAttachment
+        => EmbeddedFiles.Any(file => InvoiceAttachmentDescriptor.LooksLikeInvoiceFile(file.FileName));
+
+    /// <summary>
+    /// Konnte der Inhalt der eingebetteten Rechnungs-XML tatsächlich gelesen
+    /// werden?
+    ///
+    /// **Das ist keine Aussage über die Anwesenheit.** Für die fragt man
+    /// <see cref="HasExistingInvoiceAttachment"/>. Diese Eigenschaft sagt nur,
+    /// ob <see cref="ExistingInvoiceXml"/> ausgewertet werden kann – etwa für
+    /// die Gegenprüfung einer soeben erzeugten Datei.
+    /// </summary>
+    public bool HasReadableExistingInvoiceXml => ExistingInvoiceXml is { Length: > 0 };
 
     /// <summary>Kann die Datei zu PDF/A-3 aufgewertet werden?</summary>
     public bool CanBeUpgraded => UpgradeBlockers.Count == 0;

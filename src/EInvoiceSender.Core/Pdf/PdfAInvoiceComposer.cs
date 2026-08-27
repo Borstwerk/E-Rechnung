@@ -69,7 +69,8 @@ public sealed partial class PdfAInvoiceComposer : IPdfAInvoiceComposer
             return CompositionResult.Failed(report.Build());
         }
 
-        if (analysis.HasExistingInvoiceXml)
+        // Auch hier zählt die Anwesenheit des Anhangs, nicht sein Lesbarkeit.
+        if (analysis.HasExistingInvoiceAttachment)
         {
             report.Warning(
                 "APP-PDF-020",
