@@ -25,7 +25,7 @@ namespace EInvoiceSender.Core.Pdf;
 /// Der Analysator wirft bei beschädigten Dateien nicht, sondern meldet den
 /// Zustand als Hindernis. Ein Stapelabzug hilft dem Anwender nicht weiter.
 /// </summary>
-public sealed partial class PdfAnalyzer : IPdfAnalyzer
+public sealed partial class PdfAnalyzer : IPdfAnalyzer, IPdfAttachmentReader
 {
     private readonly IInvoiceXmlReader _xmlReader;
     private readonly ILogger<PdfAnalyzer> _logger;
@@ -73,6 +73,62 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         cancellationToken.ThrowIfCancellationRequested();
 
         return Task.Run(() => Analyze(filePath), cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<EmbeddedFileContent>> ReadEmbeddedFilesAsync(
+        string filePath,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return Task.Run<IReadOnlyList<EmbeddedFileContent>>(() => ReadEmbeddedFiles(filePath), cancellationToken);
+    }
+
+    /// <summary>
+    /// Liest alle eingebetteten Dateien samt Inhalt.
+    ///
+    /// Verwendet dieselbe Traversierung wie die Analyse: Eine Hybridrechnung
+    /// verweist auf denselben Anhang aus zwei Richtungen, und wer das nicht
+    /// entdoppelt, meldet eine einwandfreie Datei als mehrdeutig.
+    /// </summary>
+    private List<EmbeddedFileContent> ReadEmbeddedFiles(string filePath)
+    {
+        var result = new List<EmbeddedFileContent>();
+
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using PdfDocument document = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
+
+            foreach ((string fileName, PdfDictionary specification) in
+                     EnumerateFileSpecifications(document.Internals.Catalog))
+            {
+                PdfDictionary? embeddedFiles = specification.Elements.GetDictionary("/EF");
+                PdfDictionary? embedded = embeddedFiles?.Elements.GetDictionary("/F")
+                                          ?? embeddedFiles?.Elements.GetDictionary("/UF");
+
+                result.Add(new EmbeddedFileContent(
+                    FileName: fileName,
+                    Relationship: specification.Elements.GetName("/AFRelationship"),
+                    MimeType: DecodePdfName(embedded?.Elements.GetName("/Subtype")),
+                    Content: embedded?.Stream?.UnfilteredValue ?? []));
+            }
+        }
+        // Über den Zustand einer beschädigten oder geschützten Datei urteilt
+        // die Analyse. Hier gibt es dann schlicht nichts zu lesen.
+        catch (Exception ex) when (ex is not OperationCanceledException
+                                      and not OutOfMemoryException
+                                      and not StackOverflowException)
+        {
+            string reason = ex.GetType().Name;
+            LogAttachmentsUnreadable(_logger, reason);
+
+            return [];
+        }
+
+        return result;
     }
 
     private PdfAnalysisResult Analyze(string filePath)
@@ -918,6 +974,11 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         EventId = 2011, Level = LogLevel.Information,
         Message = "Schutzzustand nicht feststellbar ({Reason}). Die Hauptanalyse entscheidet.")]
     private static partial void LogProtectionUnknown(ILogger logger, string reason);
+
+    [LoggerMessage(
+        EventId = 2014, Level = LogLevel.Information,
+        Message = "Anhänge nicht lesbar ({Reason}). Die Analyse urteilt über den Zustand der Datei.")]
+    private static partial void LogAttachmentsUnreadable(ILogger logger, string reason);
 
     /// <summary>Wandelt die interne Versionszahl (z. B. 17) in "1.7".</summary>
     private static string FormatVersion(int version)

@@ -134,6 +134,47 @@ public interface IPdfAnalyzer
 }
 
 /// <summary>
+/// Ein eingebetteter Anhang samt seinem Inhalt.
+/// </summary>
+/// <param name="FileName">Name des Anhangs, wie er in der Datei steht.</param>
+/// <param name="Relationship">Wert von <c>/AFRelationship</c>, falls gesetzt.</param>
+/// <param name="MimeType">Angegebener MIME-Typ.</param>
+/// <param name="Content">Der entpackte Inhalt.</param>
+public sealed record EmbeddedFileContent(
+    string FileName,
+    string? Relationship,
+    string? MimeType,
+    byte[] Content);
+
+/// <summary>
+/// Liest die eingebetteten Dateien einer PDF samt Inhalt.
+///
+/// **Warum das nicht in <see cref="IPdfAnalyzer"/> passt.**
+/// <see cref="PdfAnalysisResult.ExistingInvoiceXml"/> liefert genau einen
+/// Anhang, nämlich den ersten, dessen Name nach einer Rechnung aussieht. Für
+/// die Erzeugung reicht das: Dort geht es nur um die Warnung „hier sind schon
+/// Rechnungsdaten drin“, und welche es sind, ändert daran nichts.
+///
+/// Der Prüfmodus darf sich genau das nicht leisten. Liegen in einer Datei
+/// mehrere rechnungsartige Anhänge, ist „der erste“ eine willkürliche Wahl mit
+/// einem sehr echten Ergebnis – der Anwender bekäme einen Prüfbericht über eine
+/// Datei, die er nicht gemeint hat. Deshalb bekommt er alle zu sehen und
+/// entscheidet die Prüfung erst danach.
+///
+/// Die Datei wird ausschließlich gelesen.
+/// </summary>
+public interface IPdfAttachmentReader
+{
+    /// <summary>
+    /// Liest alle eingebetteten Dateien mit Inhalt. Wirft nicht bei
+    /// beschädigten Dateien, sondern liefert eine leere Liste – über den
+    /// Zustand der Datei urteilt <see cref="IPdfAnalyzer"/>.
+    /// </summary>
+    Task<IReadOnlyList<EmbeddedFileContent>> ReadEmbeddedFilesAsync(
+        string filePath, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
 /// Die festen Kenngrößen des Rasterwegs.
 ///
 /// Sie stehen hier und nicht beim Erzeuger, weil auch der Prüfbericht sie nennt.

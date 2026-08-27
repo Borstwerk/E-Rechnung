@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 1118 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.Core.Tests` | 1136 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
 | `tests/EInvoiceSender.IntegrationTests` | 96 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **1214** | |
+| **Summe** | **1232** | |
 
 ## Ebenen
 
@@ -241,6 +241,32 @@ Unter Windows:
 - Der DPAPI-Schutz der IBAN, der nur unter Windows greift.
 
 Diese Punkte brauchen einen echten Windows-Rechner und einen Menschen davor.
+
+## Prüfmodus (read-only)
+
+Der Prüfmodus nimmt auf, was in einer fertigen E-Rechnung steht. Zwei Zusagen
+sind dabei belegpflichtig, und beide werden gemessen statt behauptet.
+
+**Die Quelldatei bleibt unberührt.** Der Anwender übergibt eine fertige
+Rechnung, oft die einzige Ausfertigung. Geprüft wird deshalb dreifach: Der
+gemeldete SHA-256 muss der der Quelldatei entsprechen, die Bytes müssen
+vorher und nachher identisch sein, und neben der Quelle darf keine Datei
+entstehen. Der Zeitstempel kommt als Zusatzwächter hinzu – er ersetzt den
+Bytevergleich ausdrücklich nicht, denn ein Zeitstempel lässt sich
+zurücksetzen. Der Nachweis läuft auch für den Fehlerfall: Gerade bei einer
+mangelhaften Datei wäre eine stille Reparatur verlockend.
+
+**Kein Befund behauptet mehr, als geprüft wurde.** Eine PDF/A-3B-Angabe im
+XMP ist eine Deklaration der Datei über sich selbst; veraPDF ist nicht
+gelaufen. Ein Test durchsucht deshalb alle Befundtexte nach „normkonform“,
+„gültige E-Rechnung“ und „PDF/A-konform“ und lässt keinen davon durch.
+
+Weiter abgedeckt: die Kerndaten gegen das Szenario statt gegen sich selbst,
+fehlender Rechnungsanhang, beschädigte XML, XRechnung und Order-X als
+erkannt-aber-nicht-unterstützt, mehrere Rechnungsanhänge ohne willkürliche
+Auswahl, eine gewöhnliche Beilage neben der Rechnung, DTD samt externer
+Entität, übergroße XML, beschädigte PDF und die digitale Signatur, die für
+sich genommen kein Mangel ist.
 
 ## Installer-Metadaten
 

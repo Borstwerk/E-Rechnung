@@ -24,6 +24,7 @@ automatisiert prüfen – auch auf einem Build-Agenten ohne Bildschirm.
 | `Validation` | Befunde und Prüfberichte |
 | `Validation/Rules` | die EN-16931-Regeln, nach Dokument, Parteien, Positionen, Umsatzsteuer, Summen und Zahlung gruppiert |
 | `Zugferd` | CII-XML erzeugen und zurücklesen |
+| `Checking` | Prüfmodus: read-only Bestandsaufnahme einer fertigen E-Rechnung |
 | `Pdf` | PDF-Analyse, Eingangsprüfung, PDF/A-3-Aufwertung, sichtbare Kopie (Rasterweg), XMP, ICC-Profil, Einbettung |
 | `Pdf/Detection` | örtliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefüllung und Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
@@ -65,6 +66,49 @@ das.
 sich als Ablauf: bestätigt, geeignet, gültig, erzeugen, gegenprüfen,
 aufbauen, auslesen, extern prüfen, speichern. Der Zustand eines Laufs steht
 in einem `CreationContext`; er trägt auch die Fortschrittsmeldungen.
+
+### Der Prüfmodus als eigener Dienst
+
+Seit ER-030-CHK-01A gibt es einen zweiten Anwendungsfall: eine **fertige**
+E-Rechnung prüfen, statt eine neue erzeugen. Er hat einen eigenen Anschluss:
+
+```csharp
+public interface IEInvoiceCheckService
+{
+    Task<CheckEInvoiceResult> CheckAsync(CheckEInvoiceRequest request,
+                                         CancellationToken ct = default);
+}
+```
+
+**Warum nicht als weitere Methode an `IEInvoiceService`.** Die beiden Fälle
+sind einander entgegengesetzt: Der eine nimmt Eingaben, prüft sie gegen die
+Produktgrenzen von BorstWerk und schreibt eine neue Datei; der andere nimmt
+eine fremde, fertige Datei und schreibt gar nichts. In einer Schnittstelle
+wäre für jede Methode die halbe Dokumentation eine Ausnahme, und beim Lesen
+bliebe unklar, welche Aufrufe eine Datei anfassen.
+
+**Was der Prüfmodus bewusst nicht wiederverwendet**, obwohl beides naheliegt:
+
+| Baustein | Warum nicht |
+|---|---|
+| `PdfPreflightService` | Beantwortet „kann BorstWerk diese Datei verändern?“. Eine digitale Signatur ist dort zu Recht ein Hindernis – das Einbetten bräche sie. Bei einer bereits fertigen Rechnung ist dieselbe Signatur kein Mangel. Die Hindernisse als Prüfbefunde zu übernehmen hieße, dem Anwender die Grenzen unseres Schreibwegs als Mängel seiner Rechnung auszugeben. |
+| `En16931RuleValidator` | Prüft das Domänenmodell während der Erstellung und enthält bewusste Produktgrenzen, etwa die kuratierten Codelisten. Ein Code außerhalb unserer Auswahl ist dort ein Befund; bei einer fremden Rechnung wäre er eine Falschbeschuldigung. |
+
+Wiederverwendet werden dagegen `IPdfAnalyzer`, `CiiInvoiceReader` samt der
+abgesicherten XML-Verarbeitung, `ValidationFinding` und `ValidationReport`.
+
+**Die Quelldatei wird ausschließlich gelesen.** Keine Reparatur, keine
+Änderung, keine neue PDF, kein Austausch der eingebetteten XML. Belegt wird
+das nicht durch eine Zusicherung im Text, sondern durch Tests: SHA-256 der
+Quelle, Bytevergleich vorher/nachher, und die Feststellung, dass neben der
+Quelle keine Datei entsteht.
+
+Das Ergebnis trägt bewusst **kein `Succeeded`**. Ein solches Feld würde als
+„die Rechnung ist gültig“ gelesen, und diese Aussage trifft der Slice nicht:
+Weder die EN-16931-Regelprüfung noch veraPDF laufen. `Completed` beantwortet
+allein, ob die Bestandsaufnahme bis zum Ende gelaufen ist. Eine vorhandene
+PDF/A-3B-Angabe im XMP ist genau das – eine Deklaration der Datei über sich
+selbst, und der Bericht sagt das auch so.
 
 ## EInvoiceSender.App
 
