@@ -21,7 +21,19 @@ public static class AttachedPdfFactory
     /// <summary>Ein Anhang, wie er in die Testdatei geschrieben wird.</summary>
     /// <param name="FileName">Name des Anhangs.</param>
     /// <param name="Content">Inhalt des Anhangs.</param>
-    public sealed record Attachment(string FileName, byte[] Content);
+    /// <param name="Compress">
+    /// Den Anhang mit <c>/FlateDecode</c> packen. PDFsharp speichert Anhänge
+    /// von sich aus unkomprimiert; fremde Erzeuger tun das Gegenteil, und nur
+    /// mit Kompression lässt sich der gefährliche Fall nachstellen – eine
+    /// kleine Datei, deren Anhang sich um ein Vielfaches entfaltet.
+    /// </param>
+    /// <param name="WithDecodeParms">
+    /// Zusätzlich <c>/DecodeParms</c> mit einem Prädiktor eintragen. Ein
+    /// solcher Anhang lässt sich nicht mit Bordmitteln begrenzt entpacken; der
+    /// Prüfmodus muss ihn ablehnen, statt zu raten.
+    /// </param>
+    public sealed record Attachment(
+        string FileName, byte[] Content, bool Compress = false, bool WithDecodeParms = false);
 
     /// <summary>
     /// Erzeugt eine einseitige PDF mit den angegebenen Anhängen.
@@ -75,6 +87,20 @@ public static class AttachedPdfFactory
             embeddedStream.Elements["/Type"] = new PdfName("/EmbeddedFile");
             embeddedStream.Elements["/Subtype"] = new PdfName("/text/xml");
             embeddedStream.CreateStream(attachment.Content);
+
+            if (attachment.Compress)
+            {
+                embeddedStream.Stream!.Zip();
+            }
+
+            if (attachment.WithDecodeParms)
+            {
+                var decodeParms = new PdfDictionary(document);
+                decodeParms.Elements["/Predictor"] = new PdfInteger(12);
+                decodeParms.Elements["/Columns"] = new PdfInteger(4);
+                embeddedStream.Elements["/DecodeParms"] = decodeParms;
+            }
+
             document.Internals.AddObject(embeddedStream);
 
             var specification = new PdfDictionary(document);

@@ -76,45 +76,49 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer, IPdfAttachmentReader
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<EmbeddedFileContent>> ReadEmbeddedFilesAsync(
+    public Task<EmbeddedFileReadResult> ReadEmbeddedFileAsync(
         string filePath,
+        string fileName,
+        int maxBytes,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxBytes);
         cancellationToken.ThrowIfCancellationRequested();
 
-        return Task.Run<IReadOnlyList<EmbeddedFileContent>>(() => ReadEmbeddedFiles(filePath), cancellationToken);
+        return Task.Run(() => ReadEmbeddedFile(filePath, fileName, maxBytes), cancellationToken);
     }
 
     /// <summary>
-    /// Liest alle eingebetteten Dateien samt Inhalt.
+    /// Sucht den Anhang mit dem angegebenen Namen und entpackt allein diesen,
+    /// begrenzt auf <paramref name="maxBytes"/>.
     ///
     /// Verwendet dieselbe Traversierung wie die Analyse: Eine Hybridrechnung
     /// verweist auf denselben Anhang aus zwei Richtungen, und wer das nicht
     /// entdoppelt, meldet eine einwandfreie Datei als mehrdeutig.
     /// </summary>
-    private List<EmbeddedFileContent> ReadEmbeddedFiles(string filePath)
+    private EmbeddedFileReadResult ReadEmbeddedFile(string filePath, string fileName, int maxBytes)
     {
-        var result = new List<EmbeddedFileContent>();
-
         try
         {
             using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using PdfDocument document = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
 
-            foreach ((string fileName, PdfDictionary specification) in
+            foreach ((string name, PdfDictionary specification) in
                      EnumerateFileSpecifications(document.Internals.Catalog))
             {
-                PdfDictionary? embeddedFiles = specification.Elements.GetDictionary("/EF");
-                PdfDictionary? embedded = embeddedFiles?.Elements.GetDictionary("/F")
-                                          ?? embeddedFiles?.Elements.GetDictionary("/UF");
+                if (!string.Equals(name, fileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
 
-                result.Add(new EmbeddedFileContent(
-                    FileName: fileName,
-                    Relationship: specification.Elements.GetName("/AFRelationship"),
-                    MimeType: DecodePdfName(embedded?.Elements.GetName("/Subtype")),
-                    Content: embedded?.Stream?.UnfilteredValue ?? []));
+                // Erst hier wird überhaupt etwas entpackt – und zwar nur
+                // dieser eine Anhang, und nur bis zur Grenze.
+                return BoundedEmbeddedFileReader.Read(specification, maxBytes);
             }
+
+            return EmbeddedFileReadResult.Failed(EmbeddedFileReadStatus.NotFound);
         }
         // Über den Zustand einer beschädigten oder geschützten Datei urteilt
         // die Analyse. Hier gibt es dann schlicht nichts zu lesen.
@@ -125,10 +129,8 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer, IPdfAttachmentReader
             string reason = ex.GetType().Name;
             LogAttachmentsUnreadable(_logger, reason);
 
-            return [];
+            return EmbeddedFileReadResult.Failed(EmbeddedFileReadStatus.NotFound);
         }
-
-        return result;
     }
 
     private PdfAnalysisResult Analyze(string filePath)
@@ -773,21 +775,22 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer, IPdfAttachmentReader
                 continue;
             }
 
-            PdfDictionary? embeddedFiles = specification.Elements.GetDictionary("/EF");
-            PdfDictionary? stream = embeddedFiles?.Elements.GetDictionary("/F")
-                                    ?? embeddedFiles?.Elements.GetDictionary("/UF");
+            // **Begrenzt entpacken, nicht erst entpacken und dann messen.**
+            // Früher stand hier UnfilteredValue mit einer Längenprüfung
+            // danach. Das ist genau die falsche Reihenfolge: Nachgemessen
+            // entfaltet eine PDF-Datei von 67 KB einen Anhang auf 64 MiB, und
+            // der Speicher ist belegt, bevor die Prüfung überhaupt zum Zuge
+            // kommt. Eine OutOfMemoryException fängt diese Klasse bewusst
+            // nicht ab – eine fremde Datei könnte die Anwendung so beenden.
+            EmbeddedFileReadResult content =
+                BoundedEmbeddedFileReader.Read(specification, SecureXmlLimit);
 
-            if (stream?.Stream is null)
+            if (content.Status != EmbeddedFileReadStatus.Read || content.Content.Length == 0)
             {
                 continue;
             }
 
-            byte[] xml = stream.Stream.UnfilteredValue;
-
-            if (xml.Length == 0 || xml.Length > SecureXmlLimit)
-            {
-                continue;
-            }
+            byte[] xml = content.Content;
 
             // Die XML stammt aus einer fremden Datei und wird ausschließlich
             // über den abgesicherten Leser ausgewertet.

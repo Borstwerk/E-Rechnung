@@ -143,22 +143,44 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
         // Feststellungen über ihren Inhalt.
         ReportDocumentObservations(analysis, report);
 
-        IReadOnlyList<EmbeddedFileContent> embedded =
-            await _attachments.ReadEmbeddedFilesAsync(request.SourcePath, cancellationToken).ConfigureAwait(false);
-
-        IReadOnlyList<CheckedAttachment> invoiceLike = CheckedAttachmentNames.SelectInvoiceLike(embedded);
+        // **Zuerst die Namen, dann erst ein Inhalt.** Die Metadaten stehen
+        // schon in der Analyse und kosten nichts. Jeder entpackte Anhang
+        // dagegen kostet Speicher in der Größe, die die fremde Datei bestimmt
+        // – gemessen 64 MiB aus einer PDF von 67 KB. Anhänge zu entpacken, die
+        // für die Prüfung ohnehin keine Rolle spielen, wäre dieser Preis für
+        // nichts.
+        IReadOnlyList<CheckedAttachment> invoiceLike =
+            CheckedAttachmentNames.SelectInvoiceLike(analysis.EmbeddedFiles);
 
         if (SelectAttachment(invoiceLike, report) is not { } attachment)
         {
-            return Aborted(fileName, size, sha256, report, Describe(analysis, null, null));
+            return Aborted(fileName, size, sha256, report, Describe(analysis, null, null, null));
         }
 
-        CiiInspection inspection = _inspector.Inspect(attachment.File.Content);
-        CheckedDocumentInfo info = Describe(analysis, attachment, inspection.Summary?.ProfileId);
+        // Ab hier steht fest: genau ein auswertbarer Rechnungsanhang. Erst
+        // jetzt wird entpackt, und zwar nur bis zur Grenze von SecureXml.
+        EmbeddedFileReadResult content = await _attachments
+            .ReadEmbeddedFileAsync(
+                request.SourcePath, attachment.File.FileName,
+                SecureXml.MaxXmlSizeInBytes, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (content.Status != EmbeddedFileReadStatus.Read)
+        {
+            ReportContentFailure(content, attachment, report);
+
+            return new CheckEInvoiceResult(
+                Completed: false, Canceled: false, fileName, size, sha256,
+                Describe(analysis, attachment, null, null), null, report.Build());
+        }
+
+        CiiInspection inspection = _inspector.Inspect(content.Content);
+        CheckedDocumentInfo info = Describe(
+            analysis, attachment, content.Content.Length, inspection.Summary?.ProfileId);
 
         if (inspection.Status != CiiStructureStatus.Cii)
         {
-            ReportStructureFailure(inspection.Status, attachment, report);
+            ReportStructureFailure(inspection.Status, attachment, content.Content.Length, report);
 
             return new CheckEInvoiceResult(
                 Completed: false, Canceled: false, fileName, size, sha256, info, null, report.Build());
@@ -167,7 +189,7 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
         ReportProfile(inspection.Summary!, report);
 
         string attachmentKind = CheckedAttachmentNames.Describe(attachment.Kind);
-        LogChecked(_logger, attachmentKind, attachment.File.Content.Length);
+        LogChecked(_logger, attachmentKind, content.Content.Length);
 
         return new CheckEInvoiceResult(
             Completed: true,
@@ -178,6 +200,48 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
             info,
             inspection.Summary,
             report.Build());
+    }
+
+    /// <summary>
+    /// Meldet, warum der Inhalt des Rechnungsanhangs gar nicht erst entpackt
+    /// wurde.
+    /// </summary>
+    private static void ReportContentFailure(
+        EmbeddedFileReadResult content, CheckedAttachment attachment, ValidationReportBuilder report)
+    {
+        switch (content.Status)
+        {
+            case EmbeddedFileReadStatus.TooLarge:
+                report.Error(
+                    CheckRuleIds.InvoiceXmlTooLarge,
+                    "Der Rechnungsanhang ist zu groß und wurde aus Sicherheitsgründen nicht "
+                    + "verarbeitet.",
+                    "InvoiceXml",
+                    $"Anhang {attachment.File.FileName}. Grenze: {SecureXml.MaxXmlSizeInBytes} Bytes "
+                    + "im entpackten Zustand; "
+                    + (content.StoppedAtLimit
+                        ? "das Entpacken wurde an der Grenze abgebrochen."
+                        : "die Größe wurde nach dem Entpacken festgestellt."));
+                break;
+
+            case EmbeddedFileReadStatus.UnsupportedFilter:
+                report.Error(
+                    CheckRuleIds.InvoiceXmlUnsupportedFilter,
+                    "Der Rechnungsanhang ist mit einem Verfahren gepackt, das diese Anwendung "
+                    + "nicht sicher begrenzt entpacken kann. Er wurde deshalb nicht verarbeitet.",
+                    "InvoiceXml",
+                    $"Anhang {attachment.File.FileName}, Filter: {content.FilterDescription ?? "unbekannt"}.");
+                break;
+
+            default:
+                report.Error(
+                    CheckRuleIds.InvoiceXmlEmpty,
+                    "Der Rechnungsanhang ließ sich nicht lesen. Die Datei nennt ihn, liefert "
+                    + "aber keinen Inhalt.",
+                    "InvoiceXml",
+                    $"Anhang {attachment.File.FileName}.");
+                break;
+        }
     }
 
     /// <summary>
@@ -234,7 +298,7 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
                 + $"{CheckedAttachmentNames.Describe(only.Kind)}. Dieses Format wird derzeit nicht "
                 + "geprüft; geprüft werden ZUGFeRD- und Factur-X-Rechnungen.",
                 "EmbeddedFiles",
-                $"Anhang {only.File.FileName}, {only.File.Content.Length} Bytes.");
+                $"Anhang {only.File.FileName}; sein Inhalt wurde nicht entpackt.");
 
             return null;
         }
@@ -249,10 +313,13 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
     /// Anwender, der wissen will, was er als Nächstes tun soll, wertlos.
     /// </summary>
     private static void ReportStructureFailure(
-        CiiStructureStatus status, CheckedAttachment attachment, ValidationReportBuilder report)
+        CiiStructureStatus status,
+        CheckedAttachment attachment,
+        int contentLength,
+        ValidationReportBuilder report)
     {
         string field = "InvoiceXml";
-        string where = $"Anhang {attachment.File.FileName}, {attachment.File.Content.Length} Bytes.";
+        string where = $"Anhang {attachment.File.FileName}, {contentLength} Bytes.";
 
         switch (status)
         {
@@ -265,12 +332,18 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
                 break;
 
             case CiiStructureStatus.TooLarge:
+                // Zweite Linie. Erreichbar ist sie nur, wenn der begrenzte
+                // Leser umgangen wurde – die Grenze greift normalerweise
+                // schon dort. Trotzdem hier die zutreffende Meldung und nicht
+                // die allgemeine: Ein stiller Fehlgriff auf "keine
+                // CII-Struktur" verschöbe die Ursache.
                 report.Error(
                     CheckRuleIds.InvoiceXmlTooLarge,
                     "Der Rechnungsanhang ist zu groß und wurde aus Sicherheitsgründen nicht "
                     + "verarbeitet.",
                     field,
-                    $"{where} Grenze: {SecureXml.MaxXmlSizeInBytes} Bytes.");
+                    $"{where} Grenze: {SecureXml.MaxXmlSizeInBytes} Bytes; erkannt beim Einlesen "
+                    + "der XML.");
                 break;
 
             case CiiStructureStatus.NotWellFormed:
@@ -367,7 +440,10 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
     }
 
     private static CheckedDocumentInfo Describe(
-        PdfAnalysisResult analysis, CheckedAttachment? attachment, string? profileId)
+        PdfAnalysisResult analysis,
+        CheckedAttachment? attachment,
+        int? contentLength,
+        string? profileId)
         => new(
             PdfVersion: analysis.PdfVersion,
             PageCount: analysis.PageCount,
@@ -376,7 +452,7 @@ public sealed partial class EInvoiceCheckService : IEInvoiceCheckService
             EmbeddedFiles: analysis.EmbeddedFiles,
             InvoiceAttachmentName: attachment?.File.FileName,
             InvoiceAttachmentKind: attachment?.Kind,
-            InvoiceAttachmentSizeInBytes: attachment?.File.Content.Length,
+            InvoiceAttachmentSizeInBytes: contentLength,
             ProfileId: profileId,
             IsEncrypted: analysis.IsEncrypted,
             IsDigitallySigned: analysis.UpgradeBlockers.Contains(PdfUpgradeBlocker.DigitallySigned));
@@ -464,6 +540,9 @@ public static class CheckRuleIds
 
     /// <summary>Der Rechnungsanhang überschreitet die Größengrenze.</summary>
     public const string InvoiceXmlTooLarge = "APP-CHK-024";
+
+    /// <summary>Der Rechnungsanhang ist nicht begrenzt entpackbar gepackt.</summary>
+    public const string InvoiceXmlUnsupportedFilter = "APP-CHK-025";
 
     /// <summary>Der Rechnungsanhang ist keine wohlgeformte XML.</summary>
     public const string InvoiceXmlNotWellFormed = "APP-CHK-030";

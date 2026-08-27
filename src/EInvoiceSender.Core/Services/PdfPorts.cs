@@ -133,45 +133,105 @@ public interface IPdfAnalyzer
     Task<bool> LooksLikePdfAsync(string filePath, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Ein eingebetteter Anhang samt seinem Inhalt.
-/// </summary>
-/// <param name="FileName">Name des Anhangs, wie er in der Datei steht.</param>
-/// <param name="Relationship">Wert von <c>/AFRelationship</c>, falls gesetzt.</param>
-/// <param name="MimeType">Angegebener MIME-Typ.</param>
-/// <param name="Content">Der entpackte Inhalt.</param>
-public sealed record EmbeddedFileContent(
-    string FileName,
-    string? Relationship,
-    string? MimeType,
-    byte[] Content);
+/// <summary>Wie das Lesen eines eingebetteten Anhangs ausgegangen ist.</summary>
+public enum EmbeddedFileReadStatus
+{
+    /// <summary>Der Inhalt wurde vollständig und innerhalb der Grenze gelesen.</summary>
+    Read,
+
+    /// <summary>Es gibt keinen Anhang dieses Namens.</summary>
+    NotFound,
+
+    /// <summary>Der entpackte Inhalt überschreitet die zulässige Größe.</summary>
+    TooLarge,
+
+    /// <summary>
+    /// Der Anhang verwendet ein Kompressionsverfahren, das sich hier nicht
+    /// begrenzt entpacken lässt. Er wird deshalb gar nicht entpackt.
+    /// </summary>
+    UnsupportedFilter,
+}
+
+/// <summary>Ergebnis des Lesens eines einzelnen Anhangs.</summary>
+/// <param name="Status">Wie es ausgegangen ist.</param>
+/// <param name="Content">Der Inhalt; nur bei <see cref="EmbeddedFileReadStatus.Read"/> gefüllt.</param>
+/// <param name="FilterDescription">
+/// Das vorgefundene Filterverfahren, für den technischen Teil eines Befunds.
+/// </param>
+/// <param name="StoppedAtLimit">
+/// Wurde das Entpacken tatsächlich an der Grenze abgebrochen, ohne den Rest
+/// anzufassen?
+///
+/// <para>
+/// <b>Warum das getrennt festgehalten wird.</b> Ein
+/// <see cref="EmbeddedFileReadStatus.TooLarge"/> allein sagt nur, dass der
+/// Inhalt zu groß war – nicht, ob der Speicher dafür schon verbraucht wurde.
+/// Genau das ist aber der Unterschied zwischen einer wirksamen Grenze und
+/// einer, die zu spät kommt. Wer im Bericht schreibt „an der Grenze
+/// abgebrochen“, muss es belegen können.
+/// </para>
+/// </param>
+public sealed record EmbeddedFileReadResult(
+    EmbeddedFileReadStatus Status,
+    byte[] Content,
+    string? FilterDescription,
+    bool StoppedAtLimit = false)
+{
+    /// <summary>Ein Ergebnis ohne Inhalt.</summary>
+    public static EmbeddedFileReadResult Failed(
+        EmbeddedFileReadStatus status, string? filter = null, bool stoppedAtLimit = false)
+        => new(status, [], filter, stoppedAtLimit);
+}
 
 /// <summary>
-/// Liest die eingebetteten Dateien einer PDF samt Inhalt.
-///
-/// **Warum das nicht in <see cref="IPdfAnalyzer"/> passt.**
-/// <see cref="PdfAnalysisResult.ExistingInvoiceXml"/> liefert genau einen
-/// Anhang, nämlich den ersten, dessen Name nach einer Rechnung aussieht. Für
-/// die Erzeugung reicht das: Dort geht es nur um die Warnung „hier sind schon
-/// Rechnungsdaten drin“, und welche es sind, ändert daran nichts.
-///
-/// Der Prüfmodus darf sich genau das nicht leisten. Liegen in einer Datei
-/// mehrere rechnungsartige Anhänge, ist „der erste“ eine willkürliche Wahl mit
-/// einem sehr echten Ergebnis – der Anwender bekäme einen Prüfbericht über eine
-/// Datei, die er nicht gemeint hat. Deshalb bekommt er alle zu sehen und
-/// entscheidet die Prüfung erst danach.
-///
-/// Die Datei wird ausschließlich gelesen.
+/// Liest den Inhalt <b>eines</b> namentlich benannten Anhangs, und zwar mit
+/// einer harten Obergrenze.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>Warum genau einer und nicht alle.</b> Der Inhalt eines Anhangs zu
+/// entpacken kostet Speicher in der Größe des entpackten Inhalts – und die
+/// bestimmt die zu prüfende Datei, nicht wir. Eine gemessene PDF-Datei von
+/// 67 KB entfaltete einen Anhang auf 64 MiB. Alle Anhänge vorsorglich zu
+/// entpacken hieße, diesen Preis auch für Dateien zu zahlen, die für die
+/// Prüfung überhaupt keine Rolle spielen: für den beigelegten Lieferschein,
+/// für den zweiten Rechnungsanhang, der die Prüfung ohnehin abbricht, und für
+/// das Fremdformat, dessen Inhalt gar nicht ausgewertet wird.
+/// </para>
+/// <para>
+/// Deshalb entscheidet der Prüfmodus zuerst anhand der <b>Namen</b> – die
+/// stehen in <see cref="PdfAnalysisResult.EmbeddedFiles"/> und kosten nichts –
+/// und liest erst danach genau den einen Anhang, den er wirklich auswerten
+/// will.
+/// </para>
+/// <para>
+/// <b>Warum das nicht in <see cref="IPdfAnalyzer"/> passt.</b>
+/// <see cref="PdfAnalysisResult.ExistingInvoiceXml"/> liefert den ersten
+/// Anhang, dessen Name nach einer Rechnung aussieht. Für die Erzeugung reicht
+/// das – dort geht es nur um die Warnung „hier sind schon Rechnungsdaten
+/// drin“. Der Prüfmodus darf sich diese willkürliche Wahl nicht leisten: Der
+/// Anwender bekäme sonst einen Bericht über eine Datei, die er nicht gemeint
+/// hat.
+/// </para>
+/// <para>Die Datei wird ausschließlich gelesen.</para>
+/// </remarks>
 public interface IPdfAttachmentReader
 {
     /// <summary>
-    /// Liest alle eingebetteten Dateien mit Inhalt. Wirft nicht bei
-    /// beschädigten Dateien, sondern liefert eine leere Liste – über den
-    /// Zustand der Datei urteilt <see cref="IPdfAnalyzer"/>.
+    /// Liest den Inhalt des Anhangs mit dem angegebenen Namen, höchstens
+    /// jedoch <paramref name="maxBytes"/> Bytes im entpackten Zustand.
+    ///
+    /// Wirft nicht bei beschädigten Dateien, sondern meldet den Zustand über
+    /// <see cref="EmbeddedFileReadResult.Status"/>.
     /// </summary>
-    Task<IReadOnlyList<EmbeddedFileContent>> ReadEmbeddedFilesAsync(
-        string filePath, CancellationToken cancellationToken = default);
+    /// <param name="filePath">Die zu lesende PDF-Datei.</param>
+    /// <param name="fileName">
+    /// Name des Anhangs. Der Aufrufer hat zuvor festgestellt, dass er in
+    /// dieser Datei eindeutig ist.
+    /// </param>
+    /// <param name="maxBytes">Obergrenze für den entpackten Inhalt.</param>
+    Task<EmbeddedFileReadResult> ReadEmbeddedFileAsync(
+        string filePath, string fileName, int maxBytes, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

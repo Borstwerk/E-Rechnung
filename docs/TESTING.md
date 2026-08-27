@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 1136 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.Core.Tests` | 1142 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
 | `tests/EInvoiceSender.IntegrationTests` | 96 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **1232** | |
+| **Summe** | **1238** | |
 
 ## Ebenen
 
@@ -260,6 +260,18 @@ mangelhaften Datei wäre eine stille Reparatur verlockend.
 XMP ist eine Deklaration der Datei über sich selbst; veraPDF ist nicht
 gelaufen. Ein Test durchsucht deshalb alle Befundtexte nach „normkonform“,
 „gültige E-Rechnung“ und „PDF/A-konform“ und lässt keinen davon durch.
+
+**Anhänge werden nicht auf Verdacht entpackt.** Eine PDF von 67 KB kann einen
+Anhang von 64 MiB tragen; wer erst entpackt und danach misst, hat den Speicher
+schon verbraucht. `AttachmentMaterialisationTests` belegt beides: Ein
+mitschreibender Leser zeigt, dass bei Mehrdeutigkeit und bei einem nicht
+unterstützten Format **kein** Inhalt angefordert wird und neben der Rechnung
+liegende Fremdanhänge unangetastet bleiben. Und für den Rechnungsanhang selbst
+prüft ein Test mit einer echten Entfaltungsbombe, dass die Grenze schon beim
+Entpacken greift – belegt am Befundtext, nicht nur an der Kennung, denn
+dieselbe Kennung käme auch nach einer zu späten Messung heraus. Die Gegenprobe
+mit einem komprimierten Anhang unter der Grenze verhindert, dass die Sperre
+einfach alles ablehnt.
 
 Weiter abgedeckt: die Kerndaten gegen das Szenario statt gegen sich selbst,
 fehlender Rechnungsanhang, beschädigte XML, XRechnung und Order-X als

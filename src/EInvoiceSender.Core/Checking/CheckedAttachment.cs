@@ -28,11 +28,18 @@ public enum CheckedAttachmentKind
 }
 
 /// <summary>
-/// Ein rechnungsartiger Anhang, bereits eingeordnet.
+/// Ein rechnungsartiger Anhang, eingeordnet allein nach seinem Namen.
 /// </summary>
-/// <param name="File">Der Anhang samt Inhalt.</param>
+/// <remarks>
+/// <b>Bewusst ohne Inhalt.</b> Die Einordnung geschieht auf den Metadaten, die
+/// die PDF-Analyse ohnehin schon gelesen hat. Erst wenn feststeht, dass genau
+/// ein auswertbarer Anhang vorliegt, wird dessen Inhalt entpackt – und dann
+/// begrenzt. Alles andere hieße, für einen Anhang zu bezahlen, den niemand
+/// ansehen wird.
+/// </remarks>
+/// <param name="File">Die Metadaten des Anhangs.</param>
 /// <param name="Kind">Das erkannte Format.</param>
-public sealed record CheckedAttachment(EmbeddedFileContent File, CheckedAttachmentKind Kind)
+public sealed record CheckedAttachment(EmbeddedFileInfo File, CheckedAttachmentKind Kind)
 {
     /// <summary>Kann dieser Prüfmodus den Anhang auswerten?</summary>
     public bool IsSupported => Kind == CheckedAttachmentKind.FacturX;
@@ -104,10 +111,11 @@ public static class CheckedAttachmentNames
 
     /// <summary>
     /// Wählt aus allen Anhängen die rechnungsartigen heraus, in der
-    /// Reihenfolge, in der sie in der Datei stehen.
+    /// Reihenfolge, in der sie in der Datei stehen – allein anhand der Namen,
+    /// ohne einen Inhalt anzufassen.
     /// </summary>
     public static IReadOnlyList<CheckedAttachment> SelectInvoiceLike(
-        IEnumerable<EmbeddedFileContent> files)
+        IEnumerable<EmbeddedFileInfo> files)
     {
         ArgumentNullException.ThrowIfNull(files);
 

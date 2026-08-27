@@ -103,6 +103,40 @@ das nicht durch eine Zusicherung im Text, sondern durch Tests: SHA-256 der
 Quelle, Bytevergleich vorher/nachher, und die Feststellung, dass neben der
 Quelle keine Datei entsteht.
 
+#### Anhänge werden nicht auf Verdacht entpackt
+
+Einen eingebetteten Anhang zu entpacken kostet Speicher in der Größe des
+*entpackten* Inhalts – und die bestimmt die fremde Datei, nicht wir. An
+PDFsharp 6.2.4 nachgemessen: Eine PDF-Datei von **67 KB** entfaltet einen
+Anhang auf **64 MiB**, Verhältnis 1:1029. `PdfStream.Length` hilft dabei
+nicht, denn es meldet die *komprimierte* Größe; `/Params /Size` stammt aus
+der zu prüfenden Datei und ist damit genau die Angabe, der man nicht glauben
+darf. PDFsharp bietet keine begrenzte Dekomprimierung – jede `Decode`-Methode
+liefert ein fertiges `byte[]`.
+
+Daraus folgen zwei Regeln:
+
+1. **Erst die Namen, dann ein Inhalt.** Über Leerbefund, Mehrdeutigkeit und
+   nicht unterstütztes Format entscheiden die Anhangsnamen aus
+   `PdfAnalysisResult.EmbeddedFiles`. Entpackt wird ausschließlich der eine
+   Anhang, der auch ausgewertet wird.
+2. **Dieser eine nur bis zur Grenze.** `BoundedEmbeddedFileReader` entpackt
+   `/FlateDecode` selbst über `ZLibStream` aus der Basisklassenbibliothek und
+   bricht bei `SecureXml.MaxXmlSizeInBytes` ab. Andere Verfahren – verkettete
+   Filter, LZW, ein Prädiktor in `/DecodeParms` – werden nicht geraten,
+   sondern mit `APP-CHK-025` abgelehnt.
+
+Gemessen für dieselbe 64-MiB-Bombe: 34 MB statt 269 MB und 159 ms statt
+437 ms. Entscheidend ist aber nicht der Faktor, sondern die Abhängigkeit: Bei
+einer viermal größeren Bombe (256 MiB) blieb es bei 34,6 MB. Der Bedarf hängt
+jetzt an *unserer* Grenze, nicht mehr an der Größe, die ein Angreifer wählt.
+
+**Restgrenze, ausdrücklich benannt:** Der rohe, noch komprimierte Datenstrom
+liegt im Speicher, sobald PDFsharp die Datei geöffnet hat. Der Bedarf bleibt
+also proportional zur Dateigröße auf der Platte. Beseitigt ist die
+Vervielfachung, nicht die erste Grenze; die zöge nur ein PDF-Leser mit
+strömender Objektverarbeitung.
+
 Das Ergebnis trägt bewusst **kein `Succeeded`**. Ein solches Feld würde als
 „die Rechnung ist gültig“ gelesen, und diese Aussage trifft der Slice nicht:
 Weder die EN-16931-Regelprüfung noch veraPDF laufen. `Completed` beantwortet
