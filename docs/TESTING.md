@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 1150 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.Core.Tests` | 1188 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
 | `tests/EInvoiceSender.IntegrationTests` | 99 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **1249** | |
+| **Summe** | **1287** | |
 
 ## Ebenen
 
@@ -288,6 +288,31 @@ Auswahl, eine gewöhnliche Beilage neben der Rechnung, DTD samt externer
 Entität, übergroße XML, beschädigte PDF und die digitale Signatur, die für
 sich genommen kein Mangel ist.
 
+## Installer-Buildwächter
+
+`build/test-installer-build-guard.sh` belegt, dass sich das WiX-Projekt nicht
+direkt bauen lässt – mit echten Buildversuchen, nicht mit einer
+Quelltextsuche. Geprüft werden:
+
+- ein direkter `dotnet build` des Installerprojekts scheitert, verweist auf
+  `Build-Installer.ps1` und `Build-Release.ps1` und hinterlässt kein MSI,
+- der Wächter greift, **bevor** die WiX-Werkzeugkette anläuft; ein Abbruch
+  erst an einer späteren Prüfung wäre nur Zufall,
+- ein autorisierter Build ohne `PublishDir` bricht ebenfalls ab, damit kein
+  Standardordner allein durch sein Dasein zur Installerquelle wird,
+- der autorisierte Weg mit `PublishDir` kommt durch den Wächter – ein zu
+  breiter Wächter wäre so schädlich wie gar keiner.
+
+Der Wächter ist reine MSBuild-Logik und deshalb plattformneutral prüfbar; das
+Skript läuft in beiden CI-Jobs. Eine vermeintliche `EInvoiceSender.exe` im
+Testordner umgeht die Sperre ausdrücklich nicht: Der gefährliche Fall ist
+gerade der, in dem eine Datei dieses Namens vorhanden, aber veraltet ist.
+
+Dass `Build-Installer.ps1` bei jedem Aufruf frisch veröffentlicht und
+`Build-Release.ps1` keinen zweiten Publish erzeugt, sichern Quelltextprüfungen
+in `InstallerProjectTests` und `ReleasePackagingTests` ab. Beide Skripte
+laufen nur unter Windows mit PowerShell; diese Prüfungen laufen überall.
+
 ## Installer-Metadaten
 
 Der Windows-Bau führt nach dem Erzeugen des MSI automatisch
@@ -368,6 +393,11 @@ sind insbesondere:
 - vollständige Übernahme der Drittanbieterhinweise und Lizenztexte,
 - fehlender Lizenztext,
 - exakte ZIP-Struktur ohne zusätzlichen obersten Ordner,
+- Abweisung eines fremden Veröffentlichungsverzeichnisses, belegt an einer
+  Sentinel-Datei, die den Aufruf überleben muss – eine Prüfung im Quelltext
+  allein sagt nicht, dass tatsächlich nichts gelöscht wurde,
+- Abweisung auch dann, wenn der Pfad erst über `..` aus dem Repository
+  herausführt,
 - exakt zwei Prüfsummenzeilen in fester Reihenfolge,
 - manipuliertes MSI und manipuliertes ZIP.
 

@@ -44,6 +44,17 @@ public enum VatCategory
 
     /// <summary>O – nicht im Anwendungsbereich der Umsatzsteuer.</summary>
     OutsideScope,
+
+    // Der EN-16931-Codebestand kennt darüber hinaus L (Kanarische Inseln,
+    // IGIC) und M (Ceuta und Melilla, IPSI). Beide fehlen hier bewusst: Diese
+    // Anwendung bietet sie nicht zur Erstellung an, weil ihre steuerliche
+    // Behandlung hier niemand geprüft hat.
+    //
+    // Das ist eine Grenze dieses Programms, **keine** Aussage über die Norm.
+    // Eine fremde Rechnung mit L oder M ist normgerecht; sie ließe sich mit
+    // BorstWerk nur nicht erzeugen. Für den späteren Prüfmodus
+    // (ER-030-CHK-01) muss diese Unterscheidung erhalten bleiben – siehe
+    // docs/E-INVOICE-STANDARD.md, Abschnitt zu den Codelisten.
 }
 
 /// <summary>

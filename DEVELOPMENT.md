@@ -102,7 +102,15 @@ Für einen reinen Installerbau während der Entwicklung:
 .\build\Build-Installer.ps1
 ```
 
-Veröffentlicht die Anwendung bei Bedarf und baut und prüft ausschließlich das MSI.
+Veröffentlicht die Anwendung bei jedem Aufruf neu und baut und prüft ausschließlich das MSI.
+
+**Das WiX-Projekt wird nicht direkt gebaut.** Ein Bau aus Visual Studio oder per
+`dotnet build installer/EInvoiceSender.Setup/...` bricht ab und verweist auf
+`Build-Installer.ps1` beziehungsweise `Build-Release.ps1`. Grund ist der Vorfall vom
+25.08.2026: Ein direkter Build paketierte einen liegengebliebenen Veröffentlichungsbestand
+und erzeugte ein MSI, dessen Version stimmte und dessen Inhalt veraltet war. Die
+Einzelheiten stehen in [`docs/BUILD.md`](docs/BUILD.md); belegt wird die Sperre mit echten
+Buildversuchen in `build/test-installer-build-guard.sh`.
 
 Das Paket ist ein Dual-Purpose-Paket (`Scope="perUserOrMachine"`): Die Standardinstallation läuft
 für den aktuellen Benutzer ohne UAC-Rückfrage, dieselbe Datei lässt sich bei Bedarf für alle

@@ -905,7 +905,7 @@ internal static partial class PositionDetector
 
         if (UnitMappings.TryGetValue(normalized, out string? mapped)
             && mapped is not null
-            && UnitCodeList.IsValid(mapped))
+            && UnitCodeList.IsSupported(mapped))
         {
             code = mapped;
             return true;
