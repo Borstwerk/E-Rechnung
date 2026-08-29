@@ -54,13 +54,23 @@ internal static class InvoiceLineRules
                     $"{field}.Quantity", normRule: "BR-22");
             }
 
-            if (!UnitCodeList.IsValid(line.Unit.Value))
+            // Die Erzeugung wird weiterhin angehalten: Eine Einheit
+            // durchzulassen, deren Bedeutung hier niemand geprüft hat, wäre
+            // schlimmer als eine abgelehnte Rechnung.
+            //
+            // Der Befund trägt aber bewusst **keinen** Normverweis mehr.
+            // Rec. 20/21 kennt mehrere hundert Codes; welche davon gültig
+            // sind, entscheidet diese Anwendung nicht. Ein hier abgelehnter
+            // Code kann normgerecht sein – er wird nur nicht unterstützt.
+            if (!UnitCodeList.IsSupported(line.Unit.Value))
             {
                 report.Error(
                     "APP-LIN-005",
-                    $"Die Mengeneinheit '{line.Unit.Value}' in {label} ist unbekannt.",
+                    $"Die Mengeneinheit '{line.Unit.Value}' in {label} wird von dieser "
+                    + "Anwendung nicht unterstützt.",
                     $"{field}.Unit",
-                    "Zulässig sind die Codes nach UN/ECE-Empfehlung 20 und 21.", "BR-23");
+                    "Unterstützt sind die Codes der Auswahlliste; über die Gültigkeit nach "
+                    + "UN/ECE-Empfehlung 20 und 21 trifft diese Prüfung keine Aussage.");
             }
 
             if (line.NetUnitPrice < 0m)

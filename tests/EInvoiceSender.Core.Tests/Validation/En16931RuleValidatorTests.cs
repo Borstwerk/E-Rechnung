@@ -134,14 +134,34 @@ public sealed class En16931RuleValidatorTests
         ErwarteFehler(Prüfe(kaputt), "APP-DOC-006");
     }
 
+    /// <summary>
+    /// Eine Währung außerhalb des EN-16931-Codebestands ist ein Normbefund.
+    ///
+    /// **Was dieser Test früher behauptete.** Er verlangte einen Fehler für
+    /// jeden Code außerhalb der kuratierten BorstWerk-Auswahl – und schrieb
+    /// damit die Verwechslung fest, um die es in ER-030-STD-01b geht: „von
+    /// BorstWerk nicht angeboten“ ist keine Aussage über die Norm. Geprüft
+    /// wird jetzt gegen den vollständigen Codebestand v17b, deshalb sind BGN
+    /// (zurückgezogen) und XYZ (nie vergeben) beide Fehler, KZT (gültig, nur
+    /// nicht angeboten) dagegen nicht. Die genaue Abgrenzung prüft
+    /// <c>StandardRefreshTests</c>.
+    /// </summary>
     [Fact]
-    public void Dokument_UnbekannteWährung_LöstFehlerAus()
+    public void Dokument_NichtNormgültigeWährung_LöstFehlerAus()
     {
         ErwarteKeinenFehler(Prüfe(BaseInvoice), "APP-DOC-008");
 
-        Invoice kaputt = BaseInvoice with { Currency = CurrencyCode.Parse("XYZ") };
+        foreach (string code in new[] { "BGN", "XYZ" })
+        {
+            Invoice kaputt = BaseInvoice with { Currency = CurrencyCode.Parse(code) };
 
-        ErwarteFehler(Prüfe(kaputt), "APP-DOC-008");
+            ErwarteFehler(Prüfe(kaputt), "APP-DOC-008");
+        }
+
+        Invoice gültigNurNichtAngeboten =
+            BaseInvoice with { Currency = CurrencyCode.Parse("KZT") };
+
+        ErwarteKeinenFehler(Prüfe(gültigNurNichtAngeboten), "APP-DOC-008");
     }
 
     [Fact]
