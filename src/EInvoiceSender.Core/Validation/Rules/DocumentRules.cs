@@ -80,22 +80,63 @@ internal static class DocumentRules
                 "DueDate", normRule: "BR-CO-25");
         }
 
+        // Der frühere Normverweis BR-CO-03 war schlicht falsch. Im
+        // EN-16931-Schematron des gepinnten Prüfwerkzeugs lautet die Regel:
+        // „Value added tax point date (BT-7) and Value added tax point date
+        // code (BT-8) are mutually exclusive.“ Mit der Rechnungsart hat sie
+        // nichts zu tun.
+        //
+        // Ersetzt wird sie durch keinen anderen Verweis, und das mit Absicht:
+        // Über die Zugehörigkeit zu UNTDID 1001 wacht BR-CL-01, und die
+        // Liste hier ist nur die Teilmenge, die diese Anwendung beherrscht.
+        // Ein hier abgelehnter Code kann in UNTDID 1001 stehen – dasselbe
+        // Verhältnis wie bei Währung und Mengeneinheit.
         if (!InvoiceTypeCodes.IsValid((int)invoice.TypeCode))
         {
             report.Error(
                 "APP-DOC-007",
                 "Die gewählte Rechnungsart wird von dieser Anwendung nicht unterstützt.",
                 "TypeCode",
-                $"Code {(int)invoice.TypeCode}", "BR-CO-03");
+                $"Code {(int)invoice.TypeCode}; über die Zugehörigkeit zu UNTDID 1001 "
+                + "entscheidet die externe Prüfung (BR-CL-01).");
         }
 
-        if (!CurrencyCodeList.IsValid(invoice.Currency.Value))
+        // Zwei verschiedene Aussagen, und sie dürfen nicht zusammenfallen.
+        // Die Reihenfolge ist deshalb keine Geschmacksfrage: Zuerst die Norm,
+        // dann das Angebot dieser Anwendung.
+        //
+        // Der Normbefund beruht auf dem **vollständigen** Codebestand v17b,
+        // nicht auf einer Liste bekannter Ausfälle. Nur so lässt sich ein
+        // erfundener Code wie XYZ von einem gültigen, hier bloß nicht
+        // angebotenen wie KZT unterscheiden.
+        //
+        // Der Normverweis lautet BR-CL-04 („Invoice currency code MUST be
+        // coded using ISO code list 4217 alpha-3“), nicht BR-05: BR-05
+        // verlangt nur, dass BT-5 überhaupt vorhanden ist. Beide Wortlaute
+        // sind im EN-16931-Schematron des gepinnten Prüfwerkzeugs belegt.
+        if (!CurrencyCodeList.IsValidPerEn16931(invoice.Currency.Value))
         {
+            CurrencyCodeList.TryGetWithdrawalReason(invoice.Currency.Value, out string? reason);
+
             report.Error(
                 "APP-DOC-008",
-                $"'{invoice.Currency.Value}' ist keine bekannte Währung. Bitte verwenden "
-                + "Sie eine Währungskennung nach ISO 4217, zum Beispiel EUR.",
-                "Currency", normRule: "BR-05");
+                $"'{invoice.Currency.Value}' ist keine gültige Währungskennung. Bitte "
+                + "verwenden Sie eine aktuelle Kennung nach ISO 4217, zum Beispiel EUR.",
+                "Currency",
+                reason ?? "Nicht im EN-16931-Codebestand v17b enthalten.",
+                "BR-CL-04");
+        }
+        else if (!CurrencyCodeList.IsOffered(invoice.Currency.Value))
+        {
+            // Normgültig, nur nicht im Angebot. Das ist eine Grenze dieses
+            // Programms – sie als Grenze der Norm auszugeben wäre der Fehler,
+            // den dieser Zweig gerade vermeidet. Deshalb kein Normverweis.
+            report.Warning(
+                "APP-DOC-011",
+                $"Die Währung '{invoice.Currency.Value}' ist nach ISO 4217 gültig, wird von "
+                + "dieser Anwendung aber nicht zur Auswahl angeboten.",
+                "Currency",
+                "Nicht in der kuratierten Auswahl dieser Anwendung enthalten.");
         }
 
         ValidatePeriod(

@@ -71,9 +71,19 @@ public static class CiiConstants
     /// <summary>Beschreibungstext des Anhangs im PDF.</summary>
     public const string EmbeddedDescription = "Factur-X/ZUGFeRD Rechnung";
 
-    /// <summary>Menschenlesbare Formatbezeichnung für den Validierungsbericht.</summary>
+    /// <summary>
+    /// Menschenlesbare Formatbezeichnung für den Validierungsbericht.
+    ///
+    /// **Was sich mit dem Versionssprung ändert – und was nicht.** Geändert hat
+    /// sich allein die Fassung, gegen die abgeglichen wurde: ZUGFeRD 2.5.2 /
+    /// Factur-X 1.09.2 mit der Syntaxfassung CII D22B. Unverändert bleiben
+    /// Profilkennung, Namensräume, Anhangname, MIME-Typ, Dateibeziehung und
+    /// die XMP-Angaben – sie sind über ZUGFeRD 2.1 bis 2.5 hinweg dieselben.
+    /// Insbesondere bleibt <c>fx:Version</c> „1.0“: Das ist die Fassung des
+    /// XMP-Extension-Schemas, nicht die des Standards.
+    /// </summary>
     public const string FormatDescription =
-        "ZUGFeRD 2.3 / Factur-X 1.07, Profil EN 16931 (CII D16B), PDF/A-3b";
+        "ZUGFeRD 2.5.2 / Factur-X 1.09.2, Profil EN 16931 (CII D22B), PDF/A-3b";
 
     /// <summary>
     /// Bekannte Profilkennungen zur Erkennung eingehender Dateien.

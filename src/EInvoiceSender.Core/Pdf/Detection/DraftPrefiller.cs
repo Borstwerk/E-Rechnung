@@ -138,7 +138,7 @@ public static class DraftPrefiller
     ///
     /// **Beide Prüfungen sind nötig.** <see cref="UnitCode.TryParse"/> prüft
     /// nur die Form – ein bis drei Buchstaben oder Ziffern; „XXX“ besteht sie
-    /// anstandslos. Erst <see cref="UnitCodeList.IsValid"/> entscheidet, ob es
+    /// anstandslos. Erst <see cref="UnitCodeList.IsSupported"/> entscheidet, ob es
     /// die Einheit überhaupt gibt. Das ist dieselbe Liste, an der später
     /// <c>InvoiceLineRules</c> misst: Was hier durchkommt und dort scheitert,
     /// wäre ein Entwurf, der erst beim Erzeugen der Rechnung auffliegt.
@@ -160,7 +160,7 @@ public static class DraftPrefiller
         if (line.UnitCode is { } code)
         {
             if (!UnitCode.TryParse(code, out UnitCode parsed)
-                || !UnitCodeList.IsValid(parsed.Value))
+                || !UnitCodeList.IsSupported(parsed.Value))
             {
                 return false;
             }
