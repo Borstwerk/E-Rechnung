@@ -117,6 +117,51 @@ try {
         }
     }
 
+    # -----------------------------------------------------------------------
+    # Build-Installer.ps1 darf nur in das Veröffentlichungsverzeichnis des
+    # Repositorys schreiben.
+    #
+    # Publish.ps1 löscht sein Zielverzeichnis rekursiv. Der Parameter
+    # -PublishDirectory existiert nur, damit Build-Release.ps1 dasselbe
+    # Verzeichnis benennen kann, das es anschließend weiterverwendet – ohne
+    # Sperre wäre er ein frei adressierbarer Löschbefehl im normalen
+    # Installer-Einstieg.
+    #
+    # Der Nachweis ist bewusst empirisch: Eine Sentinel-Datei im fremden
+    # Ordner muss den Aufruf überleben. Dass irgendwo eine Prüfung im
+    # Quelltext steht, sagt darüber nichts.
+    # -----------------------------------------------------------------------
+    Invoke-PackagingTest 'Fremdes Veröffentlichungsverzeichnis wird abgewiesen, bevor gelöscht wird' {
+        $foreign = Join-Path $testRoot 'fremdes-verzeichnis'
+        New-Item -ItemType Directory -Path $foreign -Force | Out-Null
+        $sentinel = Join-Path $foreign 'nicht-loeschen.txt'
+        Set-Content -LiteralPath $sentinel -Value 'Diese Datei muss den Aufruf überleben.'
+
+        Assert-Throws -ExpectedMessage 'Unzulässiges Veröffentlichungsverzeichnis' -Action {
+            & (Join-Path $PSScriptRoot 'Build-Installer.ps1') -PublishDirectory $foreign
+        }
+
+        $sentinelMessage = "Die Sentinel-Datei wurde entfernt: $sentinel. Der Aufruf hat " +
+            'den fremden Ordner angetastet, statt vorher abzubrechen.'
+
+        Assert-True -Condition (Test-Path -LiteralPath $sentinel -PathType Leaf) `
+            -Message $sentinelMessage
+        Assert-True -Condition (Test-Path -LiteralPath $foreign -PathType Container) `
+            -Message "Der fremde Ordner wurde entfernt: $foreign."
+    }
+
+    # Dieselbe Sperre gegen einen Pfad, der erst nach dem Auflösen von ".."
+    # aus dem Repository herausführt. Ein reiner Zeichenkettenvergleich ginge
+    # hier vorbei.
+    Invoke-PackagingTest 'Verzeichniswechsel über ".." wird ebenfalls abgewiesen' {
+        $repositoryRoot = Split-Path -Parent $PSScriptRoot
+        $traversal = Join-Path $repositoryRoot 'artifacts' 'publish' 'win-x64' '..' '..' '..'
+
+        Assert-Throws -ExpectedMessage 'Unzulässiges Veröffentlichungsverzeichnis' -Action {
+            & (Join-Path $PSScriptRoot 'Build-Installer.ps1') -PublishDirectory $traversal
+        }
+    }
+
     Invoke-PackagingTest 'Fehlendes MSI wird abgewiesen' {
         $directory = Join-Path $testRoot 'missing-msi'
         New-Item -ItemType Directory -Path $directory -Force | Out-Null

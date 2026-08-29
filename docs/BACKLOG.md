@@ -8,26 +8,6 @@ Requirements-Datei, aktuell in [`REQUIREMENTS-0.2.0.md`](REQUIREMENTS-0.2.0.md).
 Wiederkehrende manuelle Release- und Windows-Prüfungen stehen getrennt in
 [`RELEASE-CHECKLIST.md`](RELEASE-CHECKLIST.md).
 
-## Releaseweg
-
-- **Releaseweg gegen veralteten Publish-Bestand absichern.** Ein direkter Build
-  des WiX-/Installerprojekts aus Visual Studio kann einen bereits vorhandenen
-  Bestand aus `artifacts/publish/win-x64` paketieren, statt ihn neu zu
-  erzeugen. Am 25.08.2026 entstand dadurch bei einem lokalen Test ein formal
-  korrektes 0.2.0-MSI mit älteren Programmbinärdateien – die Versionsangaben
-  stimmten, der Inhalt nicht.
-
-  Der offizielle Releaseweg über `build/Build-Release.ps1` war davon **nicht**
-  betroffen: Er erzeugt den Publish-Bestand frisch und räumt vorher auf.
-
-  Künftig soll der direkte Installerbau entweder einen frischen Publish
-  erzwingen oder – besser – hart abbrechen und auf `Build-Installer.ps1`
-  beziehungsweise `Build-Release.ps1` verweisen. Ein Bau, der stillschweigend
-  Altbestand einpackt, ist schlimmer als einer, der sich weigert.
-
-  Kein Blocker für 0.2.0, da der freigegebene und getestete Releaseweg korrekt
-  arbeitet.
-
 ## Bedienung
 
 - **Steuernummer und EN-16931-Verkäuferkennung im Rechnungsformular deutlicher

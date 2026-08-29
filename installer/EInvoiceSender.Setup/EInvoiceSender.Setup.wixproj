@@ -1,4 +1,4 @@
-<Project Sdk="WixToolset.Sdk/5.0.2">
+<Project Sdk="WixToolset.Sdk/5.0.2" InitialTargets="EnsureAuthorizedInstallerBuild">
 
   <!--
     Windows-Installer (MSI).
@@ -7,9 +7,15 @@
     unter Windows. Auf einem Linux-Agenten würde die Solution sonst nicht mehr
     bauen. Der Installer wird ausschließlich im Windows-Job der CI gebaut.
 
-    Bauen:
-      dotnet build installer/EInvoiceSender.Setup -c Release ^
-        -p:PublishDir=..\..\artifacts\publish\win-x64\
+    **Dieses Projekt wird nicht direkt gebaut.** Es gibt genau zwei
+    unterstützte Einstiege:
+
+      build\Build-Installer.ps1   nur das MSI
+      build\Build-Release.ps1     vollständiger Releaseweg
+
+    Beide veröffentlichen die Anwendung vorher frisch. Ein direkter Aufruf
+    von `dotnet build` oder ein Bau aus Visual Studio heraus bricht ab; der
+    Grund steht bei EnsureAuthorizedInstallerBuild.
   -->
 
   <PropertyGroup>
@@ -74,8 +80,29 @@
       tragen MSI und Programmdatei dieselbe Fassung, örtlich wie in der CI.
     -->
 
-    <!-- Verzeichnis der zuvor veröffentlichten Anwendung -->
-    <PublishDir Condition="'$(PublishDir)' == ''">..\..\artifacts\publish\win-x64\</PublishDir>
+    <!--
+      Verzeichnis der zuvor veröffentlichten Anwendung.
+
+      **Bewusst ohne Vorgabewert.** Früher stand hier
+      ..\..\artifacts\publish\win-x64\. Damit genügte ein direkter Build, um
+      den Inhalt dieses Ordners zu paketieren – gleich, wie alt er war. Ein
+      liegengebliebener Bestand darf nie allein dadurch zur Installerquelle
+      werden, dass jemand das Projekt baut. Den Pfad setzt ausschließlich
+      Build-Installer.ps1, und zwar auf das Verzeichnis, das es unmittelbar
+      zuvor selbst frisch veröffentlicht hat.
+
+      Diese Zeile hält fest, ob der Pfad tatsächlich von außen kam.
+
+      **Sie sieht überflüssig aus und ist es nicht.** Auf $(PublishDir)
+      direkt zu prüfen wäre wirkungslos: Microsoft.Common.targets wird erst
+      nach dem Projektkörper eingebunden und setzt dort einen eigenen
+      Vorgabewert – gemessen bin/Release/app.publish/. Zum Zeitpunkt des
+      Wächters ist $(PublishDir) also nie leer, auch wenn niemand ihn
+      angegeben hat. Hier oben, vor jenem Import, ist er es. Wer das später
+      zu "Condition='$(PublishDir)' == ''" vereinfacht, schaltet den Wächter
+      still ab.
+    -->
+    <BorstWerkSuppliedPublishDir>$(PublishDir)</BorstWerkSuppliedPublishDir>
 
     <DefineConstants>
       ProductName=$(ProductName);
@@ -85,6 +112,37 @@
       PublishDir=$(PublishDir)
     </DefineConstants>
   </PropertyGroup>
+
+  <!--
+    Wächter gegen veralteten Veröffentlichungsbestand.
+
+    Am 25.08.2026 entstand aus einem direkten Build dieses Projekts ein MSI
+    mit der Produktversion 0.2.0, dessen Programmdateien aus einem älteren
+    Quellstand stammten: Der alte Publish lag noch im damaligen
+    Standardordner und wurde stillschweigend paketiert. Keine
+    Versionsprüfung konnte das bemerken, weil auch der alte Bestand schon
+    VersionPrefix 0.2.0 trug – die Angaben stimmten, der Inhalt nicht.
+
+    Der Grundsatz dahinter: Ein Build, der sich bei der Frische seiner
+    Eingaben nicht sicher ist, muss abbrechen. Stillschweigend Altbestand zu
+    paketieren ist schlimmer als eine Verweigerung, weil das Ergebnis echt
+    aussieht.
+
+    Der Wächter hängt an InitialTargets und läuft damit vor jedem anderen
+    Ziel. Das ist Absicht: Eine spätere Prüfung – ProductCode, fehlende
+    Datei, WiX selbst – würde einen unerlaubten Build nur zufällig fangen,
+    und zwar erst, nachdem er bereits Arbeit geleistet hat.
+
+    Auch die Reihenfolge der beiden Meldungen ist Absicht: Wer ohne
+    Autorisierung baut, soll den richtigen Weg genannt bekommen und nicht
+    eine fehlende Eigenschaft, die ihn gar nichts angeht.
+  -->
+  <Target Name="EnsureAuthorizedInstallerBuild">
+    <Error Condition="'$(BorstWerkInstallerBuild)' != 'true'"
+           Text="Das Installerprojekt wird nicht direkt gebaut. Verwenden Sie build\Build-Installer.ps1 (nur das MSI) oder build\Build-Release.ps1 (vollständiger Releaseweg). Beide veröffentlichen die Anwendung vorher frisch. Ein direkter Build würde einen bereits vorhandenen, möglicherweise veralteten Veröffentlichungsbestand paketieren; die Versionsangaben des MSI wären dann korrekt, sein Inhalt nicht." />
+    <Error Condition="'$(BorstWerkSuppliedPublishDir)' == ''"
+           Text="PublishDir wurde nicht übergeben. Der Installerbau bricht ab, damit kein vorhandener Standardordner allein durch sein Dasein zur Installerquelle wird. Build-Installer.ps1 setzt den Pfad auf das Verzeichnis, das es unmittelbar zuvor selbst veröffentlicht hat." />
+  </Target>
 
   <Target Name="ValidateProductIdentity" BeforeTargets="CoreCompile">
     <Error Condition="'$(ProductCode)' == ''"

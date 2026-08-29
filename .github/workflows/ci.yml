@@ -56,6 +56,13 @@ jobs:
       - name: Bauen
         run: dotnet build EInvoiceSender.sln -c Release --no-restore
 
+      # Der Wächter gegen veralteten Publish-Bestand ist reine MSBuild-Logik
+      # und greift, bevor die WiX-Werkzeugkette anläuft. Er lässt sich deshalb
+      # hier schon prüfen und nicht erst im Windows-Job – ein direkter
+      # Installerbau soll so früh wie möglich auffallen.
+      - name: Installer-Buildwächter prüfen
+        run: ./build/test-installer-build-guard.sh
+
       # Zuerst beschaffen: die Ende-zu-Ende-Tests bestehen darauf, dass die
       # externen Validatoren tatsächlich laufen (REQUIRE_EXTERNAL_VALIDATORS).
       - name: Externe Validatoren beschaffen
@@ -117,6 +124,15 @@ jobs:
       - name: Release-Paketierungslogik prüfen
         shell: pwsh
         run: ./build/Test-ReleasePackaging.ps1
+
+      # Hier liegt das eigentliche Risiko: Unter Windows würde ein direkter
+      # Installerbau ohne Wächter tatsächlich durchlaufen und ein MSI aus
+      # altem Bestand erzeugen. Der Test läuft deshalb auch hier, und zwar
+      # vor dem Releasebau – danach läge ein frisches MSI herum und die
+      # Aussage wäre nichts mehr wert.
+      - name: Installer-Buildwächter prüfen
+        shell: bash
+        run: ./build/test-installer-build-guard.sh
 
       # Publish, MSI-Bau und -Prüfung, portable Fassung und Prüfsummen laufen
       # über denselben maßgeblichen Weg wie bei einem lokalen Releasebau.

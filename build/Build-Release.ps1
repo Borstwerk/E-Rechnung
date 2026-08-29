@@ -8,6 +8,10 @@
     zunächst in einem Stagingbereich vollständig geprüft. Erst danach wird
     der Bestand als artifacts/release veröffentlicht.
 
+    Den Publish erzeugt Build-Installer.ps1, und zwar genau einmal. Portable
+    Fassung und Prüfsummen verwenden anschließend dasselbe Verzeichnis, das
+    auch ins MSI gegangen ist – nicht ein zweites, gleich benanntes.
+
     Vollständige fachliche Tests bleiben ein vorgelagertes Freigabegate. Der
     Releasebau selbst erzwingt die vorhandenen App-, MSI-, deps-, Lizenz-,
     ZIP- und Prüfsummenprüfungen.
@@ -45,9 +49,13 @@ Remove-DirectoryStrict -Path $releaseDirectory -AllowedRoot $artifactsDirectory
 New-CleanDirectory -Path $stagingDirectory -AllowedRoot $artifactsDirectory
 
 try {
-    & (Join-Path $PSScriptRoot 'Publish.ps1') -OutputDirectory $publishDirectory
-
-    & (Join-Path $PSScriptRoot 'Build-Installer.ps1') -SkipPublish -Rebuild
+    # Der Publish entsteht ausschließlich in Build-Installer.ps1 – genau
+    # einmal, und für MSI, ZIP und Prüfsummen derselbe. Ein zweiter Publish
+    # an dieser Stelle würde nur die Frage aufwerfen, welcher der beiden
+    # tatsächlich im Paket landet.
+    & (Join-Path $PSScriptRoot 'Build-Installer.ps1') `
+        -PublishDirectory $publishDirectory `
+        -Rebuild
 
     if (-not (Test-Path -LiteralPath $builtMsi -PathType Leaf)) {
         throw "Das geprüfte MSI fehlt: $builtMsi"

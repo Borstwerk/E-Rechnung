@@ -85,6 +85,80 @@ public sealed class InstallerProjectTests
             $"build/{scriptName} fehlt.");
     }
 
+    /// <summary>
+    /// **Der Installerbau veröffentlicht bedingungslos neu.**
+    ///
+    /// Am 25.08.2026 entstand ein MSI mit der Produktversion 0.2.0, dessen
+    /// Programmdateien aus einem älteren Quellstand stammten. Möglich war das,
+    /// weil der Installerbau einen vorhandenen Veröffentlichungsbestand
+    /// wiederverwenden durfte. Keine Versionsprüfung konnte das bemerken: Auch
+    /// der alte Bestand trug schon <c>VersionPrefix</c> 0.2.0.
+    ///
+    /// Der Wächter im WiX-Projekt schützt davor nur halb. Er erzwingt, dass
+    /// der Bau über <c>Build-Installer.ps1</c> läuft – nicht, dass dieses
+    /// Skript vorher tatsächlich veröffentlicht hat. Käme der Übersprung
+    /// zurück, wäre der alte Fehler wieder da, und zwar auf dem offiziellen
+    /// Weg.
+    ///
+    /// **Warum als Quelltextprüfung:** Die Skripte laufen nur unter Windows
+    /// mit PowerShell. Diese Prüfung läuft überall.
+    /// </summary>
+    [Fact]
+    public void DerInstallerbauVeröffentlichtBeiJedemAufrufNeu()
+    {
+        string[] zeilen = File.ReadAllLines(
+            Path.Combine(TestPaths.RepositoryRoot, "build", "Build-Installer.ps1"));
+        string skript = string.Join('\n', zeilen);
+
+        Assert.DoesNotContain("SkipPublish", skript, StringComparison.OrdinalIgnoreCase);
+
+        // Der Aufruf, nicht die Erwähnung: Von Publish.ps1 ist auch im
+        // Kopfkommentar die Rede.
+        string? aufruf = zeilen.FirstOrDefault(
+            z => z.TrimStart().StartsWith('&') && z.Contains("Publish.ps1", StringComparison.Ordinal));
+
+        Assert.True(
+            aufruf is not null,
+            "Build-Installer.ps1 ruft Publish.ps1 nicht mehr auf. Ohne frische "
+            + "Veröffentlichung kann der Installerbau alten Programmbestand paketieren.");
+
+        // Eingerückt heißt: in einem Block, also unter einer Bedingung. Genau
+        // das war der alte Fehler.
+        Assert.False(
+            aufruf!.StartsWith(' ') || aufruf.StartsWith('\t'),
+            "Der Aufruf von Publish.ps1 steht in Build-Installer.ps1 eingerückt und damit "
+            + $"vermutlich in einem Bedingungsblock: '{aufruf.Trim()}'. Der Installerbau muss "
+            + "bei jedem Aufruf veröffentlichen.");
+
+        // Die Absprache zwischen Skript und WiX-Projekt: ohne diese
+        // Eigenschaft weist der Wächter auch den offiziellen Weg ab.
+        Assert.Contains("BorstWerkInstallerBuild=true", skript, StringComparison.Ordinal);
+        Assert.Contains("-p:PublishDir=", skript, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Das WiX-Projekt bricht ab, wenn es nicht über den vorgesehenen Weg
+    /// gebaut wird, und kennt keinen Vorgabewert für <c>PublishDir</c>.
+    ///
+    /// Das Verhalten selbst prüft <c>build/test-installer-build-guard.sh</c>
+    /// mit einem echten Buildversuch. Hier steht nur die Struktur, die dort
+    /// vorausgesetzt wird – ein versehentlich wieder eingeführter
+    /// Vorgabewert fällt damit schon in der Solution auf.
+    /// </summary>
+    [Fact]
+    public void DasInstallerprojektKenntKeinenVorgabewertFürPublishDir()
+    {
+        XElement wurzel = XDocument.Load(SetupProject).Root!;
+
+        Assert.Equal(
+            "EnsureAuthorizedInstallerBuild",
+            wurzel.Attribute("InitialTargets")?.Value);
+
+        Assert.DoesNotContain(
+            Properties(SetupProject).Elements(),
+            e => e.Name.LocalName == "PublishDir");
+    }
+
     private static string SetupProject { get; } = Path.Combine(
         TestPaths.RepositoryRoot, "installer", "EInvoiceSender.Setup", "EInvoiceSender.Setup.wixproj");
 
