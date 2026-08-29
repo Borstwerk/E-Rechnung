@@ -254,7 +254,7 @@ public sealed partial class EInvoiceService : IEInvoiceService
                 + "ausdrücklich, dass diese ersetzt werden soll, oder wählen Sie die "
                 + "ursprüngliche PDF-Rechnung aus.",
                 "SourcePdfPath",
-                $"Vorhandenes Profil: {preflight.ExistingInvoiceProfile}");
+                $"Vorhandenes Profil: {preflight.ExistingInvoiceProfile ?? "unbekannt"}");
 
             context.Fail(PipelineStep.Preflight, 1, "Bestätigung zum Ersetzen fehlt");
 
@@ -659,7 +659,9 @@ public sealed partial class EInvoiceService : IEInvoiceService
         PdfAnalysisResult reopened = await _analyzer
             .AnalyzeAsync(filePath, cancellationToken).ConfigureAwait(false);
 
-        if (!reopened.HasExistingInvoiceXml || reopened.ExistingInvoiceXml is null)
+        // Hier geht es tatsächlich um den Inhalt: Die soeben erzeugte Datei
+        // muss die Rechnungsdaten nicht nur tragen, sondern lesbar tragen.
+        if (!reopened.HasReadableExistingInvoiceXml || reopened.ExistingInvoiceXml is null)
         {
             report.Error(
                 "APP-USE-020",

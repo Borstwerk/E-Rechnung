@@ -25,7 +25,7 @@ namespace EInvoiceSender.Core.Zugferd;
 /// bereits auf den Folgeknoten, was in einer Leseschleife lautlos Elemente
 /// überspringt. Dieser Fehler ist in der Entwicklung genau so aufgetreten.
 /// </summary>
-public sealed class CiiInvoiceReader : IInvoiceXmlReader
+public sealed class CiiInvoiceReader : IInvoiceXmlReader, ICiiInvoiceInspector
 {
     private static readonly XNamespace Rsm = CiiConstants.NsRsm;
     private static readonly XNamespace Ram = CiiConstants.NsRam;
@@ -34,7 +34,7 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
     /// <inheritdoc />
     public string? ReadProfileId(byte[] xml)
     {
-        XDocument? document = TryLoad(xml);
+        XDocument? document = TryLoad(xml, out _);
 
         return document?.Root?
             .Element(Rsm + "ExchangedDocumentContext")?
@@ -45,9 +45,70 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
     /// <inheritdoc />
     public InvoiceEcho? ReadEcho(byte[] xml)
     {
-        XDocument? document = TryLoad(xml);
-        XElement? root = document?.Root;
+        XDocument? document = TryLoad(xml, out _);
 
+        if (ReadCore(document?.Root) is not { } core)
+        {
+            return null;
+        }
+
+        return new InvoiceEcho(
+            ProfileId: core.ProfileId,
+            InvoiceNumber: core.InvoiceNumber,
+            IssueDate: core.IssueDate,
+            TypeCode: core.TypeCode,
+            Currency: core.Currency,
+            SellerIdentifier: core.SellerIdentifier,
+            LineTotal: core.LineTotal,
+            TaxBasisTotal: core.TaxBasisTotal,
+            TaxTotal: core.TaxTotal,
+            GrandTotal: core.GrandTotal,
+            DuePayableAmount: core.DuePayableAmount,
+            LineCount: core.LineCount);
+    }
+
+    /// <inheritdoc />
+    public CiiInspection Inspect(byte[] xml)
+    {
+        ArgumentNullException.ThrowIfNull(xml);
+
+        if (xml.Length == 0)
+        {
+            return CiiInspection.Failed(CiiStructureStatus.Empty);
+        }
+
+        XDocument? document = TryLoad(xml, out CiiStructureStatus failure);
+
+        if (document is null)
+        {
+            return CiiInspection.Failed(failure);
+        }
+
+        if (ReadCore(document.Root) is not { } core)
+        {
+            // Wohlgeformt, aber nicht das erwartete Dokument. Das ist etwas
+            // anderes als "kaputt" und bekommt deshalb einen eigenen Befund.
+            return CiiInspection.Failed(CiiStructureStatus.NotCii);
+        }
+
+        return CiiInspection.Read(core);
+    }
+
+    /// <summary>
+    /// Die gemeinsame Navigation durch das CII-Dokument.
+    ///
+    /// Sie steht bewusst genau einmal hier: Die Gegenprüfung der Erzeugung und
+    /// die Bestandsaufnahme einer fremden Rechnung lesen dieselben Felder an
+    /// denselben Stellen. Zwei Fassungen derselben Elementpfade wären zwei
+    /// Fassungen, die auseinanderlaufen können – und dann läse der Prüfmodus
+    /// etwas anderes als die Erzeugung, ohne dass es jemandem auffiele.
+    ///
+    /// Liefert <see langword="null"/> unter genau den Bedingungen, unter denen
+    /// <see cref="ReadEcho"/> das schon immer tat: kein Dokument, falsches
+    /// Wurzelelement, oder weder Profilkennung noch Dokumentangaben.
+    /// </summary>
+    private static CiiInvoiceSummary? ReadCore(XElement? root)
+    {
         if (root is null || root.Name != Rsm + CiiConstants.RootElement)
         {
             return null;
@@ -69,7 +130,7 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
             return null;
         }
 
-        return new InvoiceEcho(
+        return new CiiInvoiceSummary(
             ProfileId: profileId,
             InvoiceNumber: exchangedDocument?.Element(Ram + "ID")?.Value,
             IssueDate: ReadDate(exchangedDocument?.Element(Ram + "IssueDateTime")),
@@ -94,10 +155,16 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
     /// Lädt das Dokument abgesichert. Liefert null statt einer Ausnahme, wenn
     /// die Eingabe keine brauchbare XML ist – der Aufrufer soll dem Anwender
     /// eine verständliche Meldung zeigen, keinen Stapelabzug.
+    ///
+    /// <paramref name="failure"/> hält fest, <b>warum</b> es nicht ging. Für
+    /// die Erzeugung ist das gleichgültig, für die Prüfung einer fremden Datei
+    /// ist es die halbe Auskunft.
     /// </summary>
-    private static XDocument? TryLoad(byte[] xml)
+    private static XDocument? TryLoad(byte[] xml, out CiiStructureStatus failure)
     {
         ArgumentNullException.ThrowIfNull(xml);
+
+        failure = CiiStructureStatus.Cii;
 
         try
         {
@@ -106,11 +173,15 @@ public sealed class CiiInvoiceReader : IInvoiceXmlReader
         }
         catch (XmlException)
         {
+            // Auch der Fall, in dem der abgesicherte Leser eine DTD ablehnt:
+            // Für den Anwender ist die Datei damit nicht lesbar.
+            failure = CiiStructureStatus.NotWellFormed;
             return null;
         }
         catch (InvalidDataException)
         {
             // Größenbegrenzung aus SecureXml.
+            failure = CiiStructureStatus.TooLarge;
             return null;
         }
     }

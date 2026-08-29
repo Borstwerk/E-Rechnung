@@ -24,6 +24,7 @@ automatisiert prüfen – auch auf einem Build-Agenten ohne Bildschirm.
 | `Validation` | Befunde und Prüfberichte |
 | `Validation/Rules` | die EN-16931-Regeln, nach Dokument, Parteien, Positionen, Umsatzsteuer, Summen und Zahlung gruppiert |
 | `Zugferd` | CII-XML erzeugen und zurücklesen |
+| `Checking` | Prüfmodus: read-only Bestandsaufnahme einer fertigen E-Rechnung |
 | `Pdf` | PDF-Analyse, Eingangsprüfung, PDF/A-3-Aufwertung, sichtbare Kopie (Rasterweg), XMP, ICC-Profil, Einbettung |
 | `Pdf/Detection` | örtliche Datenerkennung, je Aufgabe ein Detektor: Dokument, Parteien, Zahlung, Summen; dazu Vertrauensstufen, Vorbefüllung und Summenabgleich |
 | `Reports` | Validierungsbericht als JSON und als Text |
@@ -65,6 +66,110 @@ das.
 sich als Ablauf: bestätigt, geeignet, gültig, erzeugen, gegenprüfen,
 aufbauen, auslesen, extern prüfen, speichern. Der Zustand eines Laufs steht
 in einem `CreationContext`; er trägt auch die Fortschrittsmeldungen.
+
+### Der Prüfmodus als eigener Dienst
+
+Seit ER-030-CHK-01A gibt es einen zweiten Anwendungsfall: eine **fertige**
+E-Rechnung prüfen, statt eine neue erzeugen. Er hat einen eigenen Anschluss:
+
+```csharp
+public interface IEInvoiceCheckService
+{
+    Task<CheckEInvoiceResult> CheckAsync(CheckEInvoiceRequest request,
+                                         CancellationToken ct = default);
+}
+```
+
+**Warum nicht als weitere Methode an `IEInvoiceService`.** Die beiden Fälle
+sind einander entgegengesetzt: Der eine nimmt Eingaben, prüft sie gegen die
+Produktgrenzen von BorstWerk und schreibt eine neue Datei; der andere nimmt
+eine fremde, fertige Datei und schreibt gar nichts. In einer Schnittstelle
+wäre für jede Methode die halbe Dokumentation eine Ausnahme, und beim Lesen
+bliebe unklar, welche Aufrufe eine Datei anfassen.
+
+**Was der Prüfmodus bewusst nicht wiederverwendet**, obwohl beides naheliegt:
+
+| Baustein | Warum nicht |
+|---|---|
+| `PdfPreflightService` | Beantwortet „kann BorstWerk diese Datei verändern?“. Eine digitale Signatur ist dort zu Recht ein Hindernis – das Einbetten bräche sie. Bei einer bereits fertigen Rechnung ist dieselbe Signatur kein Mangel. Die Hindernisse als Prüfbefunde zu übernehmen hieße, dem Anwender die Grenzen unseres Schreibwegs als Mängel seiner Rechnung auszugeben. |
+| `En16931RuleValidator` | Prüft das Domänenmodell während der Erstellung und enthält bewusste Produktgrenzen, etwa die kuratierten Codelisten. Ein Code außerhalb unserer Auswahl ist dort ein Befund; bei einer fremden Rechnung wäre er eine Falschbeschuldigung. |
+
+Wiederverwendet werden dagegen `IPdfAnalyzer`, `CiiInvoiceReader` samt der
+abgesicherten XML-Verarbeitung, `ValidationFinding` und `ValidationReport`.
+
+**Die Quelldatei wird ausschließlich gelesen.** Keine Reparatur, keine
+Änderung, keine neue PDF, kein Austausch der eingebetteten XML. Belegt wird
+das nicht durch eine Zusicherung im Text, sondern durch Tests: SHA-256 der
+Quelle, Bytevergleich vorher/nachher, und die Feststellung, dass neben der
+Quelle keine Datei entsteht.
+
+#### Anhänge werden nicht auf Verdacht entpackt
+
+Einen eingebetteten Anhang zu entpacken kostet Speicher in der Größe des
+*entpackten* Inhalts – und die bestimmt die fremde Datei, nicht wir. An
+PDFsharp 6.2.4 nachgemessen: Eine PDF-Datei von **67 KB** entfaltet einen
+Anhang auf **64 MiB**, Verhältnis 1:1029. `PdfStream.Length` hilft dabei
+nicht, denn es meldet die *komprimierte* Größe; `/Params /Size` stammt aus
+der zu prüfenden Datei und ist damit genau die Angabe, der man nicht glauben
+darf. PDFsharp bietet keine begrenzte Dekomprimierung – jede `Decode`-Methode
+liefert ein fertiges `byte[]`.
+
+Daraus folgen zwei Regeln:
+
+1. **Erst die Namen, dann ein Inhalt.** Über Leerbefund, Mehrdeutigkeit und
+   nicht unterstütztes Format entscheiden die Anhangsnamen aus
+   `PdfAnalysisResult.EmbeddedFiles`. Entpackt wird ausschließlich der eine
+   Anhang, der auch ausgewertet wird.
+2. **Dieser eine nur bis zur Grenze.** `BoundedEmbeddedFileReader` entpackt
+   `/FlateDecode` selbst über `ZLibStream` aus der Basisklassenbibliothek und
+   bricht bei `SecureXml.MaxXmlSizeInBytes` ab. Andere Verfahren – verkettete
+   Filter, LZW, ein Prädiktor in `/DecodeParms` – werden nicht geraten,
+   sondern mit `APP-CHK-025` abgelehnt.
+
+Gemessen für dieselbe 64-MiB-Bombe: 34 MB statt 269 MB und 159 ms statt
+437 ms. Entscheidend ist aber nicht der Faktor, sondern die Abhängigkeit: Bei
+einer viermal größeren Bombe (256 MiB) blieb es bei 34,6 MB. Der Bedarf hängt
+jetzt an *unserer* Grenze, nicht mehr an der Größe, die ein Angreifer wählt.
+
+**Restgrenze, ausdrücklich benannt:** Der rohe, noch komprimierte Datenstrom
+liegt im Speicher, sobald PDFsharp die Datei geöffnet hat. Der Bedarf bleibt
+also proportional zur Dateigröße auf der Platte. Beseitigt ist die
+Vervielfachung, nicht die erste Grenze; die zöge nur ein PDF-Leser mit
+strömender Objektverarbeitung.
+
+#### Anwesenheit und Lesbarkeit sind zwei verschiedene Aussagen
+
+Die begrenzte Entpackung hatte eine Folge, die beinahe eine Sicherheitslücke
+geworden wäre. `PdfPreflightReport.HasExistingInvoice` war als
+`ExistingInvoiceProfile is not null` definiert und setzte damit „eine Rechnung
+ist vorhanden“ mit „eine Rechnung wurde erfolgreich gelesen“ gleich. Solange
+jeder Anhang bedingungslos entpackt wurde, fiel das kaum auf.
+
+An dieser Aussage hängt aber `APP-USE-002`: **Eine vorhandene Rechnung wird
+nie stillschweigend ersetzt.** Ein Anhang, der zu groß, ungewöhnlich gepackt
+oder beschädigt ist, liefert kein Profil – und hätte die Sperre geöffnet.
+Ausgerechnet die verdächtigste Datei wäre am Schutz vorbeigekommen, und der
+Anwender hätte seine einzige Ausfertigung überschrieben, ohne gefragt worden
+zu sein.
+
+Deshalb gilt jetzt:
+
+| Frage | Woher die Antwort kommt |
+|---|---|
+| Ist ein Rechnungsanhang **vorhanden**? | `HasExistingInvoice` – allein aus den Anhangsnamen, ohne einen Inhalt zu entpacken |
+| **Welche** Rechnung ist es? | `ExistingInvoiceProfile` – `null`, wenn sich das nicht feststellen ließ |
+| Ist der Inhalt **auswertbar**? | `PdfAnalysisResult.HasReadableExistingInvoiceXml` – nur für die Gegenprüfung erzeugter Dateien |
+
+Die Warnung an den Anwender hängt an der Anwesenheit, nicht am Lesen. Ein
+unlesbarer Anhang ist eher ein Grund mehr nachzufragen als einer weniger; das
+Profil erscheint dann als „unbekannt“.
+
+Das Ergebnis trägt bewusst **kein `Succeeded`**. Ein solches Feld würde als
+„die Rechnung ist gültig“ gelesen, und diese Aussage trifft der Slice nicht:
+Weder die EN-16931-Regelprüfung noch veraPDF laufen. `Completed` beantwortet
+allein, ob die Bestandsaufnahme bis zum Ende gelaufen ist. Eine vorhandene
+PDF/A-3B-Angabe im XMP ist genau das – eine Deklaration der Datei über sich
+selbst, und der Bericht sagt das auch so.
 
 ## EInvoiceSender.App
 

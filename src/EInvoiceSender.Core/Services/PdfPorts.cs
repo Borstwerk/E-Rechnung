@@ -108,8 +108,42 @@ public sealed record PdfAnalysisResult(
     string? ExistingInvoiceProfile,
     IReadOnlyList<PdfUpgradeBlocker> UpgradeBlockers)
 {
-    /// <summary>Enthält die Datei bereits eine Rechnungs-XML?</summary>
-    public bool HasExistingInvoiceXml => ExistingInvoiceXml is { Length: > 0 };
+    /// <summary>
+    /// Trägt die Datei einen Anhang, dessen <b>Name</b> auf eine Rechnung
+    /// hindeutet?
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Anwesenheit, nicht Lesbarkeit.</b> Diese Frage wird ausschließlich
+    /// aus den Anhangsnamen beantwortet – ohne einen Inhalt zu entpacken. Sie
+    /// ist deshalb auch dann richtig, wenn sich der Anhang nicht auswerten
+    /// lässt: zu groß, ungewöhnlich gepackt, beschädigt oder ohne
+    /// Profilangabe.
+    /// </para>
+    /// <para>
+    /// <b>Warum das getrennt sein muss.</b> An dieser Aussage hängt die Sperre
+    /// „eine vorhandene Rechnung wird nie stillschweigend ersetzt“. Wäre sie
+    /// an das erfolgreiche Lesen gebunden, hätte ein unlesbarer Anhang die
+    /// Sperre geöffnet – ausgerechnet die verdächtigste Datei käme so am
+    /// Schutz vorbei. Ob eine Rechnung <i>da</i> ist, entscheidet der Anhang;
+    /// ob wir sie <i>verstehen</i>, steht getrennt in
+    /// <see cref="ExistingInvoiceProfile"/> und
+    /// <see cref="HasReadableExistingInvoiceXml"/>.
+    /// </para>
+    /// </remarks>
+    public bool HasExistingInvoiceAttachment
+        => EmbeddedFiles.Any(file => InvoiceAttachmentDescriptor.LooksLikeInvoiceFile(file.FileName));
+
+    /// <summary>
+    /// Konnte der Inhalt der eingebetteten Rechnungs-XML tatsächlich gelesen
+    /// werden?
+    ///
+    /// **Das ist keine Aussage über die Anwesenheit.** Für die fragt man
+    /// <see cref="HasExistingInvoiceAttachment"/>. Diese Eigenschaft sagt nur,
+    /// ob <see cref="ExistingInvoiceXml"/> ausgewertet werden kann – etwa für
+    /// die Gegenprüfung einer soeben erzeugten Datei.
+    /// </summary>
+    public bool HasReadableExistingInvoiceXml => ExistingInvoiceXml is { Length: > 0 };
 
     /// <summary>Kann die Datei zu PDF/A-3 aufgewertet werden?</summary>
     public bool CanBeUpgraded => UpgradeBlockers.Count == 0;
@@ -131,6 +165,107 @@ public interface IPdfAnalyzer
     /// Die Dateiendung allein reicht als Nachweis nicht aus.
     /// </summary>
     Task<bool> LooksLikePdfAsync(string filePath, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Wie das Lesen eines eingebetteten Anhangs ausgegangen ist.</summary>
+public enum EmbeddedFileReadStatus
+{
+    /// <summary>Der Inhalt wurde vollständig und innerhalb der Grenze gelesen.</summary>
+    Read,
+
+    /// <summary>Es gibt keinen Anhang dieses Namens.</summary>
+    NotFound,
+
+    /// <summary>Der entpackte Inhalt überschreitet die zulässige Größe.</summary>
+    TooLarge,
+
+    /// <summary>
+    /// Der Anhang verwendet ein Kompressionsverfahren, das sich hier nicht
+    /// begrenzt entpacken lässt. Er wird deshalb gar nicht entpackt.
+    /// </summary>
+    UnsupportedFilter,
+}
+
+/// <summary>Ergebnis des Lesens eines einzelnen Anhangs.</summary>
+/// <param name="Status">Wie es ausgegangen ist.</param>
+/// <param name="Content">Der Inhalt; nur bei <see cref="EmbeddedFileReadStatus.Read"/> gefüllt.</param>
+/// <param name="FilterDescription">
+/// Das vorgefundene Filterverfahren, für den technischen Teil eines Befunds.
+/// </param>
+/// <param name="StoppedAtLimit">
+/// Wurde das Entpacken tatsächlich an der Grenze abgebrochen, ohne den Rest
+/// anzufassen?
+///
+/// <para>
+/// <b>Warum das getrennt festgehalten wird.</b> Ein
+/// <see cref="EmbeddedFileReadStatus.TooLarge"/> allein sagt nur, dass der
+/// Inhalt zu groß war – nicht, ob der Speicher dafür schon verbraucht wurde.
+/// Genau das ist aber der Unterschied zwischen einer wirksamen Grenze und
+/// einer, die zu spät kommt. Wer im Bericht schreibt „an der Grenze
+/// abgebrochen“, muss es belegen können.
+/// </para>
+/// </param>
+public sealed record EmbeddedFileReadResult(
+    EmbeddedFileReadStatus Status,
+    byte[] Content,
+    string? FilterDescription,
+    bool StoppedAtLimit = false)
+{
+    /// <summary>Ein Ergebnis ohne Inhalt.</summary>
+    public static EmbeddedFileReadResult Failed(
+        EmbeddedFileReadStatus status, string? filter = null, bool stoppedAtLimit = false)
+        => new(status, [], filter, stoppedAtLimit);
+}
+
+/// <summary>
+/// Liest den Inhalt <b>eines</b> namentlich benannten Anhangs, und zwar mit
+/// einer harten Obergrenze.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Warum genau einer und nicht alle.</b> Der Inhalt eines Anhangs zu
+/// entpacken kostet Speicher in der Größe des entpackten Inhalts – und die
+/// bestimmt die zu prüfende Datei, nicht wir. Eine gemessene PDF-Datei von
+/// 67 KB entfaltete einen Anhang auf 64 MiB. Alle Anhänge vorsorglich zu
+/// entpacken hieße, diesen Preis auch für Dateien zu zahlen, die für die
+/// Prüfung überhaupt keine Rolle spielen: für den beigelegten Lieferschein,
+/// für den zweiten Rechnungsanhang, der die Prüfung ohnehin abbricht, und für
+/// das Fremdformat, dessen Inhalt gar nicht ausgewertet wird.
+/// </para>
+/// <para>
+/// Deshalb entscheidet der Prüfmodus zuerst anhand der <b>Namen</b> – die
+/// stehen in <see cref="PdfAnalysisResult.EmbeddedFiles"/> und kosten nichts –
+/// und liest erst danach genau den einen Anhang, den er wirklich auswerten
+/// will.
+/// </para>
+/// <para>
+/// <b>Warum das nicht in <see cref="IPdfAnalyzer"/> passt.</b>
+/// <see cref="PdfAnalysisResult.ExistingInvoiceXml"/> liefert den ersten
+/// Anhang, dessen Name nach einer Rechnung aussieht. Für die Erzeugung reicht
+/// das – dort geht es nur um die Warnung „hier sind schon Rechnungsdaten
+/// drin“. Der Prüfmodus darf sich diese willkürliche Wahl nicht leisten: Der
+/// Anwender bekäme sonst einen Bericht über eine Datei, die er nicht gemeint
+/// hat.
+/// </para>
+/// <para>Die Datei wird ausschließlich gelesen.</para>
+/// </remarks>
+public interface IPdfAttachmentReader
+{
+    /// <summary>
+    /// Liest den Inhalt des Anhangs mit dem angegebenen Namen, höchstens
+    /// jedoch <paramref name="maxBytes"/> Bytes im entpackten Zustand.
+    ///
+    /// Wirft nicht bei beschädigten Dateien, sondern meldet den Zustand über
+    /// <see cref="EmbeddedFileReadResult.Status"/>.
+    /// </summary>
+    /// <param name="filePath">Die zu lesende PDF-Datei.</param>
+    /// <param name="fileName">
+    /// Name des Anhangs. Der Aufrufer hat zuvor festgestellt, dass er in
+    /// dieser Datei eindeutig ist.
+    /// </param>
+    /// <param name="maxBytes">Obergrenze für den entpackten Inhalt.</param>
+    Task<EmbeddedFileReadResult> ReadEmbeddedFileAsync(
+        string filePath, string fileName, int maxBytes, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

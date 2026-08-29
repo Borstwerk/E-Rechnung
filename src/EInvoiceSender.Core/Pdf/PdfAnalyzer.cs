@@ -25,7 +25,7 @@ namespace EInvoiceSender.Core.Pdf;
 /// Der Analysator wirft bei beschädigten Dateien nicht, sondern meldet den
 /// Zustand als Hindernis. Ein Stapelabzug hilft dem Anwender nicht weiter.
 /// </summary>
-public sealed partial class PdfAnalyzer : IPdfAnalyzer
+public sealed partial class PdfAnalyzer : IPdfAnalyzer, IPdfAttachmentReader
 {
     private readonly IInvoiceXmlReader _xmlReader;
     private readonly ILogger<PdfAnalyzer> _logger;
@@ -73,6 +73,64 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         cancellationToken.ThrowIfCancellationRequested();
 
         return Task.Run(() => Analyze(filePath), cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<EmbeddedFileReadResult> ReadEmbeddedFileAsync(
+        string filePath,
+        string fileName,
+        int maxBytes,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxBytes);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return Task.Run(() => ReadEmbeddedFile(filePath, fileName, maxBytes), cancellationToken);
+    }
+
+    /// <summary>
+    /// Sucht den Anhang mit dem angegebenen Namen und entpackt allein diesen,
+    /// begrenzt auf <paramref name="maxBytes"/>.
+    ///
+    /// Verwendet dieselbe Traversierung wie die Analyse: Eine Hybridrechnung
+    /// verweist auf denselben Anhang aus zwei Richtungen, und wer das nicht
+    /// entdoppelt, meldet eine einwandfreie Datei als mehrdeutig.
+    /// </summary>
+    private EmbeddedFileReadResult ReadEmbeddedFile(string filePath, string fileName, int maxBytes)
+    {
+        try
+        {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using PdfDocument document = PdfReader.Open(stream, PdfDocumentOpenMode.Import);
+
+            foreach ((string name, PdfDictionary specification) in
+                     EnumerateFileSpecifications(document.Internals.Catalog))
+            {
+                if (!string.Equals(name, fileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // Erst hier wird überhaupt etwas entpackt – und zwar nur
+                // dieser eine Anhang, und nur bis zur Grenze.
+                return BoundedEmbeddedFileReader.Read(specification, maxBytes);
+            }
+
+            return EmbeddedFileReadResult.Failed(EmbeddedFileReadStatus.NotFound);
+        }
+        // Über den Zustand einer beschädigten oder geschützten Datei urteilt
+        // die Analyse. Hier gibt es dann schlicht nichts zu lesen.
+        catch (Exception ex) when (ex is not OperationCanceledException
+                                      and not OutOfMemoryException
+                                      and not StackOverflowException)
+        {
+            string reason = ex.GetType().Name;
+            LogAttachmentsUnreadable(_logger, reason);
+
+            return EmbeddedFileReadResult.Failed(EmbeddedFileReadStatus.NotFound);
+        }
     }
 
     private PdfAnalysisResult Analyze(string filePath)
@@ -717,21 +775,22 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
                 continue;
             }
 
-            PdfDictionary? embeddedFiles = specification.Elements.GetDictionary("/EF");
-            PdfDictionary? stream = embeddedFiles?.Elements.GetDictionary("/F")
-                                    ?? embeddedFiles?.Elements.GetDictionary("/UF");
+            // **Begrenzt entpacken, nicht erst entpacken und dann messen.**
+            // Früher stand hier UnfilteredValue mit einer Längenprüfung
+            // danach. Das ist genau die falsche Reihenfolge: Nachgemessen
+            // entfaltet eine PDF-Datei von 67 KB einen Anhang auf 64 MiB, und
+            // der Speicher ist belegt, bevor die Prüfung überhaupt zum Zuge
+            // kommt. Eine OutOfMemoryException fängt diese Klasse bewusst
+            // nicht ab – eine fremde Datei könnte die Anwendung so beenden.
+            EmbeddedFileReadResult content =
+                BoundedEmbeddedFileReader.Read(specification, SecureXmlLimit);
 
-            if (stream?.Stream is null)
+            if (content.Status != EmbeddedFileReadStatus.Read || content.Content.Length == 0)
             {
                 continue;
             }
 
-            byte[] xml = stream.Stream.UnfilteredValue;
-
-            if (xml.Length == 0 || xml.Length > SecureXmlLimit)
-            {
-                continue;
-            }
+            byte[] xml = content.Content;
 
             // Die XML stammt aus einer fremden Datei und wird ausschließlich
             // über den abgesicherten Leser ausgewertet.
@@ -918,6 +977,11 @@ public sealed partial class PdfAnalyzer : IPdfAnalyzer
         EventId = 2011, Level = LogLevel.Information,
         Message = "Schutzzustand nicht feststellbar ({Reason}). Die Hauptanalyse entscheidet.")]
     private static partial void LogProtectionUnknown(ILogger logger, string reason);
+
+    [LoggerMessage(
+        EventId = 2014, Level = LogLevel.Information,
+        Message = "Anhänge nicht lesbar ({Reason}). Die Analyse urteilt über den Zustand der Datei.")]
+    private static partial void LogAttachmentsUnreadable(ILogger logger, string reason);
 
     /// <summary>Wandelt die interne Versionszahl (z. B. 17) in "1.7".</summary>
     private static string FormatVersion(int version)

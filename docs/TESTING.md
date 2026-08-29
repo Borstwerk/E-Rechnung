@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 1156 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
-| `tests/EInvoiceSender.IntegrationTests` | 96 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **1252** | |
+| `tests/EInvoiceSender.Core.Tests` | 1188 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.IntegrationTests` | 99 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
+| **Summe** | **1287** | |
 
 ## Ebenen
 
@@ -241,6 +241,52 @@ Unter Windows:
 - Der DPAPI-Schutz der IBAN, der nur unter Windows greift.
 
 Diese Punkte brauchen einen echten Windows-Rechner und einen Menschen davor.
+
+## Prüfmodus (read-only)
+
+Der Prüfmodus nimmt auf, was in einer fertigen E-Rechnung steht. Zwei Zusagen
+sind dabei belegpflichtig, und beide werden gemessen statt behauptet.
+
+**Die Quelldatei bleibt unberührt.** Der Anwender übergibt eine fertige
+Rechnung, oft die einzige Ausfertigung. Geprüft wird deshalb dreifach: Der
+gemeldete SHA-256 muss der der Quelldatei entsprechen, die Bytes müssen
+vorher und nachher identisch sein, und neben der Quelle darf keine Datei
+entstehen. Der Zeitstempel kommt als Zusatzwächter hinzu – er ersetzt den
+Bytevergleich ausdrücklich nicht, denn ein Zeitstempel lässt sich
+zurücksetzen. Der Nachweis läuft auch für den Fehlerfall: Gerade bei einer
+mangelhaften Datei wäre eine stille Reparatur verlockend.
+
+**Kein Befund behauptet mehr, als geprüft wurde.** Eine PDF/A-3B-Angabe im
+XMP ist eine Deklaration der Datei über sich selbst; veraPDF ist nicht
+gelaufen. Ein Test durchsucht deshalb alle Befundtexte nach „normkonform“,
+„gültige E-Rechnung“ und „PDF/A-konform“ und lässt keinen davon durch.
+
+**Anhänge werden nicht auf Verdacht entpackt.** Eine PDF von 67 KB kann einen
+Anhang von 64 MiB tragen; wer erst entpackt und danach misst, hat den Speicher
+schon verbraucht. `AttachmentMaterialisationTests` belegt beides: Ein
+mitschreibender Leser zeigt, dass bei Mehrdeutigkeit und bei einem nicht
+unterstützten Format **kein** Inhalt angefordert wird und neben der Rechnung
+liegende Fremdanhänge unangetastet bleiben. Und für den Rechnungsanhang selbst
+prüft ein Test mit einer echten Entfaltungsbombe, dass die Grenze schon beim
+Entpacken greift – belegt am Befundtext, nicht nur an der Kennung, denn
+dieselbe Kennung käme auch nach einer zu späten Messung heraus. Die Gegenprobe
+mit einem komprimierten Anhang unter der Grenze verhindert, dass die Sperre
+einfach alles ablehnt.
+
+**Die Sperre gegen stillschweigendes Ersetzen hält auch bei unlesbaren
+Anhängen.** `ExistingInvoiceGateTests` und ein Theorie-Test am echten
+Erzeugungsdienst prüfen alle drei Gründe, aus denen ein Rechnungsanhang nicht
+ausgewertet werden kann – ungewöhnlich gepackt, zu groß, beschädigt. In jedem
+Fall muss `APP-USE-002` greifen und das Profil trotzdem als unbekannt
+erscheinen. Die Gegenprobe ohne Rechnungsanhang verhindert, dass die Sperre
+einfach immer zuschlägt.
+
+Weiter abgedeckt: die Kerndaten gegen das Szenario statt gegen sich selbst,
+fehlender Rechnungsanhang, beschädigte XML, XRechnung und Order-X als
+erkannt-aber-nicht-unterstützt, mehrere Rechnungsanhänge ohne willkürliche
+Auswahl, eine gewöhnliche Beilage neben der Rechnung, DTD samt externer
+Entität, übergroße XML, beschädigte PDF und die digitale Signatur, die für
+sich genommen kein Mangel ist.
 
 ## Installer-Buildwächter
 

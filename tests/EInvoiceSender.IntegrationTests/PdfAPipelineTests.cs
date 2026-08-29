@@ -45,7 +45,7 @@ public sealed class PdfAPipelineTests : IDisposable
         Assert.True(analysis.CanBeUpgraded, "Eine reine Vektorgrafik-PDF muss aufwertbar sein.");
         Assert.Equal(2, analysis.PageCount);
         Assert.False(analysis.IsEncrypted);
-        Assert.False(analysis.HasExistingInvoiceXml);
+        Assert.False(analysis.HasExistingInvoiceAttachment);
         Assert.Empty(analysis.UpgradeBlockers);
     }
 
@@ -120,7 +120,7 @@ public sealed class PdfAPipelineTests : IDisposable
         // Erneut öffnen und die eingebettete XML herausholen.
         PdfAnalysisResult reopened = await _analyzer.AnalyzeAsync(outputPath);
 
-        Assert.True(reopened.HasExistingInvoiceXml, "Die eingebettete XML wurde nicht wiedergefunden.");
+        Assert.True(reopened.HasReadableExistingInvoiceXml, "Die eingebettete XML wurde nicht wiedergefunden.");
         Assert.Equal(CiiConstants.ProfileEn16931, reopened.ExistingInvoiceProfile);
         Assert.Equal("3", reopened.DeclaredPdfAPart);
         Assert.Equal("B", reopened.DeclaredPdfAConformance);
