@@ -1,6 +1,6 @@
 # BorstWerk E-Rechnung
 
-**Kostenlose Werkzeuge für kleine Unternehmen.**
+> **Ein kleines Werkzeug für eine konkrete Aufgabe.**
 
 **BorstWerk E-Rechnung** ist ein kostenloses Open-Source-Windows-Werkzeug für kleine Unternehmen,
 Selbstständige und Vereine. Es erzeugt aus einer **bereits vorhandenen PDF-Rechnung** eine
@@ -9,6 +9,10 @@ eingebetteten strukturierten Rechnungsdaten; die Verarbeitung läuft vollständi
 eigenen Rechner.
 
 BorstWerk E-Rechnung ist ein Werkzeug der [BorstWerk-Werkzeugfamilie](https://github.com/Borstwerk).
+BorstWerk entstand aus konkreten Aufgaben im eigenen Alltag und im Umfeld von Familie und Freunden:
+Wenn für eine reale Aufgabe kein passendes kleines Werkzeug vorhanden war, entstand daraus manchmal
+ein eigenes. E-Rechnung folgt derselben Grundidee – die Aufgabe lösen, ohne daraus unnötig eine
+Plattform zu machen.
 
 Sie ist ausdrücklich **kein Rechnungsprogramm**. Sie schreibt keine Rechnung, vergibt keine
 Rechnungsnummer, führt keine Buchhaltung, verwaltet keine Kunden, erstellt keine Mahnungen und
@@ -260,15 +264,23 @@ Versionen liegt beim Projektverantwortlichen.
 
 ## BorstWerk
 
-BorstWerk ist eine Familie kleiner, eigenständiger Werkzeuge für kleine Unternehmen,
-Selbstständige und Vereine. Die Werkzeuge verarbeiten Geschäftsdaten standardmäßig örtlich,
-brauchen kein Benutzerkonto, enthalten keine Werbung und keine Telemetrie – und jedes lässt sich
-unabhängig von den anderen installieren und benutzen.
+BorstWerk ist ein privates, nicht-kommerzielles Projekt für kleine Werkzeuge und Arbeitsmodelle,
+die aus konkreten Problemen im eigenen Alltag und im Umfeld von Familie und Freunden entstanden
+sind oder daraus weiterentwickelt wurden.
 
-Derzeit gehören dazu:
+Die gemeinsame Idee lautet:
+
+> **Nicht jede Aufgabe braucht eine Plattform. Manchmal braucht sie einfach ein Werkzeug.**
+
+Wo es zur Aufgabe passt, arbeiten BorstWerk-Projekte lokal, ohne Benutzerkonto, Werbung oder
+Telemetrie. Grenzen werden bewusst dokumentiert. Jedes Projekt bleibt eigenständig und soll nicht
+künstlich zu einer Plattform wachsen.
+
+Derzeit gehören unter anderem dazu:
 
 - **BorstWerk E-Rechnung** – dieses Werkzeug
-- **BorstWerk GoBD-Doku**
+- **BorstWerk GoBD-Doku** – in Entwicklung
+- **KI-Regeln** – Werkzeugkasten für kontrollierte KI-Arbeit; öffentliche Veröffentlichung in Vorbereitung
 
 Übersicht: [github.com/Borstwerk](https://github.com/Borstwerk)
 
