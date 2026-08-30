@@ -171,6 +171,41 @@ allein, ob die Bestandsaufnahme bis zum Ende gelaufen ist. Eine vorhandene
 PDF/A-3B-Angabe im XMP ist genau das – eine Deklaration der Datei über sich
 selbst, und der Bericht sagt das auch so.
 
+#### Bedienbarer Prüfmodus in der Anwendung
+
+ER-030-CHK-01 Phase B macht diesen Core-Anwendungsfall über eine eigene Aktion
+„E-Rechnung prüfen …“ im Hauptfenster erreichbar. Sie öffnet ein modales
+`EInvoiceCheckWindow` mit einem eigenen flüchtigen
+`EInvoiceCheckViewModel`. Der Fünf-Schritt-Wizard bleibt dadurch unverändert;
+ein dort begonnener Vorgang wird beim Öffnen oder Schließen des Prüffensters
+weder zurückgesetzt noch umgedeutet.
+
+Das ViewModel ruft ausschließlich `IEInvoiceCheckService` auf und zeigt dessen
+`CheckEInvoiceResult` an: Dateiname, Größe, SHA-256, technische PDF-Angaben,
+eingebettete Dateien, gelesene CII-Kerndaten und die bestehenden
+`APP-CHK-*`-Befunde. Eine neue Auswahl leert den vorigen Anzeigestand vor dem
+Aufruf. Abbruch und unerwartete Lesefehler bleiben kontrollierte lokale
+Zustände.
+
+Die Zusammensetzung verwendet dieselben Instanzen mehrfach über ihre
+passenden Anschlüsse: Der vorhandene `PdfAnalyzer` ist zugleich
+`IPdfAnalyzer` und `IPdfAttachmentReader`, der vorhandene `CiiInvoiceReader`
+zugleich `IInvoiceXmlReader` und `ICiiInvoiceInspector`. Es entsteht keine
+zweite PDF- oder XML-Pipeline.
+
+Das Prüffenster hat keinen Anschluss an Erzeugung, Speicherung,
+Firmenvorlage, Mail oder Netzwerk. Es bietet keine Reparatur und keinen
+Berichtsexport an. Der sichtbare Hinweis auf die Prüfgrenzen und die
+Ergebniszusammenfassung leiten aus `Completed` niemals „gültig“ oder
+„bestanden“ ab.
+
+Reine Darstellung bleibt in der App: Eine WPF-unabhängige
+`EInvoiceCheckDisplayFormatter` formatiert BT-2 und gelesene Geldbeträge
+deterministisch für die deutsche Oberfläche. Sie berechnet und parst nichts
+neu. Dieselbe Hilfe beschriftet die unveränderten internen und belegten
+Normkennungen für `FindingViewModel`; Befundtext, Schweregrad und
+Regelsemantik bleiben Eigentum des Core.
+
 ## EInvoiceSender.App
 
 Nur Oberfläche: Fenster, Ansichten, ViewModels, Windows-Dialoge,
@@ -181,7 +216,7 @@ Abhängigkeiten. Keine Steuer-, PDF/A-, XML- oder Rechnungslogik.
 App.xaml(.cs)              Composition Root: eine ServiceCollection, kein Generic Host
 Views/MainWindow           Rahmen, Schrittanzeige, Statuszeile, Navigation, Störungsanzeige
 Views/Steps/               die fünf Schritte als eigene UserControls
-Views/Dialogs/             Einstellungen
+Views/Dialogs/             Einstellungen, read-only Prüfmodus
 ViewModels/                je Schritt ein ViewModel plus MainViewModel
 Services/                  PDF-Vorschau, Windows-Shell, Systemuhr
 ```

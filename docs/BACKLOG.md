@@ -4,7 +4,7 @@ Nur echte, noch nicht erledigte Aufgaben. Abgeschlossenes gehört nicht
 hierher, sondern in die Commit-Historie.
 
 Verbindliche Arbeit für eine konkrete Version steht in der jeweiligen
-Requirements-Datei, aktuell in [`REQUIREMENTS-0.2.0.md`](REQUIREMENTS-0.2.0.md).
+Requirements-Datei, aktuell in [`REQUIREMENTS-0.3.0.md`](REQUIREMENTS-0.3.0.md).
 Wiederkehrende manuelle Release- und Windows-Prüfungen stehen getrennt in
 [`RELEASE-CHECKLIST.md`](RELEASE-CHECKLIST.md).
 

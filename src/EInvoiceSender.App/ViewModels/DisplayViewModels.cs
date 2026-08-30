@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using EInvoiceSender.App.Presentation;
 using EInvoiceSender.Core.Models;
 using EInvoiceSender.Core.Services;
 using EInvoiceSender.Core.Validation;
@@ -15,7 +16,7 @@ public sealed class FindingViewModel(ValidationFinding finding)
     public string Message => Finding.Message;
 
     /// <summary>Technische Angaben für den aufklappbaren Bereich.</summary>
-    public string TechnicalDetail => Finding.BuildTechnicalSummary();
+    public string TechnicalDetail => EInvoiceCheckDisplayFormatter.FormatTechnicalDetails(Finding);
 
     /// <summary>Betroffenes Feld.</summary>
     public string FieldPath => Finding.FieldPath;

@@ -6,6 +6,7 @@ using EInvoiceSender.App.Services;
 using EInvoiceSender.App.ViewModels;
 using EInvoiceSender.App.Views;
 using EInvoiceSender.App.Views.Dialogs;
+using EInvoiceSender.Core.Checking;
 using EInvoiceSender.Core.Diagnostics;
 using EInvoiceSender.Core.Mail;
 using EInvoiceSender.Core.Pdf;
@@ -105,8 +106,12 @@ public partial class App : Application
         services.AddSingleton<IProcessRunner, ProcessRunner>();
         services.AddSingleton<IInvoiceXmlWriter, CiiInvoiceWriter>();
         services.AddSingleton<IInvoiceXmlReader, CiiInvoiceReader>();
+        services.AddSingleton<ICiiInvoiceInspector>(provider =>
+            (ICiiInvoiceInspector)provider.GetRequiredService<IInvoiceXmlReader>());
         services.AddSingleton<IBusinessRuleValidator, En16931RuleValidator>();
         services.AddSingleton<IPdfAnalyzer, PdfAnalyzer>();
+        services.AddSingleton<IPdfAttachmentReader>(provider =>
+            (IPdfAttachmentReader)provider.GetRequiredService<IPdfAnalyzer>());
         services.AddSingleton<IPdfRenderProbe, PdfiumRenderProbe>();
         services.AddSingleton<IPdfPreflightService, PdfPreflightService>();
         services.AddSingleton<IPdfAInvoiceComposer, PdfAInvoiceComposer>();
@@ -119,6 +124,7 @@ public partial class App : Application
         services.AddSingleton<IEmailDraftService, EmlDraftService>();
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<IEInvoiceService, EInvoiceService>();
+        services.AddSingleton<IEInvoiceCheckService, EInvoiceCheckService>();
 
         // Lokale Datenerkennung: liest nur bereits vorhandenen PDF-Text aus.
         // Kein OCR, keine externen Dienste, nichts verlässt das Gerät.
@@ -153,7 +159,9 @@ public partial class App : Application
         services.AddSingleton<ResultViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<SettingsViewModel>();
+        services.AddTransient<EInvoiceCheckViewModel>();
         services.AddTransient<AboutWindow>();
+        services.AddTransient<EInvoiceCheckWindow>();
         services.AddSingleton<MainWindow>();
     }
 

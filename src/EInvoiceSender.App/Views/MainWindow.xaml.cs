@@ -129,6 +129,18 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// Öffnet den getrennten read-only Prüfmodus. Das modale Fenster besitzt
+    /// einen eigenen flüchtigen Zustand; der laufende Erzeugungsvorgang bleibt
+    /// im <see cref="MainViewModel"/> unverändert erhalten.
+    /// </summary>
+    private void OnCheckEInvoiceClicked(object sender, RoutedEventArgs e)
+    {
+        EInvoiceCheckWindow dialog = App.Services.GetRequiredService<EInvoiceCheckWindow>();
+        dialog.Owner = this;
+        dialog.ShowDialog();
+    }
+
+    /// <summary>
     /// Öffnet die Einstellungen und übernimmt danach die geänderten Vorgaben.
     ///
     /// <c>async void</c> ist durch das WPF-Ereignis vorgegeben.

@@ -288,6 +288,45 @@ Auswahl, eine gewöhnliche Beilage neben der Rechnung, DTD samt externer
 Entität, übergroße XML, beschädigte PDF und die digitale Signatur, die für
 sich genommen kein Mangel ist.
 
+**Die Oberfläche bleibt ein eigener read-only Ablauf.**
+`EInvoiceCheckUiTests` prüft plattformneutral am Quell- und XAML-Bestand:
+
+- eigener transienter Dialog und eigenes ViewModel statt eines Sonderzustands
+  im Fünf-Schritt-Wizard,
+- Zusammensetzung des vorhandenen `IEInvoiceCheckService` aus den bereits
+  registrierten PDF- und CII-Instanzen,
+- Bindungen für Dateiangaben, SHA-256, technische Dokumentinformationen,
+  CII-Kerndaten und die vorhandene Befunddarstellung,
+- sichtbarer Hinweis, dass weder vollständige EN-16931- noch
+  PDF/A-Konformität geprüft wurde,
+- kein Anschluss des ViewModels an Erzeugung, Dateiausgabe, Einstellungen,
+  Mail, Java-Validatoren oder Netzwerk.
+
+`EInvoiceCheckDisplayFormattingTests` führt die reine Präsentationshilfe
+tatsächlich aus. Unter einer absichtlich auf `en-US` gesetzten
+`CurrentCulture` muss BT-2 als `dd.MM.yyyy` ohne Uhrzeit erscheinen. Beträge
+werden mit zwei deutschen Nachkommastellen und der jeweils gelesenen Währung
+formatiert; ein USD-Fall verhindert eine fest eingebaute EUR-Annahme.
+Normbefunde behalten interne und belegte Normkennung in einer verständlich
+beschrifteten Detailzeile. Ein rein interner `APP-CHK-*`-Befund darf dagegen
+keinen erfundenen EN-16931-Bezug erhalten. Die fachlichen Meldungen und
+Schweregrade im Core bleiben unverändert.
+
+Die allgemeinen ViewModel-Wächter laufen auch für den neuen Zustand: jedes
+`await` kehrt mit `ConfigureAwait(true)` auf den WPF-Thread zurück, und das
+Diagnoselog erhält bei einem unerwarteten Lesefehler nur die schon durch
+ER-020-LOG-01 abgesicherte Exceptiondarstellung. Dateipfad und Rechnungsdaten
+werden nicht als Loggerparameter übergeben.
+
+Auf Windows bleibt zusätzlich manuell zu prüfen, dass Auswahl, Abbruch,
+Wiederholung, Fokusreihenfolge und Mindestfenstergröße verständlich sind, ein
+begonnener Erzeugungsvorgang erhalten bleibt und die Quelle auch durch den
+vollständigen UI-Ablauf bytegleich bleibt. Zusätzlich werden der unveränderte
+blockierende Verkäuferbefund `APP-SEL-004`/`BR-CO-26`, seine nachrangigen
+technischen Details sowie Rechnungsdatum und Summen in deutscher Darstellung
+geprüft. Die Fälle stehen in
+`RELEASE-CHECKLIST.md`.
+
 ## Installer-Buildwächter
 
 `build/test-installer-build-guard.sh` belegt, dass sich das WiX-Projekt nicht

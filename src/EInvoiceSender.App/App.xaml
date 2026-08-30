@@ -75,7 +75,7 @@
             <!-- Immer belegt: enthält mindestens die Regelkennung. -->
             <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding TechnicalDetail}"
                        Style="{StaticResource BorstWerk.Text.Technical}"
-                       Margin="0,4,0,0" />
+                       TextWrapping="Wrap" Margin="0,4,0,0" />
           </Grid>
         </Border>
 

@@ -59,6 +59,45 @@ aussieht.
 - [ ] Ergebnis und Prüfbericht öffnen.
 - [ ] E-Mail-Entwurf erzeugen.
 
+## Vorhandene E-Rechnung technisch prüfen
+
+- [ ] Im Hauptfenster „E-Rechnung prüfen …“ öffnen; der bestehende
+  Erzeugungsvorgang bleibt sichtbar unverändert erhalten.
+- [ ] Eine normale Factur-X-/ZUGFeRD-Hybridrechnung auswählen: Dateiname,
+  Größe, SHA-256, PDF-Angaben, Rechnungsanhang, Profil, Kerndaten, Summen und
+  Befunde erscheinen.
+- [ ] Rechnungsdatum erscheint als `dd.MM.yyyy` ohne Uhrzeit oder AM/PM.
+- [ ] Positionssumme, Nettosumme, Gesamtsteuer, Bruttosumme und offener
+  Zahlbetrag erscheinen mit deutschem Dezimaltrennzeichen, zwei
+  Nachkommastellen und der Währung der geprüften Rechnung.
+- [ ] Der Hinweis nennt sichtbar, dass dies keine vollständige EN-16931- oder
+  PDF/A-Konformitätsprüfung ist; nirgends wird aus „vollständig durchgeführt“
+  ein „gültig“ oder „bestanden“.
+- [ ] Gewöhnliche PDF ohne Rechnungs-XML prüfen: verständlicher Leerbefund,
+  kein Absturz und keine Datei neben der Quelle.
+- [ ] Beschädigte Rechnungs-XML prüfen: eigener XML-Befund, nicht fälschlich
+  „keine Rechnungsdaten“.
+- [ ] XRechnung und Order-X prüfen: als erkannt, aber nicht unterstützt
+  bezeichnet; ihr Inhalt wird nicht auf Verdacht entpackt.
+- [ ] PDF mit mehreren rechnungsartigen Anhängen prüfen: keine willkürliche
+  Auswahl und keine angezeigten Rechnungsdetails aus dem ersten Anhang.
+- [ ] Übergroßen beziehungsweise nicht begrenzt entpackbaren Anhang prüfen:
+  kontrollierter Befund, Anwendung bleibt bedienbar.
+- [ ] Laufende Prüfung abbrechen und danach eine andere Datei auswählen: Der
+  alte Anzeigestand ist vollständig verschwunden.
+- [ ] Prüffenster während eines begonnenen Erzeugungsvorgangs schließen:
+  aktueller Schritt und Eingaben sind unverändert.
+- [ ] Quelldatei vor und nach dem UI-Ablauf per SHA-256 und Bytevergleich
+  prüfen; sie ist unverändert, daneben entstand keine neue Datei.
+- [ ] Tastaturbedienung, Fokusreihenfolge, Sprachausgabenamen, Scrollbereich
+  und Darstellung bei der Mindestfenstergröße prüfen.
+- [ ] Im Erfassungsworkflow den blockierenden Verkäuferbefund
+  `APP-SEL-004`/`BR-CO-26` auslösen: Der verständliche Fachtext bleibt die
+  Hauptaussage; beide Kennungen stehen weiterhin in einer nachrangigen,
+  verständlich beschrifteten technischen Detailzeile.
+- [ ] Einen rein internen Befund ohne Normregel anzeigen: Die technische
+  Detailzeile erfindet keinen EN-16931-Bezug.
+
 ## Neue Rechnung und Einstellungen
 
 - [ ] Nach einem vollständigen Durchlauf „Neue Rechnung“ starten: Formular ist leer, eigene Firma steht wieder da.
