@@ -42,6 +42,17 @@ Für Windows 10 und Windows 11 (64 Bit):
 
 Alle Einzelheiten stehen in den [Release Notes zu Version 0.2.0](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.2.0).
 
+## In Entwicklung für 0.3.0
+
+Der Entwicklungsstand auf `main` ergänzt einen getrennten read-only Prüfmodus
+für bereits fertige ZUGFeRD-/Factur-X-Hybridrechnungen. Er zeigt technische
+Dokumentangaben, die eingebettete Rechnungs-XML, Kerndaten, Befunde und eine
+SHA-256-Prüfsumme, ohne die Quelldatei zu verändern.
+
+Diese technische Bestandsaufnahme ist keine vollständige EN-16931- oder
+PDF/A-Konformitätsprüfung. Sie ist noch nicht Bestandteil des oben verlinkten
+Downloads von Version 0.2.0.
+
 ## Was die Anwendung kann
 
 - eine vorhandene PDF-Rechnung auswählen und örtlich prüfen

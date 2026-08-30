@@ -109,7 +109,7 @@ public sealed class WizardFinishTests
         XElement[] neueRechnung =
         [
             .. Buttons().Where(b => (b.Attribute("Content")?.Value ?? string.Empty)
-                .Contains("Rechnung", StringComparison.Ordinal)),
+                .Contains("Neue", StringComparison.Ordinal)),
         ];
 
         Assert.Equal(2, neueRechnung.Length);

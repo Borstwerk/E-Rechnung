@@ -9,7 +9,7 @@ Dieses Projekt folgt dem zentralen [BorstWerk-Entwicklungsprozess](https://githu
 
 Vor größeren Änderungen sind zuerst die für die Arbeit relevanten Unterlagen zu lesen:
 
-- die Anforderungen der Zielversion, aktuell [`docs/REQUIREMENTS-0.2.0.md`](docs/REQUIREMENTS-0.2.0.md),
+- die Anforderungen der Zielversion, aktuell [`docs/REQUIREMENTS-0.3.0.md`](docs/REQUIREMENTS-0.3.0.md),
 - [`docs/DECISIONS.md`](docs/DECISIONS.md),
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
 - [`docs/TESTING.md`](docs/TESTING.md).
@@ -229,7 +229,8 @@ zusätzlich gegen die Golden Master und die externen Referenzvalidatoren zu prü
 
 | Datei | Inhalt |
 |---|---|
-| [`docs/REQUIREMENTS-0.2.0.md`](docs/REQUIREMENTS-0.2.0.md) | Verbindliche Anforderungen für Version 0.2.0 |
+| [`docs/REQUIREMENTS-0.3.0.md`](docs/REQUIREMENTS-0.3.0.md) | Verbindliche Anforderungen und Planungsstand für Version 0.3.0 |
+| [`docs/REQUIREMENTS-0.2.0.md`](docs/REQUIREMENTS-0.2.0.md) | Veröffentlichte Anforderungen für Version 0.2.0 |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Neue wichtige Architektur- und Produktentscheidungen samt Begründung |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Aufbau der Projektmappe, Ablauf, PDF-Wege |
 | [`docs/BUILD.md`](docs/BUILD.md) | Bauen mit Visual Studio und PowerShell |

@@ -18,6 +18,16 @@
     <ProjectReference Include="..\..\src\EInvoiceSender.Core\EInvoiceSender.Core.csproj" />
   </ItemGroup>
 
+  <!--
+    Diese reine Präsentationshilfe hat keine WPF-Abhängigkeit. Sie wird hier
+    als dieselbe Quelldatei mitübersetzt, damit deutsche Datums-/Geldformate
+    auch im plattformneutralen Linux-Testlauf wirklich ausgeführt werden.
+  -->
+  <ItemGroup>
+    <Compile Include="..\..\src\EInvoiceSender.App\Presentation\EInvoiceCheckDisplayFormatter.cs"
+             Link="App\EInvoiceCheckDisplayFormatter.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />

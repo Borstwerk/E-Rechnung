@@ -71,10 +71,16 @@
         nicht dazu. Klein gehalten, weil es beim Rechnungschreiben niemanden
         interessiert.
       -->
-      <Button Grid.Column="1" Content="_Über ..." Click="OnAboutClicked" TabIndex="95"
-              MinWidth="0" Margin="0" Padding="10,4"
-              FontSize="{StaticResource BorstWerk.FontSize.Label}"
-              AutomationProperties.HelpText="Zeigt Fassung, Lizenz und Hinweise zur Anwendung." />
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <Button Content="E-Rechnung _prüfen ..." Click="OnCheckEInvoiceClicked" TabIndex="89"
+                MinWidth="0" Padding="10,4"
+                FontSize="{StaticResource BorstWerk.FontSize.Label}"
+                AutomationProperties.HelpText="Untersucht eine vorhandene fertige E-Rechnung, ohne sie zu verändern." />
+        <Button Content="_Über ..." Click="OnAboutClicked" TabIndex="95"
+                MinWidth="0" Margin="0" Padding="10,4"
+                FontSize="{StaticResource BorstWerk.FontSize.Label}"
+                AutomationProperties.HelpText="Zeigt Fassung, Lizenz und Hinweise zur Anwendung." />
+      </StackPanel>
     </Grid>
 
     <!-- Titel des aktuellen Schritts -->
