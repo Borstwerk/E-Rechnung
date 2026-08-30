@@ -164,7 +164,7 @@ abbrechen.
 
 ## ER-030-CHK-01 – Vorhandene E-Rechnung technisch prüfen
 
-**Status:** In Arbeit
+**Status:** Umgesetzt auf `main`
 
 ### Problem / Grund
 
@@ -251,7 +251,7 @@ Die Phase unterscheidet insbesondere:
 
 ### Phase B – Prüfmodus in der Anwendung bedienbar machen
 
-**Status:** Umgesetzt – Review und Windows-Abnahme ausstehend
+**Status:** Umgesetzt auf `main`
 
 #### Zentrale Modellentscheidung
 
@@ -404,9 +404,10 @@ im lokalen Entwicklungsbuild erneut sichtbar geprüft:
   wurden als „Interne Kennung“ beschriftet und erhielten keinen erfundenen
   EN-16931-Regelbezug.
 
-Damit ist die gezielte Windows-Nachprüfung dieser beiden UX-Punkte grün. Die
-übrigen Phase-B-Abnahmepunkte und die formale Review-/Freigabegrenze werden
-davon nicht vorweggenommen.
+Damit ist die gezielte Windows-Nachprüfung dieser beiden UX-Punkte grün. Der
+vollständige Phase-B-Stand wurde anschließend unabhängig geprüft, bestand die
+Linux- und Windows-CI einschließlich CEN-Schematron und veraPDF sowie die
+vollständige Windows-Abnahme und wurde danach in `main` integriert.
 
 #### Geplante Dateien und harte Diff-Grenze Phase B
 
@@ -439,6 +440,59 @@ Ausdrücklich außerhalb des Diffs:
 - Firmenvorlage, Datenerkennung, Buyer/Seller, Positionen und CII-Writer,
 - externe Validatorintegration in der ausgelieferten Anwendung,
 - neue NuGet- oder Runtimeabhängigkeiten.
+
+## ER-030-UX-01 – Verkäuferidentifikation und steuerliche Angaben verständlich trennen
+
+**Status:** Umsetzung auf `feature/0.3.0-seller-id-ux`, Review ausstehend
+
+### Problem / Grund
+
+USt-IdNr., Steuernummer, Registerkennung und Lieferantenkennung stehen im
+Verkäuferformular optisch nahezu gleichrangig nebeneinander. Dadurch kann die
+Steuernummer wie eine für BR-CO-26 ausreichende Verkäuferkennung wirken,
+obwohl ausschließlich BT-29, BT-30 oder BT-31 den Verkäufer in diesem Sinne
+identifizieren. BT-32 bleibt eine getrennte steuerliche Angabe.
+
+### Anforderung
+
+Schritt 2 trennt steuerliche Angaben sichtbar von der
+Verkäuferidentifikation für die E-Rechnung. Die Oberfläche erklärt bereits
+bei der Eingabe, dass die vorhandene USt-IdNr. gleichzeitig als BT-31 zählt,
+eine Steuernummer allein aber nicht genügt. Es bleibt genau ein Eingabefeld
+für die USt-IdNr.; bestehende Bindungen, Herkunftsanzeigen, Vorbefüllung und
+Firmenvorlage bleiben unverändert.
+
+Die Lieferantenkennung wird als „Lieferanten-/Kreditorennummer“ bezeichnet und
+weiterhin als eine vom Kunden vergebene Kennung erklärt. Es entsteht keine
+neue fachliche Bedeutung für BT-29.
+
+### Akzeptanzkriterien
+
+- „Steuerliche Angaben“ und „Verkäuferidentifikation für die E-Rechnung“ sind
+  im Verkäuferformular sichtbar getrennt.
+- Der Hilfetext nennt USt-IdNr., Registerkennung und eine vom Kunden vergebene
+  Lieferanten-/Kreditorennummer als Identifikationswege und sagt ausdrücklich,
+  dass die Steuernummer allein nicht genügt.
+- Die USt-IdNr. erscheint nur einmal und behält ihren bisherigen Binding-Pfad.
+- Steuernummer, Registerkennung und Lieferantenkennung behalten ebenfalls
+  ihre bisherigen Binding- und Herkunftspfade.
+- `APP-SEL-004`, `BR-CO-26`, Severity und Regeltext bleiben fachlich
+  unverändert: BT-32 allein blockiert; BT-29, BT-30 oder BT-31 erfüllen die
+  Verkäuferidentifikation jeweils allein.
+- PDF-Erkennung, Firmenvorlage, CII-Reader/-Writer, Checker-Core, Installer,
+  Releaseweg und Produktversion bleiben unverändert.
+
+### Nachweis
+
+- XAML-Strukturtests sichern Gruppierung, Hilfetext, eindeutiges
+  USt-IdNr.-Feld, unveränderte Bindungen und Herkunftsanzeigen.
+- Die bestehenden Regeltests prüfen BT-32 allein sowie BT-29, BT-30 und BT-31
+  einzeln und in Kombination mit BT-32.
+- Die Windows-Abnahme prüft manuelle, aus Vorlage stammende und aus PDF
+  erkannte Werte sowie Mindestfenstergröße und Tastaturreihenfolge.
+- Core-, Integrations-, Validator-, Build-, Format- und Diff-Prüfungen bleiben
+  unverändert grün; Golden Master und externe Validatorintegration werden
+  nicht verändert.
 
 ## Allgemeine Qualitätsanforderungen 0.3.0
 
@@ -473,6 +527,7 @@ Gate-2-Plan:
 1. `ER-030-STD-01a/b` – Standardstand und Währungsbestand – **umgesetzt**
 2. `ER-030-REL-01` – Installerbau gegen Altbestand – **umgesetzt**
 3. `ER-030-CHK-01` Phase A – read-only Core-Fundament – **umgesetzt**
-4. `ER-030-CHK-01` Phase B – bedienbarer technischer Prüfmodus – **Gate 2**
-5. weitere Anforderungen erst nach eigener Planungsaufnahme und Freigabe
-6. getrenntes Versions-, Windows-Abnahme- und Releasegate
+4. `ER-030-CHK-01` Phase B – bedienbarer technischer Prüfmodus – **umgesetzt**
+5. `ER-030-UX-01` – Verkäuferidentifikation verständlich trennen – **Gate 3**
+6. weitere Anforderungen erst nach eigener Planungsaufnahme und Freigabe
+7. getrenntes Versions-, Windows-Abnahme- und Releasegate

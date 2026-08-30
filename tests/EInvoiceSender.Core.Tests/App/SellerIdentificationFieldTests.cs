@@ -64,12 +64,83 @@ public sealed class SellerIdentificationFieldTests
 
     [Theory]
     [InlineData("Registerkennung")]
-    [InlineData("Lieferantennummer")]
+    [InlineData("Lieferanten-/Kreditorennummer")]
     public void BeideKennungenTragenEineBeschriftung(string label)
     {
         Assert.Contains(
             Load("InvoiceDataView.xaml").Descendants(Presentation + "TextBlock"),
             text => text.Attribute("Text")?.Value == label);
+    }
+
+    /// <summary>
+    /// Die visuelle Reihenfolge ist Teil der fachlichen Aussage: BT-32 steht
+    /// bei den steuerlichen Angaben und ausdrücklich nicht in der Gruppe der
+    /// drei Kennungen, die BR-CO-26 erfüllen. Die USt-IdNr. bleibt ebenfalls
+    /// dort sichtbar; der Hilfetext der folgenden Gruppe erklärt ihre zweite
+    /// Rolle, ohne ein zweites Eingabefeld zu erzeugen.
+    /// </summary>
+    [Fact]
+    public void DasFormularTrenntSteuernummerVonVerkäuferidentifikation()
+    {
+        XElement seller = SellerCard();
+        XElement taxes = Text(seller, "Steuerliche Angaben");
+        XElement identification = Text(seller, "Verkäuferidentifikation für die E-Rechnung");
+
+        int taxesRow = Row(taxes);
+        int identificationRow = Row(identification);
+
+        Assert.True(taxesRow < Row(Input(seller, "SellerVatId")));
+        Assert.True(taxesRow < Row(Input(seller, "SellerTaxNumber")));
+        Assert.True(Row(Input(seller, "SellerTaxNumber")) < identificationRow);
+        Assert.True(identificationRow < Row(Input(seller, "SellerLegalRegistrationId")));
+        Assert.True(identificationRow < Row(Input(seller, "SellerIdentifier")));
+    }
+
+    [Fact]
+    public void DerHilfetextErklärtDieDreiIdentifikationswegeUndDieGrenzeDerSteuernummer()
+    {
+        XElement help = Assert.Single(
+            SellerCard().Descendants(Presentation + "TextBlock"),
+            text => text.Attribute("Text")?.Value.Contains(
+                "Steuernummer allein reicht hierfür nicht aus", StringComparison.Ordinal) == true);
+
+        string explanation = help.Attribute("Text")!.Value;
+
+        Assert.Contains("USt-IdNr.", explanation, StringComparison.Ordinal);
+        Assert.Contains("Registerkennung", explanation, StringComparison.Ordinal);
+        Assert.Contains("Lieferanten-/Kreditorennummer", explanation, StringComparison.Ordinal);
+        Assert.Contains("vom Kunden", explanation, StringComparison.Ordinal);
+        Assert.Contains("zählt bereits", explanation, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DieUStIdNrBleibtEinEinzigesFeldMitDemBisherigenBinding()
+    {
+        XElement field = Assert.Single(
+            SellerCard().Descendants(Presentation + "TextBox"),
+            box => box.Attributes().Any(attribute => attribute.Value.Contains(
+                "Draft.SellerVatId, UpdateSourceTrigger=PropertyChanged",
+                StringComparison.Ordinal)));
+
+        Assert.Equal("Umsatzsteuer-Identifikationsnummer", field.Attribute("AutomationProperties.Name")?.Value);
+    }
+
+    [Theory]
+    [InlineData("SellerVatId")]
+    [InlineData("SellerTaxNumber")]
+    [InlineData("SellerLegalRegistrationId")]
+    [InlineData("SellerIdentifier")]
+    public void DieBestehendenFachfelderBehaltenBindingUndHerkunft(string property)
+    {
+        XElement seller = SellerCard();
+        _ = Input(seller, property);
+
+        Assert.Contains(
+            seller.Descendants(Presentation + "TextBlock"),
+            hint => hint.Attribute("Text")?.Value.Contains(
+                        $"ConverterParameter={property}", StringComparison.Ordinal) == true
+                    && hint.Attribute("Visibility")?.Value.Contains(
+                        $"ConverterParameter={property}", StringComparison.Ordinal) == true);
     }
 
     /// <summary>
@@ -190,6 +261,23 @@ public sealed class SellerIdentificationFieldTests
             Load("InvoiceDataView.xaml").Descendants(Presentation + "Border"),
             border => border.Descendants(Presentation + "TextBlock").Any(
                 text => text.Attribute("Text")?.Value == "Verkäufer (Sie)"));
+
+    private static XElement Text(XElement seller, string value)
+        => Assert.Single(
+            seller.Descendants(Presentation + "TextBlock"),
+            text => text.Attribute("Text")?.Value == value);
+
+    private static XElement Input(XElement seller, string property)
+        => Assert.Single(
+            seller.Descendants(),
+            element => element.Attributes().Any(attribute => attribute.Value.Contains(
+                $"Draft.{property}, UpdateSourceTrigger=PropertyChanged",
+                StringComparison.Ordinal)));
+
+    private static int Row(XElement element)
+        => int.Parse(
+            element.Attribute("Grid.Row")?.Value ?? "0",
+            System.Globalization.CultureInfo.InvariantCulture);
 
     private static XDocument Load(string fileName)
         => XDocument.Load(ProjectFiles.With(".xaml")
