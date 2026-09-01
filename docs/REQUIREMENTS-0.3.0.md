@@ -494,6 +494,58 @@ neue fachliche Bedeutung für BT-29.
   unverändert grün; Golden Master und externe Validatorintegration werden
   nicht verändert.
 
+## ER-030-POS-01 – Mehrseitiges PDF mit vollständig einseitiger Positionstabelle
+
+**Status:** Umgesetzt auf `feature/0.3.0-position-contained-page` – Review ausstehend
+
+### Problem / Grund
+
+Die Positionserkennung verwarf bisher jedes mehrseitige PDF, bevor sie die
+eigentliche Tabellenstruktur prüfte. Dadurch blieb auch eine vollständig
+eindeutige Tabelle leer, wenn eine andere Seite lediglich ein Deckblatt oder
+Zahlungsbedingungen enthielt.
+
+### Anforderung
+
+Mehrseitige PDFs können erkannt werden, wenn genau eine unterstützte
+Positionstabellen-Kopfzeile im Dokument existiert und die vollständige
+Tabelle einschließlich Positionen, Beschreibungsfortsetzungen und
+Summengrenze vollständig auf derselben Seite liegt.
+
+Andere Seiten dürfen Begleittext enthalten. Enthält eine andere Seite jedoch
+unter der gewählten Tabellengeometrie eine vollständig parsebare Position,
+wird die gesamte Positionserkennung verworfen. Mehrseitige Tabellen werden
+damit ausdrücklich nicht unterstützt.
+
+### Akzeptanzkriterien
+
+- Eine vollständige Tabelle auf Seite 1 bleibt trotz Zahlungsbedingungen auf
+  Seite 2 erkennbar.
+- Ein Deckblatt auf Seite 1 verhindert eine vollständige Tabelle auf Seite 2
+  nicht.
+- Die Kopfzeilensuche bleibt dokumentweit; zwei unterstützte Köpfe auf
+  verschiedenen Seiten sind weiterhin mehrdeutig.
+- Kopf, Positionen, Beschreibungsfortsetzungen und Summengrenze müssen auf
+  derselben Seite liegen.
+- Eine headerlose Positionsfortsetzung auf einer anderen Seite verwirft die
+  Erkennung.
+- Beliebiger Begleittext auf anderen Seiten wird weder als
+  Beschreibungsfortsetzung noch allein als Ablehnungsgrund behandelt.
+- Header-, Einheiten-, USt-, Zeilenkontroll- und Dokumentsummengates bleiben
+  unverändert.
+
+### Nachweis
+
+- Direkte `PositionDetectorTests` prüfen beide positiven Seitenfolgen,
+  fremdseitige Fortsetzungen, wiederholte und doppelte Köpfe, eine
+  fremdseitige Summengrenze sowie zahlenhaltigen Begleittext.
+- `PositionContainedPageEndToEndTests` prüfen den echten Weg von einer
+  synthetischen mehrseitigen PDF über `PdfTextExtractor` und
+  `InvoiceDataDetector` bis zu den erkannten Positionen sowie den negativen
+  Fortsetzungsfall.
+- Der vollständige bisherige Positionstestbestand bleibt als
+  Regressionsschranke bestehen.
+
 ## Allgemeine Qualitätsanforderungen 0.3.0
 
 Für sämtliche Anforderungen gelten:

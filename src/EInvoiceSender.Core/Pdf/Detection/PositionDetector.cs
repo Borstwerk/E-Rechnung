@@ -48,9 +48,9 @@ internal sealed record PositionDetectionResult
 }
 
 /// <summary>
-/// Erkennt ausschließlich eine eng begrenzte, einseitige Positionstabelle.
-/// Die Klasse ist in Phase A absichtlich nicht mit dem produktiven
-/// <see cref="InvoiceDataDetector"/> verbunden.
+/// Erkennt ausschließlich eine eng begrenzte Positionstabelle, die
+/// vollständig auf einer PDF-Seite liegt. Weitere Dokumentseiten dürfen
+/// Begleittext, aber keinen zweiten oder fortgesetzten Tabellenkörper tragen.
 /// </summary>
 internal static partial class PositionDetector
 {
@@ -186,8 +186,7 @@ internal static partial class PositionDetector
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(totals);
 
-        if (lines.Count == 0
-            || lines.Select(line => line.PageNumber).Distinct().Count() != 1)
+        if (lines.Count == 0)
         {
             return PositionDetectionResult.Empty;
         }
@@ -205,6 +204,7 @@ internal static partial class PositionDetector
         }
 
         HeaderLayout header = headers[0];
+        int tablePage = header.Line.PageNumber;
         decimal? documentVatRate = ResolveDocumentVatRate(header, totals);
 
         if (!header.Has(ColumnRole.Vat) && documentVatRate is null)
@@ -214,7 +214,7 @@ internal static partial class PositionDetector
 
         PdfTextLine[] following =
         [
-            .. lines.Where(line => line.PageNumber == header.Line.PageNumber
+            .. lines.Where(line => line.PageNumber == tablePage
                                    && line.Top > header.Line.Top)
                 .OrderBy(line => line.Top),
         ];
@@ -288,6 +288,20 @@ internal static partial class PositionDetector
             }
         }
 
+        // Andere Seiten dürfen Begleittext enthalten, aber keinen zweiten
+        // Tabellenkörper ohne eigenen Kopf. Geprüft wird ausschließlich mit
+        // derselben Spaltengeometrie und derselben vollständigen Zeilenlogik;
+        // ein beliebiger Text in der Beschreibungsspalte ist kein Verdacht.
+        foreach (PdfTextLine line in lines.Where(
+                     line => line.PageNumber != tablePage))
+        {
+            if (TryReadPrimaryLine(
+                    line, header, documentVatRate, detected.Count + 1, out _))
+            {
+                return PositionDetectionResult.Empty;
+            }
+        }
+
         if (!PassesDocumentTotalsGate(detected, totals))
         {
             return PositionDetectionResult.Empty;
@@ -296,7 +310,7 @@ internal static partial class PositionDetector
         return new PositionDetectionResult
         {
             Lines = detected,
-            PageNumber = header.Line.PageNumber,
+            PageNumber = tablePage,
             HeaderText = header.Line.Text,
         };
     }
