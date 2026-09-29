@@ -22,44 +22,48 @@ Gedacht ist sie für den Fall, dass die Rechnung schon fertig ist – geschriebe
 LibreOffice, einer Branchenlösung oder sonst einem Programm – und daraus jetzt eine E-Rechnung
 werden soll.
 
-> **Status:** Version 0.2.0 ist veröffentlicht.
+> **Status:** Version 0.3.0 ist veröffentlicht.
 
 ## Download
 
-**Aktuelle Version: 0.2.0**
+**Aktuelle Version: 0.3.0**
 
 Für Windows 10 und Windows 11 (64 Bit):
 
-- **[MSI-Installer herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.2.0/BorstWerk-E-Rechnung-Setup.msi)** – empfohlen für die normale Installation und Updates
-- **[Portable ZIP herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.2.0/BorstWerk-E-Rechnung-portable-win-x64.zip)** – ohne Installation verwendbar
-- **[SHA-256-Prüfsummen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.2.0/SHA256SUMS.txt)**
+- **[MSI-Installer herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.3.0/BorstWerk-E-Rechnung-Setup.msi)** – empfohlen für die normale Installation und Updates
+- **[Portable ZIP herunterladen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.3.0/BorstWerk-E-Rechnung-portable-win-x64.zip)** – ohne Installation verwendbar
+- **[SHA-256-Prüfsummen](https://github.com/Borstwerk/E-Rechnung/releases/download/v0.3.0/SHA256SUMS.txt)**
 
-[**Release Notes zu Version 0.2.0**](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.2.0)
+[**Release Notes zu Version 0.3.0**](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.3.0)
 
-## Neu in 0.2.0
+## Neu in 0.3.0
 
-- Rechnungspositionen aus klar aufgebauten digitalen PDF-Tabellen erkennen
-- Mengeneinheiten wie Stunde und Stück übernehmen; fehlende Einheiten werden nicht geraten
-- Käuferland, Käufer-USt-ID und Käufer-E-Mail verbessert erkennen
-- EN16931-konforme Verkäuferidentifikation über BT-29, BT-30 oder BT-31
-- sauberer Upgradepfad von 0.1.0 auf 0.2.0
+- vorhandene ZUGFeRD-/Factur-X-Rechnungen in einem getrennten read-only Prüfmodus technisch untersuchen
+- verständliche Befunde mit nachrangigen technischen Kennungen sowie deutschem Datums- und Betragsformat
+- steuerliche Angaben und Verkäuferidentifikation im Formular sichtbar trennen
+- Positionen auch aus mehrseitigen PDFs übernehmen, wenn die vollständige Tabelle einschließlich Summengrenze auf einer Seite steht
+- Installerbau gegen die Verwendung alter Programmdateien absichern
+- dokumentierter Standardstand ZUGFeRD 2.5.2 / Factur-X 1.09.2 mit CII D22B und aktualisierte Währungscode-Prüfung
 
-Alle Einzelheiten stehen in den [Release Notes zu Version 0.2.0](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.2.0).
+Alle Einzelheiten stehen in den [Release Notes zu Version 0.3.0](https://github.com/Borstwerk/E-Rechnung/releases/tag/v0.3.0).
 
-## In Entwicklung für 0.3.0
+## Vorhandene E-Rechnung technisch prüfen
 
-Der Entwicklungsstand auf `main` ergänzt einen getrennten read-only Prüfmodus
+Über **E-Rechnung prüfen …** öffnet sich ein getrennter read-only Prüfmodus
 für bereits fertige ZUGFeRD-/Factur-X-Hybridrechnungen. Er zeigt technische
-Dokumentangaben, die eingebettete Rechnungs-XML, Kerndaten, Befunde und eine
-SHA-256-Prüfsumme, ohne die Quelldatei zu verändern.
+Dokument- und Anhanginformationen, gelesene CII-Kerndaten, Summen, Befunde und
+eine SHA-256-Prüfsumme, ohne die Quelldatei zu verändern. Ein begonnener
+Erzeugungsvorgang bleibt erhalten.
 
-Diese technische Bestandsaufnahme ist keine vollständige EN-16931- oder
-PDF/A-Konformitätsprüfung. Sie ist noch nicht Bestandteil des oben verlinkten
-Downloads von Version 0.2.0.
+Diese technische Bestandsaufnahme ist **keine vollständige EN-16931- oder
+PDF/A-Konformitätsprüfung**. Der Checker repariert oder verändert keine Datei.
+Bekannte XRechnung-/Order-X-Anhänge werden als nicht unterstützte Formate
+erkannt, aber nicht fachlich ausgewertet.
 
 ## Was die Anwendung kann
 
 - eine vorhandene PDF-Rechnung auswählen und örtlich prüfen
+- eine bereits fertige ZUGFeRD-/Factur-X-Rechnung ausschließlich lesend technisch untersuchen
 - vorhandenen PDF-Text auslesen und das Formular damit vorbelegen
 - die erkannten Angaben kontrollieren, korrigieren und ergänzen
 - wiederkehrende eigene Firmendaten einmalig hinterlegen
@@ -142,9 +146,13 @@ Steuersätzen.
 Jeder erkannte Wert bleibt sichtbar und änderbar. Unsichere Werte werden gekennzeichnet oder gar
 nicht erst übernommen.
 
-**Rechnungspositionen** werden aus klar aufgebauten Tabellen übernommen: eine Seite, ein
-eindeutiger Tabellenkopf, die Steuersätze 7 % oder 19 %, und die Summe der Positionen muss die
-Summe im Dokument treffen. Passt eine dieser Bedingungen nicht, wird **keine einzige** Position
+**Rechnungspositionen** werden aus klar aufgebauten Tabellen übernommen: genau ein
+eindeutiger Tabellenkopf im gesamten Dokument, die vollständige Tabelle einschließlich
+Summengrenze auf derselben Seite, die Steuersätze 7 % oder 19 %, und die Summe der Positionen
+muss die Summe im Dokument treffen. Weitere PDF-Seiten dürfen Deckblätter oder Begleittext,
+aber keine unterstützten Tabellenköpfe oder unter der gewählten Tabellengeometrie vollständig
+parsebaren Positionszeilen enthalten. Über Seiten fortgesetzte Tabellen werden nicht übernommen.
+Passt eine dieser Bedingungen nicht, wird **keine einzige** Position
 übernommen und die Tabelle ist von Hand zu erfassen – eine halb ausgefüllte Tabelle sähe fertig
 aus und wäre falsch. Haben Sie bereits selbst Positionen eingetragen, bleiben diese unangetastet.
 
