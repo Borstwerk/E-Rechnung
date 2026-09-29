@@ -366,16 +366,156 @@ public sealed class PositionDetectorTests : IDisposable
         fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
         fixture.AddTotals("100,00", "19,00", "119,00");
         PdfTextResult text = await Extract(fixture);
+
+        // Der Wächter braucht eine echte fortgesetzte Position. Ein bloßer
+        // Dankes- oder Zahlungstext auf Seite 2 ist nach POS-01 zulässig.
+        PdfTextLine row = Assert.Single(
+            text.Lines, line => line.Text.Contains("Beratung", StringComparison.Ordinal));
         PdfTextLine[] pages =
         [
             .. text.Lines,
-            text.Lines[^1] with { PageNumber = 2, Top = 40 },
+            row with { PageNumber = 2, Top = 80 },
         ];
 
         PositionDetectionResult result = PositionDetector.Detect(
             pages, Totals(100m, 19m, 119m));
 
         Assert.Empty(result.Lines);
+    }
+
+    [Fact]
+    public async Task VollständigeTabelleAufSeiteEinsVerträgtZahlungshinweisAufSeiteZwei()
+    {
+        var fixture = new TableFixture();
+        fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
+        fixture.AddTotals("100,00", "19,00", "119,00");
+        fixture.AddFreeLine("Zahlbar innerhalb von 14 Tagen.", 100);
+        PdfTextResult text = await Extract(fixture);
+        PdfTextLine[] pages =
+        [
+            .. text.Lines.Select(line => line.Text.StartsWith("Zahlbar", StringComparison.Ordinal)
+                ? line with { PageNumber = 2, Top = 60 }
+                : line),
+        ];
+
+        PositionDetectionResult result = PositionDetector.Detect(
+            pages, Totals(100m, 19m, 119m));
+
+        Assert.Equal(1, result.PageNumber);
+        AssertLine(
+            Assert.Single(result.Lines),
+            1, "Beratung", null, 1m, "HUR", 100m, 100m, 19m);
+    }
+
+    [Fact]
+    public async Task DeckseiteVorVollständigerTabelleAufSeiteZweiWirdIgnoriert()
+    {
+        var fixture = new TableFixture();
+        fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
+        fixture.AddTotals("100,00", "19,00", "119,00");
+        PdfTextResult text = await Extract(fixture);
+        PdfTextLine[] pages =
+        [
+            .. text.Lines.Select(line => line.Top > 80
+                ? line with { PageNumber = 2 }
+                : line),
+        ];
+
+        PositionDetectionResult result = PositionDetector.Detect(
+            pages, Totals(100m, 19m, 119m));
+
+        Assert.Equal(2, result.PageNumber);
+        AssertLine(
+            Assert.Single(result.Lines),
+            1, "Beratung", null, 1m, "HUR", 100m, 100m, 19m);
+    }
+
+    [Fact]
+    public async Task WiederholterTabellenkopfMitFortsetzungAufSeiteZweiIstMehrdeutig()
+    {
+        var fixture = new TableFixture();
+        fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
+        fixture.AddTotals("100,00", "19,00", "119,00");
+        PdfTextResult text = await Extract(fixture);
+        PdfTextLine header = Assert.Single(
+            text.Lines, line => line.Text.Contains("Beschreibung", StringComparison.Ordinal));
+        PdfTextLine row = Assert.Single(
+            text.Lines, line => line.Text.Contains("Beratung", StringComparison.Ordinal));
+        PdfTextLine[] pages =
+        [
+            .. text.Lines,
+            header with { PageNumber = 2, Top = 60 },
+            row with { PageNumber = 2, Top = 86 },
+        ];
+
+        PositionDetectionResult result = PositionDetector.Detect(
+            pages, Totals(100m, 19m, 119m));
+
+        Assert.Empty(result.Lines);
+    }
+
+    [Fact]
+    public async Task ZweiterUnterstützterTabellenkopfAufFremderSeiteIstMehrdeutig()
+    {
+        var fixture = new TableFixture();
+        fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
+        fixture.AddTotals("100,00", "19,00", "119,00");
+        PdfTextResult text = await Extract(fixture);
+        PdfTextLine header = Assert.Single(
+            text.Lines, line => line.Text.Contains("Beschreibung", StringComparison.Ordinal));
+        PdfTextLine[] pages =
+        [
+            .. text.Lines,
+            header with { PageNumber = 2, Top = 100 },
+        ];
+
+        PositionDetectionResult result = PositionDetector.Detect(
+            pages, Totals(100m, 19m, 119m));
+
+        Assert.Empty(result.Lines);
+    }
+
+    [Fact]
+    public async Task SummengrenzeAufFremderSeiteVervollständigtDieTabelleNicht()
+    {
+        var fixture = new TableFixture();
+        fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
+        fixture.AddTotals("100,00", "19,00", "119,00");
+        PdfTextResult text = await Extract(fixture);
+        PdfTextLine firstTotal = Assert.Single(
+            text.Lines, line => line.Text.Contains("Gesamt Netto", StringComparison.Ordinal));
+        PdfTextLine[] pages =
+        [
+            .. text.Lines.Select(line => line.Top >= firstTotal.Top
+                ? line with { PageNumber = 2 }
+                : line),
+        ];
+
+        PositionDetectionResult result = PositionDetector.Detect(
+            pages, Totals(100m, 19m, 119m));
+
+        Assert.Empty(result.Lines);
+    }
+
+    [Fact]
+    public async Task ZahlenhaltigerHinweisAufFremderSeiteIstKeinePosition()
+    {
+        var fixture = new TableFixture();
+        fixture.AddRow(1, "Beratung", "1", "Std", "100,00", "100,00", "19 %");
+        fixture.AddTotals("100,00", "19,00", "119,00");
+        fixture.AddFreeLine("Zahlungsziel 14 Tage · Rechnungsnummer RE-2026-0815", 100);
+        PdfTextResult text = await Extract(fixture);
+        PdfTextLine[] pages =
+        [
+            .. text.Lines.Select(line => line.Text.StartsWith("Zahlungsziel", StringComparison.Ordinal)
+                ? line with { PageNumber = 2, Top = 60 }
+                : line),
+        ];
+
+        PositionDetectionResult result = PositionDetector.Detect(
+            pages, Totals(100m, 19m, 119m));
+
+        Assert.Single(result.Lines);
     }
 
     [Fact]

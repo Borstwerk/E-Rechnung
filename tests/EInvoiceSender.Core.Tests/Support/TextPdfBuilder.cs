@@ -130,6 +130,51 @@ public static class TextPdfBuilder
     {
         ArgumentNullException.ThrowIfNull(fragments);
 
+        return Assemble(SinglePageBody(BuildPositionedContent(fragments)));
+    }
+
+    /// <summary>
+    /// Erzeugt mehrere Seiten mit jeweils frei positionierten Textfragmenten.
+    /// So lässt sich belegen, dass eine vollständig einseitige Tabelle auch in
+    /// einem mehrseitigen Dokument eindeutig bleibt.
+    /// </summary>
+    public static byte[] CreatePositionedPages(
+        params IReadOnlyList<PositionedPdfText>[] pages)
+    {
+        ArgumentNullException.ThrowIfNull(pages);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pages.Length, 1);
+
+        int fontObject = 3 + (pages.Length * 2);
+        var body = new List<byte[]>();
+        string kids = string.Join(
+            " ", Enumerable.Range(0, pages.Length).Select(i => $"{3 + (i * 2)} 0 R"));
+
+        body.Add(Ascii("<< /Type /Catalog /Pages 2 0 R >>"));
+        body.Add(Ascii($"<< /Type /Pages /Kids [{kids}] /Count {pages.Length} >>"));
+
+        for (int index = 0; index < pages.Length; index++)
+        {
+            int contentObject = 4 + (index * 2);
+            body.Add(Ascii(
+                $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {PageWidth} {PageHeight}] "
+                + $"/Resources << /Font << /F1 {fontObject} 0 R >> >> /Contents {contentObject} 0 R >>"));
+
+            byte[] content = BuildPositionedContent(pages[index]);
+            byte[] header = Ascii($"<< /Length {content.Length} >>\nstream\n");
+            byte[] footer = Ascii("\nendstream");
+            body.Add([.. header, .. content, .. footer]);
+        }
+
+        body.Add(Ascii(
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"));
+
+        return Assemble(body);
+    }
+
+    private static byte[] BuildPositionedContent(IEnumerable<PositionedPdfText> fragments)
+    {
+        ArgumentNullException.ThrowIfNull(fragments);
+
         var stream = new MemoryStream();
         Write(stream, "BT\n/F1 10 Tf\n");
 
@@ -140,7 +185,7 @@ public static class TextPdfBuilder
 
         Write(stream, "ET");
 
-        return Assemble(SinglePageBody(stream.ToArray()));
+        return stream.ToArray();
     }
 
     private const int RightColumn = 320;
