@@ -8,9 +8,10 @@ Diese Datei ist die verbindliche Anforderungsbasis für Version 0.3.0. Bereits
 auf `main` liegende 0.3.0-Slices sind als umgesetzt gekennzeichnet. Geplante
 Slices beginnen erst nach ausdrücklicher Freigabe ihres Gate-2-Plans.
 
-Die Produktversion bleibt bis zu einem eigenen Versions- und Releasegate bei
-`0.2.0`. Aus dieser Datei folgt weder eine Versionsumschaltung noch eine
-Freigabe von Installer, Tag oder GitHub Release.
+Die Versions- und Releasevorbereitung ist mit `ER-030-VER-01` und
+`ER-030-REL-02` freigegeben. Die Umstellung auf `0.3.0` ist keine
+Veröffentlichung: Diff-Review, Abnahme des konkreten Releasekandidaten und
+ausdrückliche Freigabe von Tag und GitHub Release bleiben getrennte Gates.
 
 ## Produktgrenzen
 
@@ -443,7 +444,7 @@ Ausdrücklich außerhalb des Diffs:
 
 ## ER-030-UX-01 – Verkäuferidentifikation und steuerliche Angaben verständlich trennen
 
-**Status:** Umsetzung auf `feature/0.3.0-seller-id-ux`, Review ausstehend
+**Status:** Umgesetzt auf `main`, unabhängig reviewed und unter Windows abgenommen
 
 ### Problem / Grund
 
@@ -496,7 +497,7 @@ neue fachliche Bedeutung für BT-29.
 
 ## ER-030-POS-01 – Mehrseitiges PDF mit vollständig einseitiger Positionstabelle
 
-**Status:** Umgesetzt auf `feature/0.3.0-position-contained-page` – Review ausstehend
+**Status:** Umgesetzt auf `main`, unabhängig reviewed und unter Windows abgenommen
 
 ### Problem / Grund
 
@@ -546,6 +547,108 @@ damit ausdrücklich nicht unterstützt.
 - Der vollständige bisherige Positionstestbestand bleibt als
   Regressionsschranke bestehen.
 
+## ER-030-VER-01 – Produktversion und Installeridentität für 0.3.0 festlegen
+
+**Status:** Auf `codex/0.3.0-release-preparation` umgesetzt – vom Auftraggeber zur PR-Erstellung freigegeben
+
+### Problem / Grund
+
+Die freigegebenen 0.3.0-Slices sind integriert, der Build verwendet jedoch
+noch die Produktversion 0.2.0. Ein neuer Releasekandidat braucht eine
+konsistente Produktversion und eine feste, von den Vorgängern verschiedene
+MSI-Identität, ohne bestehende Upgrade- und Wartungsregeln zu verändern.
+
+### Anforderung
+
+`VersionPrefix` in `Directory.Build.props` wird auf `0.3.0` gestellt und
+bleibt die einzige aktive Produktversionsquelle. Für 0.3.0 wird einmalig ein
+neuer fester ProductCode zugeordnet. Die historischen Zuordnungen von 0.1.0
+und 0.2.0 sowie der gemeinsame UpgradeCode bleiben unverändert.
+
+### Akzeptanzkriterien
+
+- VER-A1: Anwendung und MSI übernehmen dieselbe zentrale Version 0.3.0;
+  Buildskripte und CI erhalten keine unabhängige Versionsangabe.
+- VER-A2: 0.3.0 besitzt genau einen festen, gültigen ProductCode, der von den
+  unveränderten ProductCodes von 0.1.0 und 0.2.0 verschieden ist und bei einem
+  erneuten Bau stabil bleibt.
+- VER-A3: Unbekannte Versionen ohne ProductCode-Zuordnung brechen vor WiX
+  verständlich ab; kein automatisch generierter ProductCode als Rückfall.
+- VER-A4: UpgradeCode, Dual-Purpose-Scope, Featuremigration und Wartungsmodus
+  derselben Version bleiben unverändert. `AllowSameVersionUpgrades` bleibt aus.
+- VER-A5: Runtimepatch 10.0.11, Abhängigkeiten, Lizenzbestand, Datenpfade und
+  Einstellungsformat bleiben unverändert; keine Migration und keine Fachänderung.
+- VER-A6: Vollständige Tests, externe Validatoren, Build, Formatprüfung sowie
+  MSI-/Publish-Prüfung bleiben grün; Golden Master werden nicht geändert.
+
+### Nachweis und Diff-Grenze
+
+`VersioningTests` und `InstallerScopeTests` sichern zentrale Version,
+historische Zuordnungen, feste neue Identität und unveränderte Installerregeln.
+`Test-InstallerMetadata.ps1` prüft die tatsächlich gebaute App, das MSI,
+Runtimepacks und Lizenzdateien. Negativproben belegen fehlende Zuordnung,
+wiederverwendeten ProductCode und abweichende App-/MSI-Versionen.
+
+Produktiv werden ausschließlich `Directory.Build.props` und die
+ProductCode-Zuordnung im WiX-Projekt geändert. Hinzu kommen die gezielten
+Tests und Versions-/Abnahmedokumentation. Anwendungscode, Installer-UI,
+Build-/Release-Skripte, CI und Abhängigkeiten bleiben außerhalb des Diffs.
+
+## ER-030-REL-02 – Releasekandidat 0.3.0 prüfen und zur Veröffentlichung vorbereiten
+
+**Status:** Lokale Vorprüfung und manuelle Tests freigegeben – Integration, endgültiger CI-Kandidat und Veröffentlichungsfreigabe ausstehend
+
+### Problem / Grund
+
+Grüne Funktionsslices und ein erfolgreicher Paketbau sind noch keine Abnahme
+des tatsächlich auszuliefernden 0.3.0-Artefaktsatzes. Quellstand,
+Windows-Nachweise und Prüfsummen müssen sich auf denselben Kandidaten beziehen.
+
+### Anforderung
+
+Der unveränderte gemeinsame Releaseweg erzeugt und prüft einen vollständigen
+0.3.0-Kandidaten. Nach Diff-Review, Integration und grüner Main-CI wird der
+vorhandene manuelle CI-Aufruf mit `publish_artifacts` für den endgültigen
+Abnahmekandidaten verwendet. Tag und GitHub Release benötigen danach eine
+eigene ausdrückliche Veröffentlichungsfreigabe.
+
+### Akzeptanzkriterien
+
+- REL-A1: `Build-Release.ps1` bleibt der einzige Paketierungsweg. Der fertige
+  Bestand enthält exakt `BorstWerk-E-Rechnung-Setup.msi`,
+  `BorstWerk-E-Rechnung-portable-win-x64.zip` und `SHA256SUMS.txt`.
+- REL-A2: ZIP-Dateien liegen direkt an der Wurzel; Drittanbieterhinweise und
+  vollständiger Lizenzordner stammen aus den bestehenden geprüften Quellen.
+- REL-A3: Die SHA-Datei enthält ausschließlich MSI und ZIP in dieser
+  Reihenfolge. Fehlende/zusätzliche Dateien und manipulierte Artefakte werden
+  abgewiesen. Lokal und in CI müssen keine byteidentischen Pakete entstehen.
+- REL-A4: Commit-SHA, CI-Run, MSI-Identitäten und Prüfsummen des konkreten
+  Abnahmekandidaten werden erfasst. MSI und ZIP stammen aus demselben Build;
+  nach Änderungen am Kandidaten werden betroffene Nachweise erneut erbracht.
+- REL-A5: Erstinstallation, Portable-Start und kontextgleiches Upgrade
+  0.2.0 → 0.3.0 werden unter Windows geprüft, einschließlich erhaltener
+  Vorlagen/Benutzerdaten, Desktop-Featurezustand, Repair, erneutem MSI-Aufruf,
+  Downgrade und Deinstallation. Ein vollständiger Erzeugungsdurchlauf und
+  read-only Checker sowie UX-/POS-01-Smoke-Tests gehören zur Abnahme.
+- REL-A6: Main-CI und CodeQL sind grün; das bewusst gestartete CI-Artifact
+  `borstwerk-e-rechnung-win-x64` wird heruntergeladen und erneut verifiziert.
+- REL-A7: Release Notes nennen nur den tatsächlichen Umfang und Grenzen.
+  Ohne gesonderte Freigabe entstehen weder Tag noch GitHub Release oder
+  öffentliche Artefakte. Signing bleibt außerhalb dieses Requirements.
+
+### Nachweis und Reihenfolge
+
+Die bestehenden Paketierungs-, MSI-/Publish- und Lizenzprüfungen bleiben
+unverändert. `docs/ACCEPTANCE-0.3.0-WINDOWS.md` hält automatisierte Vorprüfungen
+und noch offene beziehungsweise tatsächlich ausgeführte manuelle Abnahmen
+auseinander. Die wiederkehrenden Prüfungen aus `RELEASE-CHECKLIST.md` gelten
+weiter. Release Notes werden zunächst nur als Entwurf vorbereitet.
+
+Ein erneut gebautes 0.3.0-MSI ist wegen des festen ProductCodes kein
+Major Upgrade einer früheren 0.3.0-Testinstallation. Ein geänderter Kandidat
+benötigt eine kontrollierte Testvorbereitung und neue Abnahme; dafür werden
+weder ProductCode noch Same-Version-Upgrade-Regeln geändert.
+
 ## Allgemeine Qualitätsanforderungen 0.3.0
 
 Für sämtliche Anforderungen gelten:
@@ -570,8 +673,7 @@ Gate-2-Plan:
   der dafür noch fehlenden positiven Normbestände,
 - belastbarer Vergleich zwischen sichtbarem PDF-Inhalt und eingebetteter XML,
 - optionaler Export eines Prüfberichts,
-- Versionsumschaltung auf 0.3.0 samt festem ProductCode,
-- Releaseabnahme, Tag und Veröffentlichung von 0.3.0,
+- Tag und Veröffentlichung von 0.3.0 nach separater Abschlussfreigabe,
 - Code Signing, sofern dafür eine freigegebene Lösung vorliegt.
 
 ## Geplante Bearbeitungsreihenfolge
@@ -580,6 +682,8 @@ Gate-2-Plan:
 2. `ER-030-REL-01` – Installerbau gegen Altbestand – **umgesetzt**
 3. `ER-030-CHK-01` Phase A – read-only Core-Fundament – **umgesetzt**
 4. `ER-030-CHK-01` Phase B – bedienbarer technischer Prüfmodus – **umgesetzt**
-5. `ER-030-UX-01` – Verkäuferidentifikation verständlich trennen – **Gate 3**
-6. weitere Anforderungen erst nach eigener Planungsaufnahme und Freigabe
-7. getrenntes Versions-, Windows-Abnahme- und Releasegate
+5. `ER-030-UX-01` – Verkäuferidentifikation verständlich trennen – **umgesetzt**
+6. `ER-030-POS-01` – einseitige Tabelle in mehrseitigem PDF – **umgesetzt**
+7. `ER-030-VER-01` – Versions- und Installeridentität – **zur PR-Erstellung freigegeben**
+8. `ER-030-REL-02` – lokale Vorprüfung und manuelle Tests freigegeben; endgültiger CI-Kandidat offen
+9. getrennte Abschlussfreigabe vor Tag und Veröffentlichung

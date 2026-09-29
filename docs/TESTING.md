@@ -5,9 +5,9 @@ ohne Windows – der Kern ist bewusst plattformneutral.
 
 | Projekt | Tests | Schwerpunkt |
 |---|---|---|
-| `tests/EInvoiceSender.Core.Tests` | 1188 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
+| `tests/EInvoiceSender.Core.Tests` | 1214 | Werttypen, Berechnung, Regelwerk, Codelisten, CII-Writer und -Reader, Golden Master, E-Mail-Entwurf, Dateinamen, Eingabeformular, Quelltextregeln der Oberfläche |
 | `tests/EInvoiceSender.IntegrationTests` | 99 | Gesamtablauf, PDF/A-3, Einbettung und Rückextraktion, externe Gegenprüfung, sichere XML-Verarbeitung, Prozess-Zeitlimit, atomare Speicherung |
-| **Summe** | **1287** | |
+| **Summe** | **1313** | |
 
 ## Ebenen
 
@@ -396,6 +396,33 @@ Fassung aus der gebauten Assembly liest. Die Strukturprüfung der
 Desktopoption besitzt Negativfälle für einen falschen Installationslevel,
 fehlenden Default, Kopplung des Startmenüs, fehlende Upgradebedingung,
 abweichende Feature-ControlEvents und eine unzulässige Custom Action.
+
+### Versions- und Releasevorbereitung 0.3.0
+
+ER-030-VER-01 verwendet unverändert die vorhandene App-/MSI-Artefaktprüfung.
+`VersioningTests.DieFreigegebeneProduktversionIst030` sichert zusätzlich die
+freigegebene zentrale Version; der bestehende ProductCode-Test schützt jetzt
+alle drei festen Zuordnungen einschließlich unveränderter 0.1.0-/0.2.0-Codes.
+Sein vorhandener Helfer verwirft weiterhin ungültige, doppelte oder mehreren
+Versionen zugeordnete Codes.
+
+Am 29.09.2026 waren beide gezielten Tests vor der Konfigurationsänderung aus
+dem erwarteten Grund rot und anschließend die 51 fokussierten Versions-,
+Installer-, Lizenz- und Paketierungstests grün. Brechproben gegen einen
+Versionsrückfall und wiederverwendeten ProductCode wurden erkannt und
+zurückgenommen. Echte Aufrufe von `ValidateProductIdentity` wiesen eine
+unbekannte Version und einen fehlenden 0.3.0-ProductCode verständlich ab.
+
+Der vollständige Vorbereitungsstand bestand 1.214 Core- und 99
+Integrationstests ohne Skips mit `REQUIRE_EXTERNAL_VALIDATORS=1`. Die separate
+Golden-Master-Gegenprüfung mit der unveränderten Mustang-CLI 2.24.0 prüfte 15
+Dateien ohne Abweichung; die eingecheckten Sollfassungen blieben unverändert.
+
+ER-030-REL-02 trennt diese automatisierten Nachweise von der noch offenen
+Windows-Abnahme des endgültigen CI-Artefaktsatzes. Konkrete lokale
+Paketprüfungen, Negativproben und offene Freigaben stehen in
+[`ACCEPTANCE-0.3.0-WINDOWS.md`](ACCEPTANCE-0.3.0-WINDOWS.md). Ein lokaler grüner
+Build aus einem uncommitteten Stand ist keine Veröffentlichungsfreigabe.
 
 ## Drittanbieterhinweise
 

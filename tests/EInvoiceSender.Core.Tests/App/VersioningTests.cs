@@ -21,6 +21,15 @@ public sealed class VersioningTests
     ];
 
     [Fact]
+    public void DieFreigegebeneProduktversionIst030()
+    {
+        XDocument buildProps = XDocument.Load(
+            Path.Combine(TestPaths.RepositoryRoot, "Directory.Build.props"));
+
+        Assert.Equal("0.3.0", Assert.Single(buildProps.Descendants("VersionPrefix")).Value);
+    }
+
+    [Fact]
     public void VersionPrefixIstDieEinzigeAktiveProduktversionsquelle()
     {
         var definitions =

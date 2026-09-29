@@ -59,20 +59,21 @@
     <ProductName>BorstWerk E-Rechnung</ProductName>
     <ProductManufacturer>BorstWerk</ProductManufacturer>
     <!--
-      Identitäten der veröffentlichten Produktfassungen.
+      Identitäten der festgelegten Produktfassungen.
 
       Ohne einen festen Wert erzeugt WiX bei jedem Bau einen neuen ProductCode.
       Zwei Pakete mit derselben ProductVersion, aber verschiedenen ProductCodes
       gelten dann als zwei Produkte: MajorUpgrade erfasst gleiche Versionen
       bewusst nicht. Genau so konnte 0.1.0 mehrfach installiert werden.
 
-      Die zentrale Version wählt genau einen festen Code aus. Der veröffentlichte
-      0.1.0-Code bleibt als historische Zuordnung bestehen; 0.2.0 erhält einen
-      neuen Code. Eine unbekannte Version wird vor dem WiX-Bau abgelehnt. Der
-      UpgradeCode in Package.wxs bleibt dagegen über alle Fassungen stabil.
+      Die zentrale Version wählt genau einen festen Code aus. Die veröffentlichten
+      Codes von 0.1.0 und 0.2.0 bleiben als historische Zuordnungen bestehen;
+      0.3.0 erhält einen neuen Code. Eine unbekannte Version wird vor dem WiX-Bau
+      abgelehnt. Der UpgradeCode in Package.wxs bleibt dagegen über alle Fassungen stabil.
     -->
     <ProductCode Condition="'$(VersionPrefix)' == '0.1.0'">723d8a8e-cb3d-4ec0-81d2-3821a56be91d</ProductCode>
     <ProductCode Condition="'$(VersionPrefix)' == '0.2.0'">f69b7118-58e7-4bb9-b4ff-411056aa3776</ProductCode>
+    <ProductCode Condition="'$(VersionPrefix)' == '0.3.0'">62db778c-7e3a-4241-aff3-6db002bd29f4</ProductCode>
     <!--
       Die Fassungsnummer steht in Directory.Build.props als VersionPrefix und
       wird ohne eigene ProductVersion-Eigenschaft an WiX weitergegeben. Diese
