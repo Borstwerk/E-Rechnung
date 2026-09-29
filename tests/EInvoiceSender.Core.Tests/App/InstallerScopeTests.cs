@@ -142,16 +142,16 @@ public sealed class InstallerScopeTests
     }
 
     /// <summary>
-    /// Jede veröffentlichte Produktversion behält ihren festen ProductCode.
-    /// Der Code von 0.1.0 ist bereits veröffentlicht und deshalb unveränderlich;
-    /// 0.2.0 braucht einen anderen, ebenfalls festen Code.
+    /// Jede festgelegte Produktversion behält ihren festen ProductCode.
+    /// Die veröffentlichten Codes von 0.1.0 und 0.2.0 bleiben unveränderlich;
+    /// der Releasekandidat 0.3.0 bekommt einen eigenen, ebenfalls festen Code.
     /// </summary>
     [Fact]
     public void DieProductCodesDerVeröffentlichtenFassungenBleibenStabil()
     {
         Dictionary<string, string> mappings = ProductCodeMappings();
 
-        Assert.Equal(2, mappings.Count);
+        Assert.Equal(3, mappings.Count);
         Assert.Equal(
             "723d8a8e-cb3d-4ec0-81d2-3821a56be91d",
             mappings["0.1.0"],
@@ -159,6 +159,10 @@ public sealed class InstallerScopeTests
         Assert.Equal(
             "f69b7118-58e7-4bb9-b4ff-411056aa3776",
             mappings["0.2.0"],
+            ignoreCase: true);
+        Assert.Equal(
+            "62db778c-7e3a-4241-aff3-6db002bd29f4",
+            mappings["0.3.0"],
             ignoreCase: true);
         Assert.False(
             string.Equals(mappings["0.1.0"], mappings["0.2.0"], StringComparison.OrdinalIgnoreCase));

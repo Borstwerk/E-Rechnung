@@ -74,6 +74,7 @@ Die festgelegten Zuordnungen lauten:
 
 - 0.1.0 → `{723D8A8E-CB3D-4EC0-81D2-3821A56BE91D}`
 - 0.2.0 → `{F69B7118-58E7-4BB9-B4FF-411056AA3776}`
+- 0.3.0 → `{62DB778C-7E3A-4241-AFF3-6DB002BD29F4}` (ER-030-VER-01; noch nicht veröffentlicht)
 
 `AllowSameVersionUpgrades` bleibt ausgeschaltet. Dieselbe Fassung wird über den
 festen ProductCode als dasselbe Produkt erkannt und gelangt in den normalen
