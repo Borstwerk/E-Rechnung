@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "e-rechnung",
+  "kind": "software",
+  "entrypoints": {
+    "overview": "PROJECT.md",
+    "status": "README.md",
+    "plan": "docs/BACKLOG.md",
+    "contents": "README.md"
+  },
+  "search": {
+    "include": [
+      "PROJECT.md",
+      "README.md",
+      "docs/BACKLOG.md"
+    ],
+    "exclude": []
+  }
+}
